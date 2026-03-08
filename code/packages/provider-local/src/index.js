@@ -1,7 +1,9 @@
 import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 import {
+  PROVIDER_AVAILABILITY,
   READ_WRITE_CAPABILITIES,
   cloneItem,
+  createProviderDescriptor,
   mergeItem,
   providerNotConnectedError,
 } from '../../provider-core/src/provider.js';
@@ -12,13 +14,26 @@ export function createLocalProvider() {
   let collection = null;
   let itemsById = new Map();
 
+  const descriptor = createProviderDescriptor({
+    id: 'local',
+    label: 'Example dataset',
+    category: 'builtin',
+    availability: PROVIDER_AVAILABILITY.available,
+    description: 'Built-in sample collection for local development and quick demos.',
+    statusLabel: 'Available',
+    capabilities: READ_WRITE_CAPABILITIES,
+  });
+
   function rebuildIndex() {
     itemsById = new Map((collection.items || []).map((item) => [item.id, cloneItem(item)]));
   }
 
   return {
-    id: 'local',
-    label: 'Example Dataset',
+    ...descriptor,
+
+    getDescriptor() {
+      return descriptor;
+    },
 
     async connect(config = {}) {
       sourcePath = config.path || sourcePath;

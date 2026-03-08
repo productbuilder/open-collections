@@ -25,6 +25,44 @@ class TimemapCollectorElement extends HTMLElement {
       github: createGithubProvider(),
     };
 
+    this.providerCatalog = [
+      this.providers.github.getDescriptor(),
+      this.providers['public-url'].getDescriptor(),
+      {
+        id: 'gdrive',
+        label: 'Google Drive',
+        category: 'external',
+        enabled: false,
+        statusLabel: 'Coming soon',
+        description: 'OAuth-based access to Drive folders and media.',
+      },
+      {
+        id: 's3',
+        label: 'S3-compatible storage',
+        category: 'external',
+        enabled: false,
+        statusLabel: 'Coming soon',
+        description: 'Use S3 buckets and prefixes as collection sources.',
+      },
+      {
+        id: 'wikimedia',
+        label: 'Wikimedia Commons',
+        category: 'external',
+        enabled: false,
+        statusLabel: 'Planned',
+        description: 'Import media and metadata from Wikimedia Commons.',
+      },
+      {
+        id: 'internet-archive',
+        label: 'Internet Archive',
+        category: 'external',
+        enabled: false,
+        statusLabel: 'Planned',
+        description: 'Browse and load assets from Archive.org items.',
+      },
+      this.providers.local.getDescriptor(),
+    ];
+
     this.shadow = this.attachShadow({ mode: 'open' });
     this.renderShell();
     this.cacheDom();
@@ -34,6 +72,8 @@ class TimemapCollectorElement extends HTMLElement {
     this.bindEvents();
     this.setStatus('Not connected.', 'neutral');
     this.renderCapabilities(this.providers.local);
+    this.renderProviderCatalog();
+    this.setSelectedProvider('github');
     this.renderAssets();
     this.renderEditor();
   }
@@ -377,6 +417,84 @@ class TimemapCollectorElement extends HTMLElement {
           flex-wrap: wrap;
         }
 
+        .provider-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 0.7rem;
+        }
+
+        .provider-list {
+          display: grid;
+          gap: 0.5rem;
+          align-content: start;
+        }
+
+        .provider-card {
+          border: 1px solid #dbe3ec;
+          border-radius: 8px;
+          background: #ffffff;
+          padding: 0.6rem;
+          text-align: left;
+          display: grid;
+          gap: 0.2rem;
+          cursor: pointer;
+        }
+
+        .provider-card.is-selected {
+          border-color: #0f6cc6;
+          box-shadow: 0 0 0 1px #66a6e8 inset;
+          background: #f5faff;
+        }
+
+        .provider-card.is-disabled {
+          cursor: not-allowed;
+          background: #f8fafc;
+          color: #64748b;
+          border-color: #e2e8f0;
+        }
+
+        .provider-card-label-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+        }
+
+        .pill {
+          border-radius: 999px;
+          border: 1px solid #cbd5e1;
+          padding: 0.1rem 0.4rem;
+          font-size: 0.72rem;
+          color: #475569;
+          background: #f8fafc;
+        }
+
+        .pill.is-muted {
+          color: #64748b;
+          border-color: #e2e8f0;
+          background: #f8fafc;
+        }
+
+        .provider-config {
+          display: grid;
+          gap: 0.6rem;
+          align-content: start;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          background: #f8fafc;
+          padding: 0.7rem;
+        }
+
+        .config-section-title {
+          margin: 0;
+          font-size: 0.83rem;
+          color: #334155;
+        }
+
+        .is-hidden {
+          display: none;
+        }
+
         pre {
           margin: 0;
           padding: 0.75rem;
@@ -453,24 +571,43 @@ class TimemapCollectorElement extends HTMLElement {
       <dialog id="providerDialog" aria-label="Source and provider settings">
         <div class="dialog-shell">
           <div class="dialog-header">
-            <h2 class="dialog-title">Source connection</h2>
+            <h2 class="dialog-title">Storage providers and sources</h2>
             <button class="btn" data-close="providerDialog" type="button">Close</button>
           </div>
           <div class="dialog-body">
-            <div class="field-row">
-              <label for="providerType">Provider</label>
-              <select id="providerType">
-                <option value="local">Example dataset</option>
-                <option value="public-url">Public URL</option>
-                <option value="github">GitHub (stub)</option>
-              </select>
-            </div>
-            <div class="field-row">
-              <label for="providerInput">Manifest URL / Path</label>
-              <input id="providerInput" type="text" />
-            </div>
-            <div class="dialog-actions">
-              <button class="btn btn-primary" id="connectBtn" type="button">Connect source</button>
+            <p class="panel-subtext">Collector supports multiple source providers. GitHub is the first authenticated provider in this MVP.</p>
+            <div class="provider-layout">
+              <div>
+                <p class="config-section-title">Providers</p>
+                <div id="providerCatalog" class="provider-list"></div>
+              </div>
+              <div id="providerConfig" class="provider-config">
+                <p id="providerConfigTitle" class="config-section-title">Provider configuration</p>
+
+                <div id="githubConfig" class="is-hidden">
+                  <div class="field-row"><label for="githubToken">GitHub token (PAT)</label><input id="githubToken" type="password" /></div>
+                  <div class="field-row"><label for="githubOwner">Repository owner</label><input id="githubOwner" type="text" /></div>
+                  <div class="field-row"><label for="githubRepo">Repository name</label><input id="githubRepo" type="text" /></div>
+                  <div class="field-row"><label for="githubBranch">Branch</label><input id="githubBranch" type="text" value="main" /></div>
+                  <div class="field-row"><label for="githubPath">Folder path (optional)</label><input id="githubPath" type="text" placeholder="media/" /></div>
+                </div>
+
+                <div id="publicUrlConfig" class="is-hidden">
+                  <div class="field-row"><label for="publicUrlInput">Manifest URL</label><input id="publicUrlInput" type="text" placeholder="https://example.org/collection.json" /></div>
+                </div>
+
+                <div id="localConfig" class="is-hidden">
+                  <div class="field-row"><label for="localPathInput">Collection path</label><input id="localPathInput" type="text" /></div>
+                </div>
+
+                <div id="placeholderConfig" class="is-hidden">
+                  <div class="empty">This provider is planned and not yet available in this MVP.</div>
+                </div>
+
+                <div class="dialog-actions">
+                  <button class="btn btn-primary" id="connectBtn" type="button">Connect provider</button>
+                </div>
+              </div>
             </div>
             <p id="connectionStatus" class="panel-subtext">Not connected.</p>
             <pre id="capabilities">{}</pre>
@@ -508,8 +645,19 @@ class TimemapCollectorElement extends HTMLElement {
       openManifestBtn: root.getElementById('openManifestBtn'),
       providerDialog: root.getElementById('providerDialog'),
       manifestDialog: root.getElementById('manifestDialog'),
-      providerType: root.getElementById('providerType'),
-      providerInput: root.getElementById('providerInput'),
+      providerCatalog: root.getElementById('providerCatalog'),
+      providerConfigTitle: root.getElementById('providerConfigTitle'),
+      githubConfig: root.getElementById('githubConfig'),
+      githubToken: root.getElementById('githubToken'),
+      githubOwner: root.getElementById('githubOwner'),
+      githubRepo: root.getElementById('githubRepo'),
+      githubBranch: root.getElementById('githubBranch'),
+      githubPath: root.getElementById('githubPath'),
+      publicUrlConfig: root.getElementById('publicUrlConfig'),
+      publicUrlInput: root.getElementById('publicUrlInput'),
+      localConfig: root.getElementById('localConfig'),
+      localPathInput: root.getElementById('localPathInput'),
+      placeholderConfig: root.getElementById('placeholderConfig'),
       connectBtn: root.getElementById('connectBtn'),
       connectionStatus: root.getElementById('connectionStatus'),
       capabilities: root.getElementById('capabilities'),
@@ -539,7 +687,7 @@ class TimemapCollectorElement extends HTMLElement {
       manifestPreview: root.getElementById('manifestPreview'),
     };
 
-    this.dom.providerInput.value = COLLECTOR_CONFIG.defaultLocalManifestPath;
+    this.dom.localPathInput.value = COLLECTOR_CONFIG.defaultLocalManifestPath;
     this.dom.collectionId.value = COLLECTOR_CONFIG.defaultCollectionMeta.id;
     this.dom.collectionTitle.value = COLLECTOR_CONFIG.defaultCollectionMeta.title;
     this.dom.collectionDescription.value = COLLECTOR_CONFIG.defaultCollectionMeta.description;
@@ -563,7 +711,6 @@ class TimemapCollectorElement extends HTMLElement {
       });
     });
 
-    this.dom.providerType.addEventListener('change', () => this.applyProviderInputPreset());
     this.dom.connectBtn.addEventListener('click', async () => {
       await this.connectCurrentProvider();
     });
@@ -616,23 +763,73 @@ class TimemapCollectorElement extends HTMLElement {
     dialog.removeAttribute('open');
   }
 
-  applyProviderInputPreset() {
-    const providerId = this.dom.providerType.value;
+  renderProviderCatalog() {
+    this.dom.providerCatalog.innerHTML = '';
 
-    if (providerId === 'local') {
-      this.dom.providerInput.value = COLLECTOR_CONFIG.defaultLocalManifestPath;
-      this.dom.providerInput.placeholder = '/examples/test-collection/collection.json';
+    for (const entry of this.providerCatalog) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'provider-card';
+      button.dataset.providerId = entry.id;
+      button.disabled = entry.enabled === false;
+
+      if (entry.enabled === false) {
+        button.classList.add('is-disabled');
+      }
+
+      if (this.state.selectedProviderId === entry.id) {
+        button.classList.add('is-selected');
+      }
+
+      button.innerHTML = `
+        <div class="provider-card-label-row">
+          <strong>${entry.label}</strong>
+          <span class="pill ${entry.enabled === false ? 'is-muted' : ''}">${entry.statusLabel || 'Available'}</span>
+        </div>
+        <span class="panel-subtext">${entry.description || ''}</span>
+      `;
+
+      button.addEventListener('click', () => {
+        if (entry.enabled === false) {
+          return;
+        }
+        this.setSelectedProvider(entry.id);
+      });
+
+      this.dom.providerCatalog.appendChild(button);
+    }
+  }
+
+  setSelectedProvider(providerId) {
+    const selected = this.providerCatalog.find((entry) => entry.id === providerId);
+    if (!selected) {
+      return;
     }
 
-    if (providerId === 'public-url') {
-      this.dom.providerInput.value = '';
-      this.dom.providerInput.placeholder = 'https://example.org/collection.json';
-    }
+    this.state.selectedProviderId = providerId;
+
+    this.shadow.querySelectorAll('.provider-card').forEach((card) => {
+      card.classList.toggle('is-selected', card.dataset.providerId === providerId);
+    });
+
+    this.dom.providerConfigTitle.textContent = `${selected.label} configuration`;
+    this.dom.githubConfig.classList.add('is-hidden');
+    this.dom.publicUrlConfig.classList.add('is-hidden');
+    this.dom.localConfig.classList.add('is-hidden');
+    this.dom.placeholderConfig.classList.add('is-hidden');
 
     if (providerId === 'github') {
-      this.dom.providerInput.value = '';
-      this.dom.providerInput.placeholder = 'owner/repo/path/collection.json';
+      this.dom.githubConfig.classList.remove('is-hidden');
+    } else if (providerId === 'public-url') {
+      this.dom.publicUrlConfig.classList.remove('is-hidden');
+    } else if (providerId === 'local') {
+      this.dom.localConfig.classList.remove('is-hidden');
+    } else {
+      this.dom.placeholderConfig.classList.remove('is-hidden');
     }
+
+    this.dom.connectBtn.disabled = selected.enabled === false;
+    this.renderCapabilities(this.providers[providerId] || { getCapabilities: () => selected.capabilities || {} });
   }
 
   setStatus(text, tone = 'neutral') {
@@ -886,8 +1083,14 @@ class TimemapCollectorElement extends HTMLElement {
   }
 
   async connectCurrentProvider() {
-    const providerId = this.dom.providerType.value;
+    const providerId = this.state.selectedProviderId;
     const provider = this.providers[providerId];
+
+    if (!provider) {
+      this.setConnectionStatus('Selected provider is not yet available.', false);
+      this.setStatus('Selected provider is not yet available.', 'warn');
+      return;
+    }
 
     this.state.provider = provider;
     this.state.connected = false;
@@ -898,11 +1101,19 @@ class TimemapCollectorElement extends HTMLElement {
 
     const config = {};
     if (providerId === 'local') {
-      config.path = this.dom.providerInput.value.trim() || COLLECTOR_CONFIG.defaultLocalManifestPath;
+      config.path = this.dom.localPathInput.value.trim() || COLLECTOR_CONFIG.defaultLocalManifestPath;
     }
 
     if (providerId === 'public-url') {
-      config.manifestUrl = this.dom.providerInput.value.trim();
+      config.manifestUrl = this.dom.publicUrlInput.value.trim();
+    }
+
+    if (providerId === 'github') {
+      config.token = this.dom.githubToken.value;
+      config.owner = this.dom.githubOwner.value;
+      config.repo = this.dom.githubRepo.value;
+      config.branch = this.dom.githubBranch.value;
+      config.path = this.dom.githubPath.value;
     }
 
     try {
@@ -927,6 +1138,11 @@ class TimemapCollectorElement extends HTMLElement {
       if (providerId === 'local') {
         this.dom.collectionTitle.value = 'TimeMap Collector MVP Test Collection';
         this.dom.collectionDescription.value = 'Exported from local example dataset through TimeMap Collector.';
+      }
+
+      if (providerId === 'github') {
+        this.dom.collectionTitle.value = `GitHub Collection: ${this.dom.githubOwner.value}/${this.dom.githubRepo.value}`;
+        this.dom.collectionDescription.value = 'Exported from GitHub provider using token-based repository access.';
       }
 
       this.renderAssets();

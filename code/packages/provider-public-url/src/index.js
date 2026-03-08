@@ -1,7 +1,9 @@
 import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 import {
+  PROVIDER_AVAILABILITY,
   READ_ONLY_CAPABILITIES,
   cloneItem,
+  createProviderDescriptor,
   providerNotConnectedError,
 } from '../../provider-core/src/provider.js';
 
@@ -10,9 +12,22 @@ export function createPublicUrlProvider() {
   let manifestUrl = '';
   let collection = null;
 
-  return {
+  const descriptor = createProviderDescriptor({
     id: 'public-url',
     label: 'Public URL',
+    category: 'builtin',
+    availability: PROVIDER_AVAILABILITY.available,
+    description: 'Load a public collection manifest from any URL (read-only).',
+    statusLabel: 'Available',
+    capabilities: READ_ONLY_CAPABILITIES,
+  });
+
+  return {
+    ...descriptor,
+
+    getDescriptor() {
+      return descriptor;
+    },
 
     async connect(config = {}) {
       manifestUrl = config.manifestUrl || '';

@@ -4,75 +4,71 @@
 
 ### Vertical slice delivered
 
-A first end-to-end MVP workflow is implemented:
+A provider-centered MVP workflow is implemented:
 
-1. connect to a source (fully working with local example dataset)
-2. browse assets as cards
-3. open and edit lightweight metadata
-4. generate and preview `collection.json`
-5. copy/download manifest for TimeMap ingestion handoff
+1. open provider dialog and choose a source/provider
+2. connect to a working provider (local, public URL, or GitHub)
+3. browse assets as cards
+4. edit lightweight metadata in-app
+5. generate and preview `collection.json`
+6. copy/download manifest for TimeMap ingestion handoff
 
 ### Implemented modules
 
 - `code/apps/collector-ui/`
-  - single-page UI with sections for connection, browser, editor, and manifest export
+  - single-page UI with provider picker dialog, browser, editor, and manifest export
 - `code/packages/collector-schema/`
   - minimal collection/item shape helpers and validation
   - TypeScript interfaces for shared model contract
 - `code/packages/provider-core/`
-  - provider capability model and helper utilities
+  - provider descriptor + capability model and helper utilities
 - `code/packages/provider-local/`
-  - fully working provider loading `examples/test-collection/collection.json`
+  - working provider loading `examples/test-collection/collection.json`
   - supports list/get/save/export in-session
 - `code/packages/provider-public-url/`
-  - minimal read-only provider loading a remote manifest URL
+  - read-only provider loading a remote manifest URL
 - `code/packages/provider-github/`
-  - explicit stub with clear TODO behavior and non-working methods
+  - first working authenticated provider (PAT token config)
+  - reads media assets from configured owner/repo/branch/path
+  - integrates with asset grid and manifest export
 - `examples/test-collection/`
   - MVP dataset and documentation
 
 ## What works now
 
+- Provider selection UI with enabled vs planned/disabled provider cards
 - Local provider connection and asset listing
+- Public URL provider connection (read-only)
+- GitHub provider connection using Personal Access Token + repo configuration
+- Recursive GitHub media discovery (image/video files)
 - Card browser with metadata completeness indicator and license status
 - Include/exclude toggle per asset
-- Item metadata editing for:
-  - title
-  - description
-  - creator
-  - date/period
-  - location
-  - license
-  - attribution
-  - source
-  - tags
-- Manifest generation using current collection metadata + included items
-- Manifest validation against minimal required shape
-- Manifest copy to clipboard and download as `collection.json`
+- Metadata editing for selected assets
+- Manifest generation + validation + preview + copy + download
 
 ## What is stubbed / partial
 
-- Public URL provider is read-only in MVP pass:
-  - can connect and load a manifest
-  - does not persist metadata changes remotely
-- GitHub provider is a skeleton only:
-  - no auth flow
-  - no repo browsing
-  - no read/write implementation
+- GitHub provider is read-only in this pass:
+  - no metadata write-back to GitHub
+  - no repository write of `collection.json`
+  - no browser OAuth/GitHub App flow yet
+- Planned provider placeholders (disabled):
+  - Google Drive
+  - S3-compatible storage
+  - Wikimedia Commons
+  - Internet Archive
 
 ## TimeMap handoff
 
-- The generated `collection.json` is the handoff artifact.
-- It contains required fields for collection and items in a simple JSON-first format.
-- TimeMap ingestion can later consume this manifest via file upload or URL-based fetch.
+- Generated `collection.json` remains the handoff artifact.
+- It contains collection + item fields in JSON-first format.
+- TimeMap ingestion can consume this manifest via file upload or URL-based fetch.
 
 ## Recommended next implementation step
 
-Implement the first real writable remote provider (GitHub or S3-compatible) with:
+Implement authenticated write-back for GitHub:
 
-1. connection configuration and capability checks
-2. asset discovery from provider storage
-3. metadata save path back to provider
-4. manifest publish path to a stable URL
-
-GitHub is likely fastest for a visible demo; S3-compatible is strongest for provider-agnostic long-term direction.
+1. persist edited item metadata as sidecar JSON in repo
+2. persist generated `collection.json` in configured path/branch
+3. add explicit commit-message config and conflict/error handling
+4. then add browser OAuth (or GitHub App) to replace manual PAT entry

@@ -1,3 +1,9 @@
+export const PROVIDER_AVAILABILITY = {
+  available: 'available',
+  planned: 'planned',
+  experimental: 'experimental',
+};
+
 export const READ_ONLY_CAPABILITIES = {
   canListAssets: true,
   canGetAsset: true,
@@ -11,6 +17,20 @@ export const READ_WRITE_CAPABILITIES = {
   canSaveMetadata: true,
   canExportCollection: true,
 };
+
+export function createProviderDescriptor(definition) {
+  return {
+    id: definition.id,
+    label: definition.label,
+    category: definition.category || 'external',
+    availability: definition.availability || PROVIDER_AVAILABILITY.available,
+    statusLabel: definition.statusLabel || 'Available',
+    description: definition.description || '',
+    capabilities: definition.capabilities || READ_ONLY_CAPABILITIES,
+    enabled: definition.enabled !== false,
+    isPlaceholder: definition.isPlaceholder === true,
+  };
+}
 
 export function cloneItem(item) {
   return JSON.parse(JSON.stringify(item));

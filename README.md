@@ -1,10 +1,10 @@
 # timemap-collector
 
-TimeMap Collector is now shipped as a reusable Web Component:
+TimeMap Collector is shipped as a reusable Web Component:
 
 `timemap-collector`
 
-It uses Shadow DOM and provides a clean SaaS-style shell for source connection, asset browsing, metadata editing, and manifest export.
+It uses Shadow DOM and provides a SaaS-style shell for provider connection, asset browsing, metadata editing, and manifest export.
 
 ## Quick links
 
@@ -23,15 +23,33 @@ It uses Shadow DOM and provides a clean SaaS-style shell for source connection, 
 
 ## MVP currently does
 
-- Connect to source/provider modes:
-  - Example dataset (working)
+- Provider selection dialog with a multi-provider roadmap UI
+- Working providers:
+  - GitHub (authenticated via Personal Access Token, read + import + manifest export)
   - Public URL manifest (working, read-only)
-  - GitHub (stub)
+  - Example dataset (working, local)
+- Planned placeholders (disabled in UI):
+  - Google Drive
+  - S3-compatible storage
+  - Wikimedia Commons
+  - Internet Archive
 - Browse assets as cards with thumbnail, metadata completeness, license, and include/exclude state
-- Edit metadata for the selected item in a right-side editor column
-- Open provider/source controls via header dialog
-- Open manifest export controls via header dialog
+- Edit metadata for selected assets in the sidebar
 - Generate, preview, copy, and download `collection.json`
+
+## GitHub provider (this MVP pass)
+
+Implemented:
+- Token-based authentication (`repo` scope PAT recommended)
+- Repository configuration: owner, repo, branch, folder/path
+- Recursive media discovery from the configured path (image/video files)
+- Load GitHub assets into the existing Collector card grid
+- Continue using metadata editing and manifest export on loaded assets
+
+Not yet implemented:
+- Browser OAuth/GitHub App flow
+- Metadata write-back to GitHub
+- Writing `collection.json` back into the repository
 
 ## Run locally
 
@@ -59,9 +77,3 @@ src/                    -> lightweight root web entry layer
 index.html              -> landing page
 projects/               -> planning and architecture docs
 ```
-
-## Provider status
-
-- `local/example`: working
-- `public-url`: working (read-only)
-- `github`: scaffold/stub only

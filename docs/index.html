@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TimeMap Collector Docs</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; max-width: 960px; line-height: 1.5; }
+      h1, h2 { margin-bottom: 0.35rem; }
+      code { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; }
+      .ok { color: #136c2e; }
+      .stub { color: #8a4b00; }
+    </style>
+  </head>
+  <body>
+    <h1>TimeMap Collector Documentation</h1>
+    <p>
+      TimeMap Collector is a lightweight publication and metadata management component for cultural heritage media.
+      It prepares collection manifests for downstream ingestion by TimeMap Manager.
+    </p>
+
+    <h2>MVP Status</h2>
+    <p>
+      The MVP vertical slice is implemented for source connection, card browsing, metadata editing, and manifest export.
+    </p>
+
+    <h2>Repository Structure</h2>
+    <ul>
+      <li><code>code/apps/</code>: app implementations (Collector UI currently at <code>code/apps/collector-ui/</code>)</li>
+      <li><code>code/packages/</code>: schema and provider packages</li>
+      <li><code>examples/</code>: example collections and test data</li>
+      <li><code>demo/</code>: consumer/demo entry page</li>
+      <li><code>docs/</code>: repository documentation pages</li>
+      <li><code>src/</code>: lightweight root entry layer</li>
+      <li><code>projects/</code>: planning and architecture documents</li>
+      <li><code>index.html</code>: root landing page</li>
+    </ul>
+
+    <h2>Run the Demo</h2>
+    <ol>
+      <li>Serve the repository root as static files (for example: <code>python -m http.server 8080</code>).</li>
+      <li>Open <a href="../demo/">../demo/</a> or <a href="../code/apps/collector-ui/">../code/apps/collector-ui/</a>.</li>
+      <li>Use provider mode <code>Example dataset</code> with <code>/examples/test-collection/collection.json</code>.</li>
+    </ol>
+
+    <h2>Dataset and Code Locations</h2>
+    <ul>
+      <li>Example dataset: <a href="../examples/test-collection/">../examples/test-collection/</a></li>
+      <li>Collector UI: <a href="../code/apps/collector-ui/">../code/apps/collector-ui/</a></li>
+      <li>Providers: <code>../code/packages/provider-*/</code></li>
+      <li>Schema: <code>../code/packages/collector-schema/</code></li>
+    </ul>
+
+    <h2>Provider Support</h2>
+    <ul>
+      <li><span class="ok">Working:</span> Example dataset/local provider (read/write in-session)</li>
+      <li><span class="ok">Working:</span> Public URL provider (read-only manifest loading)</li>
+      <li><span class="stub">Stubbed:</span> GitHub provider (skeleton only, no auth or repo read/write yet)</li>
+    </ul>
+
+    <h2>Working vs Stubbed</h2>
+    <ul>
+      <li>Working: connection, asset cards, metadata editing, include/exclude, manifest generation/preview/copy/download.</li>
+      <li>Stubbed: full remote writable provider flow (GitHub auth and persistence).</li>
+    </ul>
+  </body>
+</html>

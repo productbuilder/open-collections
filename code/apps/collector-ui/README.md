@@ -18,8 +18,13 @@ TimeMap Collector UI is exposed as a Web Component:
 - Sources manager dialog with connected sources, refresh/remove actions, and add-source forms
 - Source roadmap placeholders for planned integrations
 - Manifest export controls in a dialog
-- Responsive merged card grid viewport across multiple sources
-- Metadata edit sidebar for selected item
+- Responsive bounded workspace layout (header + split panes)
+- Scrollable merged card viewport across multiple sources
+- Scrollable metadata sidebar for selected item
+- Asset viewer dialog for large preview and details
+- Source badges on cards (source label + provider where useful)
+- Source filter in the main workspace (`All sources` or one source)
+- Grouped metadata sections (Basic, Authorship, Context, Rights, Classification)
 
 ## Source model in MVP
 
@@ -40,3 +45,4 @@ Planned placeholders:
 - Intended for local static hosting from repository root.
 - Workspace state is in-memory and can combine assets from multiple sources at once.
 - Source and publish concerns are now separate in state (`sources[]` with placeholder `publishDestination` scaffolding).
+- Card interaction model: click selects, `View` button (or double-click) opens the asset viewer.

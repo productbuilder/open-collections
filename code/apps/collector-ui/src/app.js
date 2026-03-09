@@ -15,6 +15,8 @@ function toWorkspaceItemId(sourceId, itemId) {
   return `${sourceId}::${itemId}`;
 }
 
+const SOURCES_STORAGE_KEY = 'timemap_collector_sources_v1';
+
 class TimemapCollectorElement extends HTMLElement {
   constructor() {
     super();
@@ -23,6 +25,7 @@ class TimemapCollectorElement extends HTMLElement {
       sources: [],
       assets: [],
       selectedItemId: null,
+      viewerItemId: null,
       selectedProviderId: 'github',
       activeSourceFilter: 'all',
       publishDestination: null,
@@ -95,6 +98,7 @@ class TimemapCollectorElement extends HTMLElement {
     this.renderSourceFilter();
     this.renderAssets();
     this.renderEditor();
+    this.restoreRememberedSources();
   }
 
   renderShell() {
@@ -111,13 +115,14 @@ class TimemapCollectorElement extends HTMLElement {
         }
 
         .app-shell {
-          min-height: 84vh;
+          height: min(100dvh, 100vh);
+          min-height: 640px;
           background: #f3f5f8;
           border: 1px solid #e5e7eb;
           border-radius: 10px;
           overflow: hidden;
-          display: grid;
-          grid-template-rows: auto 1fr;
+          display: flex;
+          flex-direction: column;
         }
 
         .topbar {
@@ -181,11 +186,14 @@ class TimemapCollectorElement extends HTMLElement {
         }
 
         .content-grid {
+          flex: 1;
+          min-height: 0;
           padding: 0.95rem;
           display: grid;
           gap: 0.95rem;
           grid-template-columns: minmax(0, 1fr) 350px;
           align-items: stretch;
+          overflow: hidden;
         }
 
         .panel {
@@ -198,7 +206,8 @@ class TimemapCollectorElement extends HTMLElement {
         .viewport-panel {
           display: grid;
           grid-template-rows: auto 1fr;
-          min-height: 600px;
+          min-height: 0;
+          overflow: hidden;
         }
 
         .panel-header {
@@ -232,6 +241,7 @@ class TimemapCollectorElement extends HTMLElement {
         .asset-wrap {
           padding: 0.9rem;
           overflow: auto;
+          min-height: 0;
         }
 
         .asset-grid {
@@ -322,6 +332,12 @@ class TimemapCollectorElement extends HTMLElement {
           color: #9a3412;
         }
 
+        .badge.source-badge {
+          border-color: #bfdbfe;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+
         .card-actions {
           display: flex;
           gap: 0.45rem;
@@ -343,8 +359,9 @@ class TimemapCollectorElement extends HTMLElement {
 
         .editor-panel {
           display: grid;
-          grid-template-rows: auto auto 1fr;
-          min-height: 600px;
+          grid-template-rows: auto minmax(0, 1fr);
+          min-height: 0;
+          overflow: hidden;
         }
 
         .editor-wrap {
@@ -352,6 +369,8 @@ class TimemapCollectorElement extends HTMLElement {
           display: grid;
           gap: 0.6rem;
           align-content: start;
+          overflow: auto;
+          min-height: 0;
         }
 
         .field-row {
@@ -493,6 +512,14 @@ class TimemapCollectorElement extends HTMLElement {
           padding: 0.25rem 0.45rem;
         }
 
+        .source-card-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
         .provider-list {
           display: grid;
           gap: 0.5rem;
@@ -571,6 +598,78 @@ class TimemapCollectorElement extends HTMLElement {
           max-width: 240px;
         }
 
+        .source-filter-label {
+          color: #334155;
+          font-weight: 600;
+        }
+
+        .editor-section {
+          border-top: 1px solid #e2e8f0;
+          padding-top: 0.6rem;
+          display: grid;
+          gap: 0.45rem;
+        }
+
+        .editor-section-title {
+          margin: 0;
+          font-size: 0.78rem;
+          letter-spacing: 0.03em;
+          text-transform: uppercase;
+          color: #64748b;
+          font-weight: 700;
+        }
+
+        .viewer-dialog {
+          width: min(980px, 96vw);
+        }
+
+        .viewer-layout {
+          display: grid;
+          gap: 0.8rem;
+        }
+
+        .viewer-media-wrap {
+          border: 1px solid #dbe3ec;
+          border-radius: 8px;
+          background: #f8fafc;
+          min-height: 280px;
+          max-height: 60vh;
+          overflow: auto;
+          display: grid;
+          place-items: center;
+          padding: 0.7rem;
+        }
+
+        .viewer-image {
+          max-width: 100%;
+          max-height: 56vh;
+          width: auto;
+          height: auto;
+          border-radius: 7px;
+          border: 1px solid #cbd5e1;
+          background: #ffffff;
+        }
+
+        .viewer-video {
+          max-width: 100%;
+          max-height: 56vh;
+          border-radius: 7px;
+          border: 1px solid #cbd5e1;
+          background: #0f172a;
+        }
+
+        .viewer-details {
+          display: grid;
+          gap: 0.55rem;
+        }
+
+        .viewer-text {
+          margin: 0;
+          color: #334155;
+          font-size: 0.9rem;
+          white-space: pre-wrap;
+        }
+
         pre {
           margin: 0;
           padding: 0.75rem;
@@ -587,6 +686,7 @@ class TimemapCollectorElement extends HTMLElement {
         @media (max-width: 1080px) {
           .content-grid {
             grid-template-columns: minmax(0, 1fr);
+            overflow: auto;
           }
 
           .editor-panel {
@@ -615,6 +715,7 @@ class TimemapCollectorElement extends HTMLElement {
                 <select id="sourceFilter" class="source-filter" aria-label="Filter assets by source">
                   <option value="all">All sources</option>
                 </select>
+                <span id="sourceFilterLabel" class="panel-subtext source-filter-label">All sources</span>
                 <p id="assetCount" class="panel-subtext">No assets loaded.</p>
               </div>
             </div>
@@ -632,16 +733,31 @@ class TimemapCollectorElement extends HTMLElement {
               <div class="empty">Select an item from the grid to edit metadata.</div>
             </div>
             <form id="editorForm" class="editor-wrap" hidden>
-              <div class="field-row"><label for="itemTitle">Title</label><input id="itemTitle" type="text" /></div>
-              <div class="field-row"><label for="itemDescription">Description</label><textarea id="itemDescription"></textarea></div>
-              <div class="field-row"><label for="itemType">Type / Format</label><input id="itemType" type="text" /></div>
-              <div class="field-row"><label for="itemCreator">Creator</label><input id="itemCreator" type="text" /></div>
-              <div class="field-row"><label for="itemDate">Date / Period</label><input id="itemDate" type="text" /></div>
-              <div class="field-row"><label for="itemLocation">Location</label><input id="itemLocation" type="text" /></div>
-              <div class="field-row"><label for="itemLicense">License</label><input id="itemLicense" type="text" /></div>
-              <div class="field-row"><label for="itemAttribution">Attribution</label><input id="itemAttribution" type="text" /></div>
-              <div class="field-row"><label for="itemSource">Source</label><input id="itemSource" type="text" /></div>
-              <div class="field-row"><label for="itemTags">Tags / Keywords (comma separated)</label><input id="itemTags" type="text" /></div>
+              <div class="editor-section">
+                <p class="editor-section-title">Basic</p>
+                <div class="field-row"><label for="itemTitle">Title</label><input id="itemTitle" type="text" /></div>
+                <div class="field-row"><label for="itemDescription">Description</label><textarea id="itemDescription"></textarea></div>
+                <div class="field-row"><label for="itemType">Type / Format</label><input id="itemType" type="text" /></div>
+              </div>
+              <div class="editor-section">
+                <p class="editor-section-title">Authorship</p>
+                <div class="field-row"><label for="itemCreator">Creator</label><input id="itemCreator" type="text" /></div>
+                <div class="field-row"><label for="itemAttribution">Attribution</label><input id="itemAttribution" type="text" /></div>
+              </div>
+              <div class="editor-section">
+                <p class="editor-section-title">Context</p>
+                <div class="field-row"><label for="itemDate">Date / Period</label><input id="itemDate" type="text" /></div>
+                <div class="field-row"><label for="itemLocation">Location</label><input id="itemLocation" type="text" /></div>
+              </div>
+              <div class="editor-section">
+                <p class="editor-section-title">Rights</p>
+                <div class="field-row"><label for="itemLicense">License</label><input id="itemLicense" type="text" /></div>
+                <div class="field-row"><label for="itemSource">Source</label><input id="itemSource" type="text" /></div>
+              </div>
+              <div class="editor-section">
+                <p class="editor-section-title">Classification</p>
+                <div class="field-row"><label for="itemTags">Tags / Keywords (comma separated)</label><input id="itemTags" type="text" /></div>
+              </div>
               <label class="checkbox-row" for="itemInclude"><span>Include in manifest</span><input id="itemInclude" type="checkbox" /></label>
               <button class="btn btn-primary" id="saveItemBtn" type="button">Save metadata</button>
             </form>
@@ -720,6 +836,25 @@ class TimemapCollectorElement extends HTMLElement {
           </div>
         </div>
       </dialog>
+
+      <dialog id="assetViewerDialog" class="viewer-dialog" aria-label="Asset viewer">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 id="viewerTitle" class="dialog-title">Asset viewer</h2>
+            <button class="btn" id="closeViewerBtn" type="button">Close</button>
+          </div>
+          <div class="dialog-body viewer-layout">
+            <div id="viewerMedia" class="viewer-media-wrap"></div>
+            <div class="viewer-details">
+              <p id="viewerDescription" class="viewer-text"></p>
+              <div id="viewerBadges" class="badge-row"></div>
+              <div class="dialog-actions">
+                <a id="viewerOpenOriginal" class="btn" href="#" target="_blank" rel="noreferrer noopener">Open original</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>
     `;
   }
 
@@ -731,9 +866,17 @@ class TimemapCollectorElement extends HTMLElement {
       openManifestBtn: root.getElementById('openManifestBtn'),
       providerDialog: root.getElementById('providerDialog'),
       manifestDialog: root.getElementById('manifestDialog'),
+      assetViewerDialog: root.getElementById('assetViewerDialog'),
+      closeViewerBtn: root.getElementById('closeViewerBtn'),
+      viewerTitle: root.getElementById('viewerTitle'),
+      viewerMedia: root.getElementById('viewerMedia'),
+      viewerDescription: root.getElementById('viewerDescription'),
+      viewerBadges: root.getElementById('viewerBadges'),
+      viewerOpenOriginal: root.getElementById('viewerOpenOriginal'),
       providerCatalog: root.getElementById('providerCatalog'),
       sourceList: root.getElementById('sourceList'),
       sourceFilter: root.getElementById('sourceFilter'),
+      sourceFilterLabel: root.getElementById('sourceFilterLabel'),
       providerConfigTitle: root.getElementById('providerConfigTitle'),
       githubConfig: root.getElementById('githubConfig'),
       githubToken: root.getElementById('githubToken'),
@@ -791,8 +934,16 @@ class TimemapCollectorElement extends HTMLElement {
 
     this.dom.openProviderBtn.addEventListener('click', () => this.openDialog(this.dom.providerDialog));
     this.dom.openManifestBtn.addEventListener('click', () => this.openDialog(this.dom.manifestDialog));
+    this.dom.closeViewerBtn.addEventListener('click', () => this.closeViewer());
+    this.dom.assetViewerDialog.addEventListener('close', () => {
+      this.state.viewerItemId = null;
+    });
+    this.dom.assetViewerDialog.addEventListener('cancel', () => {
+      this.state.viewerItemId = null;
+    });
     this.dom.sourceFilter.addEventListener('change', () => {
       this.state.activeSourceFilter = this.dom.sourceFilter.value || 'all';
+      this.renderSourceFilterLabel();
       const visible = this.getVisibleAssets();
       if (this.state.selectedItemId && !visible.some((item) => item.workspaceId === this.state.selectedItemId)) {
         this.state.selectedItemId = visible[0]?.workspaceId || null;
@@ -839,6 +990,10 @@ class TimemapCollectorElement extends HTMLElement {
       return;
     }
 
+    if (dialog.open) {
+      return;
+    }
+
     if (typeof dialog.showModal === 'function') {
       dialog.showModal();
       return;
@@ -849,6 +1004,10 @@ class TimemapCollectorElement extends HTMLElement {
 
   closeDialog(dialog) {
     if (!dialog) {
+      return;
+    }
+
+    if (!dialog.open) {
       return;
     }
 
@@ -990,6 +1149,26 @@ class TimemapCollectorElement extends HTMLElement {
     const stillExists = previous === 'all' || this.state.sources.some((entry) => entry.id === previous);
     this.state.activeSourceFilter = stillExists ? previous : 'all';
     this.dom.sourceFilter.value = this.state.activeSourceFilter;
+    this.renderSourceFilterLabel();
+  }
+
+  renderSourceFilterLabel() {
+    if (this.state.activeSourceFilter === 'all') {
+      this.dom.sourceFilterLabel.textContent = 'All sources';
+      return;
+    }
+
+    const source = this.getSourceById(this.state.activeSourceFilter);
+    this.dom.sourceFilterLabel.textContent = source ? `Filtered: ${source.label}` : 'All sources';
+  }
+
+  formatSourceBadge(item) {
+    const sourceLabel = item.sourceLabel || '';
+    const providerName = this.providerCatalog.find((entry) => entry.id === item.providerId)?.label || item.providerId || '';
+    if (sourceLabel && providerName && !sourceLabel.toLowerCase().includes(providerName.toLowerCase())) {
+      return `${sourceLabel} · ${providerName}`;
+    }
+    return sourceLabel || providerName || 'Source';
   }
 
   renderSourcesList() {
@@ -1017,7 +1196,7 @@ class TimemapCollectorElement extends HTMLElement {
       label.textContent = source.label;
       const detail = document.createElement('p');
       detail.className = 'panel-subtext';
-      detail.textContent = `${source.providerLabel} | ${source.itemCount || 0} assets`;
+      detail.textContent = `${source.providerLabel} | ${source.itemCount || 0} items`;
       labelBlock.append(label, detail);
 
       const badges = document.createElement('div');
@@ -1035,6 +1214,16 @@ class TimemapCollectorElement extends HTMLElement {
       const status = document.createElement('p');
       status.className = 'panel-subtext';
       status.textContent = source.status || 'Connected';
+
+      const meta = document.createElement('div');
+      meta.className = 'source-card-meta';
+      const statusPill = document.createElement('span');
+      statusPill.className = 'pill';
+      statusPill.textContent = source.status ? 'Connected' : 'Unknown';
+      const countPill = document.createElement('span');
+      countPill.className = 'pill';
+      countPill.textContent = `${source.itemCount || 0} items`;
+      meta.append(statusPill, countPill);
 
       const actions = document.createElement('div');
       actions.className = 'source-card-actions';
@@ -1063,8 +1252,21 @@ class TimemapCollectorElement extends HTMLElement {
         this.removeSource(source.id);
       });
 
-      actions.append(refreshBtn, inspectBtn, removeBtn);
-      card.append(top, status, actions);
+      const showBtn = document.createElement('button');
+      showBtn.type = 'button';
+      showBtn.className = 'btn';
+      showBtn.textContent = 'Show only';
+      showBtn.addEventListener('click', () => {
+        this.state.activeSourceFilter = source.id;
+        this.renderSourceFilter();
+        const visible = this.getVisibleAssets();
+        this.state.selectedItemId = visible[0]?.workspaceId || null;
+        this.renderAssets();
+        this.renderEditor();
+      });
+
+      actions.append(refreshBtn, inspectBtn, showBtn, removeBtn);
+      card.append(top, status, meta, actions);
       list.appendChild(card);
     }
   }
@@ -1169,6 +1371,87 @@ class TimemapCollectorElement extends HTMLElement {
     return image;
   }
 
+  openViewer(itemId) {
+    const item = this.state.assets.find((entry) => entry.workspaceId === itemId);
+    if (!item) {
+      return;
+    }
+
+    this.state.viewerItemId = itemId;
+    if (this.state.selectedItemId !== itemId) {
+      this.state.selectedItemId = itemId;
+      this.renderAssets();
+      this.renderEditor();
+    }
+
+    this.renderViewer();
+    this.openDialog(this.dom.assetViewerDialog);
+  }
+
+  closeViewer() {
+    this.state.viewerItemId = null;
+    this.closeDialog(this.dom.assetViewerDialog);
+  }
+
+  renderViewer() {
+    const item = this.state.assets.find((entry) => entry.workspaceId === this.state.viewerItemId);
+    if (!item) {
+      this.closeViewer();
+      return;
+    }
+
+    this.dom.viewerTitle.textContent = item.title || item.id || 'Asset viewer';
+    this.dom.viewerDescription.textContent = item.description || 'No description available.';
+    this.dom.viewerBadges.innerHTML = '';
+    this.dom.viewerMedia.innerHTML = '';
+
+    const sourceBadge = document.createElement('span');
+    sourceBadge.className = 'badge source-badge';
+    sourceBadge.textContent = this.formatSourceBadge(item);
+
+    const typeBadge = document.createElement('span');
+    typeBadge.className = 'badge';
+    typeBadge.textContent = `Type: ${item.media?.type || 'unknown'}`;
+
+    const licenseBadge = document.createElement('span');
+    const hasLicense = Boolean(item.license);
+    licenseBadge.className = `badge ${hasLicense ? 'ok' : 'warn'}`;
+    licenseBadge.textContent = hasLicense ? `License: ${item.license}` : 'License missing';
+    this.dom.viewerBadges.append(sourceBadge, typeBadge, licenseBadge);
+
+    const mediaType = (item.media?.type || '').toLowerCase();
+    const mediaUrl = item.media?.url || item.media?.thumbnailUrl || '';
+    if (mediaUrl && mediaType.includes('image')) {
+      const image = document.createElement('img');
+      image.className = 'viewer-image';
+      image.src = mediaUrl;
+      image.alt = item.title || item.id || 'Asset image';
+      this.dom.viewerMedia.appendChild(image);
+    } else if (mediaUrl && mediaType.includes('video')) {
+      const video = document.createElement('video');
+      video.className = 'viewer-video';
+      video.src = mediaUrl;
+      video.controls = true;
+      video.preload = 'metadata';
+      this.dom.viewerMedia.appendChild(video);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'empty';
+      placeholder.textContent = mediaUrl
+        ? 'Large preview is not available for this media type yet.'
+        : 'No media URL available for this asset.';
+      this.dom.viewerMedia.appendChild(placeholder);
+    }
+
+    if (mediaUrl) {
+      this.dom.viewerOpenOriginal.href = mediaUrl;
+      this.dom.viewerOpenOriginal.classList.remove('is-hidden');
+    } else {
+      this.dom.viewerOpenOriginal.removeAttribute('href');
+      this.dom.viewerOpenOriginal.classList.add('is-hidden');
+    }
+  }
+
   renderAssets() {
     const grid = this.dom.assetGrid;
     grid.innerHTML = '';
@@ -1184,6 +1467,7 @@ class TimemapCollectorElement extends HTMLElement {
     }
 
     this.dom.assetCount.textContent = `${visibleAssets.length} visible | ${this.state.assets.length} total`;
+    this.renderSourceFilterLabel();
 
     if (visibleAssets.length === 0) {
       const empty = document.createElement('div');
@@ -1209,6 +1493,9 @@ class TimemapCollectorElement extends HTMLElement {
 
       card.addEventListener('click', () => {
         this.selectItem(item.workspaceId);
+      });
+      card.addEventListener('dblclick', () => {
+        this.openViewer(item.workspaceId);
       });
       card.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -1241,8 +1528,8 @@ class TimemapCollectorElement extends HTMLElement {
       include.textContent = included ? 'Included' : 'Excluded';
 
       const sourceBadge = document.createElement('span');
-      sourceBadge.className = 'badge';
-      sourceBadge.textContent = item.sourceLabel || item.providerId || 'Source';
+      sourceBadge.className = 'badge source-badge';
+      sourceBadge.textContent = this.formatSourceBadge(item);
 
       badges.append(completeness, license, include, sourceBadge);
 
@@ -1252,12 +1539,12 @@ class TimemapCollectorElement extends HTMLElement {
       const openBtn = document.createElement('button');
       openBtn.type = 'button';
       openBtn.className = 'btn';
-      openBtn.textContent = 'Open';
+      openBtn.textContent = 'View';
       openBtn.addEventListener('click', (event) => {
         event.stopPropagation();
       });
       openBtn.addEventListener('click', () => {
-        this.selectItem(item.workspaceId);
+        this.openViewer(item.workspaceId);
       });
 
       const toggleBtn = document.createElement('button');
@@ -1520,6 +1807,11 @@ class TimemapCollectorElement extends HTMLElement {
       if (this.state.selectedItemId && !this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId)) {
         this.state.selectedItemId = this.getVisibleAssets()[0]?.workspaceId || this.state.assets[0]?.workspaceId || null;
       }
+      if (this.state.viewerItemId && !this.state.assets.some((item) => item.workspaceId === this.state.viewerItemId)) {
+        this.closeViewer();
+      } else if (this.state.viewerItemId) {
+        this.renderViewer();
+      }
 
       this.setConnectionStatus(`Refreshed source ${updatedSource.label}.`, true);
       this.setStatus(`Refreshed source ${updatedSource.label}.`, 'ok');
@@ -1544,6 +1836,9 @@ class TimemapCollectorElement extends HTMLElement {
 
     if (this.state.selectedItemId && !this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId)) {
       this.state.selectedItemId = this.getVisibleAssets()[0]?.workspaceId || this.state.assets[0]?.workspaceId || null;
+    }
+    if (this.state.viewerItemId && !this.state.assets.some((item) => item.workspaceId === this.state.viewerItemId)) {
+      this.closeViewer();
     }
 
     if (this.state.sources.length === 0) {

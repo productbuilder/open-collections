@@ -35,7 +35,10 @@ It uses Shadow DOM and provides a SaaS-style shell for source management, merged
   - Internet Archive
 - Browse assets as cards with thumbnail, metadata completeness, license, and include/exclude state
 - Merge assets from multiple connected read sources into one workspace grid
-- Edit metadata for selected assets in the sidebar
+- Show source badges on cards and filter the grid by source
+- Edit metadata for selected assets in a scrollable sidebar
+- Group metadata fields into readable editor sections
+- Open assets in a viewer dialog for larger preview and details
 - Generate, preview, copy, and download `collection.json`
 
 ## Source and destination direction

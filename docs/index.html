@@ -43,19 +43,20 @@
 					<li>Header: title + actions for Sources and Manifest dialogs</li>
 					<li>Main viewport: responsive media card grid</li>
 					<li>Right sidebar: metadata editing for selected item</li>
-					<li>Provider and Manifest UIs moved into dialogs</li>
+					<li>Sources manager and Manifest UIs in dialogs</li>
 				</ul>
 			</section>
 
 			<section>
-				<h2>3. Provider architecture in MVP</h2>
+				<h2>3. Source architecture in MVP</h2>
 				<ul>
-					<li>Provider picker dialog for storage/source connections</li>
-					<li>GitHub provider (token-based authenticated read/import)</li>
-					<li>Public URL provider flow (read-only)</li>
-					<li>Example/local provider flow</li>
+					<li>Sources manager with connected-source list and add-source forms</li>
+					<li>Multiple read sources can be loaded into one workspace</li>
+					<li>GitHub source (manifest-first import, fallback file browse)</li>
+					<li>Public URL source flow (read-only)</li>
+					<li>Example/local source flow</li>
 					<li>Disabled placeholders for Google Drive, S3, Wikimedia Commons, Internet Archive</li>
-					<li>Asset browsing and selection</li>
+					<li>Merged asset browsing and source-aware selection</li>
 					<li>Metadata editing and include/exclude state</li>
 					<li>Manifest generate/preview/copy/download</li>
 				</ul>

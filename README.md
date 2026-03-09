@@ -4,7 +4,7 @@ TimeMap Collector is shipped as a reusable Web Component:
 
 `timemap-collector`
 
-It uses Shadow DOM and provides a SaaS-style shell for provider connection, asset browsing, metadata editing, and manifest export.
+It uses Shadow DOM and provides a SaaS-style shell for source management, merged asset browsing, metadata editing, and manifest export.
 
 ## Quick links
 
@@ -23,7 +23,7 @@ It uses Shadow DOM and provides a SaaS-style shell for provider connection, asse
 
 ## MVP currently does
 
-- Provider selection dialog with a multi-provider roadmap UI
+- Sources manager dialog with a multi-source roadmap UI
 - Working providers:
   - GitHub (authenticated via Personal Access Token, read + import + manifest export)
   - Public URL manifest (working, read-only)
@@ -34,14 +34,21 @@ It uses Shadow DOM and provides a SaaS-style shell for provider connection, asse
   - Wikimedia Commons
   - Internet Archive
 - Browse assets as cards with thumbnail, metadata completeness, license, and include/exclude state
+- Merge assets from multiple connected read sources into one workspace grid
 - Edit metadata for selected assets in the sidebar
 - Generate, preview, copy, and download `collection.json`
+
+## Source and destination direction
+
+- Read sources can be added multiple times per workspace/session.
+- Publishing remains explicit and separate; this pass includes lightweight `publishDestination` state scaffolding in the app model.
 
 ## GitHub provider (this MVP pass)
 
 Implemented:
 - Token-based authentication (`repo` scope PAT recommended)
 - Repository configuration: owner, repo, branch, folder/path
+- Manifest-first loading: checks `<configured-path>/collection.json` and imports inline `items` when present
 - Recursive media discovery from the configured path (image/video files)
 - Load GitHub assets into the existing Collector card grid
 - Continue using metadata editing and manifest export on loaded assets

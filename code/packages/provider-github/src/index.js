@@ -5,6 +5,7 @@ import {
   createProviderDescriptor,
   providerNotConnectedError,
 } from '../../provider-core/src/provider.js';
+import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov', '.m4v'];
@@ -43,6 +44,26 @@ function asRawPath(path) {
   return path ? path.replace(/^\/+/, '') : '';
 }
 
+function joinRepoPath(...parts) {
+  return parts
+    .filter(Boolean)
+    .map((part) => String(part).replace(/^\/+/, '').replace(/\/+$/, ''))
+    .filter(Boolean)
+    .join('/');
+}
+
+function normalizeFolderPath(path = '') {
+  const trimmed = String(path).trim();
+  if (!trimmed || trimmed === '/') {
+    return '';
+  }
+  return asApiPath(trimmed);
+}
+
+function isAbsoluteUrl(value = '') {
+  return /^https?:\/\//i.test(value) || /^data:/i.test(value);
+}
+
 export function createGithubProvider() {
   let connected = false;
   let token = '';
@@ -51,6 +72,7 @@ export function createGithubProvider() {
   let branch = 'main';
   let contentPath = '';
   let items = [];
+  let collection = null;
 
   const descriptor = createProviderDescriptor({
     id: 'github',
@@ -62,7 +84,15 @@ export function createGithubProvider() {
     capabilities: READ_ONLY_CAPABILITIES,
   });
 
-  async function fetchRepoContents(pathValue) {
+  function rawUrlForRepoPath(pathValue) {
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${asRawPath(pathValue)}`;
+  }
+
+  function blobUrlForRepoPath(pathValue) {
+    return `https://github.com/${owner}/${repo}/blob/${branch}/${asRawPath(pathValue)}`;
+  }
+
+  async function fetchRepoContents(pathValue, options = {}) {
     const targetPath = asApiPath(pathValue);
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${targetPath}?ref=${branch}`;
     const response = await fetch(url, {
@@ -74,11 +104,158 @@ export function createGithubProvider() {
     });
 
     if (!response.ok) {
+      if (response.status === 404 && options.allowNotFound) {
+        return null;
+      }
+
       const errorBody = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Authentication failed or repository access denied.');
+      }
+
+      if (response.status === 404) {
+        const location = targetPath || '/';
+        throw new Error(`Repository or path not accessible: ${location}`);
+      }
+
       throw new Error(`GitHub API ${response.status}: ${errorBody.slice(0, 220)}`);
     }
 
     return response.json();
+  }
+
+  async function decodeContentEntry(entry) {
+    if (typeof entry.content === 'string' && entry.encoding === 'base64') {
+      const binary = atob(entry.content.replace(/\n/g, ''));
+      const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    if (entry.download_url) {
+      const response = await fetch(entry.download_url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch manifest content (${response.status}).`);
+      }
+
+      return response.text();
+    }
+
+    throw new Error('Unable to read collection.json content from GitHub response.');
+  }
+
+  function resolveRepoReference(reference, manifestFolderPath) {
+    const raw = typeof reference === 'string' ? reference.trim() : '';
+    if (!raw || isAbsoluteUrl(raw)) {
+      return null;
+    }
+
+    if (raw.startsWith('/')) {
+      return asApiPath(raw);
+    }
+
+    return joinRepoPath(manifestFolderPath, raw);
+  }
+
+  function resolveMediaUrl(url, manifestFolderPath) {
+    const raw = typeof url === 'string' ? url.trim() : '';
+    if (!raw) {
+      return '';
+    }
+
+    if (isAbsoluteUrl(raw)) {
+      return raw;
+    }
+
+    const repoPath = resolveRepoReference(raw, manifestFolderPath);
+    return repoPath ? rawUrlForRepoPath(repoPath) : raw;
+  }
+
+  function resolveSourceUrl(url, manifestFolderPath) {
+    const raw = typeof url === 'string' ? url.trim() : '';
+    if (!raw) {
+      return '';
+    }
+
+    if (isAbsoluteUrl(raw)) {
+      return raw;
+    }
+
+    const repoPath = resolveRepoReference(raw, manifestFolderPath);
+    return repoPath ? blobUrlForRepoPath(repoPath) : raw;
+  }
+
+  function normalizeManifestItem(item, index, manifestFolderPath) {
+    const media = item && typeof item.media === 'object' ? item.media : {};
+    const mediaUrl = resolveMediaUrl(media.url, manifestFolderPath);
+    const thumbnailUrl = resolveMediaUrl(media.thumbnailUrl, manifestFolderPath);
+    const mediaType = (media.type || mediaTypeForPath(media.url || '') || mediaTypeForPath(mediaUrl || '') || 'image')
+      .toLowerCase();
+
+    const fallbackId = `manifest_item_${index + 1}`;
+    const fallbackTitle =
+      titleFromPath(resolveRepoReference(media.url || media.thumbnailUrl || '', manifestFolderPath) || fallbackId) ||
+      `Item ${index + 1}`;
+
+    return {
+      ...item,
+      id: (item.id || '').trim() || fallbackId,
+      title: (item.title || '').trim() || fallbackTitle,
+      description: item.description || '',
+      creator: item.creator || '',
+      date: item.date || '',
+      location: item.location || '',
+      license: item.license || '',
+      attribution: item.attribution || '',
+      source: resolveSourceUrl(item.source, manifestFolderPath),
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      include: item.include !== false,
+      media: {
+        ...media,
+        type: mediaType,
+        url: mediaUrl,
+        thumbnailUrl: thumbnailUrl || (mediaType === 'image' ? mediaUrl : ''),
+      },
+    };
+  }
+
+  async function loadCollectionManifest(rootFolderPath) {
+    const manifestPath = joinRepoPath(rootFolderPath, 'collection.json');
+    const manifestEntry = await fetchRepoContents(manifestPath, { allowNotFound: true });
+    if (!manifestEntry || Array.isArray(manifestEntry) || manifestEntry.type !== 'file') {
+      return { found: false, manifestPath };
+    }
+
+    const manifestText = await decodeContentEntry(manifestEntry);
+    let manifestJson;
+    try {
+      manifestJson = JSON.parse(manifestText);
+    } catch (error) {
+      throw new Error(`collection.json could not be parsed: ${error.message}`);
+    }
+
+    const validationErrors = validateCollectionShape(manifestJson);
+    if (validationErrors.length > 0) {
+      throw new Error(`collection.json schema invalid: ${validationErrors.join(' ')}`);
+    }
+
+    const normalizedItems = (manifestJson.items || []).map((item, index) =>
+      normalizeManifestItem(item, index, rootFolderPath),
+    );
+
+    return {
+      found: true,
+      manifestPath,
+      collection: {
+        ...manifestJson,
+        items: normalizedItems,
+      },
+      items: normalizedItems,
+    };
   }
 
   async function listMediaFilesRecursive(pathValue) {
@@ -101,12 +278,12 @@ export function createGithubProvider() {
           continue;
         }
 
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${asRawPath(child.path)}`;
+        const rawUrl = rawUrlForRepoPath(child.path);
         files.push({
           id: itemIdFromPath(child.path),
           title: titleFromPath(child.path),
           description: '',
-          source: `https://github.com/${owner}/${repo}/blob/${branch}/${child.path}`,
+          source: blobUrlForRepoPath(child.path),
           include: true,
           tags: [],
           license: '',
@@ -135,7 +312,7 @@ export function createGithubProvider() {
       owner = (config.owner || '').trim();
       repo = (config.repo || '').trim();
       branch = (config.branch || 'main').trim() || 'main';
-      contentPath = (config.path || '').trim();
+      contentPath = normalizeFolderPath(config.path || '');
 
       if (!token || !owner || !repo) {
         connected = false;
@@ -147,17 +324,31 @@ export function createGithubProvider() {
       }
 
       try {
-        items = await listMediaFilesRecursive(contentPath);
+        await fetchRepoContents(contentPath || '');
+        const manifestResult = await loadCollectionManifest(contentPath);
+
+        if (manifestResult.found) {
+          collection = cloneItem(manifestResult.collection);
+          items = manifestResult.items.map(cloneItem);
+        } else {
+          collection = null;
+          items = await listMediaFilesRecursive(contentPath);
+        }
+
         connected = true;
-        const where = contentPath ? `${owner}/${repo}/${contentPath}` : `${owner}/${repo}`;
+        const where = contentPath ? `${owner}/${repo}/${contentPath}` : `${owner}/${repo}/`;
+        const message = manifestResult.found
+          ? `Connected to GitHub repo ${where}. Found ${manifestResult.manifestPath} and loaded ${items.length} manifest items.`
+          : `Connected to GitHub repo ${where}. No manifest found at ${manifestResult.manifestPath}; loaded ${items.length} media assets from file browser.`;
         return {
           ok: true,
-          message: `Connected to GitHub repo ${where} (${items.length} media assets).`,
+          message,
           capabilities: READ_ONLY_CAPABILITIES,
         };
       } catch (error) {
         connected = false;
         items = [];
+        collection = null;
         return {
           ok: false,
           message: `GitHub connection failed: ${error.message}`,
@@ -194,7 +385,7 @@ export function createGithubProvider() {
         id: collectionMeta.id,
         title: collectionMeta.title,
         description: collectionMeta.description,
-        items: items.map(cloneItem),
+        items: (collection?.items || items).map(cloneItem),
       };
     },
 

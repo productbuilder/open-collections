@@ -40,11 +40,13 @@ It uses Shadow DOM and provides a SaaS-style shell for source management, merged
 - Group metadata fields into readable editor sections
 - Open assets in a viewer dialog for larger preview and details
 - Generate, preview, copy, and download `collection.json`
+- Remember non-secret source configuration locally for faster workspace restore
 
 ## Source and destination direction
 
 - Read sources can be added multiple times per workspace/session.
 - Publishing remains explicit and separate; this pass includes lightweight `publishDestination` state scaffolding in the app model.
+- Local source memory excludes secrets (tokens/passwords are not persisted).
 
 ## GitHub provider (this MVP pass)
 
@@ -54,12 +56,11 @@ Implemented:
 - Manifest-first loading: checks `<configured-path>/collection.json` and imports inline `items` when present
 - Recursive media discovery from the configured path (image/video files)
 - Load GitHub assets into the existing Collector card grid
+- Save inline `collection.json` item metadata back to GitHub when PAT has repo write permission
 - Continue using metadata editing and manifest export on loaded assets
 
 Not yet implemented:
 - Browser OAuth/GitHub App flow
-- Metadata write-back to GitHub
-- Writing `collection.json` back into the repository
 
 ## Run locally
 

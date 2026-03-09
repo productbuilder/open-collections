@@ -25,11 +25,12 @@ TimeMap Collector UI is exposed as a Web Component:
 - Source badges on cards (source label + provider where useful)
 - Source filter in the main workspace (`All sources` or one source)
 - Grouped metadata sections (Basic, Authorship, Context, Rights, Classification)
+- Source list/config remembered locally between reloads (safe fields only)
 
 ## Source model in MVP
 
 Enabled providers:
-- GitHub (token-auth/public read, manifest-first import, fallback file browsing)
+- GitHub (manifest-first import; inline metadata save to repo when PAT has write permission)
 - Public URL (read-only)
 - Example dataset (local editable)
 
@@ -46,3 +47,5 @@ Planned placeholders:
 - Workspace state is in-memory and can combine assets from multiple sources at once.
 - Source and publish concerns are now separate in state (`sources[]` with placeholder `publishDestination` scaffolding).
 - Card interaction model: click selects, `View` button (or double-click) opens the asset viewer.
+- Secrets are not persisted locally (for example GitHub PAT); remembered GitHub sources may require re-entering token.
+- GitHub inline `collection.json` item edits can be saved back to repo when PAT has write permission.

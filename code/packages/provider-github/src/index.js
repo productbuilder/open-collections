@@ -1,6 +1,7 @@
 import {
   PROVIDER_AVAILABILITY,
   READ_ONLY_CAPABILITIES,
+  READ_WRITE_CAPABILITIES,
   cloneItem,
   createProviderDescriptor,
   providerNotConnectedError,
@@ -73,6 +74,11 @@ export function createGithubProvider() {
   let contentPath = '';
   let items = [];
   let collection = null;
+  let manifestPath = '';
+  let manifestSha = '';
+  let manifestRootPath = '';
+  let hasWriteAccess = false;
+  let capabilities = READ_ONLY_CAPABILITIES;
 
   const descriptor = createProviderDescriptor({
     id: 'github',
@@ -122,6 +128,53 @@ export function createGithubProvider() {
     }
 
     return response.json();
+  }
+
+  async function putRepoContent(pathValue, payload) {
+    const targetPath = asApiPath(pathValue);
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${targetPath}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Save failed: insufficient permissions or invalid token.');
+      }
+      if (response.status === 409 || response.status === 422) {
+        throw new Error('Save failed: collection.json changed upstream (SHA conflict). Refresh source and retry.');
+      }
+      throw new Error(`Save failed: GitHub API ${response.status}: ${errorBody.slice(0, 220)}`);
+    }
+
+    return response.json();
+  }
+
+  async function detectWriteAccess() {
+    const url = `https://api.github.com/repos/${owner}/${repo}`;
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const body = await response.json();
+    const permissions = body?.permissions || {};
+    return Boolean(permissions.push || permissions.maintain || permissions.admin);
   }
 
   async function decodeContentEntry(entry) {
@@ -250,12 +303,44 @@ export function createGithubProvider() {
     return {
       found: true,
       manifestPath,
-      collection: {
-        ...manifestJson,
-        items: normalizedItems,
-      },
+      manifestSha: manifestEntry.sha || '',
+      manifestRootPath: rootFolderPath,
+      rawCollection: cloneItem(manifestJson),
       items: normalizedItems,
     };
+  }
+
+  function mergeItemPatch(item, patch) {
+    return {
+      ...item,
+      ...patch,
+      tags: Array.isArray(patch.tags) ? patch.tags : item.tags,
+      media: {
+        ...(item.media || {}),
+        ...(patch.media || {}),
+      },
+    };
+  }
+
+  function resetManifestContext() {
+    manifestPath = '';
+    manifestSha = '';
+    manifestRootPath = '';
+    hasWriteAccess = false;
+  }
+
+  function updateCapabilities() {
+    const canWrite = Boolean(token && collection && manifestPath && manifestSha && hasWriteAccess);
+    capabilities = canWrite ? READ_WRITE_CAPABILITIES : READ_ONLY_CAPABILITIES;
+  }
+
+  function encodeBase64Utf8(text) {
+    const bytes = new TextEncoder().encode(text);
+    let binary = '';
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
   }
 
   async function listMediaFilesRecursive(pathValue) {
@@ -316,10 +401,14 @@ export function createGithubProvider() {
 
       if (!token || !owner || !repo) {
         connected = false;
+        items = [];
+        collection = null;
+        resetManifestContext();
+        updateCapabilities();
         return {
           ok: false,
           message: 'Enter token, owner, and repository to connect GitHub.',
-          capabilities: READ_ONLY_CAPABILITIES,
+          capabilities,
         };
       }
 
@@ -328,31 +417,41 @@ export function createGithubProvider() {
         const manifestResult = await loadCollectionManifest(contentPath);
 
         if (manifestResult.found) {
-          collection = cloneItem(manifestResult.collection);
+          collection = cloneItem(manifestResult.rawCollection);
           items = manifestResult.items.map(cloneItem);
+          manifestPath = manifestResult.manifestPath;
+          manifestSha = manifestResult.manifestSha;
+          manifestRootPath = manifestResult.manifestRootPath;
+          hasWriteAccess = await detectWriteAccess();
         } else {
           collection = null;
           items = await listMediaFilesRecursive(contentPath);
+          resetManifestContext();
         }
 
         connected = true;
+        updateCapabilities();
         const where = contentPath ? `${owner}/${repo}/${contentPath}` : `${owner}/${repo}/`;
         const message = manifestResult.found
-          ? `Connected to GitHub repo ${where}. Found ${manifestResult.manifestPath} and loaded ${items.length} manifest items.`
+          ? `Connected to GitHub repo ${where}. Found ${manifestResult.manifestPath}, loaded ${items.length} items, and ${
+              capabilities.canSaveMetadata ? 'enabled metadata save.' : 'running in read-only mode (no repo write permission).'
+            }`
           : `Connected to GitHub repo ${where}. No manifest found at ${manifestResult.manifestPath}; loaded ${items.length} media assets from file browser.`;
         return {
           ok: true,
           message,
-          capabilities: READ_ONLY_CAPABILITIES,
+          capabilities,
         };
       } catch (error) {
         connected = false;
         items = [];
         collection = null;
+        resetManifestContext();
+        updateCapabilities();
         return {
           ok: false,
           message: `GitHub connection failed: ${error.message}`,
-          capabilities: READ_ONLY_CAPABILITIES,
+          capabilities,
         };
       }
     },
@@ -372,8 +471,55 @@ export function createGithubProvider() {
       return item ? cloneItem(item) : null;
     },
 
-    async saveMetadata() {
-      throw new Error('GitHub provider is read-only in this MVP pass.');
+    async saveMetadata(id, patch) {
+      if (!connected) {
+        throw providerNotConnectedError('github');
+      }
+
+      if (!capabilities.canSaveMetadata) {
+        throw new Error('Save failed: collection manifest is read-only for this GitHub source.');
+      }
+
+      if (!collection || !Array.isArray(collection.items)) {
+        throw new Error('Save failed: no editable collection manifest loaded.');
+      }
+
+      const targetIndex = collection.items.findIndex((entry) => entry.id === id);
+      if (targetIndex === -1) {
+        throw new Error(`Save failed: item not found in manifest (${id}).`);
+      }
+
+      const currentItem = collection.items[targetIndex];
+      const nextItem = mergeItemPatch(currentItem, patch || {});
+
+      const nextCollection = cloneItem(collection);
+      nextCollection.items[targetIndex] = nextItem;
+
+      const serialized = `${JSON.stringify(nextCollection, null, 2)}\n`;
+      const commitMessage = `Update metadata for ${id} via TimeMap Collector`;
+      const payload = {
+        message: commitMessage,
+        content: encodeBase64Utf8(serialized),
+        sha: manifestSha,
+        branch,
+      };
+
+      const response = await putRepoContent(manifestPath, payload);
+      const nextSha = response?.content?.sha;
+      if (!nextSha) {
+        throw new Error('Save failed: missing updated file SHA in GitHub response.');
+      }
+
+      collection = nextCollection;
+      manifestSha = nextSha;
+      items = (collection.items || []).map((entry, index) => normalizeManifestItem(entry, index, manifestRootPath));
+
+      const updated = items.find((entry) => entry.id === id);
+      if (!updated) {
+        throw new Error(`Save failed: item not found after save (${id}).`);
+      }
+
+      return cloneItem(updated);
     },
 
     async exportCollection(collectionMeta) {
@@ -385,12 +531,12 @@ export function createGithubProvider() {
         id: collectionMeta.id,
         title: collectionMeta.title,
         description: collectionMeta.description,
-        items: (collection?.items || items).map(cloneItem),
+        items: items.map(cloneItem),
       };
     },
 
     getCapabilities() {
-      return READ_ONLY_CAPABILITIES;
+      return capabilities;
     },
   };
 }

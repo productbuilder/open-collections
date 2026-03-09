@@ -593,14 +593,9 @@ class TimemapCollectorElement extends HTMLElement {
         }
 
         .source-filter {
-          width: auto;
-          min-width: 170px;
-          max-width: 240px;
-        }
-
-        .source-filter-label {
-          color: #334155;
-          font-weight: 600;
+          width: 220px;
+          min-width: 220px;
+          max-width: 220px;
         }
 
         .editor-section {
@@ -715,7 +710,6 @@ class TimemapCollectorElement extends HTMLElement {
                 <select id="sourceFilter" class="source-filter" aria-label="Filter assets by source">
                   <option value="all">All sources</option>
                 </select>
-                <span id="sourceFilterLabel" class="panel-subtext source-filter-label">All sources</span>
                 <p id="assetCount" class="panel-subtext">No assets loaded.</p>
               </div>
             </div>
@@ -876,7 +870,6 @@ class TimemapCollectorElement extends HTMLElement {
       providerCatalog: root.getElementById('providerCatalog'),
       sourceList: root.getElementById('sourceList'),
       sourceFilter: root.getElementById('sourceFilter'),
-      sourceFilterLabel: root.getElementById('sourceFilterLabel'),
       providerConfigTitle: root.getElementById('providerConfigTitle'),
       githubConfig: root.getElementById('githubConfig'),
       githubToken: root.getElementById('githubToken'),
@@ -943,7 +936,6 @@ class TimemapCollectorElement extends HTMLElement {
     });
     this.dom.sourceFilter.addEventListener('change', () => {
       this.state.activeSourceFilter = this.dom.sourceFilter.value || 'all';
-      this.renderSourceFilterLabel();
       const visible = this.getVisibleAssets();
       if (this.state.selectedItemId && !visible.some((item) => item.workspaceId === this.state.selectedItemId)) {
         this.state.selectedItemId = visible[0]?.workspaceId || null;
@@ -968,8 +960,7 @@ class TimemapCollectorElement extends HTMLElement {
       if (!selected) {
         return;
       }
-      await this.updateItem(selected.workspaceId, this.collectEditorPatch());
-      this.setStatus(`Saved metadata for ${selected.id}`, 'ok');
+      await this.updateItem(selected.workspaceId, this.collectEditorPatch(), { explicitSave: true });
     });
 
     this.dom.generateManifestBtn.addEventListener('click', async () => {
@@ -1136,39 +1127,28 @@ class TimemapCollectorElement extends HTMLElement {
 
     const allOption = document.createElement('option');
     allOption.value = 'all';
-    allOption.textContent = `All sources (${this.state.sources.length})`;
+    allOption.textContent = 'All sources';
     this.dom.sourceFilter.appendChild(allOption);
 
     for (const source of this.state.sources) {
       const option = document.createElement('option');
       option.value = source.id;
-      option.textContent = `${source.label} (${source.itemCount || 0})`;
+      option.textContent = source.displayLabel || source.label || source.providerLabel || 'Source';
       this.dom.sourceFilter.appendChild(option);
     }
 
     const stillExists = previous === 'all' || this.state.sources.some((entry) => entry.id === previous);
     this.state.activeSourceFilter = stillExists ? previous : 'all';
     this.dom.sourceFilter.value = this.state.activeSourceFilter;
-    this.renderSourceFilterLabel();
-  }
-
-  renderSourceFilterLabel() {
-    if (this.state.activeSourceFilter === 'all') {
-      this.dom.sourceFilterLabel.textContent = 'All sources';
-      return;
-    }
-
-    const source = this.getSourceById(this.state.activeSourceFilter);
-    this.dom.sourceFilterLabel.textContent = source ? `Filtered: ${source.label}` : 'All sources';
   }
 
   formatSourceBadge(item) {
-    const sourceLabel = item.sourceLabel || '';
-    const providerName = this.providerCatalog.find((entry) => entry.id === item.providerId)?.label || item.providerId || '';
-    if (sourceLabel && providerName && !sourceLabel.toLowerCase().includes(providerName.toLowerCase())) {
-      return `${sourceLabel} · ${providerName}`;
+    const display = (item.sourceDisplayLabel || '').trim();
+    if (display) {
+      return display;
     }
-    return sourceLabel || providerName || 'Source';
+    const providerName = this.providerCatalog.find((entry) => entry.id === item.providerId)?.label || item.providerId || '';
+    return providerName || 'Source';
   }
 
   renderSourcesList() {
@@ -1193,10 +1173,10 @@ class TimemapCollectorElement extends HTMLElement {
       const labelBlock = document.createElement('div');
       const label = document.createElement('p');
       label.className = 'source-card-label';
-      label.textContent = source.label;
+      label.textContent = source.displayLabel || source.label;
       const detail = document.createElement('p');
       detail.className = 'panel-subtext';
-      detail.textContent = `${source.providerLabel} | ${source.itemCount || 0} items`;
+      detail.textContent = source.detailLabel || `${source.providerLabel} | ${source.itemCount || 0} items`;
       labelBlock.append(label, detail);
 
       const badges = document.createElement('div');
@@ -1206,7 +1186,7 @@ class TimemapCollectorElement extends HTMLElement {
       readBadge.textContent = source.capabilities?.canSaveMetadata ? 'Read + Write' : 'Read';
       const authBadge = document.createElement('span');
       authBadge.className = 'badge';
-      authBadge.textContent = source.authMode === 'token' ? 'Token auth' : 'Public';
+      authBadge.textContent = source.needsCredentials ? 'Token required' : source.authMode === 'token' ? 'Token auth' : 'Public';
       badges.append(readBadge, authBadge);
 
       top.append(labelBlock, badges);
@@ -1219,7 +1199,7 @@ class TimemapCollectorElement extends HTMLElement {
       meta.className = 'source-card-meta';
       const statusPill = document.createElement('span');
       statusPill.className = 'pill';
-      statusPill.textContent = source.status ? 'Connected' : 'Unknown';
+      statusPill.textContent = source.needsReconnect ? 'Needs reconnect' : 'Connected';
       const countPill = document.createElement('span');
       countPill.className = 'pill';
       countPill.textContent = `${source.itemCount || 0} items`;
@@ -1293,24 +1273,169 @@ class TimemapCollectorElement extends HTMLElement {
     return config;
   }
 
-  sourceLabelFor(providerId, config, fallbackLabel) {
+  sourceDisplayLabelFor(providerId, config, fallbackLabel) {
+    if (providerId === 'github') {
+      const repo = (config.repo || '').trim();
+      return repo || 'GitHub';
+    }
+
+    if (providerId === 'public-url') {
+      const manifestUrl = (config.manifestUrl || '').trim();
+      if (!manifestUrl) {
+        return 'Public URL';
+      }
+
+      try {
+        const parsed = new URL(manifestUrl);
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (parsed.hostname.includes('githubusercontent.com') && parts.length >= 2) {
+          return parts[1];
+        }
+
+        const file = parts[parts.length - 1] || '';
+        const name = file.replace(/\.[^.]+$/, '');
+        if (name && !['collection', 'manifest', 'index'].includes(name.toLowerCase())) {
+          return name;
+        }
+
+        return parsed.hostname.replace(/^www\./i, '') || 'Public URL';
+      } catch (error) {
+        return 'Public URL';
+      }
+    }
+
+    if (providerId === 'local') {
+      return 'Example dataset';
+    }
+
+    return fallbackLabel || 'Source';
+  }
+
+  sourceDetailLabelFor(providerId, config, fallbackLabel) {
     if (providerId === 'github') {
       const owner = (config.owner || '').trim();
       const repo = (config.repo || '').trim();
       const path = (config.path || '').trim();
+      const branch = (config.branch || 'main').trim() || 'main';
       const base = owner && repo ? `${owner}/${repo}` : fallbackLabel;
-      return path ? `${base}:${path}` : base;
+      const scope = path || '/';
+      return `${base} @ ${branch}:${scope}`;
     }
 
     if (providerId === 'public-url') {
-      return (config.manifestUrl || '').trim() || fallbackLabel;
+      return (config.manifestUrl || '').trim() || 'Public URL manifest';
     }
 
     if (providerId === 'local') {
-      return (config.path || '').trim() || fallbackLabel;
+      return (config.path || '').trim() || 'Example dataset';
     }
 
-    return fallbackLabel;
+    return fallbackLabel || 'Source';
+  }
+
+  sanitizeSourceConfig(providerId, config = {}) {
+    if (providerId === 'github') {
+      return {
+        owner: (config.owner || '').trim(),
+        repo: (config.repo || '').trim(),
+        branch: (config.branch || 'main').trim() || 'main',
+        path: (config.path || '').trim(),
+      };
+    }
+
+    if (providerId === 'public-url') {
+      return {
+        manifestUrl: (config.manifestUrl || '').trim(),
+      };
+    }
+
+    if (providerId === 'local') {
+      return {
+        path: (config.path || '').trim() || COLLECTOR_CONFIG.defaultLocalManifestPath,
+      };
+    }
+
+    return {};
+  }
+
+  toPersistedSource(source) {
+    return {
+      id: source.id,
+      providerId: source.providerId,
+      providerLabel: source.providerLabel,
+      displayLabel: source.displayLabel || source.label,
+      detailLabel: source.detailLabel || source.label,
+      config: this.sanitizeSourceConfig(source.providerId, source.config),
+      capabilities: source.capabilities || {},
+      authMode: source.authMode || 'public',
+      itemCount: source.itemCount || 0,
+      status: source.status || '',
+      needsReconnect: Boolean(source.needsReconnect),
+      needsCredentials: Boolean(source.needsCredentials),
+    };
+  }
+
+  saveSourcesToStorage() {
+    try {
+      const payload = this.state.sources.map((source) => this.toPersistedSource(source));
+      window.localStorage.setItem(SOURCES_STORAGE_KEY, JSON.stringify(payload));
+    } catch (error) {
+      // Ignore storage failures in restricted/private browser modes.
+    }
+  }
+
+  async restoreRememberedSources() {
+    let remembered = [];
+    try {
+      remembered = JSON.parse(window.localStorage.getItem(SOURCES_STORAGE_KEY) || '[]');
+    } catch (error) {
+      remembered = [];
+    }
+
+    if (!Array.isArray(remembered) || remembered.length === 0) {
+      return;
+    }
+
+    const restored = remembered
+      .filter((entry) => entry && typeof entry === 'object')
+      .map((entry) => ({
+        id: entry.id || makeSourceId(entry.providerId || 'source'),
+        providerId: entry.providerId,
+        providerLabel: entry.providerLabel || this.providerCatalog.find((p) => p.id === entry.providerId)?.label || 'Source',
+        displayLabel: entry.displayLabel || entry.label || 'Source',
+        detailLabel: entry.detailLabel || entry.label || 'Source',
+        label: entry.detailLabel || entry.label || entry.displayLabel || 'Source',
+        config: this.sanitizeSourceConfig(entry.providerId, entry.config || {}),
+        capabilities: entry.capabilities || this.providerFactories[entry.providerId]?.getCapabilities?.() || {},
+        status:
+          entry.providerId === 'github'
+            ? 'Remembered source. Token is not stored; re-enter token if repository requires it.'
+            : 'Remembered source. Click Refresh to reconnect.',
+        authMode: entry.providerId === 'github' ? 'token' : entry.authMode || 'public',
+        itemCount: Number(entry.itemCount) || 0,
+        provider: null,
+        needsReconnect: true,
+        needsCredentials: entry.providerId === 'github',
+      }));
+
+    this.state.sources = restored;
+    this.state.assets = [];
+    this.state.selectedItemId = null;
+    this.state.activeSourceFilter = 'all';
+
+    this.setStatus(`Restored ${restored.length} remembered source definitions.`, 'neutral');
+    this.setConnectionStatus('Remembered sources loaded. Refresh sources to reconnect.', 'neutral');
+    this.renderSourcesList();
+    this.renderSourceFilter();
+    this.renderAssets();
+    this.renderEditor();
+
+    for (const source of restored) {
+      if (source.providerId !== 'github') {
+        // Public URL and local sources can reconnect without secrets.
+        await this.refreshSource(source.id);
+      }
+    }
   }
 
   normalizeSourceAssets(source, rawItems) {
@@ -1322,6 +1447,7 @@ class TimemapCollectorElement extends HTMLElement {
         sourceAssetId,
         sourceId: source.id,
         sourceLabel: source.label,
+        sourceDisplayLabel: source.displayLabel || source.label,
         providerId: source.providerId,
       };
     });
@@ -1467,7 +1593,6 @@ class TimemapCollectorElement extends HTMLElement {
     }
 
     this.dom.assetCount.textContent = `${visibleAssets.length} visible | ${this.state.assets.length} total`;
-    this.renderSourceFilterLabel();
 
     if (visibleAssets.length === 0) {
       const empty = document.createElement('div');
@@ -1594,8 +1719,8 @@ class TimemapCollectorElement extends HTMLElement {
     this.dom.editorForm.hidden = false;
 
     this.dom.editorStatus.textContent = canSave
-      ? `Editing ${selected.id} from ${selected.sourceLabel}`
-      : `Editing ${selected.id} from ${selected.sourceLabel} (read-only source, local edits only)`;
+      ? `Editing ${selected.id} from ${selected.sourceDisplayLabel || selected.sourceLabel}`
+      : `Editing ${selected.id} from ${selected.sourceDisplayLabel || selected.sourceLabel} (read-only source, local edits only)`;
 
     this.dom.itemTitle.value = selected.title || '';
     this.dom.itemDescription.value = selected.description || '';
@@ -1636,7 +1761,7 @@ class TimemapCollectorElement extends HTMLElement {
     };
   }
 
-  async updateItem(id, patch) {
+  async updateItem(id, patch, options = {}) {
     const current = this.state.assets.find((item) => item.workspaceId === id);
     if (!current) {
       this.setStatus(`Could not find item ${id}`, 'warn');
@@ -1647,21 +1772,41 @@ class TimemapCollectorElement extends HTMLElement {
     const canSave = Boolean(source?.capabilities?.canSaveMetadata);
 
     if (canSave && source?.provider) {
-      const updated = await source.provider.saveMetadata(current.sourceAssetId, patch);
-      if (!updated) {
-        this.setStatus(`Could not update item ${current.id}`, 'warn');
-        return;
-      }
+      try {
+        this.setStatus('Saving metadata...', 'neutral');
+        const updated = await source.provider.saveMetadata(current.sourceAssetId, patch);
+        if (!updated) {
+          this.setStatus(`Save failed: provider returned no updated item for ${current.id}`, 'warn');
+          return;
+        }
 
-      const next = {
-        ...updated,
-        workspaceId: current.workspaceId,
-        sourceAssetId: updated.id || current.sourceAssetId,
-        sourceId: current.sourceId,
-        sourceLabel: current.sourceLabel,
-        providerId: current.providerId,
-      };
-      this.state.assets = this.state.assets.map((item) => (item.workspaceId === id ? next : item));
+        const next = {
+          ...updated,
+          workspaceId: current.workspaceId,
+          sourceAssetId: updated.id || current.sourceAssetId,
+          sourceId: current.sourceId,
+          sourceLabel: current.sourceLabel,
+          sourceDisplayLabel: current.sourceDisplayLabel,
+          providerId: current.providerId,
+        };
+        this.state.assets = this.state.assets.map((item) => (item.workspaceId === id ? next : item));
+        this.setStatus('Metadata saved to GitHub.', 'ok');
+      } catch (error) {
+        this.state.assets = this.state.assets.map((item) => {
+          if (item.workspaceId !== id) {
+            return item;
+          }
+          return {
+            ...item,
+            ...patch,
+            media: {
+              ...(item.media || {}),
+              ...(patch.media || {}),
+            },
+          };
+        });
+        this.setStatus(`Save failed: ${error.message}. Local edits were kept.`, 'warn');
+      }
     } else {
       this.state.assets = this.state.assets.map((item) => {
         if (item.workspaceId !== id) {
@@ -1677,6 +1822,10 @@ class TimemapCollectorElement extends HTMLElement {
         };
       });
       this.setStatus('Source is read-only. Changes are local to this workspace session.', 'warn');
+    }
+
+    if (options.explicitSave && !canSave) {
+      this.setStatus('Selected item source is read-only. Changes are local only.', 'warn');
     }
 
     this.renderAssets();
@@ -1712,17 +1861,23 @@ class TimemapCollectorElement extends HTMLElement {
       this.setConnectionStatus(result.message, true);
 
       const loaded = await provider.listAssets();
+      const displayLabel = this.sourceDisplayLabelFor(providerId, config, selectedProvider?.label || providerId);
+      const detailLabel = this.sourceDetailLabelFor(providerId, config, selectedProvider?.label || providerId);
       const source = {
         id: makeSourceId(providerId),
         providerId,
         providerLabel: selectedProvider?.label || providerId,
-        label: this.sourceLabelFor(providerId, config, selectedProvider?.label || providerId),
+        label: detailLabel,
+        displayLabel,
+        detailLabel,
         config: { ...config },
         capabilities: provider.getCapabilities(),
         status: result.message,
         authMode: providerId === 'github' && (config.token || '').trim() ? 'token' : 'public',
         itemCount: loaded.length,
         provider,
+        needsReconnect: false,
+        needsCredentials: false,
       };
 
       const normalized = this.normalizeSourceAssets(source, loaded);
@@ -1740,6 +1895,7 @@ class TimemapCollectorElement extends HTMLElement {
       this.renderSourceFilter();
       this.renderAssets();
       this.renderEditor();
+      this.saveSourcesToStorage();
     } catch (error) {
       this.setConnectionStatus(`Connection error: ${error.message}`, false);
       this.setStatus(`Connection error: ${error.message}`, 'warn');
@@ -1786,18 +1942,34 @@ class TimemapCollectorElement extends HTMLElement {
       const provider = providerFactory();
       const result = await provider.connect(source.config || {});
       if (!result.ok) {
+        const next = {
+          ...source,
+          status: result.message,
+          needsReconnect: true,
+          needsCredentials: source.providerId === 'github',
+        };
+        this.state.sources = this.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
+        this.renderSourcesList();
+        this.saveSourcesToStorage();
         this.setConnectionStatus(result.message, false);
         this.setStatus(`Refresh failed: ${result.message}`, 'warn');
         return;
       }
 
       const loaded = await provider.listAssets();
+      const displayLabel = this.sourceDisplayLabelFor(source.providerId, source.config || {}, source.providerLabel);
+      const detailLabel = this.sourceDetailLabelFor(source.providerId, source.config || {}, source.providerLabel);
       const updatedSource = {
         ...source,
         provider,
         capabilities: provider.getCapabilities(),
         itemCount: loaded.length,
         status: result.message,
+        displayLabel,
+        detailLabel,
+        label: detailLabel,
+        needsReconnect: false,
+        needsCredentials: false,
       };
       const normalized = this.normalizeSourceAssets(updatedSource, loaded);
 
@@ -1819,7 +1991,17 @@ class TimemapCollectorElement extends HTMLElement {
       this.renderSourceFilter();
       this.renderAssets();
       this.renderEditor();
+      this.saveSourcesToStorage();
     } catch (error) {
+      const next = {
+        ...source,
+        status: `Refresh error: ${error.message}`,
+        needsReconnect: true,
+        needsCredentials: source.providerId === 'github',
+      };
+      this.state.sources = this.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
+      this.renderSourcesList();
+      this.saveSourcesToStorage();
       this.setConnectionStatus(`Refresh error: ${error.message}`, false);
       this.setStatus(`Refresh error: ${error.message}`, 'warn');
     }
@@ -1854,6 +2036,7 @@ class TimemapCollectorElement extends HTMLElement {
     this.renderSourceFilter();
     this.renderAssets();
     this.renderEditor();
+    this.saveSourcesToStorage();
   }
 
   currentCollectionMeta() {

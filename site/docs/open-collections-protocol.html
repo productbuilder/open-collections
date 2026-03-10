@@ -13,6 +13,8 @@
 				<nav class="site-nav" aria-label="Primary navigation">
 					<a href="../../">Home</a>
 					<a href="./open-collections-protocol.html" class="is-active" aria-current="page">Protocol</a>
+					<a href="../tools/">Tools</a>
+					<a href="../storage/">Storage</a>
 					<a href="./">Documentation</a>
 					<a href="../demo/">Demo</a>
 				</nav>
@@ -84,7 +86,7 @@
 						</tr>
 						<tr>
 							<td>Browser</td>
-							<td>Collection Browser/Viewer</td>
+							<td>Collection Browser</td>
 						</tr>
 					</tbody>
 				</table>
@@ -193,6 +195,10 @@
 					Open Collections Protocol is not one centralized platform. It is a protocol and ecosystem pattern.
 					Different tools can operate on the same published resources.
 				</p>
+				<p>
+					Collection Manager and Collection Browser are ecosystem tools and components.
+					They are not the protocol itself, but they make protocol adoption easier in practice.
+				</p>
 				<ul>
 					<li><strong>Publishing layer:</strong> manifests, item files, and media published over HTTP.</li>
 					<li><strong>Identity layer:</strong> canonical URLs for public identity, optional content hashes for verification.</li>
@@ -200,9 +206,9 @@
 					<li><strong>Presentation layer:</strong> browsers, viewers, timelines, and other end-user applications.</li>
 				</ul>
 				<p>
-					Typical ecosystem actors include <strong>Collector</strong> (publishes), <strong>Registrator</strong>
+					Typical ecosystem actors include <strong>Collection Manager</strong> (helps people publish), <strong>Registrator</strong>
 					(registers/curates discovered endpoints), <strong>Indexer</strong> (crawls and builds search), and
-					<strong>Browser/Viewer</strong> tools such as TimeMap.
+					<strong>Collection Browser</strong> and tools such as <strong>TimeMap</strong> for public exploration.
 				</p>
 				<pre><code>Domain
   ├─ /.well-known/collections.json (DCD)
@@ -210,7 +216,7 @@
        ├─ items/*.json
        └─ media/*
 
-Indexer / Browser / Aggregator
+Indexer / Collection Browser / Aggregator
   └─ consume published URLs and build different experiences</code></pre>
 			</section>
 

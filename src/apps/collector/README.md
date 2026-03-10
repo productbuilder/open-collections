@@ -29,6 +29,8 @@ TimeMap Collector is the writable collection-management app.
 - OPFS is used for local draft/workspace persistence when available.
 - Draft workflow is explicit: `Save locally`, `Restore draft`, `Discard draft`.
 - New collections can be created from scratch via `New collection` and start as local drafts.
+- Each collection uses its own root directory namespace (for example `harbor-collection/collection.json`, `harbor-collection/media/*`, `harbor-collection/thumbs/*`).
+- Collector publishes one selected source + one selected collection at a time.
 - Image ingestion supports drag-and-drop and file picker (`jpg`, `jpeg`, `png`, `webp`, `gif`).
 - New images are added immediately as local draft items with upload status badges.
 - Thumbnails are generated automatically for image assets when possible.

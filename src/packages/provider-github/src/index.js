@@ -607,7 +607,10 @@ export function createGithubProvider() {
         });
       }
 
-      const targetManifestPath = manifestPath || joinRepoPath(contentPath, 'collection.json');
+      const collectionRootPath = asApiPath(payload.collectionRootPath || '');
+      const targetManifestPath = collectionRootPath
+        ? joinRepoPath(collectionRootPath, 'collection.json')
+        : manifestPath || joinRepoPath(contentPath, 'collection.json');
       const existingManifestEntry = await fetchRepoContents(targetManifestPath, { allowNotFound: true });
       const serialized = `${JSON.stringify(manifest, null, 2)}\n`;
       const manifestPayload = {
@@ -626,11 +629,14 @@ export function createGithubProvider() {
 
       const manifestResponse = await putRepoContent(targetManifestPath, manifestPayload);
       const nextSha = manifestResponse?.content?.sha || '';
+      const manifestFolder = targetManifestPath.includes('/')
+        ? targetManifestPath.slice(0, targetManifestPath.lastIndexOf('/'))
+        : '';
 
       collection = cloneItem(manifest);
       manifestPath = targetManifestPath;
       manifestSha = nextSha;
-      manifestRootPath = contentPath;
+      manifestRootPath = manifestFolder;
       items = (collection.items || []).map((entry, index) => normalizeManifestItem(entry, index, manifestRootPath));
       updateCapabilities();
 

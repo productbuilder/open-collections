@@ -79,6 +79,7 @@ index.html
 - Collector uses OPFS for local draft/workspace persistence when browser support is available.
 - Collector supports image ingestion via drag-and-drop and file picker for local drafts.
 - Collector supports creating new collections from scratch as local drafts (`New collection`).
+- Collection publishing now targets explicit collection roots (for example `<collection-slug>/collection.json`, `<collection-slug>/media/*`, `<collection-slug>/thumbs/*`).
 - Collector generates image thumbnails for draft assets when possible.
 - GitHub publish uploads originals (`media/`), thumbnails (`thumbs/`), and updates `collection.json`.
 - Publishing remains provider-backed (GitHub/other storage), separate from OPFS local drafts.

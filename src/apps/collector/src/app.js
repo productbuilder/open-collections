@@ -127,6 +127,7 @@ class TimemapCollectorElement extends HTMLElement {
     this.renderSourceFilter();
     this.renderAssets();
     this.renderEditor();
+    this.renderWorkspaceContext();
     this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
     this.setLocalDraftControlsEnabled(false);
     this.initializeLocalDraftState();
@@ -867,6 +868,7 @@ class TimemapCollectorElement extends HTMLElement {
           <div class="brand">
             <h1 class="title">TimeMap Collector</h1>
             <p id="statusText" class="status">Not connected.</p>
+            <p id="workspaceContext" class="status">Storage: none | Collection: none</p>
           </div>
           <div class="top-actions">
             <button class="btn btn-primary" id="openNewCollectionBtn" type="button">New collection</button>
@@ -1252,6 +1254,7 @@ class TimemapCollectorElement extends HTMLElement {
     const root = this.shadow;
     this.dom = {
       statusText: root.getElementById('statusText'),
+      workspaceContext: root.getElementById('workspaceContext'),
       openNewCollectionBtn: root.getElementById('openNewCollectionBtn'),
       openProviderBtn: root.getElementById('openProviderBtn'),
       openPublishBtn: root.getElementById('openPublishBtn'),
@@ -1755,6 +1758,60 @@ class TimemapCollectorElement extends HTMLElement {
     return slug || fallback;
   }
 
+  normalizeCollectionRootPath(rootPath, fallbackId = '') {
+    const fallback = `${this.slugifySegment(fallbackId || 'collection', 'collection')}/`;
+    const raw = String(rootPath || '').trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/^\/+/, '')
+      .replace(/\/+$/, '')
+      .split('/')
+      .map((segment) => this.slugifySegment(segment, 'collection'))
+      .filter(Boolean)
+      .join('/');
+    return cleaned ? `${cleaned}/` : fallback;
+  }
+
+  joinCollectionRootPath(collectionRootPath, relativePath = '') {
+    const root = this.normalizeCollectionRootPath(collectionRootPath, this.state.selectedCollectionId || 'collection');
+    const relative = String(relativePath || '').replace(/^\/+/, '');
+    return relative ? `${root}${relative}` : root;
+  }
+
+  activeCollectionRootPath() {
+    const collectionId = (this.state.selectedCollectionId || '').trim();
+    if (!collectionId || collectionId === 'all') {
+      return '';
+    }
+    const activeSource = this.state.activeSourceFilter !== 'all' ? this.getSourceById(this.state.activeSourceFilter) : null;
+    if (activeSource) {
+      const sourceCollection = (activeSource.collections || []).find((entry) => entry.id === collectionId);
+      if (sourceCollection?.rootPath) {
+        return this.normalizeCollectionRootPath(sourceCollection.rootPath, collectionId);
+      }
+    }
+    const localCollection = this.state.localDraftCollections.find((entry) => entry.id === collectionId);
+    if (localCollection?.rootPath) {
+      return this.normalizeCollectionRootPath(localCollection.rootPath, collectionId);
+    }
+    return this.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
+  }
+
+  renderWorkspaceContext() {
+    const source =
+      this.state.activeSourceFilter !== 'all'
+        ? this.getSourceById(this.state.activeSourceFilter)
+        : null;
+    const sourceLabel = source?.displayLabel || source?.label || 'none';
+    const collectionId = this.state.selectedCollectionId && this.state.selectedCollectionId !== 'all'
+      ? this.state.selectedCollectionId
+      : 'none';
+    const rootPath = collectionId !== 'none' ? this.activeCollectionRootPath() : 'n/a';
+    this.dom.workspaceContext.textContent = `Storage: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
+  }
+
   readableTitleFromFilename(name, fallbackId) {
     const base = String(name || '').replace(/\.[^.]+$/, '');
     const cleaned = base.replace(/[_-]+/g, ' ').trim();
@@ -1793,6 +1850,9 @@ class TimemapCollectorElement extends HTMLElement {
         return true;
       }
     }
+    if (this.state.localDraftCollections.some((entry) => entry.id === id)) {
+      return true;
+    }
     return this.state.assets.some((item) => item.collectionId === id);
   }
 
@@ -1808,6 +1868,7 @@ class TimemapCollectorElement extends HTMLElement {
   }
 
   buildInitialCollectionManifest(meta) {
+    const rootPath = this.normalizeCollectionRootPath(meta.rootPath || `${meta.id}/`, meta.id);
     return {
       id: meta.id,
       title: meta.title,
@@ -1815,6 +1876,7 @@ class TimemapCollectorElement extends HTMLElement {
       license: meta.license || '',
       publisher: meta.publisher || '',
       language: meta.language || '',
+      rootPath,
       items: [],
     };
   }
@@ -1841,6 +1903,7 @@ class TimemapCollectorElement extends HTMLElement {
       license: this.dom.newCollectionLicense.value.trim(),
       publisher: this.dom.newCollectionPublisher.value.trim(),
       language: this.dom.newCollectionLanguage.value.trim(),
+      rootPath: this.normalizeCollectionRootPath(`${slug}/`, slug),
     };
 
     this.setCollectionMetaFields(meta);
@@ -1848,7 +1911,7 @@ class TimemapCollectorElement extends HTMLElement {
     this.dom.manifestPreview.textContent = JSON.stringify(this.state.manifest, null, 2);
     this.state.selectedItemId = null;
     if (!this.state.localDraftCollections.some((entry) => entry.id === slug)) {
-      this.state.localDraftCollections = [...this.state.localDraftCollections, { id: slug, title }];
+      this.state.localDraftCollections = [...this.state.localDraftCollections, { id: slug, title, rootPath: meta.rootPath }];
     }
 
     if (this.state.activeSourceFilter !== 'all') {
@@ -1858,7 +1921,7 @@ class TimemapCollectorElement extends HTMLElement {
         if (!exists) {
           source.collections = [
             ...(source.collections || []),
-            { id: slug, title },
+            { id: slug, title, rootPath: meta.rootPath },
           ];
         }
         source.selectedCollectionId = slug;
@@ -1936,7 +1999,14 @@ class TimemapCollectorElement extends HTMLElement {
     if (preferred && preferred !== 'all') {
       if (!existing.some((entry) => entry.id === preferred)) {
         const localEntry = this.state.localDraftCollections.find((entry) => entry.id === preferred);
-        source.collections = [...existing, { id: preferred, title: localEntry?.title || preferred }];
+        source.collections = [
+          ...existing,
+          {
+            id: preferred,
+            title: localEntry?.title || preferred,
+            rootPath: this.normalizeCollectionRootPath(localEntry?.rootPath || `${preferred}/`, preferred),
+          },
+        ];
       }
       source.selectedCollectionId = preferred;
       return preferred;
@@ -2105,6 +2175,7 @@ class TimemapCollectorElement extends HTMLElement {
 
     const collectionId = this.ensureCollectionForSource(source);
     const collectionLabel = this.collectionLabelFor(source, collectionId);
+    const collectionRootPath = this.activeCollectionRootPath() || this.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
     const created = [];
 
     for (const file of accepted) {
@@ -2164,6 +2235,7 @@ class TimemapCollectorElement extends HTMLElement {
         providerId: source.providerId,
         collectionId,
         collectionLabel,
+        collectionRootPath,
         localFileRef,
         localThumbnailRef: thumbnailBlob ? localThumbnailRef : '',
       };
@@ -2277,6 +2349,7 @@ class TimemapCollectorElement extends HTMLElement {
     const stillExists = previous === 'all' || collections.some((entry) => entry.id === previous);
     this.state.selectedCollectionId = stillExists ? previous : 'all';
     this.dom.collectionFilter.value = this.state.selectedCollectionId;
+    this.renderWorkspaceContext();
   }
 
   formatSourceBadge(item) {
@@ -2657,7 +2730,11 @@ class TimemapCollectorElement extends HTMLElement {
     if (Array.isArray(snapshot.localDraftCollections)) {
       this.state.localDraftCollections = snapshot.localDraftCollections
         .filter((entry) => entry && entry.id)
-        .map((entry) => ({ id: String(entry.id), title: entry.title || String(entry.id) }));
+        .map((entry) => ({
+          id: String(entry.id),
+          title: entry.title || String(entry.id),
+          rootPath: this.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
+        }));
     }
 
     if (snapshot.collectionMeta && typeof snapshot.collectionMeta === 'object') {
@@ -2850,7 +2927,11 @@ class TimemapCollectorElement extends HTMLElement {
     if (Array.isArray(payload.localDraftCollections)) {
       this.state.localDraftCollections = payload.localDraftCollections
         .filter((entry) => entry && entry.id)
-        .map((entry) => ({ id: String(entry.id), title: entry.title || String(entry.id) }));
+        .map((entry) => ({
+          id: String(entry.id),
+          title: entry.title || String(entry.id),
+          rootPath: this.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
+        }));
     }
 
     if (payload.collectionMeta && typeof payload.collectionMeta === 'object') {
@@ -2973,6 +3054,7 @@ class TimemapCollectorElement extends HTMLElement {
         providerId: source.providerId,
         collectionId: item.collectionId || null,
         collectionLabel: item.collectionLabel || '',
+        collectionRootPath: item.collectionRootPath || '',
       };
     });
   }
@@ -2989,6 +3071,7 @@ class TimemapCollectorElement extends HTMLElement {
         grouped.set(collectionId, {
           id: collectionId,
           title: collectionLabel || collectionId,
+          rootPath: this.normalizeCollectionRootPath(item.collectionRootPath || `${collectionId}/`, collectionId),
         });
       }
     }
@@ -3002,6 +3085,7 @@ class TimemapCollectorElement extends HTMLElement {
       {
         id: fallbackId,
         title: source.displayLabel || source.providerLabel || 'Default collection',
+        rootPath: this.normalizeCollectionRootPath(`${fallbackId}/`, fallbackId),
       },
     ];
   }
@@ -3733,14 +3817,16 @@ class TimemapCollectorElement extends HTMLElement {
   }
 
   currentCollectionMeta() {
+    const collectionId = this.dom.collectionId.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.id;
     return {
-      id: this.dom.collectionId.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.id,
+      id: collectionId,
       title: this.dom.collectionTitle.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.title,
       description:
         this.dom.collectionDescription.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.description,
       license: this.dom.collectionLicense.value.trim(),
       publisher: this.dom.collectionPublisher.value.trim(),
       language: this.dom.collectionLanguage.value.trim(),
+      rootPath: this.activeCollectionRootPath() || this.normalizeCollectionRootPath(`${collectionId}/`, collectionId),
     };
   }
 
@@ -3773,8 +3859,12 @@ class TimemapCollectorElement extends HTMLElement {
         ? JSON.parse(JSON.stringify(this.state.manifest))
         : {};
     const collectionMeta = this.currentCollectionMeta();
+    const selectedSourceId = this.state.activeSourceFilter || 'all';
+    const selectedCollectionId = this.state.selectedCollectionId || 'all';
     const includedItems = this.state.assets
       .filter((item) => item.include !== false)
+      .filter((item) => (selectedSourceId === 'all' ? true : item.sourceId === selectedSourceId))
+      .filter((item) => (selectedCollectionId === 'all' ? true : item.collectionId === selectedCollectionId))
       .map((item) => this.toManifestItem(item));
     return {
       ...baseFromCurrent,
@@ -3787,6 +3877,10 @@ class TimemapCollectorElement extends HTMLElement {
     const collectionMeta = this.currentCollectionMeta();
     if (!collectionMeta.id || !collectionMeta.title) {
       this.setStatus('Create or complete collection metadata before generating a manifest.', 'warn');
+      return null;
+    }
+    if ((this.state.selectedCollectionId || 'all') === 'all') {
+      this.setStatus('Select one collection before generating a manifest.', 'warn');
       return null;
     }
 
@@ -3839,15 +3933,21 @@ class TimemapCollectorElement extends HTMLElement {
       this.setStatus('This source does not support upload publishing yet.', 'warn');
       return;
     }
+    if ((this.state.selectedCollectionId || 'all') === 'all') {
+      this.setStatus('Select one collection before publishing.', 'warn');
+      return;
+    }
 
     const manifest = await this.generateManifest({ silent: true });
     if (!manifest) {
       return;
     }
+    const collectionRootPath = this.activeCollectionRootPath() || this.normalizeCollectionRootPath(`${manifest.id}/`, manifest.id);
 
     const pending = this.state.assets.filter(
       (item) =>
         item.sourceId === source.id &&
+        item.collectionId === this.state.selectedCollectionId &&
         item.isLocalDraftAsset &&
         item.include !== false &&
         item.draftUploadStatus !== 'uploaded',
@@ -3887,7 +3987,7 @@ class TimemapCollectorElement extends HTMLElement {
       }
 
       uploads.push({
-        path: item.media?.url || '',
+        path: this.joinCollectionRootPath(collectionRootPath, item.media?.url || ''),
         blob: original,
         message: `Upload ${item.id} original via TimeMap Collector`,
       });
@@ -3895,7 +3995,7 @@ class TimemapCollectorElement extends HTMLElement {
       const thumb = await this.loadLocalAssetBlob(item, 'thumbnail');
       if (thumb && item.thumbnailRepoPath) {
         uploads.push({
-          path: item.thumbnailRepoPath,
+          path: this.joinCollectionRootPath(collectionRootPath, item.thumbnailRepoPath),
           blob: thumb,
           message: `Upload ${item.id} thumbnail via TimeMap Collector`,
         });
@@ -3910,26 +4010,25 @@ class TimemapCollectorElement extends HTMLElement {
     }
 
     try {
-      const result = await source.provider.publishCollection({
+      await source.provider.publishCollection({
         manifest,
         uploads,
+        collectionRootPath,
         commitMessage: `Publish collection ${manifest.id} via TimeMap Collector`,
       });
-      const uploadedMap = new Map((result.uploaded || []).map((entry) => [entry.path, entry.rawUrl]));
 
       this.state.assets = this.state.assets.map((item) => {
         if (item.sourceId !== source.id || !item.isLocalDraftAsset) {
           return item;
         }
-        const nextMediaUrl = item.media?.url ? uploadedMap.get(item.media.url) || item.media.url : item.media?.url;
-        const nextThumbPath = item.thumbnailRepoPath || item.media?.thumbnailUrl || '';
-        const nextThumbUrl = nextThumbPath ? uploadedMap.get(nextThumbPath) || item.media?.thumbnailUrl || nextThumbPath : item.media?.thumbnailUrl;
+        const nextMediaRelativePath = item.media?.url || '';
+        const nextThumbRelativePath = item.thumbnailRepoPath || item.media?.thumbnailUrl || '';
         return {
           ...item,
           media: {
             ...(item.media || {}),
-            url: nextMediaUrl,
-            thumbnailUrl: nextThumbUrl,
+            url: nextMediaRelativePath,
+            thumbnailUrl: nextThumbRelativePath,
           },
           draftUploadStatus: 'uploaded',
           isLocalDraftAsset: false,
@@ -3937,7 +4036,7 @@ class TimemapCollectorElement extends HTMLElement {
         };
       });
 
-      source.status = `Published ${manifest.id} (${this.state.assets.filter((item) => item.sourceId === source.id).length} items).`;
+      source.status = `Published ${manifest.id} to ${collectionRootPath}`;
       this.state.manifest = manifest;
       this.dom.manifestPreview.textContent = JSON.stringify(manifest, null, 2);
       this.refreshSourceCollectionsAndCounts(source.id);

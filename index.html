@@ -13,6 +13,8 @@
 				<nav class="site-nav" aria-label="Primary navigation">
 					<a href="./" class="is-active" aria-current="page">Home</a>
 					<a href="./site/docs/open-collections-protocol.html">Protocol</a>
+					<a href="./site/tools/">Tools</a>
+					<a href="./site/storage/">Storage</a>
 					<a href="./site/docs/">Documentation</a>
 					<a href="./site/demo/">Demo</a>
 				</nav>
@@ -22,55 +24,32 @@
 		<main>
 			<header class="hero">
 				<p class="eyebrow">Open Collections Protocol</p>
-				<h1>Publish collections like the web</h1>
+				<h1>Publish and discover collections like the web</h1>
 				<p class="lead">
-					Open Collections Protocol is a lightweight, web-native way to publish,
-					discover, and reuse collections as open resources with stable URLs,
-					simple manifests, and domain-based authority.
+					Open Collections Protocol is a lightweight, web-native way to publish and
+					discover collections as ordinary web resources.
 				</p>
 				<p>
-					Instead of locking collections inside one platform or requiring a complex
-					backend just to get online, the protocol treats a collection as a published
-					web resource: it has its own URL, manifest, and discoverable presence.
+					Collection Manager and Collection Browser help teams edit, publish, and view
+					collections as standalone tools or embeddable web components.
 				</p>
 				<div class="cta-row" aria-label="Primary calls to action">
 					<a class="button-link" href="./site/docs/open-collections-protocol.html">Read the protocol</a>
-					<a class="button-link button-link-secondary" href="./docs/linked-collections-architecture.md">How it works</a>
-					<a class="button-link button-link-secondary" href="./site/demo/">View demo</a>
+					<a class="button-link button-link-secondary" href="./site/tools/">Explore tools</a>
+					<a class="button-link button-link-secondary" href="./site/storage/">Compare storage options</a>
 				</div>
 			</header>
 
 			<section>
 				<h2>Collections should be easier to publish</h2>
 				<p>
-					Today, many collections are trapped in custom platforms, database-heavy
-					systems, or one-off APIs. That makes portability, reuse, preservation,
-					and discovery harder than they should be.
+					Open Collections Protocol is built for institutions and community teams that
+					want practical publishing, not platform lock-in.
 				</p>
 				<p>
-					Smaller institutions, local history projects, and community publishers are
-					often hit hardest by setup and maintenance overhead.
-				</p>
-				<p>
-					Databases are often useful behind the scenes. But publication should not
-					depend on database complexity as a prerequisite. Open Collections Protocol
-					defines the published web surface while allowing any internal storage
-					model behind it.
-				</p>
-			</section>
-
-			<section>
-				<h2>A collection works like a website</h2>
-				<p>
-					Think of a collection the way you think of a website. A collection
-					manifest plays the role of an <code>index.html</code> page: it introduces
-					the collection and links to what is inside. Item pages are item detail
-					resources, media files are web assets, indexers act like search engines,
-					and browsers/viewers let people navigate what has been published.
-				</p>
-				<p>
-					This mental model keeps publishing understandable for both heritage teams
-					and developers while remaining compatible with richer backend systems.
+					You can host published collections with common storage providers, including
+					Git-based platforms and S3-compatible object storage, without relying on one
+					central system.
 				</p>
 			</section>
 
@@ -90,102 +69,41 @@
 						<p>Publish a Domain Collections Discovery (DCD) document to advertise collections from a domain.</p>
 					</article>
 					<article class="step-card">
-						<h3>4. Let the ecosystem consume</h3>
-						<p>Indexers, browsers, aggregators, and other tools can use the same published surface.</p>
+						<h3>4. Reuse across the ecosystem</h3>
+						<p>Indexers, browsers, portals, and aggregators can all use the same published surface.</p>
 					</article>
 				</div>
 			</section>
 
 			<section>
-				<h2>Not another central platform</h2>
-				<p>
-					Open Collections Protocol is a shared protocol and ecosystem pattern, not
-					a single system where everyone must store their data. Publishers keep
-					control, and different tools can work with the same collection.
-				</p>
-				<p>
-					The result is more portability, easier reuse, and a stronger path for
-					long-term preservation.
-				</p>
-			</section>
-
-			<section>
-				<h2>Built for federation and reuse</h2>
-				<p>
-					Collections can reference other collections. That supports thematic
-					curation, regional aggregation, and cross-institution publishing without
-					requiring every record to be copied into one central platform.
-				</p>
-			</section>
-
-			<section>
-				<h2>Designed for real collection owners</h2>
-				<p>
-					Museums, archives, libraries, local history groups, and community curators
-					can publish with a lower technical barrier while keeping control of their
-					collections and references.
-				</p>
-				<ul>
-					<li>Lower barrier to publish and maintain</li>
-					<li>Stable references for citation and preservation</li>
-					<li>Easier discovery across institutions and domains</li>
-					<li>Less dependence on any single vendor platform</li>
-				</ul>
-			</section>
-
-			<section>
-				<h2>Simple on the surface, flexible underneath</h2>
-				<p>
-					For developers, the model is straightforward: HTTP + JSON, stable URLs,
-					and crawlable resources that work well with static hosting and caching.
-				</p>
-				<p>
-					You can generate the published surface from a CMS, a database, a static
-					pipeline, or hand-authored files. Progressive enhancement remains
-					possible, because the protocol defines publication outputs, not storage
-					internals.
-				</p>
-			</section>
-
-			<section>
 				<h2>Many tools, one shared web surface</h2>
 				<p>
-					LinkedCollections describes the architecture behind the protocol, while
-					Domain Collections Discovery (DCD) supports discovery across domains.
-					Around that core, ecosystem tools can take on different roles.
+					LinkedCollections is the architectural model behind the protocol, and
+					Domain Collections Discovery (DCD) supports domain-level discovery.
 				</p>
 				<div class="link-grid">
-					<div class="link-card"><strong>Publisher</strong><br />Publishes manifests and item/media URLs.</div>
-					<div class="link-card"><strong>Collector</strong><br />Creates and manages collection publication outputs.</div>
-					<div class="link-card"><strong>Registrator</strong><br />Helps register or announce published collections.</div>
-					<div class="link-card"><strong>Indexer</strong><br />Crawls and indexes collection resources for discovery.</div>
-					<div class="link-card"><strong>Browser / Viewer / TimeMap</strong><br />Presents collections for public exploration.</div>
+					<div class="link-card"><strong>Collection Manager</strong><br />Create, organize, and publish collection outputs.</div>
+					<div class="link-card"><strong>Collection Browser</strong><br />Browse and present published collections for readers.</div>
+					<div class="link-card"><strong>Indexer</strong><br />Crawl and index collection resources for search and discovery.</div>
+					<div class="link-card"><strong>Registrator</strong><br />Register or announce published collection endpoints.</div>
+					<div class="link-card"><strong>TimeMap</strong><br />Offer timeline and map-based exploration experiences.</div>
 				</div>
 				<p>
-					These roles are ecosystem options, not mandatory central services.
-				</p>
-			</section>
-
-			<section>
-				<h2>A lightweight baseline, not a replacement</h2>
-				<p>
-					This approach can coexist with IIIF, JSON-LD/schema.org, RDF/Linked Data,
-					and open data catalogs. Open Collections Protocol provides a lightweight
-					baseline for publication and discovery, while richer standards can still
-					be layered where needed.
+					Collection Manager and Collection Browser can run as standalone tools or be
+					embedded as web components in websites, portals, and collection systems.
 				</p>
 			</section>
 
 			<section>
 				<h2>Open, portable, and web-native</h2>
 				<p>
-					A collection should be able to exist online as an ordinary web resource
-					first. More complex systems can still sit behind the scenes when needed.
+					Publish once on the open web, keep control of your own domain and hosting,
+					and let many tools interoperate with the same collection resources.
 				</p>
 				<div class="cta-row" aria-label="Closing calls to action">
 					<a class="button-link" href="./site/docs/open-collections-protocol.html">Protocol</a>
-					<a class="button-link button-link-secondary" href="./docs/linked-collections-architecture.md">Architecture docs</a>
-					<a class="button-link button-link-secondary" href="./site/demo/">Examples and demo</a>
+					<a class="button-link button-link-secondary" href="./site/docs/">Documentation</a>
+					<a class="button-link button-link-secondary" href="./site/demo/">Demo</a>
 				</div>
 			</section>
 		</main>

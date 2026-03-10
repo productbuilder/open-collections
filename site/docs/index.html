@@ -13,6 +13,8 @@
 				<nav class="site-nav" aria-label="Primary navigation">
 					<a href="../../">Home</a>
 					<a href="./open-collections-protocol.html">Protocol</a>
+					<a href="../tools/">Tools</a>
+					<a href="../storage/">Storage</a>
 					<a href="./" class="is-active" aria-current="page">Documentation</a>
 					<a href="../demo/">Demo</a>
 				</nav>
@@ -22,77 +24,63 @@
 			<header>
 				<h1>Documentation</h1>
 				<p>
-					The main UI is now a reusable Shadow DOM Web Component:
-					<code>timemap-collector</code>.
+					Use this page to choose the right starting point. Begin with user-facing guides,
+					then go deeper into implementation details when needed.
 				</p>
 				<div class="link-grid" aria-label="Documentation entry points">
 					<a class="link-card" href="./open-collections-protocol.html"
-						><strong>Open Collections Protocol</strong><br />Public overview of the protocol,
-						LinkedCollections architecture, DCD discovery, and ecosystem roles.</a
+						><strong>Start here</strong><br />Get the big picture of Open Collections Protocol,
+						LinkedCollections, and Domain Collections Discovery (DCD).</a
+					>
+					<a class="link-card" href="../tools/"
+						><strong>Tools</strong><br />Learn what Collection Manager, Collection Browser,
+						Indexer, Registrator, and TimeMap do.</a
+					>
+					<a class="link-card" href="../storage/"
+						><strong>Storage providers</strong><br />Compare Git-based and S3-compatible hosting
+						options for publishing.</a
+					>
+					<a class="link-card" href="../demo/"
+						><strong>Publishing a collection</strong><br />Use the demo to test a practical workflow
+						with a sample collection.</a
+					>
+					<a class="link-card" href="../../src/apps/collector/"
+						><strong>Components and embedding</strong><br />Open the Collection Manager app and
+						component implementation entry points.</a
+					>
+					<a class="link-card" href="../../docs/linked-collections-architecture.md"
+						><strong>Technical reference</strong><br />Read deeper architecture and specification
+						documents in the project docs directory.</a
 					>
 				</div>
 			</header>
 
 			<section>
-				<h2>1. Embedding</h2>
+				<h2>Protocol overview</h2>
+				<p>
+					The protocol page explains the publishing model, discovery with DCD,
+					and how tools and components fit around the protocol without redefining it.
+				</p>
+			</section>
+
+			<section>
+				<h2>Tools and components</h2>
+				<p>
+					Collection Manager and Collection Browser can be used as standalone tools and
+					as embeddable web components. Integration details and API specifics belong in
+					technical implementation docs and app source references.
+				</p>
+			</section>
+
+			<section>
+				<h2>Technical implementation notes</h2>
+				<p>
+					For implementation details (including custom elements, embedding scripts,
+					and application internals), use the technical reference links above.
+				</p>
 				<pre><code>&lt;script type="module" src="/src/apps/collector/src/index.js"&gt;&lt;/script&gt;
 &lt;timemap-collector&gt;&lt;/timemap-collector&gt;</code></pre>
-				<ul>
-					<li>Custom element name: <code>timemap-collector</code></li>
-					<li>Uses Shadow DOM for style and shell encapsulation</li>
-					<li>Main layout: white header, card viewport, metadata sidebar</li>
-				</ul>
-			</section>
-
-			<section>
-				<h2>2. SaaS Shell Layout</h2>
-				<ul>
-					<li>Collector header: Sources + Publish + Register placeholder actions</li>
-					<li>Main workspace is height-bounded with split panes</li>
-					<li>Left pane: independently scrollable media card viewport</li>
-					<li>Right pane: independently scrollable metadata editor</li>
-					<li>Sources manager and Manifest UIs in dialogs</li>
-				</ul>
-			</section>
-
-			<section>
-				<h2>3. Collector storage model</h2>
-				<ul>
-					<li>Sources manager with connected storage-source list and add-source forms</li>
-					<li>Collector is focused on storage-backed collection management</li>
-					<li>Sources represent storage systems with collections per source (scaffolded where discovery is limited)</li>
-					<li>GitHub source (manifest-first import; inline item metadata save with PAT write permission)</li>
-					<li>Google Drive connected source (read-only import mode currently)</li>
-					<li>Registration flow placeholder available from Collector header</li>
-					<li>Merged asset browsing and source-aware selection</li>
-					<li>Source badges on cards and source filtering in the main workspace</li>
-					<li>Asset viewer dialog for large preview (View button or double-click)</li>
-					<li>Metadata editor grouped by Basic, Authorship, Context, Rights, Classification</li>
-					<li>Remembered source definitions in local browser storage (safe config only; no tokens)</li>
-					<li>Manifest generate/preview/copy/download</li>
-					<li>OPFS local draft storage for workspace persistence (with browser-support fallback)</li>
-					<li>Image ingestion (drag/drop + picker), local draft upload states, thumbnail generation, and GitHub publish uploads</li>
-					<li>New collection flow: create local draft collection metadata first, then add assets and publish explicitly</li>
-					<li>Collection root model: each collection publishes to its own directory namespace (`&lt;collection-id&gt;/collection.json`, `media/`, `thumbs/`)</li>
-				</ul>
-			</section>
-
-			<section>
-				<h2>4. Browser app</h2>
-				<ul>
-					<li>Separate read-only app at <code>/src/apps/browser/</code></li>
-					<li>Loads collection manifests for public browsing</li>
-					<li>No publish or metadata write controls</li>
-				</ul>
-			</section>
-
-			<section class="docs-utility-section">
-				<h2>5. Live Collector Instance</h2>
-				<div class="docs-embed-block">
-					<timemap-collector></timemap-collector>
-				</div>
 			</section>
 		</main>
-		<script type="module" src="../../src/apps/collector/src/index.js"></script>
 	</body>
 </html>

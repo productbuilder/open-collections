@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Storage | Open Collections Protocol</title>
+		<link rel="stylesheet" href="../../index.css" />
+	</head>
+	<body class="docs-page">
+		<div class="site-header">
+			<div class="site-header-inner">
+				<div class="site-brand">Open Collections Protocol</div>
+				<nav class="site-nav" aria-label="Primary navigation">
+					<a href="../../">Home</a>
+					<a href="../docs/open-collections-protocol.html">Protocol</a>
+					<a href="../tools/">Tools</a>
+					<a href="./" class="is-active" aria-current="page">Storage</a>
+					<a href="../docs/">Documentation</a>
+					<a href="../demo/">Demo</a>
+				</nav>
+			</div>
+		</div>
+
+		<main>
+			<header>
+				<h1>Storage options</h1>
+				<p>
+					Open Collections Protocol does not require one central platform. You can host
+					collections with storage providers your team already knows.
+				</p>
+				<p>
+					The key requirement is a stable published web surface: predictable URLs for
+					manifests, item details, and media.
+				</p>
+			</header>
+
+			<section>
+				<h2>Git providers</h2>
+				<p>
+					Git-based hosting works well when you want straightforward version history,
+					collaborative editing workflows, and easy static publishing.
+				</p>
+				<ul>
+					<li><strong>Good for:</strong> smaller-to-medium collections, team editing, audit trails.</li>
+					<li><strong>Typical choices:</strong> GitHub, GitLab, Forgejo, and Gitea.</li>
+					<li><strong>When to choose:</strong> when your team is comfortable with repository-based publishing.</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2>S3-compatible object storage</h2>
+				<p>
+					S3-compatible storage is useful for larger media workloads and infrastructure
+					setups that separate storage from application logic.
+				</p>
+				<ul>
+					<li><strong>Good for:</strong> large asset volumes, scalable storage, CDN-friendly delivery.</li>
+					<li><strong>Typical choices:</strong> AWS S3, Cloudflare R2, Backblaze B2 S3, and MinIO.</li>
+					<li><strong>When to choose:</strong> when you need object-storage scale or already run S3-style infrastructure.</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2>Choosing between Git and S3</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>Question</th>
+							<th>Git providers</th>
+							<th>S3-compatible providers</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Do you want built-in version history and pull request workflows?</td>
+							<td>Strong fit</td>
+							<td>Usually handled by external tooling</td>
+						</tr>
+						<tr>
+							<td>Do you expect very large media storage needs?</td>
+							<td>Possible, but may require extra planning</td>
+							<td>Strong fit</td>
+						</tr>
+						<tr>
+							<td>Do you want simple static publishing from repository files?</td>
+							<td>Strong fit</td>
+							<td>Possible with static hosting layer in front</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section>
+				<h2>Publishing stability matters most</h2>
+				<p>
+					Whichever storage provider you choose, the public outcome should look the same:
+					stable, crawlable, web-accessible collection resources.
+				</p>
+				<p>
+					That consistency allows Collection Manager, Collection Browser, indexers,
+					registries, and other tools to interoperate without requiring one vendor platform.
+				</p>
+			</section>
+		</main>
+	</body>
+</html>

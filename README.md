@@ -1,6 +1,6 @@
-# timemap-collector
+# open-collections
 
-TimeMap now contains two focused applications in one repository:
+Open Collections now contains two focused applications in one repository:
 
 - Collector: writable collection management (edit, publish, register placeholder)
 - Browser: read-only collection browsing

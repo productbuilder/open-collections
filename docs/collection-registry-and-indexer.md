@@ -1,143 +1,173 @@
 # Collection Registry (Registrator) and Collection Indexer
 
-> The Collection Registry keeps track of what is known. The Collection Indexer turns what is known into something searchable, browsable, and explorable.
+> Collection Registry keeps track of what is known. Collection Indexer turns what is known into something searchable and explorable. WordPress can be one practical path for publishing and participating in that ecosystem.
 
 ## 1) Overview
 
-Open Collections Protocol allows collections to be published as ordinary web resources.
+Open Collections Protocol is the publication and discovery layer. It defines how collections are published as ordinary web resources.
 
-On top of that publishing layer, two optional ecosystem tools can be used:
+On top of that layer, optional ecosystem tools can help communities coordinate discovery and reuse:
 
-- **Collection Registry** (internal module term: **Registrator**)
+- **Collection Registry** (internal module name: **Registrator**)
 - **Collection Indexer**
+- tools such as **Collection Manager** and **Collection Browser**
 
-These tools are not mandatory central infrastructure. Collections can still be published and consumed without them. They exist to make discovery, validation, and cross-collection exploration easier when ecosystems grow.
+These are ecosystem tools, not mandatory centralized infrastructure.
 
-## 2) Why they are separate
+## 2) Collection Registry: what it is
 
-The core distinction is:
+**Collection Registry** is a lightweight persistent tool for tracking known collections, publishers, and registries.
 
-- **Collection Registry** = keeps track of known publishers, collections, and registries.
-- **Collection Indexer** = fetches and processes known collections to create derived search/browse views.
+It is intentionally practical:
 
-The registry answers:
+- it can start small
+- it does not need a heavy backend from day one
+- it can support local, institutional, thematic, national, or global use
 
-- what is known
-- who published it
-- where it is
-- whether it is valid
-- whether it has been indexed
+It is not the same thing as the Collection Indexer.
 
-The indexer answers:
+## 3) What the registry stores
 
-- what the manifests and item metadata contain
-- how to derive browse/search structures from that content
-- how viewers, discovery layers, and aggregators can use those derived outputs
+A first implementation should persist records such as:
 
-This separation prevents the registry from becoming a full search engine and prevents indexing from becoming mandatory for basic publication.
+- publishers
+- collection registrations
+- registry registrations
+- validation records
+- index jobs or indexing state references
 
-## 3) Why they can still be combined in one app
+In short: it stores what is known and the current operational state around that knowledge.
 
-They are **separate logical modules**, but they can run together in one deployment for early implementations.
+## 4) Why it exists
 
-Practical first deployment pattern:
+The registry exists because collection owners and communities need a practical way to keep track of known resources.
 
-- one app process
-- one lightweight persistent store
-- clear internal boundaries between registry and indexing workflows
+It helps with:
 
-This gives a simple operational setup while preserving architecture that can later split into separate services.
+- registering collections in one place
+- validating and re-validating known records
+- supporting local governance and trust models
+- linking registries without requiring one global platform
 
-## 4) Collection Registry
+A registry can register:
 
-The Collection Registry tracks:
+- publishers
+- collections
+- other registries
 
-- known publishers
-- known collections
-- known registries
-- validation state
-- indexing state (at registration level)
+That linked-registry model supports federation.
 
-A key first-class capability: a registry must be able to register **other registries**, not only collections.
+## 5) Minimal persistence model
 
-## 5) Collection Indexer
+A lightweight-first baseline is recommended:
 
-The Collection Indexer processes:
+- SQLite-backed persistence
+- JSON export/import
+- optional published `registry.json`
+- no heavy database server required at first
 
-- collection manifests
+This gives durability and portability with low operational burden.
+
+## 6) Minimal deployment model
+
+A simple and practical deployment is:
+
+- one small web app
+- one SQLite file on disk
+- one domain or subdomain
+- optional reverse proxy
+- optional scheduled backup
+- optional export endpoint such as `registry.json`
+
+This model works well for small organizations and early pilots.
+
+## 7) Go binary option
+
+One practical packaging choice is a Go application distributed as a standalone binary.
+
+Why this works well:
+
+- simple install and update path
+- no Go toolchain needed when prebuilt binaries are provided
+- SQLite fits naturally as file-based persistence
+- easy self-hosting on modest infrastructure
+- easy backup by copying data files
+
+This is a strong option for downloadable self-hosted deployments.
+
+## 8) Container option
+
+Another practical packaging choice is a container deployment.
+
+Typical pattern:
+
+- run Collection Registry in a container
+- mount persistent storage for SQLite/data files
+- expose the web UI/API through a domain
+
+Tradeoff:
+
+- users do not need Node.js or Go installed
+- users do need a container runtime
+
+This is often a good fit for hosted environments and technical operations teams.
+
+## 9) Hosted option
+
+A shared hosted Collection Registry service can be offered later.
+
+It is useful, but not required for the core architecture.
+
+The core model still works with self-hosted, lightweight deployments.
+
+## 10) Collection Indexer: separate but related
+
+**Collection Registry** and **Collection Indexer** should remain separate in architecture and data model:
+
+- Collection Registry keeps track of known things
+- Collection Indexer processes known collections
+
+Collection Indexer processes:
+
+- manifests
 - item metadata
 - media references
-- derived search and browse structures
+- derived browse/search structures
 
-It supports downstream tools such as viewers, discovery portals, aggregators, and exploratory interfaces (including TimeMap-like experiences).
+An early implementation may run both modules together in one app process, while keeping clear logical boundaries.
 
-The indexer should track indexing jobs and outputs, while the registry stays focused on persistent references and state.
+## 11) Linked registries and federation
 
-## 6) Federation / linked registries
+Federation is a core requirement.
 
-Federation is core to the registry model.
+A registry can:
 
-A registry may:
-
-- register publishers
-- register collections
 - register other registries
 - link to another registry
 - harvest summary data from another registry
 - optionally mirror another registry
 
-Federation should **preserve provenance**:
+When importing records, provenance should be preserved:
 
-- imported records keep source-registry references
-- provenance metadata is retained when harvesting or mirroring
-- federation should not require full duplication by default
+- retain source registry references
+- track import source and timestamps
+- avoid losing authority context
 
-Registries can operate at different levels:
+## 12) Indexing modes
 
-- local
-- institutional
-- thematic
-- national
-- global
+Collection Indexer does not need to scan the entire internet continuously from day one.
 
-This enables a network of linked registries rather than one mandatory global hub.
+Use staged indexing:
 
-## 7) Indexing modes
+1. **Registry-driven indexing** of known records
+2. **Scheduled refresh** of known records
+3. **Optional broader discovery** later when needed
 
-Indexing should be staged, not assumed to be internet-wide crawling from day one.
+This keeps early operations manageable.
 
-### Mode 1: Registry-driven indexing
+## 13) Starter data model (first pass)
 
-Index only known collections discovered via local registry entries, known publishers, or linked registries.
-
-### Mode 2: Scheduled refresh indexing
-
-Periodically re-check known collections and known registries to refresh validation and index outputs.
-
-### Mode 3: Optional broader discovery (later)
-
-Add wider crawling only when needed.
-
-Internet-scale continuous crawling is optional, not required for initial design.
-
-## 8) Persistence and deployment
-
-Registry data must be persistent, but the first implementation can stay lightweight.
-
-Recommended starting approach:
-
-- downloadable / self-hostable deployment
-- SQLite-backed or file-backed persistence
-- JSON export/import
-- optional published registry JSON for static sharing
-
-Later, a hosted shared service can be added without changing the conceptual model.
-
-Blockchain is not part of the core design. If ever used, it should be optional notarization only.
-
-## 9) Minimal first-pass data model
-
-### A. Publisher
+### Publisher
 
 ```json
 {
@@ -152,10 +182,7 @@ Blockchain is not part of the core design. If ever used, it should be optional n
 }
 ```
 
-A publisher represents a domain or authority that publishes collections.
-DCD acts as the domain-level discovery anchor.
-
-### B. Collection registration
+### Collection registration
 
 ```json
 {
@@ -177,10 +204,7 @@ DCD acts as the domain-level discovery anchor.
 }
 ```
 
-The registry stores collection-level references and state, not full indexed search content.
-This is the persistent registry record for a known collection.
-
-### C. Registry
+### Registry
 
 ```json
 {
@@ -198,9 +222,7 @@ This is the persistent registry record for a known collection.
 }
 ```
 
-A registry record can point to another registry, enabling linked registry networks.
-
-### D. Validation record
+### Validation record
 
 ```json
 {
@@ -219,9 +241,7 @@ A registry record can point to another registry, enabling linked registry networ
 }
 ```
 
-Current status can live on main records, with validation history preserved in separate validation records.
-
-### E. Index job
+### Index job
 
 ```json
 {
@@ -235,9 +255,7 @@ Current status can live on main records, with validation history preserved in se
 }
 ```
 
-This belongs to the indexer workflow and tracks indexing activity without turning the registry into the full search backend.
-
-### Starter status vocabularies
+## 14) Starter status vocabularies
 
 Collection registration status:
 
@@ -261,23 +279,3 @@ Indexing status:
 - `indexed`
 - `partial`
 - `failed`
-
-## 10) Relationship to the broader ecosystem
-
-- **Open Collections Protocol**: base publishing and interoperability layer.
-- **LinkedCollections**: linked-data and cross-collection relationship patterns that can inform indexing and aggregation.
-- **DCD (Domain Collections Discovery)**: domain discovery anchor used by registries and indexers.
-- **Collection Manager**: helps create and publish collections.
-- **Collection Registry (Registrator)**: keeps track of known publishers, collections, and registries.
-- **Collection Indexer**: processes known collections into searchable/browsable derived structures.
-- **Collection Browser**: consumes published and/or indexed outputs for public exploration.
-- **TimeMap**: uses indexed/published collection data for cross-collection, temporal, and contextual exploration.
-- **Publishers**: host authoritative manifests and media.
-- **Viewers and aggregators**: consume indexed or directly published outputs.
-
-## Scope boundary summary
-
-- Collection Registry is not the same as Collection Indexer.
-- Registry should not become a full search engine by default.
-- Indexer should not become mandatory for basic publication.
-- Both are optional ecosystem tools above the core protocol.

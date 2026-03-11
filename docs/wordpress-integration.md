@@ -14,8 +14,6 @@ WordPress is a strong path for:
 - community publishers
 - teams that already run a WordPress website
 
-It lowers onboarding friction by reusing familiar admin workflows, hosting, and plugin-based distribution.
-
 ## 2) Core positioning
 
 A WordPress integration should preserve these boundaries:
@@ -27,20 +25,20 @@ A WordPress integration should preserve these boundaries:
 
 ## 3) Plugin concept (first implementation)
 
-A practical first plugin direction is:
+Working plugin direction:
 
 - **Open Collections for WordPress**
 
-Phase-1 plugin focus:
+Phase 1 focus:
 
 - embed Collection Manager
 - manage WordPress-side configuration
-- publish protocol-facing outputs
+- expose protocol-facing output routes
 - optionally expose Domain-owned Collections Discovery (DCD)
 
 ## 4) Relationship to Collection Manager
 
-The plugin should embed/use the existing Collection Manager web component.
+The plugin embeds and configures the existing Collection Manager web component.
 
 - WordPress hosts and configures Collection Manager
 - Collection Manager remains reusable outside WordPress
@@ -49,35 +47,34 @@ The plugin should embed/use the existing Collection Manager web component.
 Likely integration methods include:
 
 - shortcode
-- block
 - admin screen mount
-- page embed
-- settings-driven configuration passed into component initialization
+- block integration later
+- settings-driven configuration handoff
 
 ## 5) Suggested implementation roadmap
 
-### Phase 1 — Publishing + Manager embed
+### Phase 1 - Publishing + Manager embed
 
 - embed Collection Manager
 - provide basic plugin settings
 - configure collection root/output paths
-- expose/generate collection manifest
+- expose manifest/item/media route placeholders
 - expose optional DCD output
 
-### Phase 2 — Browser + better UX
+### Phase 2 - Browser + better UX
 
 - embed Collection Browser
 - improve admin/editor experience
 - improve media library integration
 - improve publishing flows
 
-### Phase 3 — Registry participation
+### Phase 3 - Registry participation
 
 - optional Collection Registry participation
 - registry export
 - possibly lightweight registry functions inside WordPress
 
-### Phase 4 — Advanced integrations
+### Phase 4 - Advanced integrations
 
 - provider-specific helpers
 - richer permission models
@@ -126,18 +123,21 @@ Avoid overbuilding in the first version:
 - complex custom data modeling too early
 - too many provider integrations at once
 
-## 9) Why this matters
+## 9) Current scaffold status
 
-This path lowers adoption barriers while preserving open interoperability:
+Implemented scaffold code now lives in:
 
-- easier starting point for non-technical users
-- incremental adoption for existing organizations
-- portable, web-native outputs remain central
-- decentralized protocol architecture remains intact
+- `wordpress/open-collections/`
 
-## 10) Plan reference
+Current scaffold includes:
 
-See implementation scaffold and phase details:
+- plugin bootstrap and modular includes
+- admin settings page
+- shortcode and admin mount support
+- config handoff pattern for component mounting
+- protocol route placeholders
+
+## 10) Plan and implementation notes
 
 - [WordPress Integration Plan](../projects/plans/26-03-11/wordpress-integration-plan.md)
 

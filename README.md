@@ -13,6 +13,7 @@ Open Collections now contains two focused applications in one repository:
 - Site examples: `./site/examples/`
 - Collector app: `./src/apps/collector/`
 - Browser app: `./src/apps/browser/`
+- WordPress plugin scaffold: `./wordpress/open-collections/`
 
 ## App roles
 

@@ -25,5 +25,6 @@ require_once OPEN_COLLECTIONS_PLUGIN_DIR . 'includes/class-open-collections-plug
 require_once OPEN_COLLECTIONS_PLUGIN_DIR . 'includes/class-open-collections-settings.php';
 require_once OPEN_COLLECTIONS_PLUGIN_DIR . 'includes/class-open-collections-admin.php';
 require_once OPEN_COLLECTIONS_PLUGIN_DIR . 'includes/class-open-collections-embed.php';
+require_once OPEN_COLLECTIONS_PLUGIN_DIR . 'includes/class-open-collections-protocol.php';
 
 Open_Collections_Plugin::instance()->boot();

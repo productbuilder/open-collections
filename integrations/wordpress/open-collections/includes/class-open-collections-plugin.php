@@ -27,6 +27,11 @@ class Open_Collections_Plugin
     private $embed;
 
     /**
+     * @var Open_Collections_Protocol
+     */
+    private $protocol;
+
+    /**
      * @return Open_Collections_Plugin
      */
     public static function instance()
@@ -46,6 +51,7 @@ class Open_Collections_Plugin
         $this->settings = new Open_Collections_Settings();
         $this->admin = new Open_Collections_Admin($this->settings);
         $this->embed = new Open_Collections_Embed($this->settings);
+        $this->protocol = new Open_Collections_Protocol($this->settings);
 
         add_action('admin_init', array($this->settings, 'register_settings'));
         add_action('admin_menu', array($this->admin, 'register_admin_menu'));
@@ -53,5 +59,8 @@ class Open_Collections_Plugin
 
         add_shortcode('open_collections_manager', array($this->embed, 'render_shortcode'));
         add_action('wp_enqueue_scripts', array($this->embed, 'register_frontend_assets'));
+
+        add_action('rest_api_init', array($this->protocol, 'register_rest_routes'));
+        add_action('template_redirect', array($this->protocol, 'maybe_render_dcd_output'));
     }
 }

@@ -62,7 +62,16 @@ class Open_Collections_Admin
             true
         );
 
-        wp_localize_script('open-collections-manager-embed', 'OpenCollectionsConfig', $this->build_manager_config());
+        wp_localize_script(
+            'open-collections-manager-embed',
+            'OpenCollectionsConfig',
+            $this->settings->build_manager_config(
+                array(
+                    'mountSelector' => '#open-collections-manager-root',
+                    'context'       => 'wordpress-admin',
+                )
+            )
+        );
         wp_enqueue_script('open-collections-manager-embed');
     }
 
@@ -75,6 +84,7 @@ class Open_Collections_Admin
         echo '<div class="wrap open-collections-settings">';
         echo '<h1>' . esc_html__('Open Collections for WordPress', 'open-collections') . '</h1>';
         echo '<p>' . esc_html__('Integration layer settings for Open Collections Protocol output and Collection Manager embedding.', 'open-collections') . '</p>';
+        echo '<p><strong>' . esc_html__('Embedding quick start:', 'open-collections') . '</strong> ' . esc_html__('Use shortcode [open_collections_manager] on a page, or open the Collection Manager admin submenu.', 'open-collections') . '</p>';
 
         echo '<form method="post" action="options.php">';
         settings_fields('open_collections_settings_group');
@@ -92,36 +102,8 @@ class Open_Collections_Admin
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Collection Manager (Scaffold)', 'open-collections') . '</h1>';
-        echo '<p>' . esc_html__('This page will mount Collection Manager using WordPress-managed configuration.', 'open-collections') . '</p>';
+        echo '<p>' . esc_html__('This page mounts Collection Manager using your saved plugin settings and protocol route stubs.', 'open-collections') . '</p>';
         echo '<div id="open-collections-manager-root" class="open-collections-manager-root"></div>';
         echo '</div>';
-    }
-
-    /**
-     * Build an initial configuration payload sent from WordPress into Collection Manager.
-     *
-     * Direction: use a localized script object so both admin mount and shortcode mount can
-     * read one JSON config envelope with routing, output, and provider settings.
-     */
-    private function build_manager_config()
-    {
-        $options = $this->settings->get_options();
-
-        return array(
-            'pluginVersion' => OPEN_COLLECTIONS_VERSION,
-            'mountSelector' => '#open-collections-manager-root',
-            'apiBase'       => rest_url(),
-            'output'        => array(
-                'collectionRoot' => $options['collection_root'],
-                'enableDcd'      => (bool) $options['enable_dcd'],
-            ),
-            'manager'       => array(
-                'bundleUrl' => $options['manager_bundle_url'],
-                'mountMode' => $options['manager_mount_mode'],
-            ),
-            'provider'      => array(
-                'name' => $options['provider'],
-            ),
-        );
     }
 }

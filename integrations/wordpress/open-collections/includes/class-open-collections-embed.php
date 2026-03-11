@@ -21,6 +21,13 @@ class Open_Collections_Embed
 
     public function register_frontend_assets()
     {
+        wp_register_style(
+            'open-collections-admin',
+            OPEN_COLLECTIONS_PLUGIN_URL . 'assets/css/admin.css',
+            array(),
+            OPEN_COLLECTIONS_VERSION
+        );
+
         wp_register_script(
             'open-collections-manager-embed',
             OPEN_COLLECTIONS_PLUGIN_URL . 'assets/js/collection-manager-embed.js',
@@ -32,12 +39,12 @@ class Open_Collections_Embed
         wp_localize_script(
             'open-collections-manager-embed',
             'OpenCollectionsConfig',
-            array(
-                'mountSelector' => '.open-collections-shortcode-root',
-                'manager' => array(
-                    'bundleUrl' => $this->settings->get_options()['manager_bundle_url'],
-                    'mountMode' => 'shortcode',
-                ),
+            $this->settings->build_manager_config(
+                array(
+                    'mountSelector' => '.open-collections-shortcode-root',
+                    'context'       => 'wordpress-shortcode',
+                    'manager'       => array('mountMode' => 'shortcode'),
+                )
             )
         );
     }
@@ -57,6 +64,7 @@ class Open_Collections_Embed
             'open_collections_manager'
         );
 
+        wp_enqueue_style('open-collections-admin');
         wp_enqueue_script('open-collections-manager-embed');
 
         return sprintf(

@@ -36,6 +36,15 @@ class Open_Collections_Settings
         );
 
         add_settings_field(
+            'output_base_url',
+            __('Output base URL', 'open-collections'),
+            array($this, 'render_text_field'),
+            'open-collections',
+            'open_collections_output',
+            array('key' => 'output_base_url', 'placeholder' => 'https://example.org/collections/main')
+        );
+
+        add_settings_field(
             'enable_dcd',
             __('Enable DCD endpoint', 'open-collections'),
             array($this, 'render_checkbox_field'),
@@ -90,6 +99,24 @@ class Open_Collections_Settings
             'open_collections_provider',
             array('key' => 'provider', 'placeholder' => 'filesystem | github | s3 | wordpress')
         );
+
+        add_settings_field(
+            'storage_adapter',
+            __('Storage adapter', 'open-collections'),
+            array($this, 'render_text_field'),
+            'open-collections',
+            'open_collections_provider',
+            array('key' => 'storage_adapter', 'placeholder' => 'wp-media | local | remote')
+        );
+
+        add_settings_field(
+            'site_domain',
+            __('Protocol site domain', 'open-collections'),
+            array($this, 'render_text_field'),
+            'open-collections',
+            'open_collections_provider',
+            array('key' => 'site_domain', 'placeholder' => 'collections.example.org')
+        );
     }
 
     /**
@@ -102,10 +129,13 @@ class Open_Collections_Settings
 
         return array(
             'collection_root'    => isset($input['collection_root']) ? sanitize_text_field($input['collection_root']) : '',
+            'output_base_url'    => isset($input['output_base_url']) ? esc_url_raw($input['output_base_url']) : '',
             'enable_dcd'         => ! empty($input['enable_dcd']) ? 1 : 0,
             'manager_bundle_url' => isset($input['manager_bundle_url']) ? esc_url_raw($input['manager_bundle_url']) : '',
             'manager_mount_mode' => isset($input['manager_mount_mode']) ? sanitize_key($input['manager_mount_mode']) : 'shortcode',
             'provider'           => isset($input['provider']) ? sanitize_text_field($input['provider']) : '',
+            'storage_adapter'    => isset($input['storage_adapter']) ? sanitize_text_field($input['storage_adapter']) : '',
+            'site_domain'        => isset($input['site_domain']) ? sanitize_text_field($input['site_domain']) : '',
         );
     }
 
@@ -116,10 +146,13 @@ class Open_Collections_Settings
     {
         $defaults = array(
             'collection_root'    => '/collections/main',
+            'output_base_url'    => home_url('/collections/main'),
             'enable_dcd'         => 0,
             'manager_bundle_url' => '',
             'manager_mount_mode' => 'shortcode',
             'provider'           => 'wordpress',
+            'storage_adapter'    => 'wp-media',
+            'site_domain'        => wp_parse_url(home_url(), PHP_URL_HOST),
         );
 
         return wp_parse_args(get_option(self::OPTION_KEY, array()), $defaults);
@@ -172,5 +205,48 @@ class Open_Collections_Settings
         }
 
         echo '</select>';
+    }
+
+    /**
+     * Build a stable config envelope that WordPress passes into Collection Manager.
+     *
+     * This method centralizes all plugin->manager settings mapping so shortcode and admin
+     * mounts use the same config contract.
+     *
+     * @param array $overrides
+     * @return array
+     */
+    public function build_manager_config($overrides = array())
+    {
+        $options = $this->get_options();
+
+        $config = array(
+            'pluginVersion' => OPEN_COLLECTIONS_VERSION,
+            'apiBase'       => rest_url(),
+            'output'        => array(
+                'collectionRoot' => $options['collection_root'],
+                'outputBaseUrl'  => $options['output_base_url'],
+                'enableDcd'      => (bool) $options['enable_dcd'],
+            ),
+            'manager'       => array(
+                'bundleUrl' => $options['manager_bundle_url'],
+                'mountMode' => $options['manager_mount_mode'],
+            ),
+            'provider'      => array(
+                'name'           => $options['provider'],
+                'storageAdapter' => $options['storage_adapter'],
+            ),
+            'protocol'      => array(
+                'siteDomain' => $options['site_domain'],
+                'routes'     => array(
+                    'collection' => rest_url('open-collections/v1/collection.json'),
+                    'item'       => rest_url('open-collections/v1/items/{itemId}'),
+                    'media'      => rest_url('open-collections/v1/media/{path}'),
+                    'dcd'        => home_url('/.well-known/collections.json'),
+                ),
+            ),
+        );
+
+        return array_replace_recursive($config, $overrides);
     }
 }

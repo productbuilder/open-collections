@@ -10,6 +10,10 @@
   min-height: 120px;
 }
 
+.open-collections-shortcode-root {
+  margin: 12px 0;
+}
+
 .open-collections-config-preview {
   margin: 0;
   white-space: pre-wrap;

@@ -141,11 +141,18 @@ See implementation scaffold and phase details:
 
 - [WordPress Integration Plan](../projects/plans/26-03-11/wordpress-integration-plan.md)
 
-## 11) Repository status (current scaffold)
+## 11) Repository status (current MVP pass)
 
 A first plugin scaffold now exists at:
 
 - `integrations/wordpress/open-collections/`
 
-This scaffold establishes plugin bootstrap, settings/admin structure, and early embed/config plumbing for Collection Manager without claiming production completeness.
+This implementation now includes a first usable path:
 
+- persisted plugin settings for output/provider/embed values
+- shortcode + admin mount points for Collection Manager
+- localized config envelope from WordPress to manager runtime
+- lightweight protocol output stubs (`collection.json`, item/media URL shapes)
+- optional `/.well-known/collections.json` placeholder output
+
+It still intentionally avoids full registry/indexer/provider production workflows in this phase.

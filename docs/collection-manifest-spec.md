@@ -2,42 +2,48 @@
 
 ## Overview
 
-A collection is described by a manifest file called:
+A collection is described by a manifest file called `collection.json`.
 
-collection.json
-
-This file is the entry point for the collection.
-
-Applications use it to:
+This file is the core publication entry point. Applications use it to:
 
 - identify the collection
 - list items
 - locate item metadata
 - locate media resources
+- understand optional access capabilities (if present)
 
 The manifest acts as a **collection index**, not a full database.
 
-Detailed metadata should be stored in separate item files.
+## Core protocol vs optional capabilities
+
+Open Collections Protocol is designed as:
+
+1. **Core protocol (required):** static-friendly publication with stable URLs, manifest, item detail files, media assets, and DCD discovery.
+2. **Optional capabilities (additive):** pagination, filtering, incremental synchronization, and query templates for very large collections.
+
+A collection remains valid without any optional capability fields.
 
 ---
 
-# Minimal Manifest Structure
-
-Example:
+## Minimal Core Manifest Structure
 
 ```json
 {
   "id": "harbor-collection",
   "title": "Harbor Collection",
   "description": "Historic harbor maps",
-  "version": "1.0",
+  "protocolVersion": "1.0",
+  "canonicalUrl": "https://museum-example.org/collections/harbor/collection.json",
+  "license": "CC BY 4.0",
+  "rightsStatement": "https://rightsstatements.org/vocab/InC/1.0/",
   "items": [
     {
       "id": "harbor-map-001",
       "title": "Harbor Map 001",
       "type": "image",
       "thumbnailUrl": "thumbs/harbor-map-001.jpg",
-      "detailUrl": "items/harbor-map-001.json"
+      "detailUrl": "items/harbor-map-001.json",
+      "updatedAt": "2025-09-01T12:00:00Z"
     }
   ]
 }
@@ -45,174 +51,155 @@ Example:
 
 ---
 
-# Top-Level Fields
+## Top-Level Fields
 
-## id
+### `id`
 
-Unique identifier for the collection.
+Collection identifier. Keep stable once published.
 
-Example:
-
-```
-"harbor-collection"
-```
-
----
-
-## title
+### `title`
 
 Human-readable title.
 
-Example:
+### `description`
 
-```
-"Harbor Collection"
-```
+Optional collection description.
+
+### `protocolVersion`
+
+Recommended protocol version field (for example `"1.0"`).
+
+### `canonicalUrl`
+
+Primary public identifier for the manifest URL.
+
+### `license`
+
+Human-readable or machine-readable license reference.
+
+### `rightsStatement`
+
+Rights statement URI or text.
+
+### `items`
+
+Array of lightweight item summaries.
+
+Detailed metadata should be stored in separate item detail files.
+
+### `capabilities` (optional)
+
+Optional collection access/scalability declarations.
+
+### `queries` (optional)
+
+Optional query templates for clients.
 
 ---
 
-## description
-
-Optional description of the collection.
-
----
-
-## version
-
-Optional version identifier.
-
----
-
-## items
-
-Array of item summaries.
-
-Each item represents a resource within the collection.
-
-The items array should contain **lightweight item summaries** only.
-
-Detailed metadata should be stored separately.
-
----
-
-# Item Summary Fields
+## Item Summary Fields
 
 Each item summary should include:
 
-## id
+- `id` (stable within the collection)
+- `title`
+- `type`
+- `thumbnailUrl`
+- `detailUrl`
 
-Unique identifier within the collection.
+Recommended for synchronization:
 
-Example:
+- `updatedAt` (ISO 8601 timestamp)
 
-```
-"harbor-map-001"
-```
+## Item Detail Files
 
----
+Detailed metadata should be stored in separate files (for example `items/harbor-map-001.json`) and can include:
 
-## title
-
-Human-readable title.
-
----
-
-## type
-
-Type of item.
-
-Common values include:
-
-* image
-* model
-* document
-* material
-* product
+- `canonicalUrl`
+- rights and attribution metadata
+- richer domain fields
+- namespaced extension objects under an `extensions` key
 
 ---
 
-## thumbnailUrl
+## Identity and Mirrors
 
-URL of the thumbnail image.
-
-This should load quickly and represent the item visually.
-
----
-
-## detailUrl
-
-URL pointing to the item detail file.
-
-Example:
-
-```
-items/harbor-map-001.json
-```
-
-This file contains full metadata.
+- Canonical URLs are primary public identifiers.
+- Local IDs are useful internal keys but should not replace canonical URLs.
+- Mirror hosting is allowed; canonical references should still be clear.
 
 ---
 
-# Item Detail Files
+## Extension Model
 
-Detailed metadata should be stored in separate files.
+Use additive extension patterns that avoid collisions:
 
-Example:
+- namespaced fields
+- `extensions` objects
+- linked vocabularies when needed
 
-```
-items/harbor-map-001.json
-```
-
-This allows applications to load item details on demand.
+Keep extension fields optional so the base manifest stays simple.
 
 ---
 
-# Media Storage
+## Optional Collection Access Capabilities (Large Collections)
 
-Media assets should be stored in predictable directories.
+For large collections, listing all items directly in one manifest may become impractical.
 
-Example:
+Optional access capabilities can expose paged and filtered item access.
 
+```json
+{
+  "capabilities": {
+    "pagination": true,
+    "filtering": true,
+    "incrementalSync": true
+  },
+  "itemsPageUrl": "https://museum-example.org/collections/harbor/items?page=1",
+  "queries": {
+    "itemSearchUrlTemplate": "https://museum-example.org/collections/harbor/items{?page,pageSize,type,updatedAfter}"
+  }
+}
 ```
-media/
-thumbs/
-items/
-```
 
-Example structure:
-
-```
-collection/
-  collection.json
-  items/
-  media/
-  thumbs/
-```
+These fields are optional and do not replace core publication files.
 
 ---
 
-# Design Principles
+## Schema Direction
+
+The protocol should maintain JSON Schema definitions for:
+
+- collection manifests
+- item records
+- optional capability structures
+
+This keeps validation practical while preserving lightweight publication.
+
+---
+
+## Protocol Maturity and Next Steps
+
+The protocol is already useful in production-style publishing flows, while still maturing.
+
+Likely next maturity steps:
+
+- formal versioned specification
+- maintained JSON Schemas
+- stable compatibility/versioning guidance
+- optional access capability profiles
+- reference implementations
+
+---
+
+## Design Principles
 
 The manifest should remain:
 
-* small
-* readable
-* easy to index
-* easy to cache
+- small
+- readable
+- easy to index
+- easy to cache
+- compatible with static hosting
 
 It should function as a **collection index**, not a full record store.
-
----
-
-# Future Extensions
-
-Optional extensions may include:
-
-* tags
-* dates
-* geographic information
-* links to other collections
-* JSON-LD contexts
-* IIIF references
-
-These should remain optional to keep the base specification simple.

@@ -39,6 +39,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       selectedCollectionId: 'all',
       currentLevel: 'collections',
       openedCollectionId: null,
+      mobileEditorOpen: false,
       publishDestination: null,
       manifest: null,
       opfsAvailable: false,
@@ -134,6 +135,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
     this.setLocalDraftControlsEnabled(false);
     this.initializeLocalDraftState();
+    this.syncEditorVisibility();
+    window.addEventListener('resize', () => this.syncEditorVisibility());
   }
 
   renderShell() {
@@ -397,6 +400,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
           grid-template-rows: auto minmax(0, 1fr);
           min-height: 0;
           overflow: hidden;
+        }
+
+        .editor-close-btn {
+          display: none;
+        }
+
+        .more-actions-btn {
+          display: none;
         }
 
         .editor-wrap {
@@ -864,6 +875,135 @@ class OpenCollectionsManagerElement extends HTMLElement {
             min-height: 0;
           }
         }
+
+        @media (max-width: 760px) {
+          .app-shell {
+            border: none;
+            border-radius: 0;
+            min-height: 100dvh;
+          }
+
+          .topbar {
+            padding: 0.55rem 0.7rem;
+            gap: 0.55rem;
+            align-items: center;
+          }
+
+          .title {
+            font-size: 0.9rem;
+          }
+
+          #statusText,
+          #workspaceContext,
+          #openNewCollectionBtn,
+          #openProviderBtn,
+          #openPublishBtn,
+          #openRegisterBtn,
+          #assetCount,
+          #sourceFilter,
+          #collectionFilter {
+            display: none;
+          }
+
+          .top-actions {
+            flex-wrap: nowrap;
+            margin-left: auto;
+          }
+
+          .more-actions-btn {
+            display: inline-flex;
+          }
+
+          .btn {
+            padding: 0.3rem 0.52rem;
+            font-size: 0.77rem;
+            border-radius: 7px;
+          }
+
+          .content-grid {
+            padding: 0.65rem;
+            gap: 0.65rem;
+          }
+
+          .viewport-panel.panel {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+          }
+
+          .viewport-panel .panel-header {
+            border: none;
+            background: transparent;
+            padding: 0.1rem 0 0.45rem;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+          }
+
+          .panel-header-meta {
+            width: 100%;
+            justify-content: space-between;
+            gap: 0.4rem;
+          }
+
+          .viewport-actions .btn {
+            font-size: 0.78rem;
+          }
+
+          .asset-wrap {
+            padding: 0;
+          }
+
+          .asset-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.55rem;
+          }
+
+          .asset-card {
+            padding: 0.48rem;
+            gap: 0.4rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+          }
+
+          .thumb,
+          .thumb-placeholder {
+            height: 108px;
+          }
+
+          .card-actions .btn {
+            font-size: 0.76rem;
+            padding: 0.26rem 0.44rem;
+          }
+
+          .editor-panel {
+            position: fixed;
+            inset: 0;
+            z-index: 12;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            background: #f3f5f8;
+            display: none;
+          }
+
+          .editor-panel.is-mobile-editor-open {
+            display: grid;
+          }
+
+          .editor-panel .panel-header {
+            padding: 0.7rem 0.8rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+          }
+
+          .editor-wrap {
+            padding: 0.8rem;
+          }
+
+          .editor-close-btn {
+            display: inline-flex;
+          }
+        }
       </style>
 
       <div class="app-shell">
@@ -879,6 +1019,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
             <button class="btn" id="openProviderBtn" type="button">Sources</button>
             <button class="btn" id="openPublishBtn" type="button">Publish</button>
             <button class="btn" id="openRegisterBtn" type="button">Register</button>
+            <button class="btn more-actions-btn" id="openMobileActionsBtn" type="button">More</button>
           </div>
         </header>
 
@@ -910,7 +1051,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
           <aside class="panel editor-panel" aria-label="Metadata editor">
             <div class="panel-header">
               <h2 id="editorTitle" class="panel-title">Metadata editor</h2>
-              <p id="editorStatus" class="panel-subtext">Select a collection card.</p>
+              <div class="panel-header-meta">
+                <p id="editorStatus" class="panel-subtext">Select a collection card.</p>
+                <button class="btn editor-close-btn" id="closeEditorBtn" type="button">Close</button>
+              </div>
             </div>
             <div id="editorEmpty" class="editor-wrap">
               <div class="empty">Select a card to edit metadata.</div>
@@ -1036,6 +1180,24 @@ class OpenCollectionsManagerElement extends HTMLElement {
             </div>
             <p id="connectionStatus" class="panel-subtext">Not connected.</p>
             <pre id="capabilities">{}</pre>
+          </div>
+        </div>
+      </dialog>
+
+
+
+      <dialog id="mobileActionsDialog" aria-label="Mobile quick actions">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 class="dialog-title">Quick actions</h2>
+            <button class="btn" data-close="mobileActionsDialog" type="button">Close</button>
+          </div>
+          <div class="dialog-body">
+            <div class="dialog-actions">
+              <button class="btn" id="mobileActionsSourcesBtn" type="button">Sources</button>
+              <button class="btn" id="mobileActionsPublishBtn" type="button">Publish</button>
+              <button class="btn" id="mobileActionsRegisterBtn" type="button">Register</button>
+            </div>
           </div>
         </div>
       </dialog>
@@ -1286,13 +1448,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
       activeSourceLabel: root.getElementById('activeSourceLabel'),
       backToCollectionsBtn: root.getElementById('backToCollectionsBtn'),
       viewportTitle: root.getElementById('viewportTitle'),
+      editorPanel: root.querySelector('.editor-panel'),
       editorTitle: root.getElementById('editorTitle'),
+      closeEditorBtn: root.getElementById('closeEditorBtn'),
       openProviderBtn: root.getElementById('openProviderBtn'),
       openPublishBtn: root.getElementById('openPublishBtn'),
       openRegisterBtn: root.getElementById('openRegisterBtn'),
+      openMobileActionsBtn: root.getElementById('openMobileActionsBtn'),
       providerDialog: root.getElementById('providerDialog'),
       sourcePickerDialog: root.getElementById('sourcePickerDialog'),
       sourcePickerList: root.getElementById('sourcePickerList'),
+      mobileActionsDialog: root.getElementById('mobileActionsDialog'),
+      mobileActionsSourcesBtn: root.getElementById('mobileActionsSourcesBtn'),
+      mobileActionsPublishBtn: root.getElementById('mobileActionsPublishBtn'),
+      mobileActionsRegisterBtn: root.getElementById('mobileActionsRegisterBtn'),
       publishDialog: root.getElementById('publishDialog'),
       newCollectionDialog: root.getElementById('newCollectionDialog'),
       registerDialog: root.getElementById('registerDialog'),
@@ -1408,12 +1577,26 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.dom.openStorageOptionsBtn.addEventListener('click', () => this.openDialog(this.dom.storageOptionsDialog));
     this.dom.openPublishBtn.addEventListener('click', () => this.openDialog(this.dom.publishDialog));
     this.dom.openRegisterBtn.addEventListener('click', () => this.openDialog(this.dom.registerDialog));
+    this.dom.openMobileActionsBtn.addEventListener('click', () => this.openDialog(this.dom.mobileActionsDialog));
+    this.dom.mobileActionsSourcesBtn.addEventListener('click', () => {
+      this.closeDialog(this.dom.mobileActionsDialog);
+      this.openDialog(this.dom.providerDialog);
+    });
+    this.dom.mobileActionsPublishBtn.addEventListener('click', () => {
+      this.closeDialog(this.dom.mobileActionsDialog);
+      this.openDialog(this.dom.publishDialog);
+    });
+    this.dom.mobileActionsRegisterBtn.addEventListener('click', () => {
+      this.closeDialog(this.dom.mobileActionsDialog);
+      this.openDialog(this.dom.registerDialog);
+    });
     this.dom.openNewCollectionBtn.addEventListener('click', () => this.openNewCollectionDialog());
     this.dom.openSourcePickerBtn.addEventListener('click', () => {
       this.renderSourcePicker();
       this.openDialog(this.dom.sourcePickerDialog);
     });
     this.dom.backToCollectionsBtn.addEventListener('click', () => this.leaveCollectionView());
+    this.dom.closeEditorBtn.addEventListener('click', () => this.closeMobileEditor());
     this.dom.closeViewerBtn.addEventListener('click', () => this.closeViewer());
     this.dom.assetViewerDialog.addEventListener('close', () => {
       this.state.viewerItemId = null;
@@ -1584,6 +1767,29 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     dialog.removeAttribute('open');
+  }
+
+  isMobileViewport() {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  openMobileEditor() {
+    this.state.mobileEditorOpen = true;
+    this.syncEditorVisibility();
+  }
+
+  closeMobileEditor() {
+    this.state.mobileEditorOpen = false;
+    this.syncEditorVisibility();
+  }
+
+  syncEditorVisibility() {
+    if (!this.dom.editorPanel) {
+      return;
+    }
+
+    const shouldShowOverlay = this.isMobileViewport() && this.state.mobileEditorOpen;
+    this.dom.editorPanel.classList.toggle('is-mobile-editor-open', shouldShowOverlay);
   }
 
   renderProviderCatalog() {
@@ -3340,6 +3546,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state.openedCollectionId = collectionId;
     this.state.currentLevel = 'items';
     this.state.selectedItemId = null;
+    this.closeMobileEditor();
     this.renderAssets();
     this.renderEditor();
   }
@@ -3348,6 +3555,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state.currentLevel = 'collections';
     this.state.openedCollectionId = null;
     this.state.selectedItemId = null;
+    this.closeMobileEditor();
     this.renderAssets();
     this.renderEditor();
   }
@@ -3412,6 +3620,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
           this.state.selectedCollectionId = collection.id;
           this.renderAssets();
           this.renderEditor();
+          if (this.isMobileViewport()) {
+            this.openMobileEditor();
+          }
         });
 
         const title = document.createElement('p');
@@ -3497,12 +3708,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   selectItem(itemId) {
     if (this.state.selectedItemId === itemId) {
+      if (this.isMobileViewport()) {
+        this.openMobileEditor();
+      }
       return;
     }
 
     this.state.selectedItemId = itemId;
     this.renderAssets();
     this.renderEditor();
+    if (this.isMobileViewport()) {
+      this.openMobileEditor();
+    }
     if (this.state.opfsAvailable) {
       this.persistWorkspaceToOpfs().catch(() => {});
     }
@@ -3521,6 +3738,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.dom.editorEmpty.hidden = Boolean(selectedCollection);
       if (!selectedCollection) {
         this.dom.editorStatus.textContent = 'Select a collection card.';
+        this.syncEditorVisibility();
         return;
       }
       this.dom.editorStatus.textContent = `Editing collection ${selectedCollection.id}`;
@@ -3529,6 +3747,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.dom.collectionEditorLicense.value = selectedCollection.license || '';
       this.dom.collectionEditorPublisher.value = selectedCollection.publisher || '';
       this.dom.collectionEditorLanguage.value = selectedCollection.language || '';
+      this.syncEditorVisibility();
       return;
     }
 
@@ -3542,6 +3761,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.dom.editorStatus.textContent = 'Select an item card.';
       this.dom.editorForm.hidden = true;
       this.dom.editorEmpty.hidden = false;
+      this.syncEditorVisibility();
       return;
     }
 
@@ -3564,6 +3784,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.dom.itemTags.value = Array.isArray(selected.tags) ? selected.tags.join(', ') : '';
     this.dom.itemInclude.checked = selected.include !== false;
     this.dom.saveItemBtn.disabled = false;
+    this.syncEditorVisibility();
   }
 
   tagsToArray(rawValue) {

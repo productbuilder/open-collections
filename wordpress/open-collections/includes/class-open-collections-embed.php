@@ -164,8 +164,13 @@ class Open_Collections_Embed {
 				'componentScriptUrl' => esc_url_raw($script_url),
 				'defaults' => array(
 					'collectionRoot' => $settings['collection_root'],
+					'manifestFilename' => $settings['manifest_filename'],
+					'itemRouteSegment' => $settings['item_route_segment'],
+					'mediaRouteSegment' => $settings['media_route_segment'],
 					'publishMode' => $settings['publish_mode'],
 					'dcdEnabled' => (bool) $settings['dcd_enabled'],
+					'dcdRouteMode' => $settings['dcd_route_mode'],
+					'dcdCustomPath' => $settings['dcd_custom_path'],
 					'providerMode' => $settings['provider_mode'],
 					'defaultCollectionTitle' => $settings['default_collection_title'],
 					'defaultCollectionSlug' => $settings['default_collection_slug'],

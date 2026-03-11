@@ -15,7 +15,12 @@ class Open_Collections_Settings {
 	public function defaults() {
 		return array(
 			'collection_root' => '/collections',
+			'manifest_filename' => 'collection.json',
+			'item_route_segment' => 'items',
+			'media_route_segment' => 'media',
 			'dcd_enabled' => 0,
+			'dcd_route_mode' => 'well-known',
+			'dcd_custom_path' => '/collections-discovery.json',
 			'provider_mode' => 'manual',
 			'component_mount_mode' => 'shortcode',
 			'component_script_url' => '',
@@ -61,7 +66,15 @@ class Open_Collections_Settings {
 		);
 
 		$this->add_field('collection_root', 'Collection root/output base path');
+		$this->add_field('manifest_filename', 'Manifest filename');
+		$this->add_field('item_route_segment', 'Item route segment');
+		$this->add_field('media_route_segment', 'Media route segment');
 		$this->add_field('dcd_enabled', 'DCD enabled', 'checkbox');
+		$this->add_field('dcd_route_mode', 'DCD route mode', 'select', array(
+			'well-known' => 'Well-known: /.well-known/collections.json',
+			'custom' => 'Custom path',
+		));
+		$this->add_field('dcd_custom_path', 'DCD custom path');
 		$this->add_field('provider_mode', 'Provider mode placeholder', 'select', array(
 			'manual' => 'Manual',
 			'wordpress-media' => 'WordPress media (placeholder)',
@@ -139,7 +152,12 @@ class Open_Collections_Settings {
 		$output = $defaults;
 
 		$output['collection_root'] = $this->sanitize_collection_root($input, $defaults);
+		$output['manifest_filename'] = $this->sanitize_manifest_filename($input, $defaults);
+		$output['item_route_segment'] = $this->sanitize_route_segment($input, 'item_route_segment', $defaults['item_route_segment']);
+		$output['media_route_segment'] = $this->sanitize_route_segment($input, 'media_route_segment', $defaults['media_route_segment']);
 		$output['dcd_enabled'] = isset($input['dcd_enabled']) ? 1 : 0;
+		$output['dcd_route_mode'] = $this->sanitize_choice($input, 'dcd_route_mode', array('well-known', 'custom'), $defaults['dcd_route_mode']);
+		$output['dcd_custom_path'] = $this->sanitize_path($input, 'dcd_custom_path', $defaults['dcd_custom_path']);
 		$output['provider_mode'] = $this->sanitize_choice($input, 'provider_mode', array('manual', 'wordpress-media', 'external'), $defaults['provider_mode']);
 		$output['component_mount_mode'] = $this->sanitize_choice($input, 'component_mount_mode', array('shortcode', 'admin', 'both'), $defaults['component_mount_mode']);
 		$output['component_script_url'] = isset($input['component_script_url']) ? esc_url_raw(trim((string) $input['component_script_url'])) : '';
@@ -169,6 +187,44 @@ class Open_Collections_Settings {
 
 		$value = (string) $input[$key];
 		return in_array($value, $allowed, true) ? $value : $fallback;
+	}
+
+	private function sanitize_manifest_filename($input, $defaults) {
+		if (!isset($input['manifest_filename'])) {
+			return $defaults['manifest_filename'];
+		}
+
+		$name = sanitize_file_name((string) $input['manifest_filename']);
+		if ('' === $name || '.' === $name || '..' === $name) {
+			return $defaults['manifest_filename'];
+		}
+
+		if (!preg_match('/\.json$/i', $name)) {
+			$name .= '.json';
+		}
+
+		return $name;
+	}
+
+	private function sanitize_route_segment($input, $key, $fallback) {
+		if (!isset($input[$key])) {
+			return $fallback;
+		}
+
+		$segment = sanitize_title((string) $input[$key]);
+		return '' === $segment ? $fallback : $segment;
+	}
+
+	private function sanitize_path($input, $key, $fallback) {
+		if (!isset($input[$key])) {
+			return $fallback;
+		}
+
+		$path = trim((string) $input[$key]);
+		$path = '/' . ltrim($path, '/');
+		$path = preg_replace('#/+#', '/', $path);
+
+		return '/' === $path ? $fallback : $path;
 	}
 
 	/**

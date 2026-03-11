@@ -1,6 +1,6 @@
 # Open Collections WordPress Plugin Scaffold
 
-This folder contains the first implementation scaffold for a distributable WordPress plugin.
+This folder contains the current implementation scaffold for a distributable WordPress plugin.
 
 ## Purpose
 
@@ -14,9 +14,9 @@ This scaffold does not reimplement Collection Manager inside WordPress.
 
 - `open-collections.php` plugin bootstrap
 - `includes/class-open-collections-plugin.php` wiring and lifecycle
-- `includes/class-open-collections-settings.php` admin settings page and option schema
+- `includes/class-open-collections-settings.php` admin settings page and output settings schema
 - `includes/class-open-collections-embed.php` shortcode/admin mount and script enqueue
-- `includes/class-open-collections-output.php` protocol output rewrite placeholders
+- `includes/class-open-collections-output.php` protocol output routes and structured stubs
 - `assets/js/open-collections-embed.js` mount script and config handoff
 - `assets/js/collection-manager-placeholder.js` fallback component script
 
@@ -28,11 +28,18 @@ This scaffold does not reimplement Collection Manager inside WordPress.
 - Config handoff pattern:
   - plugin defaults via localized script config (`OpenCollectionsPluginConfig`)
   - per-mount overrides via mount `data-*` attributes / `data-ocp-config` JSON
-- Placeholder protocol routes:
-  - `/collections/{slug}/collection.json`
-  - `/collections/{slug}/items/{item-id}.json`
-  - `/collections/{slug}/media/{asset-id}`
-  - optional `/.well-known/collections.json` (when enabled)
+- Protocol-facing output model with configurable route shape:
+  - collection base path (default `/collections`)
+  - manifest filename (default `collection.json`)
+  - item route segment (default `items`)
+  - media route segment (default `media`)
+- Protocol output stubs:
+  - `/{collection-root}/{slug}/{manifest-filename}`
+  - `/{collection-root}/{slug}/{item-segment}/{item-id}.json`
+  - `/{collection-root}/{slug}/{media-segment}/{asset-path}`
+- Optional DCD output:
+  - `/.well-known/collections.json`, or
+  - custom DCD path when configured
 
 ## Not implemented yet
 
@@ -46,3 +53,4 @@ This scaffold does not reimplement Collection Manager inside WordPress.
 
 - Set `Collection Manager script URL` in plugin settings to load the real component bundle.
 - If no URL is set, a local placeholder script is used so mount behavior can still be tested.
+- Current protocol outputs are structured, realistic stubs to establish stable public URLs while storage/publishing internals are implemented incrementally.

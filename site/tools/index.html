@@ -100,18 +100,17 @@
 			</section>
 
 			<section>
-				<h2>Indexer</h2>
+				<h2>Collection Indexer</h2>
 				<p><strong>Discover and organize collections</strong></p>
 				<p>
-					An Indexer finds published collections, reads their manifests, and helps make them
-					searchable and discoverable.
+					A Collection Indexer fetches known published collections, reads their manifests and item metadata, and creates searchable or browsable derived views.
 				</p>
 				<p>Indexers can:</p>
 				<ul>
-					<li>crawl collection endpoints</li>
-					<li>follow domain discovery files</li>
-					<li>organize collections for search or aggregation</li>
-					<li>connect related collections across publishers</li>
+					<li>index collections known through registries and publishers</li>
+					<li>refresh indexes on a schedule</li>
+					<li>derive search and browse structures from item metadata</li>
+					<li>power viewers, discovery layers, aggregation, and exploration</li>
 				</ul>
 				<p>
 					This is similar to how search engines work on the web: they do not own the websites they
@@ -120,22 +119,21 @@
 			</section>
 
 			<section>
-				<h2>Registrator</h2>
-				<p><strong>Register or announce collections</strong></p>
+				<h2>Collection Registry (Registrator)</h2>
+				<p><strong>Keep track of what is known</strong></p>
 				<p>
-					A Registrator helps publishers register, announce, validate, or curate collection
-					endpoints.
+					The public-facing name is <strong>Collection Registry</strong>. <strong>Registrator</strong> is the internal module term.
+					It keeps track of known publishers, collections, and other registries.
 				</p>
 				<p>Depending on the ecosystem, a Registrator might:</p>
 				<ul>
-					<li>register a collection or domain discovery endpoint</li>
-					<li>validate that a collection is published correctly</li>
-					<li>support curated registries</li>
-					<li>make collections easier to find and trust</li>
+					<li>register publishers, collections, and other registries</li>
+					<li>track validation status and indexing status</li>
+					<li>link to, harvest from, or mirror other registries</li>
+					<li>preserve provenance for imported records</li>
 				</ul>
 				<p>
-					This is especially useful when collections need to be gathered across institutions,
-					communities, or thematic networks.
+					This is especially useful for local, institutional, thematic, national, or global registry networks.
 				</p>
 			</section>
 

@@ -140,4 +140,13 @@ Current scaffold includes:
 ## 10) Plan and implementation notes
 
 - [WordPress Integration Plan](../projects/plans/26-03-11/wordpress-integration-plan.md)
+
+## 11) Repository status (current scaffold)
+
+A first plugin scaffold now exists at:
+
+- `integrations/wordpress/open-collections/`
+
+This scaffold establishes plugin bootstrap, settings/admin structure, and early embed/config plumbing for Collection Manager without claiming production completeness.
+
 - [WordPress Plugin Scaffold Note](./wordpress-plugin-scaffold.md)

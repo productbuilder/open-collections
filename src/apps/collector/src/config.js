@@ -1,5 +1,5 @@
 export const COLLECTOR_CONFIG = {
-  defaultLocalManifestPath: '/site/examples/test-collection/collection.json',
+  defaultLocalManifestPath: '/site/examples/demo-host/collections.json',
   defaultCollectionMeta: {
     id: 'col-mvp-export',
     title: 'Open Collections Manager Export',

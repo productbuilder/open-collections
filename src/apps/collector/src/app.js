@@ -120,8 +120,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   connectedCallback() {
     this.bindEvents();
-    this.setStatus('No storage sources connected yet.', 'neutral');
-    this.setConnectionStatus('No storage sources connected.', 'neutral');
+    this.setStatus('No hosts connected yet.', 'neutral');
+    this.setConnectionStatus('No hosts connected.', 'neutral');
     this.renderCapabilities(this.providerFactories.local.getCapabilities());
     this.renderProviderCatalog();
     this.setSelectedProvider('github');
@@ -147,6 +147,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
         * {
           box-sizing: border-box;
+        }
+
+        [hidden] {
+          display: none !important;
         }
 
         .app-shell {
@@ -871,14 +875,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
           <div class="brand">
             <h1 class="title">Open Collections Manager</h1>
             <p id="statusText" class="status">Not connected.</p>
-            <p id="workspaceContext" class="status">Storage: none | Collection: none</p>
+            <p id="workspaceContext" class="status">Host: none | Collection: none</p>
           </div>
           <div class="top-actions">
-            <button class="btn" id="openSourcePickerBtn" type="button">Source: <span id="activeSourceLabel">Select source</span></button>
-            <button class="btn btn-primary" id="openNewCollectionBtn" type="button">Add collection</button>
-            <button class="btn" id="openProviderBtn" type="button">Sources</button>
-            <button class="btn" id="openPublishBtn" type="button">Publish</button>
-            <button class="btn" id="openRegisterBtn" type="button">Register</button>
+            <button class="btn" id="openHostManagerBtn" type="button">Host: <span id="activeHostLabel">Select host</span></button>
+            <button class="btn" id="openHeaderMenuBtn" type="button">More</button>
           </div>
         </header>
 
@@ -893,7 +894,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
                   <input id="imageFileInput" type="file" accept="${IMAGE_UPLOAD_ACCEPT}" multiple hidden />
                 </div>
                 <select id="sourceFilter" class="source-filter is-hidden" aria-label="Filter assets by source">
-                  <option value="all">All storage sources</option>
+                  <option value="all">All hosts</option>
                 </select>
                 <select id="collectionFilter" class="source-filter is-hidden" aria-label="Choose active collection">
                   <option value="all">All collections</option>
@@ -959,26 +960,26 @@ class OpenCollectionsManagerElement extends HTMLElement {
         </div>
       </div>
 
-      <dialog id="providerDialog" aria-label="Sources manager">
+      <dialog id="providerDialog" aria-label="Host manager">
         <div class="dialog-shell">
           <div class="dialog-header">
-            <h2 class="dialog-title">Sources manager</h2>
+            <h2 class="dialog-title">Host manager</h2>
             <button class="btn" data-close="providerDialog" type="button">Close</button>
           </div>
           <div class="dialog-body">
             <div class="source-manager">
               <div>
-                <p class="config-section-title">Connected storage sources</p>
+                <p class="config-section-title">Connected hosts</p>
                 <div id="sourceList" class="source-list"></div>
                 <button class="btn storage-help-btn" id="openStorageOptionsBtn" type="button">Storage options</button>
               </div>
               <div class="provider-layout">
                 <div>
-                <p class="config-section-title">Add storage source</p>
+                <p class="config-section-title">Add storage host</p>
                 <div id="providerCatalog" class="provider-list"></div>
               </div>
               <div id="providerConfig" class="provider-config">
-                <p id="providerConfigTitle" class="config-section-title">Source configuration</p>
+                <p id="providerConfigTitle" class="config-section-title">Host configuration</p>
 
                 <div id="githubConfig" class="is-hidden">
                   <div class="field-row"><label for="githubToken">GitHub token (PAT)</label><input id="githubToken" type="password" /></div>
@@ -1029,7 +1030,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
                 </div>
 
                 <div class="dialog-actions">
-                  <button class="btn btn-primary" id="connectBtn" type="button">Add storage source</button>
+                  <button class="btn btn-primary" id="connectBtn" type="button">Add host</button>
                 </div>
               </div>
             </div>
@@ -1040,10 +1041,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
         </div>
       </dialog>
 
-      <dialog id="sourcePickerDialog" aria-label="Select source">
+      <dialog id="sourcePickerDialog" aria-label="Select host">
         <div class="dialog-shell">
           <div class="dialog-header">
-            <h2 class="dialog-title">Select source</h2>
+            <h2 class="dialog-title">Select host</h2>
             <button class="btn" data-close="sourcePickerDialog" type="button">Close</button>
           </div>
           <div id="sourcePickerList" class="dialog-body"></div>
@@ -1108,6 +1109,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
             <div class="empty">
               Collection registration will be added here.
               Collection Manager will later register published collections with the registry.
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog id="headerMenuDialog" aria-label="Header menu">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 class="dialog-title">More actions</h2>
+            <button class="btn" data-close="headerMenuDialog" type="button">Close</button>
+          </div>
+          <div class="dialog-body">
+            <div class="dialog-actions">
+              <button class="btn" id="openRegisterFromMenuBtn" type="button">Register collection</button>
             </div>
           </div>
         </div>
@@ -1281,21 +1296,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.dom = {
       statusText: root.getElementById('statusText'),
       workspaceContext: root.getElementById('workspaceContext'),
-      openNewCollectionBtn: root.getElementById('openNewCollectionBtn'),
-      openSourcePickerBtn: root.getElementById('openSourcePickerBtn'),
-      activeSourceLabel: root.getElementById('activeSourceLabel'),
+      openHostManagerBtn: root.getElementById('openHostManagerBtn'),
+      openHeaderMenuBtn: root.getElementById('openHeaderMenuBtn'),
+      activeHostLabel: root.getElementById('activeHostLabel'),
       backToCollectionsBtn: root.getElementById('backToCollectionsBtn'),
       viewportTitle: root.getElementById('viewportTitle'),
       editorTitle: root.getElementById('editorTitle'),
-      openProviderBtn: root.getElementById('openProviderBtn'),
-      openPublishBtn: root.getElementById('openPublishBtn'),
-      openRegisterBtn: root.getElementById('openRegisterBtn'),
       providerDialog: root.getElementById('providerDialog'),
       sourcePickerDialog: root.getElementById('sourcePickerDialog'),
       sourcePickerList: root.getElementById('sourcePickerList'),
       publishDialog: root.getElementById('publishDialog'),
       newCollectionDialog: root.getElementById('newCollectionDialog'),
       registerDialog: root.getElementById('registerDialog'),
+      headerMenuDialog: root.getElementById('headerMenuDialog'),
+      openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
       storageOptionsDialog: root.getElementById('storageOptionsDialog'),
       assetViewerDialog: root.getElementById('assetViewerDialog'),
       closeViewerBtn: root.getElementById('closeViewerBtn'),
@@ -1404,14 +1418,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     this._eventsBound = true;
 
-    this.dom.openProviderBtn.addEventListener('click', () => this.openDialog(this.dom.providerDialog));
+    this.dom.openHostManagerBtn.addEventListener('click', () => this.openDialog(this.dom.providerDialog));
+    this.dom.openHeaderMenuBtn.addEventListener('click', () => this.openDialog(this.dom.headerMenuDialog));
     this.dom.openStorageOptionsBtn.addEventListener('click', () => this.openDialog(this.dom.storageOptionsDialog));
-    this.dom.openPublishBtn.addEventListener('click', () => this.openDialog(this.dom.publishDialog));
-    this.dom.openRegisterBtn.addEventListener('click', () => this.openDialog(this.dom.registerDialog));
-    this.dom.openNewCollectionBtn.addEventListener('click', () => this.openNewCollectionDialog());
-    this.dom.openSourcePickerBtn.addEventListener('click', () => {
-      this.renderSourcePicker();
-      this.openDialog(this.dom.sourcePickerDialog);
+    this.dom.openRegisterFromMenuBtn.addEventListener('click', () => {
+      this.closeDialog(this.dom.headerMenuDialog);
+      this.openDialog(this.dom.registerDialog);
     });
     this.dom.backToCollectionsBtn.addEventListener('click', () => this.leaveCollectionView());
     this.dom.closeViewerBtn.addEventListener('click', () => this.closeViewer());
@@ -1635,7 +1647,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       card.classList.toggle('is-selected', card.dataset.providerId === providerId);
     });
 
-    this.dom.providerConfigTitle.textContent = `${selected.label} source configuration`;
+    this.dom.providerConfigTitle.textContent = `${selected.label} host configuration`;
     this.dom.githubConfig.classList.add('is-hidden');
     this.dom.publicUrlConfig.classList.add('is-hidden');
     this.dom.gdriveConfig.classList.add('is-hidden');
@@ -1814,6 +1826,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return slug || fallback;
   }
 
+  hostNameFromPath(path, fallback = 'Local host') {
+    const normalized = String(path || '').trim().replace(/\\/g, '/');
+    if (!normalized) {
+      return fallback;
+    }
+    const parts = normalized.split('/').filter(Boolean);
+    if (parts.length === 0) {
+      return fallback;
+    }
+    const tail = parts[parts.length - 1] || '';
+    const name = tail.endsWith('.json') ? (parts[parts.length - 2] || '') : tail;
+    return name || fallback;
+  }
+
   normalizeCollectionRootPath(rootPath, fallbackId = '') {
     const fallback = `${this.slugifySegment(fallbackId || 'collection', 'collection')}/`;
     const raw = String(rootPath || '').trim();
@@ -1865,7 +1891,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       ? this.state.selectedCollectionId
       : 'none';
     const rootPath = collectionId !== 'none' ? this.activeCollectionRootPath() : 'n/a';
-    this.dom.workspaceContext.textContent = `Storage: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
+    this.dom.workspaceContext.textContent = `Host: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
   }
 
   readableTitleFromFilename(name, fallbackId) {
@@ -2353,7 +2379,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     const allOption = document.createElement('option');
     allOption.value = 'all';
-    allOption.textContent = 'All storage sources';
+    allOption.textContent = 'All hosts';
     this.dom.sourceFilter.appendChild(allOption);
 
     for (const source of this.state.sources) {
@@ -2425,7 +2451,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (this.state.sources.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'No storage sources added yet.';
+      empty.textContent = 'No hosts added yet.';
       list.appendChild(empty);
       return;
     }
@@ -2603,7 +2629,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     if (providerId === 'local') {
-      return 'Example dataset';
+      return this.hostNameFromPath(config.path, 'Local host');
     }
 
     return fallbackLabel || 'Source';
@@ -2634,7 +2660,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     if (providerId === 'local') {
-      return (config.path || '').trim() || 'Example dataset';
+      return (config.path || '').trim() || 'Local host';
     }
 
     return fallbackLabel || 'Source';
@@ -3275,9 +3301,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   renderSourceContext() {
     const source = this.getSourceById(this.state.activeSourceFilter);
-    this.dom.activeSourceLabel.textContent = source
-      ? (source.displayLabel || source.label || source.providerLabel || 'Source')
-      : 'Select source';
+    this.dom.activeHostLabel.textContent = source
+      ? (source.displayLabel || source.label || source.providerLabel || 'Host')
+      : 'Select host';
   }
 
   renderSourcePicker() {
@@ -3286,7 +3312,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (this.state.sources.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'No sources connected yet. Use Sources to add one.';
+      empty.textContent = 'No hosts connected yet. Use Host manager to add one.';
       wrap.appendChild(empty);
       return;
     }
@@ -3294,7 +3320,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     for (const source of this.state.sources) {
       const card = document.createElement('article');
       card.className = 'source-card';
-      const label = source.displayLabel || source.label || source.providerLabel || 'Source';
+      const label = source.displayLabel || source.label || source.providerLabel || 'Host';
       const type = document.createElement('p');
       type.className = 'source-card-label';
       type.textContent = label;
@@ -3304,7 +3330,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const btn = document.createElement('button');
       btn.className = 'btn btn-primary';
       btn.type = 'button';
-      btn.textContent = 'Use source';
+      btn.textContent = 'Use host';
       btn.addEventListener('click', () => {
         this.state.activeSourceFilter = source.id;
         this.state.currentLevel = 'collections';
@@ -3513,16 +3539,35 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderEditor() {
+    const setEditorMode = (mode) => {
+      const showCollection = mode === 'collection';
+      const showItem = mode === 'item';
+      const showEmpty = mode === 'empty';
+      this.dom.collectionEditorForm.hidden = !showCollection;
+      this.dom.editorForm.hidden = !showItem;
+      this.dom.editorEmpty.hidden = !showEmpty;
+
+      this.dom.collectionEditorForm
+        .querySelectorAll('input, textarea, select, button')
+        .forEach((field) => {
+          field.disabled = !showCollection;
+        });
+      this.dom.editorForm
+        .querySelectorAll('input, textarea, select, button')
+        .forEach((field) => {
+          field.disabled = !showItem;
+        });
+    };
+
     if (this.state.currentLevel === 'collections') {
       this.dom.editorTitle.textContent = 'Collection metadata';
       const selectedCollection = this.findSelectedCollectionMeta();
-      this.dom.editorForm.hidden = true;
-      this.dom.collectionEditorForm.hidden = !selectedCollection;
-      this.dom.editorEmpty.hidden = Boolean(selectedCollection);
       if (!selectedCollection) {
+        setEditorMode('empty');
         this.dom.editorStatus.textContent = 'Select a collection card.';
         return;
       }
+      setEditorMode('collection');
       this.dom.editorStatus.textContent = `Editing collection ${selectedCollection.id}`;
       this.dom.collectionEditorTitle.value = selectedCollection.title || '';
       this.dom.collectionEditorDescription.value = selectedCollection.description || '';
@@ -3533,20 +3578,17 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     this.dom.editorTitle.textContent = 'Item metadata';
-    this.dom.collectionEditorForm.hidden = true;
     const selected = this.findSelectedItem();
     const selectedSource = selected ? this.getSourceById(selected.sourceId) : null;
     const canSave = Boolean(selectedSource?.capabilities?.canSaveMetadata);
 
     if (!selected) {
+      setEditorMode('empty');
       this.dom.editorStatus.textContent = 'Select an item card.';
-      this.dom.editorForm.hidden = true;
-      this.dom.editorEmpty.hidden = false;
       return;
     }
 
-    this.dom.editorEmpty.hidden = true;
-    this.dom.editorForm.hidden = false;
+    setEditorMode('item');
 
     this.dom.editorStatus.textContent = canSave
       ? `Editing ${selected.id} from ${selected.sourceDisplayLabel || selected.sourceLabel}`
@@ -3754,6 +3796,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
       source.selectedCollectionId = defaultCollectionId;
       this.state.sources = [...this.state.sources, source];
       this.state.assets = [...this.state.assets, ...normalizedWithCollections];
+      this.state.activeSourceFilter = source.id;
+      this.state.selectedCollectionId = source.selectedCollectionId || 'all';
+      this.state.currentLevel = 'collections';
+      this.state.openedCollectionId = null;
       this.state.manifest = null;
       this.dom.manifestPreview.textContent = '{}';
 
@@ -3947,8 +3993,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     if (this.state.sources.length === 0) {
-      this.setConnectionStatus('No storage sources connected.', 'neutral');
-      this.setStatus('No storage sources connected.', 'neutral');
+      this.setConnectionStatus('No hosts connected.', 'neutral');
+      this.setStatus('No hosts connected.', 'neutral');
     } else {
       this.setStatus(`Removed storage source ${source.label}.`, 'ok');
     }

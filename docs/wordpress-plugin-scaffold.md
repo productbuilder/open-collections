@@ -1,4 +1,4 @@
-# Open Collections WordPress Plugin Scaffold (Phase 1)
+# Open Collections WordPress Plugin Scaffold (Phase 2)
 
 ## Location
 
@@ -16,11 +16,18 @@ Plugin scaffold lives at:
 - Script enqueue and config handoff pattern:
   - defaults via localized config object (`OpenCollectionsPluginConfig`)
   - per-mount overrides via data attributes and `data-ocp-config` JSON
-- Protocol output route placeholders:
-  - `/collections/{slug}/collection.json`
-  - `/collections/{slug}/items/{item-id}.json`
-  - `/collections/{slug}/media/{asset-id}`
-  - optional `/.well-known/collections.json` when DCD is enabled
+- Protocol output route scaffolding with configurable URL model:
+  - collection base path (default `/collections`)
+  - manifest filename (default `collection.json`)
+  - item route segment (default `items`)
+  - media route segment (default `media`)
+- Protocol-facing output stubs:
+  - `/{collection-root}/{slug}/{manifest-filename}`
+  - `/{collection-root}/{slug}/{item-segment}/{item-id}.json`
+  - `/{collection-root}/{slug}/{media-segment}/{asset-path}`
+- Optional DCD output:
+  - `/.well-known/collections.json` (default)
+  - custom configured path (optional)
 
 ## Architecture boundary
 

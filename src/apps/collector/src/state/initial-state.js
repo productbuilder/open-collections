@@ -22,6 +22,6 @@
       collections: 'cards',
       items: 'cards',
     },
-    inspectorMode: 'side',
+    inspectorPlacement: 'right',
   };
 }

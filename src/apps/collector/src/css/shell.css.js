@@ -24,19 +24,9 @@ export const shellStyles = `
     flex-direction: column;
   }
 
-  .content-grid {
+  #paneLayout {
     flex: 1;
     min-height: 0;
-    padding: 0;
-    display: grid;
-    gap: 0rem;
-    grid-template-columns: minmax(0, 1fr) 420px;
-    align-items: stretch;
-    overflow: hidden;
-  }
-
-  .content-grid.is-inspector-hidden {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .btn {
@@ -276,8 +266,7 @@ export const shellStyles = `
   }
 
   @media (max-width: 1080px) {
-    .content-grid {
-      grid-template-columns: minmax(0, 1fr);
+    #paneLayout {
       overflow: auto;
     }
   }
@@ -287,11 +276,6 @@ export const shellStyles = `
       border: none;
       border-radius: 0;
       min-height: 100dvh;
-    }
-
-    .content-grid {
-      padding: 0.65rem;
-      gap: 0.65rem;
     }
 
     .btn {

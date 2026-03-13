@@ -13,6 +13,7 @@ import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
 import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
+import './components/pane-layout.js';
 import './components/source-manager.js';
 import './components/asset-viewer.js';
 import {
@@ -124,7 +125,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const root = this.shadow;
     this.dom = {
       managerHeader: root.getElementById('managerHeader'),
-      contentGrid: root.querySelector('.content-grid'),
+      paneLayout: root.getElementById('paneLayout'),
       collectionBrowser: root.getElementById('collectionBrowser'),
       metadataEditor: root.getElementById('metadataEditor'),
       sourceManager: root.getElementById('sourceManager'),
@@ -432,20 +433,31 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   syncEditorVisibility() {
-    if (!this.dom?.metadataEditor) {
+    if (!this.dom?.metadataEditor || !this.dom?.paneLayout) {
       return;
     }
 
-    const showInspectorSidePanel = this.state.inspectorMode !== 'hidden';
-    this.dom.contentGrid?.classList.toggle('is-inspector-hidden', !showInspectorSidePanel);
+    // Shell controls inspector placement; browser view mode should not hard-code layout.
+    const inspectorPlacement = this.normalizeInspectorPlacement(this.state.inspectorPlacement);
+    this.state.inspectorPlacement = inspectorPlacement;
+    this.dom.paneLayout.inspectorPlacement = inspectorPlacement;
 
     const shouldShowOverlay = this.isMobileViewport() && this.state.mobileEditorOpen;
     this.dom.metadataEditor.setMobileOpen(shouldShowOverlay);
   }
 
-  applyInspectorModeForViewMode(mode) {
-    this.state.inspectorMode = mode === 'rows' ? 'hidden' : 'side';
+  normalizeInspectorPlacement(placement) {
+    return placement === 'bottom' || placement === 'hidden' || placement === 'right' ? placement : 'right';
+  }
+
+  setInspectorPlacement(placement = 'right') {
+    this.state.inspectorPlacement = this.normalizeInspectorPlacement(placement);
     this.syncEditorVisibility();
+  }
+
+  applyInspectorModeForViewMode(mode) {
+    void mode;
+    // Intentionally no-op: inspector placement is a shell-level concern.
   }
 
   renderProviderCatalog() {

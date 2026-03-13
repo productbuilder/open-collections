@@ -1,4 +1,10 @@
 import { browserStyles } from '../css/browser.css.js';
+import './panel-shell.js';
+import './view-toggle.js';
+import './collection-card-grid.js';
+import './collection-row-list.js';
+import './item-card-grid.js';
+import './item-row-list.js';
 
 class OpenCollectionsBrowserElement extends HTMLElement {
   constructor() {
@@ -13,6 +19,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       selectedCollectionId: null,
       selectedItemId: null,
       dropTargetActive: false,
+      viewModes: {
+        collections: 'cards',
+        items: 'cards',
+      },
     };
   }
 
@@ -20,12 +30,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     this.render();
     this.bindEvents();
     this.renderFrame();
-    this.renderGrid();
+    this.renderBody();
     this.setDropTargetActive(this.model.dropTargetActive);
   }
 
   bindEvents() {
-    this.shadowRoot.getElementById('backToCollectionsBtn')?.addEventListener('click', () => {
+    this.shadowRoot.getElementById('panelShell')?.addEventListener('panel-back', () => {
       this.dispatch('back-to-collections');
     });
 
@@ -36,6 +46,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       }
       this.dispatch('add-item');
       this.shadowRoot.getElementById('imageFileInput')?.click();
+    });
+
+    this.shadowRoot.getElementById('viewToggle')?.addEventListener('view-mode-change', (event) => {
+      this.setCurrentViewMode(event.detail?.mode || 'cards');
     });
 
     this.shadowRoot.getElementById('imageFileInput')?.addEventListener('change', (event) => {
@@ -76,13 +90,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
   }
 
   setSourceOptions(options, selectedValue = 'all') {
-    // Compatibility no-op: host and collection filters are no longer rendered in this panel.
     void options;
     void selectedValue;
   }
 
   setCollectionOptions(options, selectedValue = 'all') {
-    // Compatibility no-op: host and collection filters are no longer rendered in this panel.
     void options;
     void selectedValue;
   }
@@ -95,201 +107,98 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     }
   }
 
+  getCurrentViewMode() {
+    const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
+    return this.model.viewModes?.[level] || 'cards';
+  }
+
+  setCurrentViewMode(mode) {
+    const normalizedMode = mode === 'rows' ? 'rows' : 'cards';
+    const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
+    this.model.viewModes = {
+      ...this.model.viewModes,
+      [level]: normalizedMode,
+    };
+    this.dispatch('view-mode-change', { level, mode: normalizedMode });
+    this.renderBody();
+    this.renderFrame();
+  }
+
   update(data = {}) {
+    const viewModes = data.viewModes ? { ...this.model.viewModes, ...data.viewModes } : this.model.viewModes;
     this.model = {
       ...this.model,
       ...data,
+      viewModes,
     };
-    if (!this.shadowRoot?.getElementById('viewportTitle')) {
+    if (!this.shadowRoot?.getElementById('panelShell')) {
       return;
     }
     this.renderFrame();
-    this.renderGrid();
+    this.renderBody();
     this.setDropTargetActive(this.model.dropTargetActive);
   }
 
-  requiredFieldScore(item) {
-    const checks = [
-      Boolean(item.id),
-      Boolean(item.title),
-      Boolean(item.media && item.media.url),
-      Boolean(item.license),
-    ];
-    return `${checks.filter(Boolean).length}/${checks.length}`;
-  }
-
-  createPreviewNode(item) {
-    const mediaType = (item.media?.type || '').toLowerCase();
-    const url = item.thumbnailPreviewUrl || item.previewUrl || item.media?.thumbnailUrl || item.media?.url;
-
-    if (!url) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'thumb-placeholder';
-      placeholder.textContent = 'No preview';
-      return placeholder;
-    }
-
-    if (mediaType.includes('video')) {
-      const video = document.createElement('video');
-      video.className = 'thumb';
-      video.src = url;
-      video.muted = true;
-      video.playsInline = true;
-      video.preload = 'metadata';
-      return video;
-    }
-
-    const image = document.createElement('img');
-    image.className = 'thumb';
-    image.src = url;
-    image.alt = item.title || item.id;
-    return image;
-  }
-
   renderFrame() {
-    const title = this.shadowRoot.getElementById('viewportTitle');
-    const backBtn = this.shadowRoot.getElementById('backToCollectionsBtn');
+    const panelShell = this.shadowRoot.getElementById('panelShell');
     const addBtn = this.shadowRoot.getElementById('addImagesBtn');
-    const count = this.shadowRoot.getElementById('assetCount');
-    if (!title || !backBtn || !addBtn || !count) {
+    const viewToggle = this.shadowRoot.getElementById('viewToggle');
+    if (!panelShell || !addBtn || !viewToggle) {
       return;
     }
 
-    title.textContent = this.model.viewportTitle || 'Collections';
-    count.textContent = this.model.assetCountText || 'No assets loaded.';
+    panelShell.setAttribute('title', this.model.viewportTitle || 'Collections');
+    panelShell.setAttribute('subtitle', this.model.assetCountText || 'No assets loaded.');
+    panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
     addBtn.textContent = this.model.currentLevel === 'collections' ? 'Add collection' : 'Add item';
-    backBtn.classList.toggle('is-hidden', this.model.currentLevel === 'collections');
+    viewToggle.setAttribute('mode', this.getCurrentViewMode());
   }
 
-  renderGrid() {
-    const grid = this.shadowRoot.getElementById('assetGrid');
-    if (!grid) {
+  renderBody() {
+    const host = this.shadowRoot.getElementById('browserHost');
+    if (!host) {
       return;
     }
-    grid.innerHTML = '';
+    host.innerHTML = '';
 
-    if (this.model.currentLevel === 'collections') {
-      const collections = Array.isArray(this.model.collections) ? this.model.collections : [];
-      if (collections.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = 'No collections yet. Add a collection to begin.';
-        grid.appendChild(empty);
-        return;
-      }
+    const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
+    const mode = this.getCurrentViewMode();
+    const componentTag = level === 'collections'
+      ? mode === 'rows' ? 'open-collection-row-list' : 'open-collection-card-grid'
+      : mode === 'rows' ? 'open-item-row-list' : 'open-item-card-grid';
 
-      for (const collection of collections) {
-        const card = document.createElement('article');
-        card.className = 'asset-card';
-        if (this.model.selectedCollectionId === collection.id) {
-          card.classList.add('is-selected');
-        }
-        card.addEventListener('click', () => {
-          this.dispatch('collection-select', { collectionId: collection.id });
-        });
-
-        const title = document.createElement('p');
-        title.className = 'card-title';
-        title.textContent = collection.title || collection.id;
-
-        const badges = document.createElement('div');
-        badges.className = 'badge-row';
-        const idBadge = document.createElement('span');
-        idBadge.className = 'badge';
-        idBadge.textContent = collection.id;
-        badges.appendChild(idBadge);
-
-        const actions = document.createElement('div');
-        actions.className = 'card-actions';
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.className = 'btn';
-        openBtn.textContent = 'Open';
-        openBtn.addEventListener('click', (event) => {
-          event.stopPropagation();
-          this.dispatch('collection-open', { collectionId: collection.id });
-        });
-        actions.appendChild(openBtn);
-
-        card.append(title, badges, actions);
-        grid.appendChild(card);
-      }
-      return;
-    }
-
-    const items = Array.isArray(this.model.items) ? this.model.items : [];
-    if (items.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = 'This collection has no items yet. Add item to begin.';
-      grid.appendChild(empty);
-      return;
-    }
-
-    for (const item of items) {
-      const card = document.createElement('article');
-      card.className = 'asset-card';
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', `Select item ${item.title || item.id}`);
-      if (this.model.selectedItemId === item.workspaceId) {
-        card.classList.add('is-selected');
-      }
-      card.addEventListener('click', () => {
-        this.dispatch('item-select', { workspaceId: item.workspaceId });
+    const renderer = document.createElement(componentTag);
+    if (level === 'collections') {
+      renderer.update({
+        collections: this.model.collections,
+        selectedCollectionId: this.model.selectedCollectionId,
       });
-
-      const preview = this.createPreviewNode(item);
-      const title = document.createElement('p');
-      title.className = 'card-title';
-      title.textContent = item.title || '(Untitled)';
-
-      const badges = document.createElement('div');
-      badges.className = 'badge-row';
-      const completeness = document.createElement('span');
-      completeness.className = 'badge';
-      completeness.textContent = `Completeness ${this.requiredFieldScore(item)}`;
-      badges.append(completeness);
-
-      const actions = document.createElement('div');
-      actions.className = 'card-actions';
-      const openBtn = document.createElement('button');
-      openBtn.type = 'button';
-      openBtn.className = 'btn';
-      openBtn.textContent = 'View';
-      openBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        this.dispatch('item-view', { workspaceId: item.workspaceId });
+    } else {
+      renderer.update({
+        items: this.model.items,
+        selectedItemId: this.model.selectedItemId,
       });
-      actions.append(openBtn);
-      card.append(preview, title, badges, actions);
-      grid.appendChild(card);
     }
+    host.appendChild(renderer);
   }
 
   render() {
     this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
-
       <section class="viewport-panel" aria-label="Collection browser">
-        <div class="panel-header">
-          <div class="panel-heading-left">
-            <button class="btn is-hidden" id="backToCollectionsBtn" type="button">Back</button>
-            <h2 id="viewportTitle" class="panel-title">Collections</h2>
-            <p id="assetCount" class="panel-subtext">No assets loaded.</p>
+        <open-panel-shell id="panelShell" title="Collections" subtitle="No assets loaded." show-back="false">
+          <div class="viewport-actions" slot="toolbar">
+            <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
           </div>
-          <div class="panel-header-meta">
-            
-            <div class="viewport-actions">
-              <button class="btn" id="addImagesBtn" type="button">Add item</button>
-              <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
-            </div>
+          <div class="viewport-actions" slot="header-actions">
+            <button class="btn" id="addImagesBtn" type="button">Add item</button>
+            <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>
-        </div>
-        <div id="assetWrap" class="asset-wrap">
-          <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
-          <div id="assetGrid" class="asset-grid"></div>
-        </div>
+          <div id="assetWrap" class="asset-wrap">
+            <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
+            <div id="browserHost"></div>
+          </div>
+        </open-panel-shell>
       </section>
     `;
   }

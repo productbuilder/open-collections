@@ -11,6 +11,7 @@ export const panelShellStyles = `
   .panel-shell {
     display: grid;
     grid-template-rows: auto auto 1fr;
+    height: 100%;
     min-height: 0;
     overflow: hidden;
   }
@@ -68,7 +69,10 @@ export const panelShellStyles = `
   }
 
   .body {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
+    overflow: hidden;
   }
 
   .is-hidden {

@@ -1,6 +1,7 @@
 export const configuratorSectionBrowserStyles = `
   :host {
     display: block;
+    height: 100%;
     min-height: 0;
   }
 
@@ -8,9 +9,17 @@ export const configuratorSectionBrowserStyles = `
     box-sizing: border-box;
   }
 
+  open-panel-shell {
+    display: block;
+    height: 100%;
+    min-height: 0;
+  }
+
   .content-wrap {
+    height: 100%;
     min-height: 0;
     overflow: auto;
+    overscroll-behavior: contain;
   }
 
   .actions-wrap {
@@ -166,6 +175,87 @@ export const configuratorSectionBrowserStyles = `
     margin: 0;
     font-size: 0.74rem;
     color: #991b1b;
+    font-weight: 700;
+  }
+
+  .section-nav-list {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+
+  .section-nav-btn {
+    width: 100%;
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0.62rem 0.68rem;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .section-nav-btn:hover {
+    border-color: #bfdbfe;
+    background: #f8fbff;
+  }
+
+  .section-nav-btn.is-selected {
+    border-color: #0f6cc6;
+    box-shadow: 0 0 0 1px #9bc6ee inset;
+    background: #eff6ff;
+  }
+
+  .section-nav-main {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .section-nav-title {
+    font-size: 0.88rem;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+
+  .section-nav-meta {
+    font-size: 0.78rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(56vw, 700px);
+  }
+
+  .section-nav-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .section-count {
+    font-size: 0.72rem;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+    font-weight: 700;
+  }
+
+  .section-warn {
+    font-size: 0.72rem;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
     font-weight: 700;
   }
 

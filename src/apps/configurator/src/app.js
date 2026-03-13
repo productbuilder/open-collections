@@ -4,6 +4,11 @@ import './components/configurator-header.js';
 import './components/configurator-section-browser.js';
 import './components/configurator-inspector.js';
 import { configuratorShellStyles } from './css/shell.css.js';
+import {
+  createSourceDescriptor,
+  createWorkspaceState,
+  sourceDescriptorLabel,
+} from './workspace/source-model.js';
 
 const WORKSPACES = new Set(['general', 'products', 'materials']);
 
@@ -96,6 +101,16 @@ const RELATION_FIELD_TARGETS = {
   materialSetIds: 'materialSets',
 };
 
+const GENERAL_METADATA_PRIORITY = [
+  'id',
+  'version',
+  'name',
+  'address',
+  'url',
+  'googleAnalyticsCode',
+  'pricesInCents',
+];
+
 function normalizeKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
@@ -124,6 +139,10 @@ function isEditableSection(value) {
   return Array.isArray(value) || isPlainObject(value);
 }
 
+function isScalarValue(value) {
+  return value === null || ['string', 'number', 'boolean'].includes(typeof value);
+}
+
 function friendlySectionLabel(key) {
   if (SECTION_LABELS[key]) {
     return SECTION_LABELS[key];
@@ -140,16 +159,6 @@ function createEmptyValidation() {
   return {
     overviewWarnings: [],
     sections: {},
-  };
-}
-
-function createEmptyManufacturerSource() {
-  return {
-    fileHandle: null,
-    fileName: '',
-    data: null,
-    dirty: false,
-    validation: createEmptyValidation(),
   };
 }
 
@@ -298,20 +307,60 @@ function makeCollectionRecord(workspace, data, organizationId, fileHandle = null
   const derivedId = String(data?.id || '').trim() || slugify(fileName.replace(/\.[^.]+$/, ''), `${workspace}-collection`);
   const title = String(data?.title || data?.name || derivedId || `${workspace} collection`).trim() || `${workspace} collection`;
   const normalizedId = slugify(derivedId || title, `${workspace}-collection`);
+  const ownerOrgId = String(data?.ownerOrganizationId || data?.sourceOrganizationId || organizationId || '').trim() || organizationId;
+  const isLinkedExternal = ownerOrgId !== organizationId;
 
-  return {
-    id: normalizedId,
-    title,
-    ownerOrganizationId: organizationId,
-    sourceOrganizationId: organizationId,
-    sourceType: 'local',
-    linked: false,
+  const role = workspace === 'products' ? 'products' : 'materials';
+  const source = createSourceDescriptor({
+    role,
+    label: title,
+    ownerOrgId,
+    collectionId: normalizedId,
+    connectionType: 'local-file',
     fileHandle,
     fileName,
+    sourcePath: fileName,
+    isLinkedExternal,
+    isLoaded: true,
+    isDirty: false,
     data: isPlainObject(data) ? data : {},
-    dirty: false,
     validation: validateDataRoot(workspace, data),
+  });
+
+  return {
+    ...source,
+    id: normalizedId,
+    title,
+    ownerOrganizationId: ownerOrgId,
+    sourceOrganizationId: ownerOrgId,
+    sourceType: source.connectionType,
+    linked: source.isLinkedExternal,
   };
+}
+
+function setSourceDirty(source, dirty) {
+  if (!source || typeof source !== 'object') {
+    return;
+  }
+  source.isDirty = Boolean(dirty);
+  source.dirty = Boolean(dirty);
+}
+
+function ensureUniqueEntryId(list, candidate) {
+  const base = slugify(candidate, 'entry');
+  const existing = new Set(
+    (Array.isArray(list) ? list : [])
+      .map((entry) => (isPlainObject(entry) ? String(entry.id || '').trim() : ''))
+      .filter(Boolean),
+  );
+  if (!existing.has(base)) {
+    return base;
+  }
+  let index = 2;
+  while (existing.has(`${base}-${index}`)) {
+    index += 1;
+  }
+  return `${base}-${index}`;
 }
 
 function mergeAdditive(base, addon) {
@@ -404,29 +453,26 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    const defaultOrganizationId = 'org-4x6-sofa';
     this.state = {
       organizations: [
         {
-          id: 'org-4x6-sofa',
+          id: defaultOrganizationId,
           label: '4x6 sofa',
         },
       ],
-      currentOrganizationId: 'org-4x6-sofa',
+      workspace: createWorkspaceState(defaultOrganizationId),
       activeWorkspace: 'general',
       currentLevel: 'general-sections',
-      manufacturer: createEmptyManufacturerSource(),
-      productCollections: [],
-      materialCollections: [],
-      selectedProductCollectionId: null,
-      selectedMaterialCollectionId: null,
       activeSectionId: null,
       selectedEntryRef: null,
       viewModes: {},
       relationOptions: {},
-      generatedPackageData: null,
-      exportWarnings: [],
       statusText: 'Select an organization and open source files to begin.',
       pendingOpenTarget: null,
+      pendingOrganizationId: null,
+      pendingNewCollectionWorkspace: null,
+      pendingNewCollectionName: '',
     };
   }
 
@@ -450,6 +496,85 @@ class OpenConfiguratorManagerElement extends HTMLElement {
           </open-pane-layout>
         </section>
         <input id="openFileInput" type="file" accept=".json,application/json" hidden />
+        <dialog id="organizationDialog" class="config-dialog" aria-label="Set organization">
+          <div class="dialog-shell">
+            <div class="dialog-header">
+              <h2 class="dialog-title">Set organization</h2>
+              <button class="btn" type="button" data-close-dialog="organizationDialog">Close</button>
+            </div>
+            <div class="dialog-body">
+              <p class="dialog-subtext">Choose the active organization context.</p>
+              <div id="organizationList" class="pick-list" role="listbox" aria-label="Available organizations"></div>
+            </div>
+            <div class="dialog-actions">
+              <button class="btn" type="button" data-close-dialog="organizationDialog">Cancel</button>
+              <button class="btn btn-primary" id="confirmOrganizationBtn" type="button">Use selected organization</button>
+            </div>
+          </div>
+        </dialog>
+        <dialog id="sourcesDialog" class="config-dialog" aria-label="Set sources">
+          <div class="dialog-shell">
+            <div class="dialog-header">
+              <h2 class="dialog-title">Set sources</h2>
+              <button class="btn" type="button" data-close-dialog="sourcesDialog">Close</button>
+            </div>
+            <div class="dialog-body">
+              <p class="dialog-subtext">Configure workspace source connections for this organization.</p>
+              <div class="source-role-list">
+                <section class="source-role-card">
+                  <div>
+                    <p class="source-role-title">Organization source</p>
+                    <p id="organizationSourceSummary" class="source-role-meta">Missing</p>
+                  </div>
+                  <button class="btn" id="setOrganizationSourceBtn" type="button">Set source</button>
+                </section>
+                <section class="source-role-card">
+                  <div>
+                    <p class="source-role-title">Products source</p>
+                    <p id="productsSourceSummary" class="source-role-meta">Missing</p>
+                  </div>
+                  <button class="btn" id="setProductsSourceBtn" type="button">Set source</button>
+                </section>
+                <section class="source-role-card">
+                  <div>
+                    <p class="source-role-title">Materials source</p>
+                    <p id="materialsSourceSummary" class="source-role-meta">Missing</p>
+                    <p id="materialsSourceDetail" class="source-role-detail"></p>
+                  </div>
+                  <button class="btn" id="setMaterialsSourceBtn" type="button">Set source</button>
+                </section>
+                <section class="source-role-card">
+                  <div>
+                    <p class="source-role-title">Packages source</p>
+                    <p id="packagesSourceSummary" class="source-role-meta">Missing</p>
+                  </div>
+                  <button class="btn" id="setPackagesSourceBtn" type="button">Set source</button>
+                </section>
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <button class="btn" type="button" data-close-dialog="sourcesDialog">Done</button>
+            </div>
+          </div>
+        </dialog>
+        <dialog id="newCollectionDialog" class="config-dialog" aria-label="New collection">
+          <div class="dialog-shell">
+            <div class="dialog-header">
+              <h2 id="newCollectionDialogTitle" class="dialog-title">New collection</h2>
+              <button class="btn" type="button" data-close-dialog="newCollectionDialog">Close</button>
+            </div>
+            <div class="dialog-body">
+              <div class="field-row">
+                <label for="newCollectionNameInput">Collection name</label>
+                <input id="newCollectionNameInput" type="text" autocomplete="off" />
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <button class="btn" type="button" data-close-dialog="newCollectionDialog">Cancel</button>
+              <button class="btn btn-primary" id="confirmNewCollectionBtn" type="button" disabled>Create</button>
+            </div>
+          </div>
+        </dialog>
       </div>
     `;
   }
@@ -462,6 +587,23 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       sectionBrowser: root.getElementById('sectionBrowser'),
       inspector: root.getElementById('inspector'),
       openFileInput: root.getElementById('openFileInput'),
+      organizationDialog: root.getElementById('organizationDialog'),
+      organizationList: root.getElementById('organizationList'),
+      confirmOrganizationBtn: root.getElementById('confirmOrganizationBtn'),
+      sourcesDialog: root.getElementById('sourcesDialog'),
+      organizationSourceSummary: root.getElementById('organizationSourceSummary'),
+      productsSourceSummary: root.getElementById('productsSourceSummary'),
+      materialsSourceSummary: root.getElementById('materialsSourceSummary'),
+      materialsSourceDetail: root.getElementById('materialsSourceDetail'),
+      packagesSourceSummary: root.getElementById('packagesSourceSummary'),
+      setOrganizationSourceBtn: root.getElementById('setOrganizationSourceBtn'),
+      setProductsSourceBtn: root.getElementById('setProductsSourceBtn'),
+      setMaterialsSourceBtn: root.getElementById('setMaterialsSourceBtn'),
+      setPackagesSourceBtn: root.getElementById('setPackagesSourceBtn'),
+      newCollectionDialog: root.getElementById('newCollectionDialog'),
+      newCollectionDialogTitle: root.getElementById('newCollectionDialogTitle'),
+      newCollectionNameInput: root.getElementById('newCollectionNameInput'),
+      confirmNewCollectionBtn: root.getElementById('confirmNewCollectionBtn'),
     };
   }
 
@@ -470,12 +612,13 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       this.switchWorkspace(event.detail?.workspace || 'general');
     });
 
-    this.dom.header.addEventListener('organization-select', (event) => {
-      const organizationId = event.detail?.organizationId || '';
-      if (organizationId) {
-        this.state.currentOrganizationId = organizationId;
-        this.state.statusText = `Organization switched to ${this.currentOrganizationLabel()}.`;
-        this.refreshAll();
+    this.dom.header.addEventListener('organization-menu-action', (event) => {
+      const action = event.detail?.action || '';
+      if (action === 'set-organization') {
+        this.openOrganizationDialog();
+      }
+      if (action === 'set-sources') {
+        this.openSourcesDialog();
       }
     });
 
@@ -491,10 +634,30 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     });
 
     this.dom.sectionBrowser.addEventListener('entry-select', (event) => {
-      this.state.selectedEntryRef = event.detail?.entryRef || null;
+      const nextEntryRef = event.detail?.entryRef || null;
+      this.state.selectedEntryRef = nextEntryRef;
       this.normalizeSelection();
       this.renderBrowser();
       this.renderInspector();
+    });
+
+    this.dom.sectionBrowser.addEventListener('section-open', (event) => {
+      const index = Number(event.detail?.index);
+      if (!Number.isInteger(index)) {
+        return;
+      }
+      this.state.selectedEntryRef = { index };
+      if (this.state.currentLevel === 'products-collections' || this.state.currentLevel === 'materials-collections') {
+        this.openCollectionAtIndex(index);
+        return;
+      }
+      if (
+        this.state.currentLevel === 'general-sections'
+        || this.state.currentLevel === 'products-sections'
+        || this.state.currentLevel === 'materials-sections'
+      ) {
+        this.openSectionAtIndex(index);
+      }
     });
 
     this.dom.sectionBrowser.addEventListener('view-mode-change', (event) => {
@@ -525,9 +688,290 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       }
       event.target.value = '';
     });
+
+    this.shadowRoot.querySelectorAll('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const dialogId = button.getAttribute('data-close-dialog') || '';
+        if (dialogId) {
+          this.closeDialog(dialogId);
+        }
+      });
+    });
+
+    this.dom.confirmOrganizationBtn?.addEventListener('click', () => {
+      this.confirmOrganizationSelection();
+    });
+
+    this.dom.organizationList?.addEventListener('click', (event) => {
+      const button = event.target?.closest?.('[data-organization-id]');
+      const organizationId = button?.getAttribute('data-organization-id') || '';
+      if (!organizationId) {
+        return;
+      }
+      this.state.pendingOrganizationId = organizationId;
+      this.renderOrganizationDialog();
+    });
+
+    this.dom.organizationList?.addEventListener('dblclick', (event) => {
+      const button = event.target?.closest?.('[data-organization-id]');
+      const organizationId = button?.getAttribute('data-organization-id') || '';
+      if (!organizationId) {
+        return;
+      }
+      this.state.pendingOrganizationId = organizationId;
+      this.confirmOrganizationSelection();
+    });
+
+    this.dom.setOrganizationSourceBtn?.addEventListener('click', async () => {
+      this.closeDialog('sourcesDialog');
+      await this.openManufacturerFile();
+    });
+    this.dom.setProductsSourceBtn?.addEventListener('click', async () => {
+      this.closeDialog('sourcesDialog');
+      await this.openCollectionFile('products');
+    });
+    this.dom.setMaterialsSourceBtn?.addEventListener('click', async () => {
+      this.closeDialog('sourcesDialog');
+      await this.openCollectionFile('materials');
+    });
+    this.dom.setPackagesSourceBtn?.addEventListener('click', async () => {
+      this.closeDialog('sourcesDialog');
+      await this.openPackagesFile();
+    });
+
+    this.dom.newCollectionNameInput?.addEventListener('input', (event) => {
+      this.state.pendingNewCollectionName = String(event.target?.value || '');
+      this.syncNewCollectionDialogControls();
+    });
+    this.dom.newCollectionNameInput?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+      event.preventDefault();
+      this.confirmNewCollectionFromDialog();
+    });
+    this.dom.confirmNewCollectionBtn?.addEventListener('click', () => {
+      this.confirmNewCollectionFromDialog();
+    });
   }
   currentOrganizationLabel() {
-    return this.state.organizations.find((org) => org.id === this.state.currentOrganizationId)?.label || 'Organization';
+    const currentOrganizationId = this.currentOrganizationId();
+    return this.state.organizations.find((org) => org.id === currentOrganizationId)?.label || 'Organization';
+  }
+
+  organizationsFromManufacturerSource() {
+    const source = this.manufacturerSource();
+    const raw = Array.isArray(source?.data?.organizations) ? source.data.organizations : [];
+    const normalized = raw
+      .map((entry, index) => {
+        if (typeof entry === 'string') {
+          const label = entry.trim();
+          if (!label) {
+            return null;
+          }
+          return {
+            id: slugify(label, `org-${index + 1}`),
+            label,
+          };
+        }
+        if (!isPlainObject(entry)) {
+          return null;
+        }
+        const id = String(entry.id || entry.organizationId || '').trim() || slugify(entry.label || entry.name || `org-${index + 1}`);
+        const label = String(entry.label || entry.name || id).trim() || id;
+        return { id, label };
+      })
+      .filter(Boolean);
+    return normalized;
+  }
+
+  organizationOptions() {
+    const fromSource = this.organizationsFromManufacturerSource();
+    if (fromSource.length > 0) {
+      return fromSource;
+    }
+    return Array.isArray(this.state.organizations) ? this.state.organizations : [];
+  }
+
+  syncOrganizationsFromSource() {
+    const options = this.organizationOptions();
+    if (options.length === 0) {
+      return;
+    }
+    this.state.organizations = options;
+    const current = this.currentOrganizationId();
+    if (!options.some((org) => org.id === current)) {
+      this.state.workspace.currentOrganizationId = options[0].id;
+    }
+  }
+
+  renderOrganizationDialog() {
+    if (!this.dom.organizationList) {
+      return;
+    }
+    const organizations = this.organizationOptions();
+    if (organizations.length === 0) {
+      this.dom.organizationList.innerHTML = '<div class="empty-state">No organizations available.</div>';
+      return;
+    }
+    const pending = this.state.pendingOrganizationId || this.currentOrganizationId();
+    this.dom.organizationList.innerHTML = organizations.map((org) => {
+      const selected = org.id === pending;
+      return `
+        <button
+          type="button"
+          class="pick-item ${selected ? 'is-selected' : ''}"
+          data-organization-id="${org.id}"
+          aria-selected="${selected ? 'true' : 'false'}"
+        >
+          <span class="pick-label">${org.label}</span>
+          <span class="pick-id">${org.id}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  openOrganizationDialog() {
+    if (!this.dom.organizationDialog) {
+      return;
+    }
+    this.syncOrganizationsFromSource();
+    this.state.pendingOrganizationId = this.currentOrganizationId();
+    this.renderOrganizationDialog();
+    if (!this.dom.organizationDialog.open) {
+      this.dom.organizationDialog.showModal();
+    }
+  }
+
+  confirmOrganizationSelection() {
+    const nextId = String(this.state.pendingOrganizationId || '').trim();
+    if (!nextId) {
+      return;
+    }
+    this.state.workspace.currentOrganizationId = nextId;
+    this.setStatus(`Organization switched to ${this.currentOrganizationLabel()}.`);
+    this.closeDialog('organizationDialog');
+    this.refreshAll();
+  }
+
+  sourceSummary(source) {
+    if (!source) {
+      return 'Missing';
+    }
+    const bits = [source.label || source.fileName || source.sourceId || 'Source'];
+    if (source.fileName) {
+      bits.push(source.fileName);
+    }
+    if (source.connectionType) {
+      bits.push(source.connectionType);
+    }
+    if (source.isDirty) {
+      bits.push('unsaved');
+    }
+    return bits.filter(Boolean).join(' | ');
+  }
+
+  renderSourcesDialog() {
+    const manufacturer = this.manufacturerSource();
+    const products = this.selectedProductSource();
+    const materials = this.materialSources();
+    const packages = this.packagesSource();
+
+    if (this.dom.organizationSourceSummary) {
+      this.dom.organizationSourceSummary.textContent = this.sourceSummary(manufacturer);
+    }
+    if (this.dom.productsSourceSummary) {
+      this.dom.productsSourceSummary.textContent = this.sourceSummary(products);
+    }
+    if (this.dom.materialsSourceSummary) {
+      if (materials.length === 0) {
+        this.dom.materialsSourceSummary.textContent = 'Missing';
+      } else {
+        this.dom.materialsSourceSummary.textContent = `${materials.length} connected source${materials.length === 1 ? '' : 's'}`;
+      }
+    }
+    if (this.dom.materialsSourceDetail) {
+      this.dom.materialsSourceDetail.textContent = materials
+        .slice(0, 3)
+        .map((entry) => entry.fileName || entry.label || entry.sourceId)
+        .filter(Boolean)
+        .join(' | ');
+    }
+    if (this.dom.packagesSourceSummary) {
+      this.dom.packagesSourceSummary.textContent = this.sourceSummary(packages);
+    }
+
+    if (this.dom.setOrganizationSourceBtn) {
+      this.dom.setOrganizationSourceBtn.textContent = manufacturer ? 'Replace source' : 'Set source';
+    }
+    if (this.dom.setProductsSourceBtn) {
+      this.dom.setProductsSourceBtn.textContent = products ? 'Replace source' : 'Set source';
+    }
+    if (this.dom.setMaterialsSourceBtn) {
+      this.dom.setMaterialsSourceBtn.textContent = materials.length > 0 ? 'Add / replace source' : 'Set source';
+    }
+    if (this.dom.setPackagesSourceBtn) {
+      this.dom.setPackagesSourceBtn.textContent = packages ? 'Replace source' : 'Set source';
+    }
+  }
+
+  openSourcesDialog() {
+    if (!this.dom.sourcesDialog) {
+      return;
+    }
+    this.renderSourcesDialog();
+    if (!this.dom.sourcesDialog.open) {
+      this.dom.sourcesDialog.showModal();
+    }
+  }
+
+  closeDialog(dialogId) {
+    const dialog = this.dom?.[dialogId] || this.shadowRoot.getElementById(dialogId);
+    if (dialog?.open) {
+      dialog.close();
+    }
+  }
+
+  openNewCollectionDialog(workspace) {
+    if (!this.dom.newCollectionDialog || !this.dom.newCollectionDialogTitle) {
+      return;
+    }
+    this.state.pendingNewCollectionWorkspace = workspace === 'materials' ? 'materials' : 'products';
+    this.state.pendingNewCollectionName = '';
+    this.dom.newCollectionDialogTitle.textContent = this.state.pendingNewCollectionWorkspace === 'materials'
+      ? 'New material collection'
+      : 'New product collection';
+    if (this.dom.newCollectionNameInput) {
+      this.dom.newCollectionNameInput.value = '';
+    }
+    this.syncNewCollectionDialogControls();
+    if (!this.dom.newCollectionDialog.open) {
+      this.dom.newCollectionDialog.showModal();
+    }
+    setTimeout(() => {
+      this.dom.newCollectionNameInput?.focus();
+    }, 0);
+  }
+
+  syncNewCollectionDialogControls() {
+    if (!this.dom.confirmNewCollectionBtn) {
+      return;
+    }
+    const name = String(this.state.pendingNewCollectionName || '').trim();
+    this.dom.confirmNewCollectionBtn.disabled = name.length === 0;
+  }
+
+  confirmNewCollectionFromDialog() {
+    const workspace = this.state.pendingNewCollectionWorkspace;
+    const name = String(this.state.pendingNewCollectionName || '').trim();
+    if ((workspace !== 'products' && workspace !== 'materials') || !name) {
+      this.syncNewCollectionDialogControls();
+      return;
+    }
+    this.closeDialog('newCollectionDialog');
+    this.createNewCollection(workspace, name);
+    this.state.pendingNewCollectionWorkspace = null;
+    this.state.pendingNewCollectionName = '';
   }
 
   setStatus(text) {
@@ -538,22 +982,80 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     }
   }
 
+  currentOrganizationId() {
+    return this.state.workspace.currentOrganizationId;
+  }
+
+  manufacturerSource() {
+    return this.state.workspace.sources.manufacturer;
+  }
+
+  productSource() {
+    return this.state.workspace.sources.products;
+  }
+
+  productSources() {
+    const source = this.productSource();
+    return source ? [source] : [];
+  }
+
+  packagesSource() {
+    return this.state.workspace.sources.packages || null;
+  }
+
+  materialSources() {
+    return Array.isArray(this.state.workspace.sources.materials)
+      ? this.state.workspace.sources.materials
+      : [];
+  }
+
+  selectedProductSource() {
+    const source = this.productSource();
+    if (!source) {
+      return null;
+    }
+    const activeId = this.state.workspace.activeProductSourceId;
+    if (!activeId || activeId === source.sourceId || activeId === source.id) {
+      return source;
+    }
+    return source;
+  }
+
+  selectedMaterialSource() {
+    const sources = this.materialSources();
+    const activeId = this.state.workspace.activeMaterialSourceId;
+    if (!activeId) {
+      return sources[0] || null;
+    }
+    return sources.find((entry) => entry.sourceId === activeId || entry.id === activeId) || sources[0] || null;
+  }
+
+  workspaceGeneratedPackage() {
+    return this.state.workspace.generatedPackageData;
+  }
+
+  workspaceExportWarnings() {
+    return Array.isArray(this.state.workspace.exportWarnings)
+      ? this.state.workspace.exportWarnings
+      : [];
+  }
+
   currentWorkspaceCollections() {
     if (this.state.activeWorkspace === 'products') {
-      return this.state.productCollections;
+      return this.productSources();
     }
     if (this.state.activeWorkspace === 'materials') {
-      return this.state.materialCollections;
+      return this.materialSources();
     }
     return [];
   }
 
   selectedCollection() {
     if (this.state.activeWorkspace === 'products') {
-      return this.state.productCollections.find((entry) => entry.id === this.state.selectedProductCollectionId) || null;
+      return this.selectedProductSource();
     }
     if (this.state.activeWorkspace === 'materials') {
-      return this.state.materialCollections.find((entry) => entry.id === this.state.selectedMaterialCollectionId) || null;
+      return this.selectedMaterialSource();
     }
     return null;
   }
@@ -602,7 +1104,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
         title: 'Export / Package',
         type: 'export',
         count: null,
-        warningCount: this.state.exportWarnings.length,
+        warningCount: this.workspaceExportWarnings().length,
       });
     }
 
@@ -613,7 +1115,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     if (this.state.currentLevel === 'general-entries') {
       return {
         ownerType: 'manufacturer',
-        owner: this.state.manufacturer,
+        owner: this.manufacturerSource(),
         sectionId: this.state.activeSectionId,
         workspace: 'general',
       };
@@ -684,9 +1186,51 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   inspectorVisible() {
-    return this.state.currentLevel === 'general-entries'
+    return this.state.currentLevel === 'general-sections'
+      || this.state.currentLevel === 'products-sections'
+      || this.state.currentLevel === 'materials-sections'
+      || this.state.currentLevel === 'general-entries'
       || this.state.currentLevel === 'products-entries'
       || this.state.currentLevel === 'materials-entries';
+  }
+
+  generalMetadataKeys(data) {
+    if (!isPlainObject(data)) {
+      return [];
+    }
+    const keys = Object.keys(data).filter((key) => isScalarValue(data[key]));
+    keys.sort((a, b) => {
+      const ai = GENERAL_METADATA_PRIORITY.indexOf(a);
+      const bi = GENERAL_METADATA_PRIORITY.indexOf(b);
+      const aRank = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+      const bRank = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+      if (aRank !== bRank) {
+        return aRank - bRank;
+      }
+      return a.localeCompare(b);
+    });
+    return keys;
+  }
+
+  generalMetadataDraft() {
+    const source = this.manufacturerSource();
+    const data = isPlainObject(source?.data) ? source.data : {};
+    const keys = this.generalMetadataKeys(data);
+    const draft = {};
+    for (const key of keys) {
+      draft[key] = data[key];
+    }
+    return draft;
+  }
+
+  metadataDraftForSource(source) {
+    const data = isPlainObject(source?.data) ? source.data : {};
+    const keys = this.generalMetadataKeys(data);
+    const draft = {};
+    for (const key of keys) {
+      draft[key] = data[key];
+    }
+    return draft;
   }
 
   switchWorkspace(workspace) {
@@ -735,17 +1279,31 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     this.refreshAll();
   }
   recomputeDerivedState() {
-    this.state.manufacturer.validation = validateDataRoot('general', this.state.manufacturer.data);
+    const manufacturer = this.manufacturerSource();
+    if (manufacturer) {
+      manufacturer.validation = validateDataRoot('general', manufacturer.data);
+      manufacturer.isLoaded = isPlainObject(manufacturer.data);
+      manufacturer.dirty = Boolean(manufacturer.isDirty);
+    }
 
-    this.state.productCollections = this.state.productCollections.map((collection) => ({
-      ...collection,
-      validation: validateDataRoot('products', collection.data),
-    }));
+    this.syncOrganizationsFromSource();
 
-    this.state.materialCollections = this.state.materialCollections.map((collection) => ({
-      ...collection,
-      validation: validateDataRoot('materials', collection.data),
-    }));
+    const products = this.productSource();
+    if (products) {
+      products.validation = validateDataRoot('products', products.data);
+      products.isLoaded = isPlainObject(products.data);
+      products.dirty = Boolean(products.isDirty);
+    }
+
+    this.state.workspace.sources.materials = this.materialSources().map((source) => {
+      const next = {
+        ...source,
+        validation: validateDataRoot('materials', source.data),
+        isLoaded: isPlainObject(source.data),
+      };
+      next.dirty = Boolean(next.isDirty);
+      return next;
+    });
 
     this.rebuildRelationOptions();
     this.refreshExportSnapshot();
@@ -754,38 +1312,40 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   rebuildRelationOptions() {
     let options = {};
-    options = mergeRelationOptions(options, buildRelationOptionsFromData(this.state.manufacturer.data));
+    options = mergeRelationOptions(options, buildRelationOptionsFromData(this.manufacturerSource()?.data));
 
-    for (const collection of this.state.productCollections) {
-      options = mergeRelationOptions(options, buildRelationOptionsFromData(collection.data));
+    for (const source of this.productSources()) {
+      options = mergeRelationOptions(options, buildRelationOptionsFromData(source.data));
     }
-    for (const collection of this.state.materialCollections) {
-      options = mergeRelationOptions(options, buildRelationOptionsFromData(collection.data));
+    for (const source of this.materialSources()) {
+      options = mergeRelationOptions(options, buildRelationOptionsFromData(source.data));
     }
 
     this.state.relationOptions = options;
   }
 
   refreshExportSnapshot() {
-    const selectedProduct = this.state.productCollections.find((entry) => entry.id === this.state.selectedProductCollectionId) || null;
+    const selectedProduct = this.selectedProductSource();
     const warnings = [];
     if (!selectedProduct) {
-      warnings.push('No selected product collection.');
-      this.state.generatedPackageData = {};
-      this.state.exportWarnings = warnings;
+      warnings.push('No connected products source.');
+      this.state.workspace.generatedPackageData = {};
+      this.state.workspace.exportWarnings = warnings;
       return;
     }
 
     const base = cloneJson(selectedProduct.data || {});
-    const withOrg = isPlainObject(this.state.manufacturer.data) ? mergeAdditive(base, this.state.manufacturer.data) : base;
+    const manufacturer = this.manufacturerSource();
+    const withOrg = isPlainObject(manufacturer?.data) ? mergeAdditive(base, manufacturer.data) : base;
     let merged = withOrg;
 
-    if (this.state.materialCollections.length === 0) {
+    const materialSources = this.materialSources();
+    if (materialSources.length === 0) {
       warnings.push('No material collections loaded.');
     }
 
-    for (const collection of this.state.materialCollections) {
-      merged = mergeAdditive(merged, collection.data || {});
+    for (const source of materialSources) {
+      merged = mergeAdditive(merged, source.data || {});
     }
 
     const arrayValidation = validateArraySections(merged);
@@ -834,27 +1394,31 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       });
     }
 
-    this.state.generatedPackageData = merged;
-    this.state.exportWarnings = [...warnings, ...Array.from(new Set(relationWarnings)).slice(0, 120)];
+    this.state.workspace.generatedPackageData = merged;
+    this.state.workspace.exportWarnings = [...warnings, ...Array.from(new Set(relationWarnings)).slice(0, 120)];
   }
 
   normalizeSelection() {
     if (this.state.currentLevel.startsWith('products-')) {
-      const exists = this.state.productCollections.some((entry) => entry.id === this.state.selectedProductCollectionId);
+      const products = this.productSources();
+      const activeProductSourceId = this.state.workspace.activeProductSourceId;
+      const exists = products.some((entry) => entry.sourceId === activeProductSourceId || entry.id === activeProductSourceId);
       if (!exists) {
-        this.state.selectedProductCollectionId = this.state.productCollections[0]?.id || null;
+        this.state.workspace.activeProductSourceId = products[0]?.sourceId || products[0]?.id || null;
       }
-      if (!this.state.selectedProductCollectionId && this.state.currentLevel !== 'products-collections') {
+      if (!this.state.workspace.activeProductSourceId && this.state.currentLevel !== 'products-collections') {
         this.state.currentLevel = 'products-collections';
       }
     }
 
     if (this.state.currentLevel.startsWith('materials-')) {
-      const exists = this.state.materialCollections.some((entry) => entry.id === this.state.selectedMaterialCollectionId);
+      const materials = this.materialSources();
+      const activeMaterialSourceId = this.state.workspace.activeMaterialSourceId;
+      const exists = materials.some((entry) => entry.sourceId === activeMaterialSourceId || entry.id === activeMaterialSourceId);
       if (!exists) {
-        this.state.selectedMaterialCollectionId = this.state.materialCollections[0]?.id || null;
+        this.state.workspace.activeMaterialSourceId = materials[0]?.sourceId || materials[0]?.id || null;
       }
-      if (!this.state.selectedMaterialCollectionId && this.state.currentLevel !== 'materials-collections') {
+      if (!this.state.workspace.activeMaterialSourceId && this.state.currentLevel !== 'materials-collections') {
         this.state.currentLevel = 'materials-collections';
       }
     }
@@ -872,10 +1436,10 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       }
       const resolvedIndex = Number(this.state.selectedEntryRef?.index);
       if (this.state.currentLevel === 'products-collections' && Number.isInteger(resolvedIndex) && list[resolvedIndex]) {
-        this.state.selectedProductCollectionId = list[resolvedIndex].id;
+        this.state.workspace.activeProductSourceId = list[resolvedIndex].sourceId || list[resolvedIndex].id;
       }
       if (this.state.currentLevel === 'materials-collections' && Number.isInteger(resolvedIndex) && list[resolvedIndex]) {
-        this.state.selectedMaterialCollectionId = list[resolvedIndex].id;
+        this.state.workspace.activeMaterialSourceId = list[resolvedIndex].sourceId || list[resolvedIndex].id;
       }
       return;
     }
@@ -917,10 +1481,10 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   currentListEntries() {
     if (this.state.currentLevel === 'products-collections') {
-      return this.state.productCollections;
+      return this.productSources();
     }
     if (this.state.currentLevel === 'materials-collections') {
-      return this.state.materialCollections;
+      return this.materialSources();
     }
     if (this.state.currentLevel === 'products-sections' || this.state.currentLevel === 'materials-sections' || this.state.currentLevel === 'general-sections') {
       return this.sectionEntriesForCurrentLevel();
@@ -930,7 +1494,8 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   sectionEntriesForCurrentLevel() {
     if (this.state.currentLevel === 'general-sections') {
-      return this.sectionListForData(this.state.manufacturer.data, this.state.manufacturer.validation);
+      const manufacturer = this.manufacturerSource();
+      return this.sectionListForData(manufacturer?.data, manufacturer?.validation);
     }
 
     const collection = this.selectedCollection();
@@ -943,77 +1508,89 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   contextActions() {
     if (this.state.currentLevel === 'general-sections') {
       return [
-        { id: 'new-manufacturer', label: 'New Manufacturer' },
-        { id: 'open-manufacturer', label: 'Open Manufacturer' },
-        { id: 'save-manufacturer', label: 'Save Manufacturer', variant: 'primary', disabled: !this.state.manufacturer.data },
-        { id: 'open-section', label: 'Open Section' },
+        { id: 'open-manufacturer', label: 'Open' },
+        { id: 'save-manufacturer', label: 'Save', variant: 'primary', disabled: !this.manufacturerSource()?.data },
       ];
     }
 
     if (this.state.currentLevel === 'general-entries') {
       return [
-        { id: 'save-manufacturer', label: 'Save Manufacturer', variant: 'primary', disabled: !this.state.manufacturer.data },
+        { id: 'save-manufacturer', label: 'Save', variant: 'primary', disabled: !this.manufacturerSource()?.data },
       ];
     }
 
     if (this.state.currentLevel === 'products-collections') {
       return [
-        { id: 'new-product-collection', label: 'New Collection' },
-        { id: 'open-product-collection-file', label: 'Open Collection' },
-        { id: 'save-product-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
-        { id: 'open-selected-collection', label: 'Open Selected' },
+        { id: 'new-product-collection', label: 'New' },
+        { id: 'open-product-collection-file', label: 'Open' },
+        { id: 'save-product-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     if (this.state.currentLevel === 'products-sections') {
       return [
-        { id: 'open-section', label: 'Open Section' },
-        { id: 'save-product-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
+        { id: 'new-product-collection', label: 'New' },
+        { id: 'open-product-collection-file', label: 'Open' },
+        { id: 'save-product-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     if (this.state.currentLevel === 'products-entries') {
       return [
-        { id: 'save-product-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
+        { id: 'save-product-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     if (this.state.currentLevel === 'products-export') {
       return [
         { id: 'generate-export', label: 'Generate Export', variant: 'primary' },
-        { id: 'download-export', label: 'Download Export', disabled: !isPlainObject(this.state.generatedPackageData) || Object.keys(this.state.generatedPackageData).length === 0 },
+        { id: 'download-export', label: 'Download Export', disabled: !isPlainObject(this.workspaceGeneratedPackage()) || Object.keys(this.workspaceGeneratedPackage()).length === 0 },
       ];
     }
 
     if (this.state.currentLevel === 'materials-collections') {
       return [
-        { id: 'new-material-collection', label: 'New Collection' },
-        { id: 'open-material-collection-file', label: 'Open Collection' },
-        { id: 'save-material-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
-        { id: 'open-selected-collection', label: 'Open Selected' },
+        { id: 'new-material-collection', label: 'New' },
+        { id: 'open-material-collection-file', label: 'Open' },
+        { id: 'save-material-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     if (this.state.currentLevel === 'materials-sections') {
       return [
-        { id: 'open-section', label: 'Open Section' },
-        { id: 'save-material-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
+        { id: 'new-material-collection', label: 'New' },
+        { id: 'open-material-collection-file', label: 'Open' },
+        { id: 'save-material-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     if (this.state.currentLevel === 'materials-entries') {
       return [
-        { id: 'save-material-collection', label: 'Save Collection', variant: 'primary', disabled: !this.selectedCollection() },
+        { id: 'save-material-collection', label: 'Save', variant: 'primary', disabled: !this.selectedCollection() },
       ];
     }
 
     return [];
   }
+
+  sourceMetaText(source) {
+    if (!source) {
+      return 'No source connected';
+    }
+    const parts = [];
+    parts.push(sourceDescriptorLabel(source));
+    if (source.isDirty) {
+      parts.push('Unsaved');
+    }
+    return parts.join(' | ');
+  }
+
   browserModel() {
     const model = {
       section: { id: 'overview', label: 'Workspace', kind: 'overview' },
       sectionValue: null,
       selectedEntryRef: this.state.selectedEntryRef,
+      arrayPresentation: 'data',
       showBack: this.state.currentLevel !== 'general-sections' && this.state.currentLevel !== 'products-collections' && this.state.currentLevel !== 'materials-collections',
       showViewToggle: true,
       contextActions: this.contextActions(),
@@ -1023,35 +1600,79 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       viewMode: this.currentViewMode(),
       sectionValidation: null,
       arrayActions: this.arrayActionState(),
+      sourceMeta: '',
     };
 
     if (this.state.currentLevel === 'general-sections') {
+      const manufacturer = this.manufacturerSource();
       model.section = { id: 'general-sections', label: 'General Sections', kind: 'array' };
       model.sectionValue = this.sectionEntriesForCurrentLevel();
       model.showViewToggle = false;
-      model.overviewWarnings = this.state.manufacturer.validation.overviewWarnings;
+      model.arrayPresentation = 'section-nav';
+      model.overviewWarnings = manufacturer?.validation?.overviewWarnings || [];
+      model.sourceMeta = this.sourceMetaText(manufacturer);
       return model;
     }
 
     if (this.state.currentLevel === 'products-collections') {
       model.section = { id: 'products-collections', label: 'Product Collections', kind: 'array' };
-      model.sectionValue = this.state.productCollections.map((collection) => ({
-        id: collection.id,
-        title: collection.title,
-        owner: collection.ownerOrganizationId,
-        sourceType: collection.sourceType,
+      const sources = this.productSources();
+      model.sectionValue = sources.map((source) => ({
+        sourceId: source.sourceId,
+        id: source.id,
+        title: source.title,
+        type: source.connectionType || source.sourceType || 'source',
+        count: Object.keys(source.data || {}).filter((key) => isEditableSection(source.data?.[key])).length,
+        warningCount: Number(source.validation?.overviewWarnings?.length || 0),
+        metaText: [
+          source.fileName || '',
+          source.isLinkedExternal ? 'linked' : 'local',
+          source.isDirty ? 'unsaved' : '',
+        ].filter(Boolean).join(' | '),
+        owner: source.ownerOrganizationId || source.ownerOrgId,
+        sourceType: source.sourceType || source.connectionType,
+        sourceLabel: source.label,
+        fileName: source.fileName,
+        connectionType: source.connectionType,
+        isLinkedExternal: source.isLinkedExternal,
+        isDirty: Boolean(source.isDirty),
       }));
+      model.showViewToggle = false;
+      model.arrayPresentation = 'section-nav';
+      if (sources[0]) {
+        model.sourceMeta = this.sourceMetaText(sources[0]);
+      }
       return model;
     }
 
     if (this.state.currentLevel === 'materials-collections') {
       model.section = { id: 'materials-collections', label: 'Material Collections', kind: 'array' };
-      model.sectionValue = this.state.materialCollections.map((collection) => ({
-        id: collection.id,
-        title: collection.title,
-        owner: collection.ownerOrganizationId,
-        sourceType: collection.sourceType,
+      const sources = this.materialSources();
+      model.sectionValue = sources.map((source) => ({
+        sourceId: source.sourceId,
+        id: source.id,
+        title: source.title,
+        type: source.connectionType || source.sourceType || 'source',
+        count: Object.keys(source.data || {}).filter((key) => isEditableSection(source.data?.[key])).length,
+        warningCount: Number(source.validation?.overviewWarnings?.length || 0),
+        metaText: [
+          source.fileName || '',
+          source.isLinkedExternal ? 'linked' : 'local',
+          source.isDirty ? 'unsaved' : '',
+        ].filter(Boolean).join(' | '),
+        owner: source.ownerOrganizationId || source.ownerOrgId,
+        sourceType: source.sourceType || source.connectionType,
+        sourceLabel: source.label,
+        fileName: source.fileName,
+        connectionType: source.connectionType,
+        isLinkedExternal: source.isLinkedExternal,
+        isDirty: Boolean(source.isDirty),
       }));
+      model.showViewToggle = false;
+      model.arrayPresentation = 'section-nav';
+      if (sources.length > 0) {
+        model.sourceMeta = `${sources.length} connected material source${sources.length === 1 ? '' : 's'}`;
+      }
       return model;
     }
 
@@ -1061,6 +1682,8 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       model.section = { id: 'collection-sections', label: collection?.title ? `${collection.title} ${label}` : label, kind: 'array' };
       model.sectionValue = this.sectionEntriesForCurrentLevel();
       model.showViewToggle = false;
+      model.arrayPresentation = 'section-nav';
+      model.sourceMeta = this.sourceMetaText(collection);
       return model;
     }
 
@@ -1068,15 +1691,17 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       model.section = { id: 'export', label: 'Export / Package', kind: 'export' };
       model.showViewToggle = false;
       model.exportPayload = {
-        warnings: this.state.exportWarnings,
+        warnings: this.workspaceExportWarnings(),
         summary: this.exportSummaryStats(),
-        jsonText: JSON.stringify(this.state.generatedPackageData || {}, null, 2),
+        jsonText: JSON.stringify(this.workspaceGeneratedPackage() || {}, null, 2),
       };
-      model.overviewWarnings = this.state.exportWarnings;
+      model.overviewWarnings = this.workspaceExportWarnings();
+      model.sourceMeta = this.sourceMetaText(this.selectedProductSource());
       return model;
     }
 
     if (this.state.currentLevel === 'general-entries' || this.state.currentLevel === 'products-entries' || this.state.currentLevel === 'materials-entries') {
+      const context = this.currentEntryContext();
       const value = this.currentSectionValue();
       const kind = Array.isArray(value) ? 'array' : (isPlainObject(value) ? 'object' : 'overview');
       model.section = {
@@ -1088,6 +1713,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       model.sectionValidation = this.currentSectionValidation();
       model.showViewToggle = kind === 'array';
       model.overviewWarnings = [];
+      model.sourceMeta = this.sourceMetaText(context?.owner);
       return model;
     }
 
@@ -1098,7 +1724,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   exportSummaryStats() {
-    const generated = this.state.generatedPackageData;
+    const generated = this.workspaceGeneratedPackage();
     if (!isPlainObject(generated)) {
       return [];
     }
@@ -1149,7 +1775,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     this.dom.header.setState({
       activeWorkspace: this.state.activeWorkspace,
       organizations: this.state.organizations,
-      currentOrganizationId: this.state.currentOrganizationId,
+      currentOrganizationId: this.currentOrganizationId(),
       statusText: this.state.statusText,
     });
   }
@@ -1160,6 +1786,56 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   renderInspector() {
     this.syncInspectorPlacement();
+
+    if (this.state.currentLevel === 'general-sections') {
+      this.dom.inspector.setData({
+        section: {
+          id: '__general_metadata',
+          label: 'Organization metadata',
+          kind: 'object',
+        },
+        entryRef: { scope: 'section' },
+        entryValue: this.generalMetadataDraft(),
+        relationOptions: this.state.relationOptions,
+        relationFieldTargets: RELATION_FIELD_TARGETS,
+        entryWarnings: [],
+      });
+      return;
+    }
+
+    if (this.state.currentLevel === 'products-sections') {
+      const source = this.selectedProductSource();
+      this.dom.inspector.setData({
+        section: {
+          id: '__products_metadata',
+          label: 'Collection metadata',
+          kind: 'object',
+        },
+        entryRef: { scope: 'section' },
+        entryValue: this.metadataDraftForSource(source),
+        relationOptions: this.state.relationOptions,
+        relationFieldTargets: RELATION_FIELD_TARGETS,
+        entryWarnings: [],
+      });
+      return;
+    }
+
+    if (this.state.currentLevel === 'materials-sections') {
+      const source = this.selectedMaterialSource();
+      this.dom.inspector.setData({
+        section: {
+          id: '__materials_metadata',
+          label: 'Collection metadata',
+          kind: 'object',
+        },
+        entryRef: { scope: 'section' },
+        entryValue: this.metadataDraftForSource(source),
+        relationOptions: this.state.relationOptions,
+        relationFieldTargets: RELATION_FIELD_TARGETS,
+        entryWarnings: [],
+      });
+      return;
+    }
 
     if (!this.inspectorVisible()) {
       this.dom.inspector.setData({
@@ -1244,11 +1920,11 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       return;
     }
     if (actionId === 'new-product-collection') {
-      this.createNewCollection('products');
+      this.openNewCollectionDialog('products');
       return;
     }
     if (actionId === 'new-material-collection') {
-      this.createNewCollection('materials');
+      this.openNewCollectionDialog('materials');
       return;
     }
     if (actionId === 'open-product-collection-file') {
@@ -1267,18 +1943,11 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       await this.saveSelectedCollection('materials');
       return;
     }
-    if (actionId === 'open-selected-collection') {
-      this.openSelectedCollection();
-      return;
-    }
-    if (actionId === 'open-section') {
-      this.openSelectedSection();
-      return;
-    }
     if (actionId === 'generate-export') {
       this.refreshExportSnapshot();
-      this.setStatus(this.state.exportWarnings.length > 0
-        ? `Generated export with ${this.state.exportWarnings.length} warning${this.state.exportWarnings.length === 1 ? '' : 's'}.`
+      const warnings = this.workspaceExportWarnings();
+      this.setStatus(warnings.length > 0
+        ? `Generated export with ${warnings.length} warning${warnings.length === 1 ? '' : 's'}.`
         : 'Generated package export.');
       this.renderBrowser();
       return;
@@ -1289,8 +1958,11 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   openSelectedCollection() {
+    this.openCollectionAtIndex(Number(this.state.selectedEntryRef?.index));
+  }
+
+  openCollectionAtIndex(index) {
     const entries = this.currentListEntries();
-    const index = Number(this.state.selectedEntryRef?.index);
     if (!Number.isInteger(index) || index < 0 || index >= entries.length) {
       return;
     }
@@ -1300,10 +1972,10 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     }
 
     if (this.state.activeWorkspace === 'products') {
-      this.state.selectedProductCollectionId = selected.id;
+      this.state.workspace.activeProductSourceId = selected.sourceId || selected.id;
       this.state.currentLevel = 'products-sections';
     } else if (this.state.activeWorkspace === 'materials') {
-      this.state.selectedMaterialCollectionId = selected.id;
+      this.state.workspace.activeMaterialSourceId = selected.sourceId || selected.id;
       this.state.currentLevel = 'materials-sections';
     }
 
@@ -1313,8 +1985,11 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   openSelectedSection() {
+    this.openSectionAtIndex(Number(this.state.selectedEntryRef?.index));
+  }
+
+  openSectionAtIndex(index) {
     const entries = this.sectionEntriesForCurrentLevel();
-    const index = Number(this.state.selectedEntryRef?.index);
     if (!Number.isInteger(index) || index < 0 || index >= entries.length) {
       return;
     }
@@ -1346,12 +2021,20 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   createNewManufacturer() {
-    this.state.manufacturer = {
-      ...createEmptyManufacturerSource(),
+    const manufacturer = createSourceDescriptor({
+      role: 'manufacturer',
+      label: 'Manufacturer source',
+      ownerOrgId: this.currentOrganizationId(),
+      connectionType: 'local-file',
       fileName: 'manufacturer_info.json',
+      sourcePath: 'manufacturer_info.json',
       data: createManufacturerTemplate(),
-      dirty: true,
-    };
+      isLoaded: true,
+      isDirty: true,
+      validation: createEmptyValidation(),
+    });
+    manufacturer.dirty = true;
+    this.state.workspace.sources.manufacturer = manufacturer;
     this.state.currentLevel = 'general-sections';
     this.state.activeSectionId = null;
     this.state.selectedEntryRef = null;
@@ -1359,31 +2042,48 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     this.refreshAll();
   }
 
-  createNewCollection(workspace) {
+  createNewCollection(workspace, name = '') {
+    const resolvedName = String(name || '').trim() || `New ${workspace === 'products' ? 'product' : 'material'} collection`;
+    const baseId = slugify(resolvedName, workspace === 'products' ? 'product-collection' : 'material-collection');
+    const existingIds = new Set(this.currentWorkspaceCollections().map((entry) => String(entry.collectionId || entry.id || '').trim()).filter(Boolean));
+    let uniqueId = baseId;
+    let suffix = 2;
+    while (existingIds.has(uniqueId)) {
+      uniqueId = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+
+    const template = createCollectionTemplate(workspace);
+    template.id = uniqueId;
+    template.title = resolvedName;
+    if (!template.name) {
+      template.name = resolvedName;
+    }
     const collection = makeCollectionRecord(
       workspace,
-      createCollectionTemplate(workspace),
-      this.state.currentOrganizationId,
+      template,
+      this.currentOrganizationId(),
       null,
-      workspace === 'products' ? 'product-collection.json' : 'material-collection.json',
+      `${uniqueId}.json`,
     );
+    collection.isDirty = true;
     collection.dirty = true;
 
     if (workspace === 'products') {
-      this.state.productCollections = [...this.state.productCollections, collection];
-      this.state.selectedProductCollectionId = collection.id;
+      this.state.workspace.sources.products = collection;
+      this.state.workspace.activeProductSourceId = collection.sourceId || collection.id;
       this.state.activeWorkspace = 'products';
       this.state.currentLevel = 'products-sections';
     } else {
-      this.state.materialCollections = [...this.state.materialCollections, collection];
-      this.state.selectedMaterialCollectionId = collection.id;
+      this.state.workspace.sources.materials = [...this.materialSources(), collection];
+      this.state.workspace.activeMaterialSourceId = collection.sourceId || collection.id;
       this.state.activeWorkspace = 'materials';
       this.state.currentLevel = 'materials-sections';
     }
 
     this.state.activeSectionId = null;
     this.state.selectedEntryRef = null;
-    this.setStatus(`Created a new ${workspace === 'products' ? 'product' : 'material'} collection.`);
+    this.setStatus(`Created ${resolvedName}.`);
     this.refreshAll();
   }
 
@@ -1394,6 +2094,11 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   async openCollectionFile(workspace) {
     this.state.pendingOpenTarget = { type: 'collection', workspace };
+    await this.openJsonPicker();
+  }
+
+  async openPackagesFile() {
+    this.state.pendingOpenTarget = { type: 'packages' };
     await this.openJsonPicker();
   }
 
@@ -1450,18 +2155,27 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       }
 
       if (pending.type === 'manufacturer') {
-        this.state.manufacturer = {
+        const manufacturer = createSourceDescriptor({
+          role: 'manufacturer',
+          sourceId: this.manufacturerSource()?.sourceId || '',
+          label: 'Manufacturer source',
+          ownerOrgId: this.currentOrganizationId(),
+          connectionType: 'local-file',
           fileHandle: handle,
           fileName: file.name || (handle?.name || 'manufacturer_info.json'),
+          sourcePath: file.name || (handle?.name || ''),
           data: parsed,
-          dirty: false,
+          isLoaded: true,
+          isDirty: false,
           validation: validateDataRoot('general', parsed),
-        };
+        });
+        manufacturer.dirty = false;
+        this.state.workspace.sources.manufacturer = manufacturer;
         this.state.activeWorkspace = 'general';
         this.state.currentLevel = 'general-sections';
         this.state.activeSectionId = null;
         this.state.selectedEntryRef = null;
-        this.setStatus(`Opened manufacturer source ${this.state.manufacturer.fileName}.`);
+        this.setStatus(`Opened manufacturer source ${manufacturer.fileName}.`);
       }
 
       if (pending.type === 'collection') {
@@ -1469,36 +2183,58 @@ class OpenConfiguratorManagerElement extends HTMLElement {
         const collection = makeCollectionRecord(
           workspace,
           parsed,
-          this.state.currentOrganizationId,
+          this.currentOrganizationId(),
           handle,
           file.name || (handle?.name || `${workspace}-collection.json`),
         );
 
         if (workspace === 'products') {
-          const existingIndex = this.state.productCollections.findIndex((entry) => entry.id === collection.id);
-          if (existingIndex >= 0) {
-            this.state.productCollections[existingIndex] = collection;
-          } else {
-            this.state.productCollections = [...this.state.productCollections, collection];
+          const previous = this.productSource();
+          if (previous && previous.collectionId === collection.collectionId) {
+            collection.sourceId = previous.sourceId;
           }
-          this.state.selectedProductCollectionId = collection.id;
+          this.state.workspace.sources.products = collection;
+          this.state.workspace.activeProductSourceId = collection.sourceId || collection.id;
           this.state.activeWorkspace = 'products';
           this.state.currentLevel = 'products-sections';
         } else {
-          const existingIndex = this.state.materialCollections.findIndex((entry) => entry.id === collection.id);
+          const next = [...this.materialSources()];
+          const existingIndex = next.findIndex((entry) => entry.collectionId === collection.collectionId || entry.id === collection.id);
           if (existingIndex >= 0) {
-            this.state.materialCollections[existingIndex] = collection;
+            collection.sourceId = next[existingIndex].sourceId || collection.sourceId;
+            next[existingIndex] = collection;
           } else {
-            this.state.materialCollections = [...this.state.materialCollections, collection];
+            next.push(collection);
           }
-          this.state.selectedMaterialCollectionId = collection.id;
+          this.state.workspace.sources.materials = next;
+          this.state.workspace.activeMaterialSourceId = collection.sourceId || collection.id;
           this.state.activeWorkspace = 'materials';
           this.state.currentLevel = 'materials-sections';
         }
 
         this.state.activeSectionId = null;
         this.state.selectedEntryRef = null;
-        this.setStatus(`Opened ${workspace} collection ${collection.title}.`);
+        this.setStatus(`Opened ${workspace} source ${collection.title}.`);
+      }
+
+      if (pending.type === 'packages') {
+        const packagesSource = createSourceDescriptor({
+          role: 'packages',
+          sourceId: this.packagesSource()?.sourceId || '',
+          label: 'Packages source',
+          ownerOrgId: this.currentOrganizationId(),
+          connectionType: 'local-file',
+          fileHandle: handle,
+          fileName: file.name || (handle?.name || 'packages.json'),
+          sourcePath: file.name || (handle?.name || ''),
+          data: parsed,
+          isLoaded: true,
+          isDirty: false,
+          validation: createEmptyValidation(),
+        });
+        packagesSource.dirty = false;
+        this.state.workspace.sources.packages = packagesSource;
+        this.setStatus(`Opened packages source ${packagesSource.fileName}.`);
       }
 
       this.refreshAll();
@@ -1507,19 +2243,20 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     }
   }
   async saveManufacturer() {
-    if (!isPlainObject(this.state.manufacturer.data)) {
+    const manufacturer = this.manufacturerSource();
+    if (!isPlainObject(manufacturer?.data)) {
       this.setStatus('No manufacturer source loaded.');
       return;
     }
 
     try {
-      const text = `${JSON.stringify(this.state.manufacturer.data, null, 2)}\n`;
-      if (this.state.manufacturer.fileHandle && typeof this.state.manufacturer.fileHandle.createWritable === 'function') {
-        await this.writeToHandle(this.state.manufacturer.fileHandle, text);
+      const text = `${JSON.stringify(manufacturer.data, null, 2)}\n`;
+      if (manufacturer.fileHandle && typeof manufacturer.fileHandle.createWritable === 'function') {
+        await this.writeToHandle(manufacturer.fileHandle, text);
       } else {
-        await this.saveTextAsFile(text, this.state.manufacturer.fileName || 'manufacturer_info.json');
+        await this.saveTextAsFile(text, manufacturer.fileName || 'manufacturer_info.json');
       }
-      this.state.manufacturer.dirty = false;
+      setSourceDirty(manufacturer, false);
       this.setStatus('Manufacturer source saved.');
       this.refreshAll();
     } catch (error) {
@@ -1532,8 +2269,8 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   async saveSelectedCollection(workspace) {
     const collection = workspace === 'products'
-      ? this.state.productCollections.find((entry) => entry.id === this.state.selectedProductCollectionId)
-      : this.state.materialCollections.find((entry) => entry.id === this.state.selectedMaterialCollectionId);
+      ? this.selectedProductSource()
+      : this.selectedMaterialSource();
 
     if (!collection) {
       this.setStatus('No collection selected.');
@@ -1547,8 +2284,8 @@ class OpenConfiguratorManagerElement extends HTMLElement {
       } else {
         await this.saveTextAsFile(text, collection.fileName || `${workspace}-collection.json`);
       }
-      collection.dirty = false;
-      this.setStatus(`${workspace === 'products' ? 'Product' : 'Material'} collection saved.`);
+      setSourceDirty(collection, false);
+      this.setStatus(`${workspace === 'products' ? 'Products' : 'Materials'} source saved.`);
       this.refreshAll();
     } catch (error) {
       if (error?.name === 'AbortError') {
@@ -1560,7 +2297,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
 
   async downloadGeneratedExport() {
     try {
-      const text = `${JSON.stringify(this.state.generatedPackageData || {}, null, 2)}\n`;
+      const text = `${JSON.stringify(this.workspaceGeneratedPackage() || {}, null, 2)}\n`;
       await this.saveTextAsFile(text, 'configurator-package.json');
       this.setStatus('Generated package exported.');
     } catch (error) {
@@ -1607,6 +2344,66 @@ class OpenConfiguratorManagerElement extends HTMLElement {
   }
 
   applyEntryChange(detail) {
+    if (this.state.currentLevel === 'general-sections' && detail.sectionId === '__general_metadata') {
+      const source = this.manufacturerSource();
+      if (!isPlainObject(source?.data) || !isPlainObject(detail.value)) {
+        return;
+      }
+
+      const keys = this.generalMetadataKeys(source.data);
+      const nextData = { ...source.data };
+      for (const key of keys) {
+        if (key in detail.value) {
+          nextData[key] = detail.value[key];
+        }
+      }
+      source.data = nextData;
+      setSourceDirty(source, true);
+      this.setStatus('Edited organization metadata.');
+      this.refreshAll();
+      return;
+    }
+
+    if (this.state.currentLevel === 'products-sections' && detail.sectionId === '__products_metadata') {
+      const source = this.selectedProductSource();
+      if (!isPlainObject(source?.data) || !isPlainObject(detail.value)) {
+        return;
+      }
+
+      const keys = this.generalMetadataKeys(source.data);
+      const nextData = { ...source.data };
+      for (const key of keys) {
+        if (key in detail.value) {
+          nextData[key] = detail.value[key];
+        }
+      }
+      source.data = nextData;
+      setSourceDirty(source, true);
+      this.setStatus('Edited product collection metadata.');
+      this.refreshAll();
+      return;
+    }
+
+    if (this.state.currentLevel === 'materials-sections' && detail.sectionId === '__materials_metadata') {
+      const source = this.selectedMaterialSource();
+      if (!isPlainObject(source?.data) || !isPlainObject(detail.value)) {
+        return;
+      }
+
+      const keys = this.generalMetadataKeys(source.data);
+      const nextData = { ...source.data };
+      for (const key of keys) {
+        if (key in detail.value) {
+          nextData[key] = detail.value[key];
+        }
+      }
+      source.data = nextData;
+      setSourceDirty(source, true);
+      this.setStatus('Edited material collection metadata.');
+      this.refreshAll();
+      return;
+    }
+
     const context = this.currentEntryContext();
     if (!context || !context.owner || !isPlainObject(context.owner.data)) {
       return;
@@ -1632,7 +2429,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     }
 
     context.owner.data = nextData;
-    context.owner.dirty = true;
+    setSourceDirty(context.owner, true);
     this.setStatus(`Edited ${friendlySectionLabel(sectionId)}.`);
     this.refreshAll();
   }
@@ -1690,7 +2487,7 @@ class OpenConfiguratorManagerElement extends HTMLElement {
     }
 
     context.owner.data = { ...context.owner.data, [sectionId]: list };
-    context.owner.dirty = true;
+    setSourceDirty(context.owner, true);
     this.refreshAll();
   }
 }
@@ -1700,3 +2497,4 @@ if (!customElements.get('open-configurator-manager')) {
 }
 
 export { OpenConfiguratorManagerElement };
+

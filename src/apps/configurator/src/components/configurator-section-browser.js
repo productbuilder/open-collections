@@ -38,6 +38,7 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
       section: null,
       sectionValue: null,
       selectedEntryRef: null,
+      arrayPresentation: 'data',
       showBack: false,
       showViewToggle: true,
       contextActions: [],
@@ -53,6 +54,7 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
         canMoveUp: false,
         canMoveDown: false,
       },
+      sourceMeta: '',
     };
   }
 
@@ -124,6 +126,10 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
       subtitle = 'Package summary';
     }
 
+    if (this.model.sourceMeta) {
+      subtitle = subtitle ? `${subtitle} | ${this.model.sourceMeta}` : this.model.sourceMeta;
+    }
+
     panel.setAttribute('title', sectionLabel);
     panel.setAttribute('subtitle', subtitle);
     panel.setAttribute('show-back', this.model.showBack ? 'true' : 'false');
@@ -164,10 +170,15 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
     }
 
     if (sectionKind === 'array') {
-      host.innerHTML = this.model.viewMode === 'cards'
-        ? this.renderArrayCards(this.model.sectionValue)
-        : this.renderArrayRows(this.model.sectionValue);
-      this.bindArraySelection();
+      if (this.model.arrayPresentation === 'section-nav') {
+        host.innerHTML = this.renderSectionNavigationList(this.model.sectionValue);
+        this.bindSectionNavigationSelection();
+      } else {
+        host.innerHTML = this.model.viewMode === 'cards'
+          ? this.renderArrayCards(this.model.sectionValue)
+          : this.renderArrayRows(this.model.sectionValue);
+        this.bindArraySelection();
+      }
       return;
     }
 
@@ -293,11 +304,22 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
       const warnings = this.warningForIndex(index);
       const label = entryLabel(entry, index);
       const id = entry && typeof entry === 'object' ? (entry.id || '') : '';
+      const sourceFlags = [];
+      if (entry?.connectionType || entry?.sourceType) {
+        sourceFlags.push(String(entry.connectionType || entry.sourceType));
+      }
+      if (entry?.isLinkedExternal) {
+        sourceFlags.push('linked');
+      }
+      if (entry?.isDirty) {
+        sourceFlags.push('unsaved');
+      }
+      const sourceDetail = [entry?.fileName, ...sourceFlags].filter(Boolean).join(' | ');
       return `
         <tr class="${selected}" data-entry-index="${index}">
           <td>${escapeHtml(label)}</td>
           <td>${escapeHtml(id)}</td>
-          <td>${escapeHtml(valueType(entry))}</td>
+          <td>${escapeHtml(sourceDetail || valueType(entry))}</td>
           <td>${warnings.length > 0 ? `<span class="row-warn">${warnings.length}</span>` : ''}</td>
         </tr>
       `;
@@ -322,15 +344,62 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
       const id = entry && typeof entry === 'object' ? String(entry.id || '').trim() : '';
       const type = valueType(entry);
       const warnings = this.warningForIndex(index);
+      const sourceFlags = [];
+      if (entry?.connectionType || entry?.sourceType) {
+        sourceFlags.push(String(entry.connectionType || entry.sourceType));
+      }
+      if (entry?.isLinkedExternal) {
+        sourceFlags.push('linked');
+      }
+      if (entry?.isDirty) {
+        sourceFlags.push('unsaved');
+      }
+      const sourceDetail = [entry?.fileName, ...sourceFlags].filter(Boolean).join(' | ');
       return `
         <article class="card ${selected}" data-entry-index="${index}">
           <p class="card-title">${escapeHtml(entryLabel(entry, index))}</p>
-          <p class="card-meta">${escapeHtml(id || 'No ID')} | ${escapeHtml(type)}</p>
+          <p class="card-meta">${escapeHtml(id || 'No ID')} | ${escapeHtml(sourceDetail || type)}</p>
           ${warnings.length > 0 ? `<p class="card-warn">${warnings.length} warning${warnings.length === 1 ? '' : 's'}</p>` : ''}
         </article>
       `;
     }).join('');
     return `<div class="cards">${cards}</div>`;
+  }
+
+  renderSectionNavigationList(value) {
+    const entries = Array.isArray(value) ? value : [];
+    if (entries.length === 0) {
+      return '<div class="empty">No sections available yet.</div>';
+    }
+
+    const bars = entries.map((entry, index) => {
+      const selected = this.model.selectedEntryRef?.index === index ? 'is-selected' : '';
+      const title = entryLabel(entry, index);
+      const count = Number.isFinite(entry?.count) ? entry.count : null;
+      const warningCount = Number.isFinite(entry?.warningCount) ? entry.warningCount : 0;
+      const type = String(entry?.type || '').trim();
+      const metaText = String(entry?.metaText || '').trim();
+      const meta = [
+        metaText,
+        type ? `Type: ${type}` : '',
+        count === null ? '' : `${count} items`,
+      ].filter(Boolean).join(' | ');
+
+      return `
+        <button class="section-nav-btn ${selected}" type="button" data-entry-index="${index}">
+          <span class="section-nav-main">
+            <strong class="section-nav-title">${escapeHtml(title)}</strong>
+            ${meta ? `<span class="section-nav-meta">${escapeHtml(meta)}</span>` : ''}
+          </span>
+          <span class="section-nav-badges">
+            ${count === null ? '' : `<span class="section-count">${count}</span>`}
+            ${warningCount > 0 ? `<span class="section-warn">! ${warningCount}</span>` : ''}
+          </span>
+        </button>
+      `;
+    }).join('');
+
+    return `<div class="section-nav-list">${bars}</div>`;
   }
 
   renderObjectRows(value) {
@@ -366,6 +435,19 @@ class OpenConfiguratorSectionBrowserElement extends HTMLElement {
         const index = Number(raw);
         if (Number.isInteger(index)) {
           this.dispatch('entry-select', { entryRef: { index } });
+        }
+      });
+    });
+  }
+
+  bindSectionNavigationSelection() {
+    this.shadowRoot.querySelectorAll('.section-nav-btn[data-entry-index]').forEach((node) => {
+      node.addEventListener('click', () => {
+        const raw = node.getAttribute('data-entry-index');
+        const index = Number(raw);
+        if (Number.isInteger(index)) {
+          this.dispatch('entry-select', { entryRef: { index } });
+          this.dispatch('section-open', { index });
         }
       });
     });
@@ -410,3 +492,4 @@ if (!customElements.get('open-configurator-section-browser')) {
 }
 
 export { OpenConfiguratorSectionBrowserElement };
+

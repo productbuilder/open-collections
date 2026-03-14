@@ -5,20 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Docs: Protocol | Open Collections</title>
 		<link rel="stylesheet" href="../../index.css" />
+			<script type="module" src="../shared/site-shell-components.js"></script>
 	</head>
 	<body class="docs-page">
-		<div class="site-header">
-			<div class="site-header-inner">
-				<div class="site-brand">Open Collections</div>
-				<nav class="site-nav" aria-label="Primary navigation">
-					<a href="../../">Home</a>
-					<a href="../tools/">Tools</a>
-					<a href="../get-started/">Get started</a>
-					<a href="../hosting/">Hosting</a>
-					<a href="./" class="is-active" aria-current="page">Docs</a>
-				</nav>
-			</div>
-		</div>
+		<open-collections-site-header base-path="../../" active-page="docs"></open-collections-site-header>
 
 		<main>
 			<p class="breadcrumbs"><a href="../../">Home</a> / <a href="./">Docs</a> / Protocol</p>
@@ -170,5 +160,7 @@
 			</div>
 		</main>
 		<script src="./docs-nav.js"></script>
+
+		<open-collections-site-footer base-path="../../"></open-collections-site-footer>
 	</body>
 </html>

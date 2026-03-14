@@ -6,20 +6,11 @@
 		<title>Collection Manager Embed Demo | Open Collections</title>
 		<link rel="stylesheet" href="../../index.css" />
 		<link rel="stylesheet" href="./index.css" />
+			<script type="module" src="../shared/site-shell-components.js"></script>
 	</head>
 	<body>
-		<div class="site-header">
-			<div class="site-header-inner">
-				<div class="site-brand">Open Collections</div>
-				<nav class="site-nav" aria-label="Primary navigation">
-					<a href="../../">Home</a>
-					<a href="../tools/">Tools</a>
-					<a href="../get-started/">Get started</a>
-					<a href="../hosting/">Hosting</a>
-					<a href="../docs/">Docs</a>
-				</nav>
-			</div>
-		</div>
+		<open-collections-site-header base-path="../../" active-page="tools"></open-collections-site-header>
+
 		<main>
 			<p class="breadcrumbs"><a href="../../">Home</a> / <a href="../tools/">Tools</a> / Collection Manager Demo</p>
 			<header>
@@ -47,6 +38,8 @@
 			</section>
 		</main>
 		<script type="module" src="../../src/apps/collector/src/index.js"></script>
+
+		<open-collections-site-footer base-path="../../"></open-collections-site-footer>
 	</body>
 </html>
 

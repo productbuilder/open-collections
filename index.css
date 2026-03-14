@@ -122,6 +122,47 @@ timemap-browser {
 	text-decoration: underline;
 }
 
+
+
+.site-footer {
+	border-top: 1px solid var(--site-border-color);
+	background: #ffffff;
+}
+
+.site-footer-inner {
+	max-width: 1080px;
+	margin: 0 auto;
+	padding: 1rem;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.6rem 1rem;
+}
+
+.site-footer-text {
+	font-weight: 600;
+	color: #334155;
+}
+
+.site-footer-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.site-footer-nav a {
+	color: var(--site-link-color);
+	text-decoration: none;
+	font-weight: 600;
+	padding: 0.2rem 0.45rem;
+	border-radius: var(--site-radius-small);
+}
+
+.site-footer-nav a:hover,
+.site-footer-nav a:focus-visible {
+	text-decoration: underline;
+}
+
 main {
 	max-width: 1080px;
 	margin: 0 auto;
@@ -299,6 +340,10 @@ th {
 
 	.consumer-toolbar {
 		gap: 0.45rem 0.6rem;
+	}
+
+	.site-footer-inner {
+		padding: 0.85rem 0.7rem;
 	}
 }
 

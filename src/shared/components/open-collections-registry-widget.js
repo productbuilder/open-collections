@@ -1,246 +1,724 @@
-const WIDGET_TEMPLATE = document.createElement('template');
+const DEFAULT_RECENT_LIMIT = 5;
+const MAX_RECENT_LIMIT = 20;
 
-WIDGET_TEMPLATE.innerHTML = `
-	<style>
-		:host {
-			display: block;
-			font-family: var(--site-font-family, "Segoe UI", Tahoma, sans-serif);
-			color: var(--site-text-color, #111827);
-		}
+const MOCK_RECENT_ITEMS = [
+  {
+    id: 'demo-1',
+    title: 'Maps collection',
+    url: 'https://example.org/maps/collection.json',
+    type: 'collection',
+    addedAt: '2026-03-14T10:00:00Z',
+    status: 'valid',
+  },
+  {
+    id: 'demo-2',
+    title: 'Photo archive',
+    url: 'https://example.org/photos/collection.json',
+    type: 'collection',
+    addedAt: '2026-03-13T09:30:00Z',
+    status: 'valid',
+  },
+];
 
-		.widget-shell {
-			display: grid;
-			gap: 1rem;
-		}
+function parseRecentLimit(value) {
+  const numeric = Number.parseInt(value, 10);
+  if (!Number.isFinite(numeric) || numeric < 1) {
+    return DEFAULT_RECENT_LIMIT;
+  }
+  return Math.min(numeric, MAX_RECENT_LIMIT);
+}
 
-		.widget-panel {
-			background: #ffffff;
-			border: 1px solid #e5e7eb;
-			border-radius: 0.5rem;
-			padding: 1rem;
-			display: grid;
-			gap: 0.75rem;
-		}
+function safeText(value) {
+  return String(value ?? '').trim();
+}
 
-		h3 {
-			margin: 0;
-			font-size: 1.1rem;
-		}
+function escapeHtml(value) {
+  return safeText(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-		p {
-			margin: 0;
-			color: #334155;
-		}
+function toDateLabel(value) {
+  const raw = safeText(value);
+  if (!raw) {
+    return '';
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(parsed);
+  } catch (_error) {
+    return parsed.toISOString().slice(0, 10);
+  }
+}
 
-		form {
-			display: grid;
-			gap: 0.65rem;
-		}
+function normalizeRecentItems(payload) {
+  const list = Array.isArray(payload?.items) ? payload.items : (Array.isArray(payload) ? payload : []);
+  return list.map((item, index) => ({
+    id: safeText(item?.id) || `recent-${index + 1}`,
+    title: safeText(item?.title) || safeText(item?.name) || 'Untitled collection',
+    url: safeText(item?.url) || safeText(item?.manifestUrl) || '',
+    type: safeText(item?.type) || '',
+    addedAt: safeText(item?.addedAt) || safeText(item?.createdAt) || '',
+    status: safeText(item?.status) || '',
+  }));
+}
 
-		label {
-			font-weight: 600;
-		}
+class OpenCollectionsRegistryWidgetElement extends HTMLElement {
+  static get observedAttributes() {
+    return ['submit-url', 'recent-url', 'recent-limit', 'api-mode', 'title', 'intro'];
+  }
 
-		input[type='url'] {
-			width: 100%;
-			padding: 0.55rem 0.6rem;
-			border: 1px solid #cbd5e1;
-			border-radius: 0.35rem;
-			font-size: 1rem;
-		}
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.state = {
+      urlValue: '',
+      isSubmitting: false,
+      isLoadingRecent: false,
+      feedback: null,
+      recentItems: [],
+      recentError: '',
+    };
+    this.mockRecentItems = [...MOCK_RECENT_ITEMS];
+  }
 
-		button {
-			justify-self: start;
-			padding: 0.5rem 0.8rem;
-			border: 0;
-			border-radius: 0.35rem;
-			background: #0369a1;
-			color: #ffffff;
-			font-weight: 600;
-			cursor: pointer;
-		}
+  connectedCallback() {
+    this.render();
+    this.loadRecentItems().catch(() => {});
+  }
 
-		button[disabled] {
-			opacity: 0.75;
-			cursor: wait;
-		}
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.isConnected) {
+      return;
+    }
+    this.render();
+    if (name === 'recent-url' || name === 'recent-limit' || name === 'api-mode') {
+      this.loadRecentItems().catch(() => {});
+    }
+  }
 
-		.feedback {
-			padding: 0.55rem 0.65rem;
-			border-radius: 0.35rem;
-			font-size: 0.95rem;
-		}
+  get submitUrl() {
+    return safeText(this.getAttribute('submit-url'));
+  }
 
-		.feedback[data-kind='success'] {
-			background: #dcfce7;
-			color: #14532d;
-		}
+  set submitUrl(value) {
+    if (value == null) {
+      this.removeAttribute('submit-url');
+      return;
+    }
+    this.setAttribute('submit-url', String(value));
+  }
 
-		.feedback[data-kind='warning'] {
-			background: #fef3c7;
-			color: #78350f;
-		}
+  get recentUrl() {
+    return safeText(this.getAttribute('recent-url'));
+  }
 
-		.feedback[data-kind='error'] {
-			background: #fee2e2;
-			color: #7f1d1d;
-		}
+  set recentUrl(value) {
+    if (value == null) {
+      this.removeAttribute('recent-url');
+      return;
+    }
+    this.setAttribute('recent-url', String(value));
+  }
 
-		.recent-list {
-			margin: 0;
-			padding-left: 1.2rem;
-			display: grid;
-			gap: 0.3rem;
-		}
+  get recentLimit() {
+    return parseRecentLimit(this.getAttribute('recent-limit'));
+  }
 
-		.muted {
-			color: #64748b;
-			font-size: 0.95rem;
-		}
-	</style>
+  set recentLimit(value) {
+    this.setAttribute('recent-limit', String(value));
+  }
 
-	<div class="widget-shell">
-		<section class="widget-panel">
-			<h3>Submit a collection URL</h3>
-			<p>Enter a collection URL or a source URL to request registration.</p>
-			<form>
-				<label for="registry-url">Collection URL</label>
-				<input id="registry-url" type="url" name="url" required placeholder="https://example.org/collection.json" />
-				<button type="submit">Submit URL</button>
-			</form>
-			<div class="feedback" hidden></div>
-		</section>
+  get apiMode() {
+    return safeText(this.getAttribute('api-mode')).toLowerCase();
+  }
 
-		<section class="widget-panel" aria-live="polite">
-			<h3>Recent additions</h3>
-			<p class="muted">Most recently registered collections.</p>
-			<div class="recent-state muted">Loading recent additions…</div>
-			<ol class="recent-list" hidden></ol>
-		</section>
-	</div>
-`;
+  get titleText() {
+    return safeText(this.getAttribute('title')) || 'Register a collection';
+  }
 
-const defaultMessage = {
-	success: 'URL submitted successfully. It will be reviewed and added when valid.',
-	warning: 'URL submitted, but there are checks to complete before it can be added.',
-	error: 'We could not submit that URL right now. Please try again in a moment.',
-};
+  get introText() {
+    return safeText(this.getAttribute('intro'))
+      || 'Enter the URL of a collection or collection source. We will check it and add it to the registry if it is valid.';
+  }
 
-class OpenCollectionsRegistryWidget extends HTMLElement {
-	connectedCallback() {
-		if (this.shadowRoot) {
-			return;
-		}
+  isMockMode() {
+    return this.apiMode === 'mock' || this.hasAttribute('demo');
+  }
 
-		this.attachShadow({ mode: 'open' });
-		this.shadowRoot.append(WIDGET_TEMPLATE.content.cloneNode(true));
+  composeRecentRequestUrl() {
+    const base = this.recentUrl;
+    if (!base) {
+      return '';
+    }
+    try {
+      const url = new URL(base, window.location.href);
+      if (!url.searchParams.has('limit')) {
+        url.searchParams.set('limit', String(this.recentLimit));
+      }
+      return url.toString();
+    } catch (_error) {
+      return base;
+    }
+  }
 
-		this.form = this.shadowRoot.querySelector('form');
-		this.urlInput = this.shadowRoot.querySelector('input[name="url"]');
-		this.submitButton = this.shadowRoot.querySelector('button[type="submit"]');
-		this.feedback = this.shadowRoot.querySelector('.feedback');
-		this.recentState = this.shadowRoot.querySelector('.recent-state');
-		this.recentList = this.shadowRoot.querySelector('.recent-list');
+  async fetchJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        Accept: 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+    const contentType = safeText(response.headers.get('content-type')).toLowerCase();
+    let payload = null;
+    if (contentType.includes('application/json')) {
+      payload = await response.json();
+    } else {
+      const text = await response.text();
+      payload = text ? { message: text } : {};
+    }
+    return { response, payload };
+  }
 
-		this.form.addEventListener('submit', (event) => {
-			event.preventDefault();
-			this.submitUrl();
-		});
+  async loadRecentItems() {
+    this.state.isLoadingRecent = true;
+    this.state.recentError = '';
+    this.render();
 
-		this.loadRecent();
-	}
+    try {
+      if (this.isMockMode()) {
+        this.state.recentItems = this.mockRecentItems.slice(0, this.recentLimit);
+        return;
+      }
 
-	get submitUrlEndpoint() {
-		return this.getAttribute('submit-url') || '';
-	}
+      const recentEndpoint = this.composeRecentRequestUrl();
+      if (!recentEndpoint) {
+        this.state.recentItems = [];
+        this.state.recentError = 'Set recent-url to load recent registrations.';
+        return;
+      }
 
-	get recentUrlEndpoint() {
-		return this.getAttribute('recent-url') || '';
-	}
+      const { response, payload } = await this.fetchJson(recentEndpoint, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(safeText(payload?.message) || `Could not load recent items (${response.status}).`);
+      }
+      this.state.recentItems = normalizeRecentItems(payload).slice(0, this.recentLimit);
+    } catch (error) {
+      this.state.recentItems = [];
+      this.state.recentError = error.message || 'Could not load recent items.';
+    } finally {
+      this.state.isLoadingRecent = false;
+      this.render();
+    }
+  }
 
-	get recentLimit() {
-		const limit = Number.parseInt(this.getAttribute('recent-limit') || '5', 10);
-		return Number.isNaN(limit) ? 5 : limit;
-	}
+  readUrlFromInput() {
+    const input = this.shadowRoot.querySelector('#registryUrlInput');
+    const value = safeText(input?.value);
+    this.state.urlValue = value;
+    return value;
+  }
 
-	setFeedback(kind, message) {
-		this.feedback.hidden = false;
-		this.feedback.dataset.kind = kind;
-		this.feedback.textContent = message;
-	}
+  showFeedback(type, message, warnings = []) {
+    this.state.feedback = {
+      type,
+      message: safeText(message),
+      warnings: Array.isArray(warnings)
+        ? warnings.map((entry) => safeText(entry)).filter(Boolean)
+        : [],
+    };
+  }
 
-	async submitUrl() {
-		const targetUrl = this.urlInput.value.trim();
-		if (!targetUrl) {
-			return;
-		}
+  async submitMock(url) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 260);
+    });
+    if (url.includes('invalid')) {
+      return {
+        ok: false,
+        status: 'error',
+        message: 'Could not validate this URL.',
+      };
+    }
+    const now = new Date().toISOString();
+    const titleFallback = (() => {
+      try {
+        const parsed = new URL(url);
+        const slug = parsed.pathname.split('/').filter(Boolean).at(-1) || parsed.hostname;
+        return slug.replace(/[-_]+/g, ' ');
+      } catch (_error) {
+        return 'New collection';
+      }
+    })();
+    const item = {
+      id: `demo-${Date.now()}`,
+      title: `Demo: ${titleFallback}`,
+      url,
+      type: url.endsWith('collections.json') ? 'collections' : 'collection',
+      addedAt: now,
+      status: url.includes('warn') ? 'warning' : 'valid',
+    };
+    this.mockRecentItems = [item, ...this.mockRecentItems].slice(0, this.recentLimit);
+    if (url.includes('warn')) {
+      return {
+        ok: true,
+        status: 'warning',
+        message: 'Collection registered with warnings.',
+        item,
+        warnings: ['Some optional metadata is missing.'],
+      };
+    }
+    return {
+      ok: true,
+      status: 'valid',
+      message: 'Collection registered successfully.',
+      item,
+      warnings: [],
+    };
+  }
 
-		this.submitButton.disabled = true;
-		this.feedback.hidden = true;
+  async onSubmit(event) {
+    event.preventDefault();
+    const url = this.readUrlFromInput();
+    if (!url) {
+      this.showFeedback('error', 'Enter a collection URL first.');
+      this.render();
+      return;
+    }
 
-		try {
-			const response = await fetch(this.submitUrlEndpoint, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ url: targetUrl }),
-			});
+    try {
+      new URL(url);
+    } catch (_error) {
+      this.showFeedback('error', 'Enter a valid URL.');
+      this.render();
+      return;
+    }
 
-			const payload = await response.json().catch(() => ({}));
-			const status = payload.status || (response.ok ? 'success' : 'error');
-			const message = payload.message || defaultMessage[status] || defaultMessage.error;
-			this.setFeedback(status, message);
-			if (response.ok) {
-				this.urlInput.value = '';
-				this.loadRecent();
-			}
-		} catch (error) {
-			this.setFeedback('error', defaultMessage.error);
-		} finally {
-			this.submitButton.disabled = false;
-		}
-	}
+    this.state.isSubmitting = true;
+    this.showFeedback('loading', 'Checking URL...');
+    this.render();
 
-	async loadRecent() {
-		if (!this.recentUrlEndpoint) {
-			this.recentState.textContent = 'Recent additions are not configured yet.';
-			return;
-		}
+    try {
+      let payload = null;
+      if (this.isMockMode()) {
+        payload = await this.submitMock(url);
+      } else {
+        if (!this.submitUrl) {
+          throw new Error('Set submit-url before submitting.');
+        }
+        const { response, payload: responsePayload } = await this.fetchJson(this.submitUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url }),
+        });
+        payload = responsePayload;
+        if (!response.ok && payload?.ok !== true) {
+          throw new Error(safeText(payload?.message) || `Request failed (${response.status}).`);
+        }
+      }
 
-		this.recentState.hidden = false;
-		this.recentState.textContent = 'Loading recent additions…';
-		this.recentList.hidden = true;
+      if (payload?.ok) {
+        const status = safeText(payload.status).toLowerCase();
+        const message = safeText(payload.message) || 'Collection registered successfully.';
+        const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+        if (status === 'warning') {
+          this.showFeedback('warning', message, warnings);
+        } else {
+          this.showFeedback('success', message, warnings);
+        }
+        await this.loadRecentItems();
+      } else {
+        this.showFeedback('error', safeText(payload?.message) || 'Could not validate this URL.');
+      }
+    } catch (error) {
+      this.showFeedback('error', error.message || 'Could not submit this URL.');
+    } finally {
+      this.state.isSubmitting = false;
+      this.render();
+    }
+  }
 
-		try {
-			const response = await fetch(this.recentUrlEndpoint, { method: 'GET' });
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
-			}
+  onInput(event) {
+    this.state.urlValue = safeText(event.target?.value);
+  }
 
-			const payload = await response.json();
-			const items = Array.isArray(payload.items) ? payload.items.slice(0, this.recentLimit) : [];
-			if (!items.length) {
-				this.recentState.textContent = 'No collections have been registered yet.';
-				return;
-			}
+  feedbackClassName() {
+    const type = safeText(this.state.feedback?.type) || 'neutral';
+    if (['success', 'warning', 'error', 'loading'].includes(type)) {
+      return `feedback ${type}`;
+    }
+    return 'feedback';
+  }
 
-			this.recentList.innerHTML = items
-				.map((item) => {
-					const url = item.url || item.collectionUrl || '';
-					const label = item.name || item.title || url;
-					if (!url) {
-						return `<li>${label}</li>`;
-					}
-					return `<li><a href="${url}" target="_blank" rel="noopener">${label}</a></li>`;
-				})
-				.join('');
-			this.recentState.hidden = true;
-			this.recentList.hidden = false;
-		} catch (error) {
-			this.recentState.textContent = 'Recent additions are temporarily unavailable.';
-		}
-	}
+  badgeClass(status) {
+    const normalized = safeText(status).toLowerCase();
+    if (normalized === 'valid' || normalized === 'success') {
+      return 'status-badge valid';
+    }
+    if (normalized === 'warning' || normalized === 'warn') {
+      return 'status-badge warning';
+    }
+    if (normalized === 'error' || normalized === 'invalid') {
+      return 'status-badge error';
+    }
+    return 'status-badge';
+  }
+
+  renderRecentList() {
+    if (this.state.isLoadingRecent) {
+      return '<p class="list-state">Loading recent registrations...</p>';
+    }
+    if (this.state.recentError) {
+      return `<p class="list-state error">${escapeHtml(this.state.recentError)}</p>`;
+    }
+    if (!Array.isArray(this.state.recentItems) || this.state.recentItems.length === 0) {
+      return '<p class="list-state">No recent registrations yet.</p>';
+    }
+
+    const rows = this.state.recentItems
+      .slice(0, this.recentLimit)
+      .map((item) => {
+        const title = escapeHtml(item.title) || 'Untitled collection';
+        const url = safeText(item.url);
+        const escapedUrl = escapeHtml(url);
+        const type = escapeHtml(item.type);
+        const date = escapeHtml(toDateLabel(item.addedAt));
+        const statusRaw = safeText(item.status);
+        const status = escapeHtml(statusRaw);
+        const meta = [type, date].filter(Boolean).join(' | ');
+        const statusBadge = status ? `<span class="${this.badgeClass(statusRaw)}">${status}</span>` : '';
+        const urlMarkup = url
+          ? `<a class="recent-url" href="${escapedUrl}" target="_blank" rel="noopener">${escapedUrl}</a>`
+          : '<span class="recent-url muted">No URL</span>';
+        return `
+          <li class="recent-item">
+            <div class="recent-head">
+              <p class="recent-title">${title}</p>
+              ${statusBadge}
+            </div>
+            ${urlMarkup}
+            ${meta ? `<p class="recent-meta">${meta}</p>` : ''}
+          </li>
+        `;
+      })
+      .join('');
+
+    return `<ol class="recent-list">${rows}</ol>`;
+  }
+
+  render() {
+    const disabled = this.state.isSubmitting ? 'disabled' : '';
+    const buttonLabel = this.state.isSubmitting ? 'Checking...' : 'Check and add';
+    const feedback = this.state.feedback;
+    const feedbackMarkup = feedback?.message
+      ? `
+        <div class="${this.feedbackClassName()}" role="status" aria-live="polite">
+          <p>${escapeHtml(feedback.message)}</p>
+          ${
+            Array.isArray(feedback.warnings) && feedback.warnings.length > 0
+              ? `<ul class="warning-list">${feedback.warnings.map((entry) => `<li>${escapeHtml(entry)}</li>`).join('')}</ul>`
+              : ''
+          }
+        </div>
+      `
+      : '';
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          --widget-bg: #ffffff;
+          --widget-border: #d8e1eb;
+          --widget-text: #0f172a;
+          --widget-muted: #475569;
+          --widget-accent: #0f6cc6;
+          --widget-accent-hover: #0d5eae;
+          --widget-ok-bg: #ecfdf3;
+          --widget-ok-border: #86efac;
+          --widget-ok-text: #166534;
+          --widget-warn-bg: #fff7ed;
+          --widget-warn-border: #fdba74;
+          --widget-warn-text: #9a3412;
+          --widget-error-bg: #fef2f2;
+          --widget-error-border: #fca5a5;
+          --widget-error-text: #991b1b;
+          color: var(--widget-text);
+          font-family: "Segoe UI", Tahoma, sans-serif;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        .widget {
+          border: 1px solid var(--widget-border);
+          background: var(--widget-bg);
+          border-radius: 12px;
+          padding: 1rem;
+          display: grid;
+          gap: 0.9rem;
+        }
+
+        .title {
+          margin: 0;
+          font-size: 1.1rem;
+        }
+
+        .intro {
+          margin: 0.25rem 0 0;
+          color: var(--widget-muted);
+          font-size: 0.9rem;
+          line-height: 1.45;
+        }
+
+        .form {
+          display: grid;
+          gap: 0.55rem;
+        }
+
+        label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--widget-muted);
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 0.55rem;
+        }
+
+        input[type="url"] {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 0.5rem 0.6rem;
+          font: inherit;
+          font-size: 0.9rem;
+        }
+
+        button {
+          border: 1px solid var(--widget-accent);
+          background: var(--widget-accent);
+          color: #ffffff;
+          border-radius: 8px;
+          padding: 0.5rem 0.75rem;
+          font: inherit;
+          font-size: 0.88rem;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        button:hover:enabled {
+          background: var(--widget-accent-hover);
+          border-color: var(--widget-accent-hover);
+        }
+
+        button:disabled {
+          opacity: 0.72;
+          cursor: wait;
+        }
+
+        .feedback {
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 0.55rem 0.65rem;
+          font-size: 0.88rem;
+          color: var(--widget-muted);
+          background: #f8fafc;
+        }
+
+        .feedback p {
+          margin: 0;
+        }
+
+        .feedback.success {
+          border-color: var(--widget-ok-border);
+          background: var(--widget-ok-bg);
+          color: var(--widget-ok-text);
+        }
+
+        .feedback.warning {
+          border-color: var(--widget-warn-border);
+          background: var(--widget-warn-bg);
+          color: var(--widget-warn-text);
+        }
+
+        .feedback.error {
+          border-color: var(--widget-error-border);
+          background: var(--widget-error-bg);
+          color: var(--widget-error-text);
+        }
+
+        .feedback.loading {
+          border-color: #93c5fd;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+
+        .warning-list {
+          margin: 0.45rem 0 0;
+          padding-left: 1rem;
+          display: grid;
+          gap: 0.2rem;
+        }
+
+        .recent-section {
+          display: grid;
+          gap: 0.5rem;
+        }
+
+        .recent-heading {
+          margin: 0;
+          font-size: 0.95rem;
+        }
+
+        .list-state {
+          margin: 0;
+          color: var(--widget-muted);
+          font-size: 0.88rem;
+          padding: 0.35rem 0;
+        }
+
+        .list-state.error {
+          color: var(--widget-error-text);
+        }
+
+        .recent-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          gap: 0.45rem;
+        }
+
+        .recent-item {
+          border: 1px solid var(--widget-border);
+          border-radius: 9px;
+          padding: 0.55rem 0.6rem;
+          display: grid;
+          gap: 0.35rem;
+        }
+
+        .recent-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+        }
+
+        .recent-title {
+          margin: 0;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+
+        .recent-url {
+          margin: 0;
+          color: #1d4ed8;
+          text-decoration: none;
+          word-break: break-all;
+          font-size: 0.82rem;
+        }
+
+        .recent-url:hover {
+          text-decoration: underline;
+        }
+
+        .recent-url.muted {
+          color: var(--widget-muted);
+        }
+
+        .recent-meta {
+          margin: 0;
+          color: var(--widget-muted);
+          font-size: 0.8rem;
+        }
+
+        .status-badge {
+          border: 1px solid #cbd5e1;
+          border-radius: 999px;
+          padding: 0.1rem 0.45rem;
+          font-size: 0.74rem;
+          color: #475569;
+          background: #f8fafc;
+          text-transform: lowercase;
+        }
+
+        .status-badge.valid {
+          border-color: var(--widget-ok-border);
+          background: var(--widget-ok-bg);
+          color: var(--widget-ok-text);
+        }
+
+        .status-badge.warning {
+          border-color: var(--widget-warn-border);
+          background: var(--widget-warn-bg);
+          color: var(--widget-warn-text);
+        }
+
+        .status-badge.error {
+          border-color: var(--widget-error-border);
+          background: var(--widget-error-bg);
+          color: var(--widget-error-text);
+        }
+
+        @media (max-width: 640px) {
+          .form-row {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <section class="widget">
+        <header>
+          <h2 class="title">${escapeHtml(this.titleText)}</h2>
+          <p class="intro">${escapeHtml(this.introText)}</p>
+        </header>
+        <form class="form" id="registryForm">
+          <label for="registryUrlInput">Collection URL</label>
+          <div class="form-row">
+            <input
+              id="registryUrlInput"
+              name="registryUrl"
+              type="url"
+              placeholder="https://example.org/my-collection/collection.json"
+              value="${escapeHtml(this.state.urlValue)}"
+              required
+            />
+            <button type="submit" ${disabled}>${buttonLabel}</button>
+          </div>
+        </form>
+        ${feedbackMarkup}
+        <section class="recent-section" aria-live="polite">
+          <h3 class="recent-heading">Recently added</h3>
+          ${this.renderRecentList()}
+        </section>
+      </section>
+    `;
+
+    const form = this.shadowRoot.querySelector('#registryForm');
+    const input = this.shadowRoot.querySelector('#registryUrlInput');
+    form?.addEventListener('submit', (event) => {
+      this.onSubmit(event).catch(() => {});
+    });
+    input?.addEventListener('input', (event) => this.onInput(event));
+  }
 }
 
 if (!customElements.get('open-collections-registry-widget')) {
-	customElements.define('open-collections-registry-widget', OpenCollectionsRegistryWidget);
+  customElements.define('open-collections-registry-widget', OpenCollectionsRegistryWidgetElement);
 }

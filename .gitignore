@@ -1,3 +1,7 @@
+# Tauri
+src/desktop/workbench/src-tauri/target/
+src/desktop/workbench/node_modules/
+
 # Logs
 logs
 *.log

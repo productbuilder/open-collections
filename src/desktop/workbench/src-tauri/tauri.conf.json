@@ -4,7 +4,11 @@
   "version": "0.1.0",
   "identifier": "org.opencollections.workbench",
   "build": {
-    "beforeDevCommand": "python3 -m http.server 1420 --bind 127.0.0.1 -d ../../..",
+    "beforeDevCommand": {
+      "script": "node ./scripts/dev-static-server.mjs --host 127.0.0.1 --port 1420",
+      "cwd": "..",
+      "wait": false
+    },
     "devUrl": "http://127.0.0.1:1420/src/desktop/workbench/index.html",
     "frontendDist": "../../.."
   },

@@ -26,6 +26,16 @@ It is intentionally practical:
 
 It is not the same thing as the Collection Indexer.
 
+## 2.1) Embeddable registry widget
+
+For a lightweight public registration flow, use the embeddable Web Component:
+
+- `open-collections-registry-widget`
+
+Integration details and backend contract are documented in:
+
+- [Registry widget](./registry-widget.md)
+
 ## 3) What the registry stores
 
 A first implementation should persist records such as:

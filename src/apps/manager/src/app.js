@@ -3,15 +3,39 @@ import { createPublicUrlProvider } from '../../../packages/provider-public-url/s
 import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
 import {
   createGoogleDriveProvider,
-  normalizeGoogleDriveManifestUrl,
   requestGoogleDriveAccessToken,
 } from '../../../packages/provider-gdrive/src/index.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
-import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
+import { toWorkspaceItemId } from './utils/id-utils.js';
 import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
+import {
+  collectCurrentProviderConfig,
+  connectCurrentProvider,
+  inspectSource,
+  refreshSource,
+  removeSource,
+  renderGoogleDriveMode,
+  sanitizeSourceConfig,
+  setSelectedProvider,
+  sourceDetailLabelFor,
+  sourceDisplayLabelFor,
+  toPersistedSource,
+} from './controllers/source-controller.js';
+import {
+  applyLocalDraftPayload,
+  applyWorkspaceSnapshot,
+  buildLocalDraftPayload,
+  currentWorkspaceSnapshot,
+  discardLocalDraft,
+  initializeLocalDraftState,
+  restoreLocalDraft,
+  restoreRememberedSources,
+  saveLocalDraft,
+  saveSourcesToStorage,
+} from './controllers/workspace-controller.js';
 import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
@@ -29,8 +53,6 @@ import * as AssetService from './services/asset-service.js';
 import * as CollectionService from './services/collection-service.js';
 import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
-
-const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -215,32 +237,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   setSelectedProvider(providerId) {
-    const selected = this.providerCatalog.find((entry) => entry.id === providerId);
-    if (!selected) {
-      return;
-    }
-
-    this.state.selectedProviderId = providerId;
-    this.dom.sourceManager?.setSelectedProvider(providerId);
-    if (providerId === 'gdrive') {
-      this.renderGoogleDriveMode();
-    }
-    this.renderCapabilities(this.providerFactories[providerId]?.getCapabilities?.() || selected.capabilities || {});
+    return setSelectedProvider(this, providerId);
   }
 
   renderGoogleDriveMode() {
-    this.dom.sourceManager?.renderGoogleDriveMode();
-    const mode = this.dom.sourceManager?.getGoogleDriveSourceMode() || 'auth-manifest-file';
-    const isAuthMode = mode === 'auth-manifest-file';
-    if (this.state.selectedProviderId === 'gdrive') {
-      this.renderCapabilities({
-        canListAssets: true,
-        canGetAsset: true,
-        canSaveMetadata: false,
-        canExportCollection: true,
-        authRequired: isAuthMode,
-      });
-    }
+    return renderGoogleDriveMode(this);
   }
 
   setGoogleDriveAuthStatus(text, tone = 'neutral') {
@@ -689,19 +690,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   collectCurrentProviderConfig(providerId) {
-    const config = this.dom.sourceManager?.getProviderConfig(providerId) || {};
-    if (providerId === 'local') {
-      config.localDirectoryName = (config.localDirectoryName || '').trim();
-      config.path = (config.path || '').trim()
-        || (config.localDirectoryName ? config.localDirectoryName : MANAGER_CONFIG.defaultLocalManifestPath);
-      if (this.selectedLocalDirectoryHandle && this.selectedLocalDirectoryHandle.kind === 'directory') {
-        config.localDirectoryHandle = this.selectedLocalDirectoryHandle;
-      }
-    }
-    if (providerId === 'gdrive') {
-      config.oauthScopes = MANAGER_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly';
-    }
-    return config;
+    return collectCurrentProviderConfig(this, providerId);
   }
 
   async pickLocalFolder() {
@@ -726,178 +715,27 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   sourceDisplayLabelFor(providerId, config, fallbackLabel) {
-    if (providerId === 'github') {
-      const repo = (config.repo || '').trim();
-      return repo || 'GitHub';
-    }
-
-    if (providerId === 'public-url') {
-      const manifestUrl = (config.manifestUrl || '').trim();
-      if (!manifestUrl) {
-        return 'Public URL';
-      }
-
-      try {
-        const parsed = new URL(manifestUrl);
-        const parts = parsed.pathname.split('/').filter(Boolean);
-        if (parsed.hostname.includes('githubusercontent.com') && parts.length >= 2) {
-          return parts[1];
-        }
-
-        const file = parts[parts.length - 1] || '';
-        const name = file.replace(/\.[^.]+$/, '');
-        if (name && !['collection', 'manifest', 'index'].includes(name.toLowerCase())) {
-          return name;
-        }
-
-        return parsed.hostname.replace(/^www\./i, '') || 'Public URL';
-      } catch (error) {
-        return 'Public URL';
-      }
-    }
-
-    if (providerId === 'gdrive') {
-      const manifestTitle = (config._manifestTitle || '').trim();
-      if (manifestTitle) {
-        return manifestTitle;
-      }
-      if ((config.sourceMode || '') === 'auth-manifest-file') {
-        return 'Google Drive (Auth)';
-      }
-      return 'Google Drive';
-    }
-
-    if (providerId === 'local') {
-      return (config.localDirectoryName || '').trim() || this.hostNameFromPath(config.path, 'Local folder');
-    }
-
-    return fallbackLabel || 'Source';
+    return sourceDisplayLabelFor(this, providerId, config, fallbackLabel);
   }
 
   sourceDetailLabelFor(providerId, config, fallbackLabel) {
-    if (providerId === 'github') {
-      const owner = (config.owner || '').trim();
-      const repo = (config.repo || '').trim();
-      const path = (config.path || '').trim();
-      const branch = (config.branch || 'main').trim() || 'main';
-      const base = owner && repo ? `${owner}/${repo}` : fallbackLabel;
-      const scope = path || '/';
-      return `${base} @ ${branch}:${scope}`;
-    }
-
-    if (providerId === 'public-url') {
-      return (config.manifestUrl || '').trim() || 'Public URL manifest';
-    }
-
-    if (providerId === 'gdrive') {
-      const fileId = (config._normalizedFileId || config.fileId || '').trim();
-      const mode = (config.sourceMode || '').trim() || 'public-manifest-url';
-      if (fileId) {
-        return mode === 'auth-manifest-file' ? `Google Drive API file ${fileId}` : `Google Drive file ${fileId}`;
-      }
-      return mode === 'auth-manifest-file' ? 'Google Drive API manifest' : 'Google Drive manifest';
-    }
-
-    if (providerId === 'local') {
-      const folderName = (config.localDirectoryName || '').trim();
-      if (folderName) {
-        return `${folderName} (host root)`;
-      }
-      return (config.path || '').trim() || 'Local folder';
-    }
-
-    return fallbackLabel || 'Source';
+    return sourceDetailLabelFor(this, providerId, config, fallbackLabel);
   }
 
   sanitizeSourceConfig(providerId, config = {}) {
-    if (providerId === 'github') {
-      return {
-        owner: (config.owner || '').trim(),
-        repo: (config.repo || '').trim(),
-        branch: (config.branch || 'main').trim() || 'main',
-        path: (config.path || '').trim(),
-      };
-    }
-
-    if (providerId === 'public-url') {
-      return {
-        manifestUrl: (config.manifestUrl || '').trim(),
-      };
-    }
-
-    if (providerId === 'gdrive') {
-      return {
-        sourceMode: (config.sourceMode || 'public-manifest-url').trim() || 'public-manifest-url',
-        manifestUrl: (config.manifestUrl || '').trim(),
-        fileId: (config.fileId || '').trim(),
-        oauthClientId: (config.oauthClientId || '').trim(),
-      };
-    }
-
-    if (providerId === 'local') {
-      return {
-        path: (config.path || '').trim() || MANAGER_CONFIG.defaultLocalManifestPath,
-        localDirectoryName: (config.localDirectoryName || '').trim(),
-      };
-    }
-
-    return {};
+    return sanitizeSourceConfig(this, providerId, config);
   }
 
   toPersistedSource(source) {
-    return {
-      id: source.id,
-      providerId: source.providerId,
-      providerLabel: source.providerLabel,
-      displayLabel: source.displayLabel || source.label,
-      detailLabel: source.detailLabel || source.label,
-      config: this.sanitizeSourceConfig(source.providerId, source.config),
-      capabilities: source.capabilities || {},
-      authMode: source.authMode || 'public',
-      itemCount: source.itemCount || 0,
-      status: source.status || '',
-      needsReconnect: Boolean(source.needsReconnect),
-      needsCredentials: Boolean(source.needsCredentials),
-    };
+    return toPersistedSource(this, source);
   }
 
   currentWorkspaceSnapshot() {
-    return {
-      selectedSourceId: this.state.activeSourceFilter || 'all',
-      selectedCollectionId: this.state.selectedCollectionId || 'all',
-      selectedItemId: this.state.selectedItemId || null,
-      collectionMeta: this.currentCollectionMeta(),
-      draftCollectionId: this.draftCollectionId(),
-      lastLocalSaveAt: this.state.lastLocalSaveAt || '',
-      localDraftCollections: this.state.localDraftCollections || [],
-    };
+    return currentWorkspaceSnapshot(this);
   }
 
   buildLocalDraftPayload() {
-    return {
-      savedAt: new Date().toISOString(),
-      collectionMeta: this.currentCollectionMeta(),
-      manifest: this.state.manifest || null,
-      selectedItemId: this.state.selectedItemId || null,
-      selectedSourceId: this.state.activeSourceFilter || 'all',
-      selectedCollectionId: this.state.selectedCollectionId || 'all',
-      localDraftCollections: this.state.localDraftCollections || [],
-      assets: this.state.assets.map((item) => ({
-        ...item,
-        previewUrl: '',
-        thumbnailPreviewUrl: '',
-        draftUploadStatus: item.draftUploadStatus === 'uploading' ? 'pending-upload' : item.draftUploadStatus,
-        workspaceId: item.workspaceId,
-        sourceId: item.sourceId,
-        sourceAssetId: item.sourceAssetId,
-        sourceLabel: item.sourceLabel,
-        sourceDisplayLabel: item.sourceDisplayLabel,
-        providerId: item.providerId,
-        collectionId: item.collectionId || null,
-        collectionLabel: item.collectionLabel || '',
-      })),
-      sources: this.state.sources.map((source) => this.toPersistedSource(source)),
-    };
+    return buildLocalDraftPayload(this);
   }
 
   async persistSourcesToOpfs(payload) {
@@ -913,227 +751,35 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   applyWorkspaceSnapshot(snapshot = {}) {
-    if (!snapshot || typeof snapshot !== 'object') {
-      return;
-    }
-    if (Array.isArray(snapshot.localDraftCollections)) {
-      this.state.localDraftCollections = snapshot.localDraftCollections
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          title: entry.title || String(entry.id),
-          rootPath: this.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
-        }));
-    }
-
-    if (snapshot.collectionMeta && typeof snapshot.collectionMeta === 'object') {
-      this.setCollectionMetaFields({
-        id: snapshot.collectionMeta.id || this.dom.collectionId.value,
-        title: snapshot.collectionMeta.title || this.dom.collectionTitle.value,
-        description: snapshot.collectionMeta.description || this.dom.collectionDescription.value,
-        license: snapshot.collectionMeta.license || this.dom.collectionLicense.value,
-        publisher: snapshot.collectionMeta.publisher || this.dom.collectionPublisher.value,
-        language: snapshot.collectionMeta.language || this.dom.collectionLanguage.value,
-      });
-    }
-
-    if (snapshot.selectedSourceId && (snapshot.selectedSourceId === 'all' || this.state.sources.some((entry) => entry.id === snapshot.selectedSourceId))) {
-      this.state.activeSourceFilter = snapshot.selectedSourceId;
-    }
-    this.renderSourceFilter();
-
-    if (snapshot.selectedCollectionId) {
-      this.state.selectedCollectionId = snapshot.selectedCollectionId;
-      this.renderCollectionFilter();
-    }
-
-    if (
-      snapshot.selectedItemId &&
-      this.state.assets.some((entry) => entry.workspaceId === snapshot.selectedItemId)
-    ) {
-      this.state.selectedItemId = snapshot.selectedItemId;
-    }
+    return applyWorkspaceSnapshot(this, snapshot);
   }
 
   saveSourcesToStorage() {
-    const payload = this.state.sources.map((source) => this.toPersistedSource(source));
-
-    try {
-      window.localStorage.setItem(SOURCES_STORAGE_KEY, JSON.stringify(payload));
-    } catch (error) {
-      // Ignore storage failures in restricted/private browser modes.
-    }
-
-    if (!this.state.opfsAvailable) {
-      return;
-    }
-
-    this.persistSourcesToOpfs(payload)
-      .then(() => this.persistWorkspaceToOpfs())
-      .catch((error) => {
-        this.setLocalDraftStatus(`Local draft save failed: ${error.message}`, 'warn');
-      });
+    return saveSourcesToStorage(this);
   }
 
   async restoreRememberedSources() {
-    let remembered = [];
-
-    if (this.state.opfsAvailable) {
-      try {
-        remembered = await this.loadRememberedSourcesFromOpfs();
-      } catch (error) {
-        remembered = [];
-      }
-    }
-
-    if (!Array.isArray(remembered) || remembered.length === 0) {
-      try {
-        remembered = JSON.parse(window.localStorage.getItem(SOURCES_STORAGE_KEY) || '[]');
-      } catch (error) {
-        remembered = [];
-      }
-    }
-
-    if (!Array.isArray(remembered) || remembered.length === 0) {
-      return;
-    }
-
-    const restored = remembered
-      .filter((entry) => entry && typeof entry === 'object')
-      .map((entry) => ({
-        id: entry.id || makeSourceId(entry.providerId || 'source'),
-        providerId: entry.providerId,
-        providerLabel: entry.providerLabel || this.providerCatalog.find((p) => p.id === entry.providerId)?.label || 'Source',
-        displayLabel: entry.displayLabel || entry.label || 'Source',
-        detailLabel: entry.detailLabel || entry.label || 'Source',
-        label: entry.detailLabel || entry.label || entry.displayLabel || 'Source',
-        config: this.sanitizeSourceConfig(entry.providerId, entry.config || {}),
-        capabilities: entry.capabilities || this.providerFactories[entry.providerId]?.getCapabilities?.() || {},
-        status: (() => {
-          if (entry.providerId === 'github') {
-            return 'Remembered storage source. Token is not stored; re-enter token if repository requires it.';
-          }
-          if (entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file') {
-            return 'Remembered storage source. Google access token is session-only; reconnect authentication before refresh.';
-          }
-          if (entry.providerId === 'local' && entry.config?.localDirectoryName) {
-            return 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
-          }
-          return 'Remembered storage source. Click Refresh to reconnect.';
-        })(),
-        authMode:
-          entry.providerId === 'github'
-            ? 'token'
-            : entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file'
-              ? 'google-auth'
-              : entry.authMode || 'public',
-        itemCount: Number(entry.itemCount) || 0,
-        provider: null,
-        needsReconnect: true,
-        needsCredentials: entry.providerId === 'github' || (entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file'),
-      }));
-
-    this.state.sources = restored;
-    this.state.assets = [];
-    this.state.selectedItemId = null;
-    this.state.activeSourceFilter = 'all';
-    this.state.currentLevel = 'collections';
-    this.state.openedCollectionId = null;
-    this.syncMetadataModeFromState();
-    this.closeMobileEditor();
-
-    this.setStatus(`Restored ${restored.length} remembered storage source definitions.`, 'neutral');
-    this.setConnectionStatus('Remembered storage sources loaded. Refresh to reconnect.', 'neutral');
-    this.renderSourcesList();
-    this.renderSourceFilter();
-    this.renderAssets();
-    this.renderEditor();
-
-    for (const source of restored) {
-      if (
-        source.providerId !== 'github' &&
-        !(source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file') &&
-        !(source.providerId === 'local' && source.config?.localDirectoryName)
-      ) {
-        // Non-secret sources can reconnect automatically.
-        await this.refreshSource(source.id);
-      }
-    }
+    return restoreRememberedSources(this);
   }
 
   async initializeLocalDraftState() {
-    return DraftService.initializeLocalDraftState(this);
+    return initializeLocalDraftState(this);
   }
 
   async saveLocalDraft() {
-    return DraftService.saveLocalDraft(this);
+    return saveLocalDraft(this);
   }
 
   applyLocalDraftPayload(payload) {
-    if (!payload || typeof payload !== 'object') {
-      return;
-    }
-    if (Array.isArray(payload.localDraftCollections)) {
-      this.state.localDraftCollections = payload.localDraftCollections
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          title: entry.title || String(entry.id),
-          rootPath: this.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
-        }));
-    }
-
-    if (payload.collectionMeta && typeof payload.collectionMeta === 'object') {
-      this.setCollectionMetaFields({
-        id: payload.collectionMeta.id || this.dom.collectionId.value,
-        title: payload.collectionMeta.title || this.dom.collectionTitle.value,
-        description: payload.collectionMeta.description || this.dom.collectionDescription.value,
-        license: payload.collectionMeta.license || this.dom.collectionLicense.value,
-        publisher: payload.collectionMeta.publisher || this.dom.collectionPublisher.value,
-        language: payload.collectionMeta.language || this.dom.collectionLanguage.value,
-      });
-    }
-
-    if (Array.isArray(payload.assets)) {
-      this.state.assets = payload.assets.map((item) => ({ ...item }));
-      for (const source of this.state.sources) {
-        this.refreshSourceCollectionsAndCounts(source.id);
-      }
-      this.renderSourcesList();
-    }
-
-    if (payload.manifest && typeof payload.manifest === 'object') {
-      this.state.manifest = payload.manifest;
-      this.dom.manifestPreview.textContent = JSON.stringify(payload.manifest, null, 2);
-    }
-
-    if (payload.selectedSourceId) {
-      this.state.activeSourceFilter = payload.selectedSourceId;
-    }
-    this.renderSourceFilter();
-
-    if (payload.selectedCollectionId) {
-      this.state.selectedCollectionId = payload.selectedCollectionId;
-      this.renderCollectionFilter();
-    }
-
-    if (
-      payload.selectedItemId &&
-      this.state.assets.some((entry) => entry.workspaceId === payload.selectedItemId)
-    ) {
-      this.state.selectedItemId = payload.selectedItemId;
-    }
-
-    this.renderAssets();
-    this.renderEditor();
+    return applyLocalDraftPayload(this, payload);
   }
 
   async restoreLocalDraft(options = {}) {
-    return DraftService.restoreLocalDraft(this, options);
+    return restoreLocalDraft(this, options);
   }
 
   async discardLocalDraft() {
-    return DraftService.discardLocalDraft(this);
+    return discardLocalDraft(this);
   }
 
   normalizeSourceAssets(source, rawItems) {
@@ -1554,349 +1200,19 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   async connectCurrentProvider() {
-    const providerId = this.state.selectedProviderId;
-    const providerFactory = this.providers[providerId];
-    const selectedProvider = this.providerCatalog.find((entry) => entry.id === providerId);
-
-    if (!providerFactory || selectedProvider?.enabled === false) {
-      this.setConnectionStatus('Selected storage source type is not yet available.', false);
-      this.setStatus('Selected storage source type is not yet available.', 'warn');
-      return;
-    }
-
-    const config = this.collectCurrentProviderConfig(providerId);
-
-    if (providerId === 'local' && !config.localDirectoryHandle) {
-      this.setConnectionStatus('Select a local folder first.', false);
-      this.setStatus('Select a local folder before adding this host.', 'warn');
-      return;
-    }
-
-    const provider = providerFactory();
-
-    if (providerId === 'gdrive' && config.sourceMode === 'public-manifest-url' && config.manifestUrl) {
-      const normalized = normalizeGoogleDriveManifestUrl(config.manifestUrl);
-      if (!normalized.ok) {
-        this.setConnectionStatus(normalized.message || 'Invalid Google Drive file URL.', false);
-        this.setStatus(normalized.message || 'Invalid Google Drive file URL.', 'warn');
-        return;
-      }
-    }
-
-    try {
-      const result = await provider.connect(config);
-      this.renderCapabilities(provider);
-
-      if (!result.ok) {
-        this.setConnectionStatus(result.message, false);
-        this.setStatus(result.message, 'warn');
-        this.renderAssets();
-        this.renderEditor();
-        return;
-      }
-
-      this.setConnectionStatus(result.message, true);
-
-      const loaded = await provider.listAssets();
-      const derivedConfig = { ...config };
-      if (providerId === 'gdrive') {
-        derivedConfig._manifestTitle = result.sourceDisplayLabel || '';
-        derivedConfig._normalizedFileId = result.fileId || '';
-        derivedConfig._normalizedManifestUrl = result.normalizedManifestUrl || '';
-      }
-      if (providerId === 'local' && result.sourceDisplayLabel) {
-        derivedConfig.localDirectoryName = result.sourceDisplayLabel;
-      }
-      const displayLabel =
-        result.sourceDisplayLabel ||
-        this.sourceDisplayLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
-      const detailLabel =
-        result.sourceDetailLabel ||
-        this.sourceDetailLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
-      const source = {
-        id: makeSourceId(providerId),
-        providerId,
-        providerLabel: selectedProvider?.label || providerId,
-        label: detailLabel,
-        displayLabel,
-        detailLabel,
-        config: { ...config, ...(providerId === 'gdrive' ? { fileId: result.fileId || '' } : {}) },
-        capabilities: provider.getCapabilities(),
-        status: result.message,
-        authMode:
-          providerId === 'github'
-            ? (config.token || '').trim()
-              ? 'token'
-              : 'public'
-            : providerId === 'local' && config.localDirectoryHandle
-              ? 'local-folder'
-            : providerId === 'gdrive' && config.sourceMode === 'auth-manifest-file'
-              ? 'google-auth'
-              : 'public',
-        itemCount: loaded.length,
-        provider,
-        needsReconnect: false,
-        needsCredentials: providerId === 'gdrive' && config.sourceMode === 'auth-manifest-file' ? !(config.accessToken || '').trim() : false,
-        collections: [],
-        selectedCollectionId: null,
-      };
-
-      const normalized = this.normalizeSourceAssets(source, loaded);
-      const providerCollections = Array.isArray(result.collections)
-        ? this.normalizeCollectionsFromProvider(result.collections)
-        : null;
-      const collections = providerCollections || this.buildCollectionsForSource(source, normalized);
-      const defaultCollectionId = collections[0]?.id || null;
-      const normalizedWithCollections = normalized.map((item) => ({
-        ...item,
-        collectionId: item.collectionId || defaultCollectionId,
-        collectionLabel: item.collectionLabel || collections.find((entry) => entry.id === (item.collectionId || defaultCollectionId))?.title || '',
-      }));
-      source.collections = collections;
-      source.selectedCollectionId = defaultCollectionId;
-      if (providerId === 'local' && config.localDirectoryHandle) {
-        this.selectedLocalDirectoryHandle = config.localDirectoryHandle;
-      }
-      this.state.sources = [...this.state.sources, source];
-      this.state.assets = [...this.state.assets, ...normalizedWithCollections];
-      if (providerId === 'local') {
-        await this.hydrateLocalSourceAssetPreviews(source.id);
-      }
-      this.state.activeSourceFilter = source.id;
-      this.state.selectedCollectionId = source.selectedCollectionId || 'all';
-      this.state.currentLevel = 'collections';
-      this.state.openedCollectionId = null;
-      this.state.selectedItemId = null;
-      this.syncMetadataModeFromState();
-      this.closeMobileEditor();
-      this.state.manifest = null;
-      this.dom.manifestPreview.textContent = '{}';
-
-      this.setStatus(`Added storage source ${displayLabel} (${loaded.length} items).`, 'ok');
-      this.renderSourcesList();
-      this.renderSourceFilter();
-      this.renderAssets();
-      this.renderEditor();
-      this.saveSourcesToStorage();
-    } catch (error) {
-      this.setConnectionStatus(`Connection error: ${error.message}`, false);
-      this.setStatus(`Connection error: ${error.message}`, 'warn');
-    }
+    return connectCurrentProvider(this);
   }
 
   inspectSource(sourceId) {
-    const source = this.getSourceById(sourceId);
-    if (!source) {
-      return;
-    }
-
-    this.setSelectedProvider(source.providerId);
-    const nextConfigValues = {};
-    if (source.providerId === 'github') {
-      nextConfigValues.githubToken = source.config.token || '';
-      nextConfigValues.githubOwner = source.config.owner || '';
-      nextConfigValues.githubRepo = source.config.repo || '';
-      nextConfigValues.githubBranch = source.config.branch || 'main';
-      nextConfigValues.githubPath = source.config.path || '';
-    }
-    if (source.providerId === 'public-url') {
-      nextConfigValues.publicUrlInput = source.config.manifestUrl || '';
-    }
-    if (source.providerId === 'gdrive') {
-      nextConfigValues.gdriveSourceMode = source.config.sourceMode || 'public-manifest-url';
-      nextConfigValues.gdriveUrlInput = source.config.manifestUrl || '';
-      nextConfigValues.gdriveFileIdInput = source.config.fileId || '';
-      nextConfigValues.gdriveClientIdInput = source.config.oauthClientId || MANAGER_CONFIG.googleDriveOAuth?.clientId || '';
-      nextConfigValues.gdriveAccessTokenInput = '';
-      this.setGoogleDriveAuthStatus(
-        source.config.sourceMode === 'auth-manifest-file'
-          ? 'Re-authentication required before refresh.'
-          : 'Public shared URL mode selected.',
-        source.config.sourceMode === 'auth-manifest-file' ? 'warn' : 'neutral',
-      );
-    }
-    if (source.providerId === 'local') {
-      nextConfigValues.localPathInput = source.config.path || MANAGER_CONFIG.defaultLocalManifestPath;
-      nextConfigValues.localFolderName = source.config.localDirectoryName || '';
-      this.selectedLocalDirectoryHandle =
-        source.config?.localDirectoryHandle && source.config.localDirectoryHandle.kind === 'directory'
-          ? source.config.localDirectoryHandle
-          : null;
-    }
-    this.dom.sourceManager?.setConfigValues(nextConfigValues);
-
-    this.setConnectionStatus(`Inspecting storage source: ${source.label}`, true);
+    return inspectSource(this, sourceId);
   }
 
   async refreshSource(sourceId) {
-    const source = this.getSourceById(sourceId);
-    if (!source) {
-      return;
-    }
-
-    const providerFactory = this.providers[source.providerId];
-    if (!providerFactory) {
-      this.setStatus(`Storage source type for ${source.label} is unavailable.`, 'warn');
-      return;
-    }
-
-    try {
-      const provider = providerFactory();
-      const refreshConfig = { ...(source.config || {}) };
-      if (source.providerId === 'local' && this.selectedLocalDirectoryHandle) {
-        refreshConfig.localDirectoryHandle = this.selectedLocalDirectoryHandle;
-        if (!refreshConfig.localDirectoryName) {
-          refreshConfig.localDirectoryName = this.selectedLocalDirectoryHandle.name || refreshConfig.localDirectoryName || '';
-        }
-      }
-      const result = await provider.connect(refreshConfig);
-      if (!result.ok) {
-        const next = {
-          ...source,
-          status: result.message,
-          needsReconnect: true,
-          needsCredentials:
-            source.providerId === 'github' ||
-            (source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'),
-        };
-        this.state.sources = this.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
-        this.renderSourcesList();
-        this.saveSourcesToStorage();
-        this.setConnectionStatus(result.message, false);
-        this.setStatus(`Refresh failed: ${result.message}`, 'warn');
-        return;
-      }
-
-      const loaded = await provider.listAssets();
-      const refreshedConfig = { ...refreshConfig };
-      if (source.providerId === 'gdrive') {
-        refreshedConfig._manifestTitle = result.sourceDisplayLabel || source.displayLabel || '';
-        refreshedConfig._normalizedFileId = result.fileId || source.config?.fileId || '';
-        refreshedConfig._normalizedManifestUrl = result.normalizedManifestUrl || '';
-      }
-      if (source.providerId === 'local' && result.sourceDisplayLabel) {
-        refreshedConfig.localDirectoryName = result.sourceDisplayLabel;
-      }
-      const displayLabel =
-        result.sourceDisplayLabel || this.sourceDisplayLabelFor(source.providerId, refreshedConfig, source.providerLabel);
-      const detailLabel =
-        result.sourceDetailLabel || this.sourceDetailLabelFor(source.providerId, refreshedConfig, source.providerLabel);
-      const updatedSource = {
-        ...source,
-        provider,
-        capabilities: provider.getCapabilities(),
-        itemCount: loaded.length,
-        status: result.message,
-        authMode:
-          source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'
-            ? 'google-auth'
-            : source.authMode,
-        displayLabel,
-        detailLabel,
-        label: detailLabel,
-        config:
-          source.providerId === 'gdrive'
-            ? {
-                ...refreshConfig,
-                fileId: result.fileId || source.config?.fileId || '',
-                sourceMode: source.config?.sourceMode || 'public-manifest-url',
-              }
-            : refreshConfig,
-        collections: source.collections || [],
-        selectedCollectionId: source.selectedCollectionId || null,
-        needsReconnect: false,
-        needsCredentials: false,
-      };
-      const normalized = this.normalizeSourceAssets(updatedSource, loaded);
-      const providerCollections = Array.isArray(result.collections)
-        ? this.normalizeCollectionsFromProvider(result.collections)
-        : null;
-      const collections = providerCollections || this.buildCollectionsForSource(updatedSource, normalized);
-      const defaultCollectionId = collections[0]?.id || null;
-      const normalizedWithCollections = normalized.map((item) => ({
-        ...item,
-        collectionId: item.collectionId || defaultCollectionId,
-        collectionLabel: item.collectionLabel || collections.find((entry) => entry.id === (item.collectionId || defaultCollectionId))?.title || '',
-      }));
-      updatedSource.collections = collections;
-      updatedSource.selectedCollectionId =
-        (updatedSource.selectedCollectionId && collections.some((entry) => entry.id === updatedSource.selectedCollectionId))
-          ? updatedSource.selectedCollectionId
-          : defaultCollectionId;
-
-      this.state.sources = this.state.sources.map((entry) => (entry.id === sourceId ? updatedSource : entry));
-      this.mergeSourceAssets(sourceId, normalizedWithCollections);
-      if (source.providerId === 'local') {
-        await this.hydrateLocalSourceAssetPreviews(sourceId);
-      }
-
-      if (this.state.selectedItemId && !this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId)) {
-        this.state.selectedItemId = this.getVisibleAssets()[0]?.workspaceId || this.state.assets[0]?.workspaceId || null;
-      }
-      if (this.state.viewerItemId && !this.state.assets.some((item) => item.workspaceId === this.state.viewerItemId)) {
-        this.closeViewer();
-      } else if (this.state.viewerItemId) {
-        this.renderViewer();
-      }
-
-      this.setConnectionStatus(`Refreshed storage source ${updatedSource.label}.`, true);
-      this.setStatus(`Refreshed storage source ${updatedSource.label}.`, 'ok');
-      this.renderSourcesList();
-      this.renderSourceFilter();
-      this.renderAssets();
-      this.renderEditor();
-      this.saveSourcesToStorage();
-    } catch (error) {
-      const next = {
-        ...source,
-        status: `Refresh error: ${error.message}`,
-        needsReconnect: true,
-        needsCredentials:
-          source.providerId === 'github' ||
-          (source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'),
-      };
-      this.state.sources = this.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
-      this.renderSourcesList();
-      this.saveSourcesToStorage();
-      this.setConnectionStatus(`Refresh error: ${error.message}`, false);
-      this.setStatus(`Refresh error: ${error.message}`, 'warn');
-    }
+    return refreshSource(this, sourceId);
   }
 
   removeSource(sourceId) {
-    const source = this.getSourceById(sourceId);
-    if (!source) {
-      return;
-    }
-
-    this.state.sources = this.state.sources.filter((entry) => entry.id !== sourceId);
-    this.state.assets = this.state.assets.filter((entry) => entry.sourceId !== sourceId);
-    if (this.state.sources.length === 0) {
-      this.closeMobileEditor();
-    }
-
-    if (this.state.selectedItemId && !this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId)) {
-      this.state.selectedItemId = null;
-    }
-    if (this.state.viewerItemId && !this.state.assets.some((item) => item.workspaceId === this.state.viewerItemId)) {
-      this.closeViewer();
-    }
-    this.syncMetadataModeFromState();
-
-    if (this.state.sources.length === 0) {
-      this.setConnectionStatus('No hosts connected.', 'neutral');
-      this.setStatus('No hosts connected.', 'neutral');
-    } else {
-      this.setStatus(`Removed storage source ${source.label}.`, 'ok');
-    }
-
-    this.state.manifest = null;
-    this.dom.manifestPreview.textContent = '{}';
-    this.renderSourcesList();
-    this.renderSourceFilter();
-    this.renderAssets();
-    this.renderEditor();
-    this.saveSourcesToStorage();
+    return removeSource(this, sourceId);
   }
 
   currentCollectionMeta() {

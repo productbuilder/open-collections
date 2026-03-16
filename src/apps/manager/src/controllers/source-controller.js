@@ -304,6 +304,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.dom.manifestPreview.textContent = '{}';
 
     app.setStatus(`Added storage source ${displayLabel} (${loaded.length} items).`, 'ok');
+    app.setWorkingStateFlags({ publishError: '' });
     app.renderSourcesList();
     app.renderSourceFilter();
     app.renderAssets();
@@ -312,6 +313,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
   } catch (error) {
     app.setConnectionStatus(`Connection error: ${error.message}`, false);
     app.setStatus(`Connection error: ${error.message}`, 'warn');
+    app.refreshWorkingStatus();
   }
 }
 
@@ -395,6 +397,7 @@ export async function refreshSource(app, sourceId) {
       app.saveSourcesToStorage();
       app.setConnectionStatus(result.message, false);
       app.setStatus(`Refresh failed: ${result.message}`, 'warn');
+      app.refreshWorkingStatus();
       return;
     }
 
@@ -472,6 +475,7 @@ export async function refreshSource(app, sourceId) {
 
     app.setConnectionStatus(`Refreshed storage source ${updatedSource.label}.`, true);
     app.setStatus(`Refreshed storage source ${updatedSource.label}.`, 'ok');
+    app.refreshWorkingStatus();
     app.renderSourcesList();
     app.renderSourceFilter();
     app.renderAssets();
@@ -491,6 +495,7 @@ export async function refreshSource(app, sourceId) {
     app.saveSourcesToStorage();
     app.setConnectionStatus(`Refresh error: ${error.message}`, false);
     app.setStatus(`Refresh error: ${error.message}`, 'warn');
+    app.refreshWorkingStatus();
   }
 }
 
@@ -517,8 +522,10 @@ export function removeSource(app, sourceId) {
   if (app.state.sources.length === 0) {
     app.setConnectionStatus('No hosts connected.', 'neutral');
     app.setStatus('No hosts connected.', 'neutral');
+    app.setWorkingStateFlags({ hasUnsavedChanges: false, lastSaveTarget: '', publishError: '' });
   } else {
     app.setStatus(`Removed storage source ${source.label}.`, 'ok');
+    app.refreshWorkingStatus();
   }
 
   app.state.manifest = null;

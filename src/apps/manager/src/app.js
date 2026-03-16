@@ -9,6 +9,7 @@ import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
+import { computeWorkingStatus } from './state/working-status.js';
 import { toWorkspaceItemId } from './utils/id-utils.js';
 import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
 import {
@@ -144,6 +145,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   connectedCallback() {
     this.bindEvents();
     this.setStatus('No hosts connected yet.', 'neutral');
+    this.refreshWorkingStatus();
     this.setConnectionStatus('No hosts connected.', 'neutral');
     this.renderCapabilities(this.providerFactories.local.getCapabilities());
     this.renderProviderCatalog();
@@ -309,6 +311,41 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   setStatus(text, tone = 'neutral') {
     this.dom.managerHeader?.setStatus(text, tone);
+  }
+
+  setWorkingStateFlags(patch = {}) {
+    Object.assign(this.state, patch || {});
+    this.refreshWorkingStatus();
+  }
+
+  markDirty() {
+    this.setWorkingStateFlags({
+      hasUnsavedChanges: true,
+      lastSaveTarget: '',
+      publishError: '',
+    });
+  }
+
+  markSavedToSource() {
+    this.setWorkingStateFlags({
+      hasUnsavedChanges: false,
+      lastSaveTarget: 'source',
+      publishError: '',
+    });
+  }
+
+  markSavedToDraft() {
+    this.setWorkingStateFlags({
+      hasUnsavedChanges: false,
+      hasLocalDraft: true,
+      lastSaveTarget: 'draft',
+      publishError: '',
+    });
+  }
+
+  refreshWorkingStatus() {
+    const workingStatus = computeWorkingStatus(this.state);
+    this.dom.managerHeader?.setWorkingStatus(workingStatus);
   }
 
   setConnectionStatus(text, tone = false) {
@@ -778,6 +815,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       ? (source.displayLabel || source.label || source.providerLabel || 'Host')
       : 'Select host';
     this.dom.managerHeader?.setHostLabel(label);
+    this.refreshWorkingStatus();
   }
 
   renderSourcePicker() {
@@ -817,6 +855,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         this.renderSourceContext();
         this.renderAssets();
         this.renderEditor();
+        this.refreshWorkingStatus();
         this.closeDialog(this.dom.sourcePickerDialog);
       });
       card.append(type, meta, btn);
@@ -909,6 +948,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
           source?.providerId === 'github' ? 'Metadata saved to GitHub.' : 'Metadata saved.',
           'ok',
         );
+        this.markSavedToSource();
       } catch (error) {
         this.state.assets = this.state.assets.map((item) => {
           if (item.workspaceId !== id) {
@@ -924,6 +964,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
           };
         });
         this.setStatus(`Save failed: ${error.message}. Local edits were kept.`, 'warn');
+        this.markDirty();
       }
     } else {
       this.state.assets = this.state.assets.map((item) => {
@@ -940,11 +981,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
         };
       });
       this.setStatus('Source is read-only. Changes are local to this workspace session.', 'warn');
+      this.markDirty();
     }
 
     if (options.explicitSave && !canSave) {
       if (current.isLocalDraftAsset) {
         this.setStatus('Local draft metadata saved. Publish to upload this asset.', 'ok');
+        this.markDirty();
       } else {
         this.setStatus('Selected item source is read-only. Changes are local only.', 'warn');
       }
@@ -952,6 +995,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     this.renderAssets();
     this.renderEditor();
+    this.refreshWorkingStatus();
   }
 
   async connectCurrentProvider() {
@@ -1037,6 +1081,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     } else {
       this.setStatus(`Uploading ${pending.length} asset(s) to GitHub...`, 'neutral');
     }
+    this.setWorkingStateFlags({ publishInProgress: true, publishError: '' });
 
     this.state.assets = this.state.assets.map((item) => {
       if (!pending.some((entry) => entry.workspaceId === item.workspaceId)) {
@@ -1085,6 +1130,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.renderAssets();
       this.renderEditor();
       this.setStatus(`${failedPreparationCount} asset(s) failed local draft preparation. Fix and retry publish.`, 'warn');
+      this.setWorkingStateFlags({ publishInProgress: false, publishError: 'Local draft preparation failed.' });
       return;
     }
 
@@ -1135,6 +1181,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
         await this.saveLocalDraft();
       }
       this.setStatus('Upload complete. GitHub media, thumbnails, and collection.json published.', 'ok');
+      this.setWorkingStateFlags({
+        publishInProgress: false,
+        publishError: '',
+        hasUnsavedChanges: false,
+        lastSaveTarget: 'source',
+      });
     } catch (error) {
       this.state.assets = this.state.assets.map((item) => {
         if (item.sourceId !== source.id || item.draftUploadStatus !== 'uploading') {
@@ -1149,6 +1201,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.renderAssets();
       this.renderEditor();
       this.setStatus(`Upload failed: ${error.message}`, 'warn');
+      this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.' });
     }
   }
 

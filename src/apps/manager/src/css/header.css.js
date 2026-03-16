@@ -15,7 +15,7 @@ export const headerStyles = `
 
   .brand {
     display: grid;
-    gap: 0.15rem;
+    gap: 0.4rem;
   }
 
   .title {
@@ -23,6 +23,44 @@ export const headerStyles = `
     font-size: 1rem;
     font-weight: 700;
     color: #111827;
+  }
+
+  .working-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .working-status-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+  }
+
+  .working-status-chip[data-tone="ok"] {
+    color: #166534;
+    border-color: #86efac;
+    background: #f0fdf4;
+  }
+
+  .working-status-chip[data-tone="warn"] {
+    color: #9a3412;
+    border-color: #fdba74;
+    background: #fff7ed;
+  }
+
+  .working-status-detail {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
   }
 
   .status {
@@ -65,6 +103,7 @@ export const headerStyles = `
       font-size: 0.9rem;
     }
 
+    .working-status-detail,
     #statusText,
     #workspaceContext {
       display: none;

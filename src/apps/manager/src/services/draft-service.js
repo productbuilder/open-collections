@@ -98,6 +98,7 @@ export async function saveLocalDraft(manager) {
     await persistSourcesToOpfs(manager, manager.state.sources.map((source) => manager.toPersistedSource(source)));
     manager.setLocalDraftStatus(`Saved local draft at ${payload.savedAt}.`, 'ok');
     manager.setStatus('Local draft saved to OPFS.', 'ok');
+    manager.markSavedToDraft();
   } catch (error) {
     manager.setLocalDraftStatus(`Local draft save failed: ${error.message}`, 'warn');
     manager.setStatus(`Local draft save failed: ${error.message}`, 'warn');
@@ -138,6 +139,7 @@ export async function restoreLocalDraft(manager, options = {}) {
         'ok',
       );
       manager.setStatus('Local draft restored from OPFS.', 'ok');
+      manager.setWorkingStateFlags({ hasLocalDraft: true, publishError: '' });
     }
   } catch (error) {
     manager.setLocalDraftStatus(`Local draft restore failed: ${error.message}`, 'warn');
@@ -165,6 +167,7 @@ export async function discardLocalDraft(manager) {
     manager.state.lastLocalSaveAt = '';
     manager.setLocalDraftStatus(`Discarded local draft ${collectionId}.`, 'ok');
     manager.setStatus(`Discarded local draft ${collectionId}.`, 'ok');
+    manager.setWorkingStateFlags({ hasLocalDraft: false, lastSaveTarget: '', publishError: '' });
   } catch (error) {
     manager.setLocalDraftStatus(`Discard draft failed: ${error.message}`, 'warn');
     manager.setStatus(`Discard draft failed: ${error.message}`, 'warn');

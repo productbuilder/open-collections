@@ -8,6 +8,11 @@ class OpenCollectionsHeaderElement extends HTMLElement {
     this._workspaceText = 'Host: none | Collection: none';
     this._hostLabel = 'Select host';
     this._statusTone = 'neutral';
+    this._workingStatus = {
+      label: 'Draft',
+      detail: 'Connect a host or create a collection draft to get started.',
+      tone: 'neutral',
+    };
   }
 
   connectedCallback() {
@@ -16,6 +21,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
     this.setStatus(this._statusText, this._statusTone);
     this.setWorkspaceContext(this._workspaceText);
     this.setHostLabel(this._hostLabel);
+    this.setWorkingStatus(this._workingStatus);
   }
 
   bindEvents() {
@@ -43,6 +49,24 @@ class OpenCollectionsHeaderElement extends HTMLElement {
     status.style.color = colors[tone] || colors.neutral;
   }
 
+  setWorkingStatus(status = {}) {
+    this._workingStatus = {
+      ...this._workingStatus,
+      ...status,
+    };
+
+    const chip = this.shadowRoot?.getElementById('workingStatusChip');
+    const detail = this.shadowRoot?.getElementById('workingStatusDetail');
+    if (!chip || !detail) {
+      return;
+    }
+
+    const tone = this._workingStatus.tone || 'neutral';
+    chip.dataset.tone = tone;
+    chip.textContent = this._workingStatus.label || 'Draft';
+    detail.textContent = this._workingStatus.detail || '';
+  }
+
   setWorkspaceContext(text) {
     this._workspaceText = text;
     const workspace = this.shadowRoot?.getElementById('workspaceContext');
@@ -66,6 +90,10 @@ class OpenCollectionsHeaderElement extends HTMLElement {
       <header class="topbar">
         <div class="brand">
           <h1 class="title">Open Collections Manager</h1>
+          <div class="working-status-wrap">
+            <span id="workingStatusChip" class="working-status-chip" data-tone="neutral">Draft</span>
+            <p id="workingStatusDetail" class="working-status-detail">Connect a host or create a collection draft to get started.</p>
+          </div>
         </div>
         <div class="top-actions">
           <button class="btn" id="openHostManagerBtn" type="button">Host: <span id="activeHostLabel">Select host</span></button>

@@ -1,4 +1,5 @@
 import { browserRendererStyles } from '../css/browser-renderers.css.js';
+import { resolveItemPreviewUrl } from '../utils/preview-utils.js';
 
 class OpenItemRowListElement extends HTMLElement {
   constructor() {
@@ -26,10 +27,7 @@ class OpenItemRowListElement extends HTMLElement {
   }
 
   previewMarkup(item) {
-    const isLocal = item.providerId === 'local';
-    const url = isLocal
-      ? (item.thumbnailPreviewUrl || item.previewUrl)
-      : (item.thumbnailPreviewUrl || item.previewUrl || item.media?.thumbnailUrl || item.media?.url);
+    const url = resolveItemPreviewUrl(item);
     if (!url) {
       return '<span class="row-thumb-placeholder">No</span>';
     }

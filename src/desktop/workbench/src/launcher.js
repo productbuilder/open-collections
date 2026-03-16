@@ -2,7 +2,7 @@ import '../../../apps/manager/src/index.js';
 import '../../../apps/configurator/src/index.js';
 
 const APPS = {
-  collector: { title: 'Collector', tag: 'open-collections-manager' },
+  manager: { title: 'Manager', tag: 'open-collections-manager' },
   configurator: { title: 'Configurator', tag: 'open-configurator-manager' },
 };
 

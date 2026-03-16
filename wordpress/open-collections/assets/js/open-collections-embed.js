@@ -26,7 +26,7 @@
 	};
 
 	const renderMountedComponent = (mount, config) => {
-		const element = document.createElement('timemap-collector');
+		const element = document.createElement('timemap-manager');
 		// Handoff contract placeholder: component can later consume this JSON directly.
 		element.setAttribute('data-ocp-config', JSON.stringify(config));
 		mount.innerHTML = '';
@@ -39,7 +39,7 @@
 		});
 	};
 
-	if (window.customElements && window.customElements.get('timemap-collector')) {
+	if (window.customElements && window.customElements.get('timemap-manager')) {
 		mountAll();
 		return;
 	}

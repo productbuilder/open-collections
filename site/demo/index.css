@@ -1,6 +1,6 @@
-/* Demo host-side styling for timemap-collector */
+/* Demo host-side styling for timemap-manager */
 
-timemap-collector {
+timemap-manager {
 	display: block;
 	max-width: 100%;
 }
@@ -16,7 +16,7 @@ timemap-collector {
 }
 
 @media (max-width: 760px) {
-	timemap-collector {
+	timemap-manager {
 		min-height: 70vh;
 	}
 

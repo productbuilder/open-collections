@@ -82,7 +82,7 @@ table {
 
 iframe,
 img,
-timemap-collector,
+timemap-manager,
 timemap-browser {
 	max-width: 100%;
 }
@@ -603,7 +603,7 @@ main > section:nth-of-type(odd):not(.section-soft):not(.section-intro):not(.sect
 	}
 }
 
-/* Collector repo-specific additions aligned to contributor patterns */
+/* Manager repo-specific additions aligned to contributor patterns */
 
 .link-grid {
 	display: grid;

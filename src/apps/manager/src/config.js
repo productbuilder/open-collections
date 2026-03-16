@@ -1,4 +1,4 @@
-export const COLLECTOR_CONFIG = {
+export const MANAGER_CONFIG = {
   defaultLocalManifestPath: '/site/examples/demo-host/collections.json',
   defaultCollectionMeta: {
     id: 'col-mvp-export',

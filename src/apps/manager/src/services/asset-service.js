@@ -1,4 +1,6 @@
-﻿export async function generateThumbnailBlob(manager, file) {
+﻿import { isAbsoluteMediaUrl } from '../utils/preview-utils.js';
+
+export async function generateThumbnailBlob(manager, file) {
   const bitmap = await createImageBitmap(file);
   const maxWidth = 300;
   const ratio = bitmap.width > 0 ? Math.min(1, maxWidth / bitmap.width) : 1;
@@ -123,11 +125,13 @@ export async function hydrateLocalSourceAssetPreviews(manager, sourceId) {
     }
     const mediaPath = String(item.media?.url || '').trim();
     const thumbPath = String(item.media?.thumbnailUrl || '').trim();
+    const mediaRequiresHydration = Boolean(mediaPath) && !isAbsoluteMediaUrl(mediaPath);
+    const thumbRequiresHydration = Boolean(thumbPath) && !isAbsoluteMediaUrl(thumbPath);
     if (!item.fileName && mediaPath) {
       item.fileName = fileNameFromPath(mediaPath);
     }
 
-    if (!item.thumbnailPreviewUrl && thumbPath) {
+    if (!item.thumbnailPreviewUrl && thumbRequiresHydration) {
       try {
         const thumbBlob = await provider.readCollectionFileBlob(item.collectionId, thumbPath);
         if (thumbBlob) {
@@ -139,7 +143,7 @@ export async function hydrateLocalSourceAssetPreviews(manager, sourceId) {
       }
     }
 
-    if (!item.previewUrl && mediaPath) {
+    if (!item.previewUrl && mediaRequiresHydration) {
       try {
         const mediaBlob = await provider.readCollectionFileBlob(item.collectionId, mediaPath);
         if (mediaBlob) {

@@ -1,4 +1,5 @@
 import { browserRendererStyles } from '../css/browser-renderers.css.js';
+import { resolveItemPreviewUrl } from '../utils/preview-utils.js';
 
 class OpenItemCardGridElement extends HTMLElement {
   constructor() {
@@ -27,10 +28,7 @@ class OpenItemCardGridElement extends HTMLElement {
 
   createPreviewMarkup(item) {
     const mediaType = (item.media?.type || '').toLowerCase();
-    const isLocal = item.providerId === 'local';
-    const url = isLocal
-      ? (item.thumbnailPreviewUrl || item.previewUrl)
-      : (item.thumbnailPreviewUrl || item.previewUrl || item.media?.thumbnailUrl || item.media?.url);
+    const url = resolveItemPreviewUrl(item);
 
     if (!url) {
       return '<div class="thumb-placeholder">No preview</div>';

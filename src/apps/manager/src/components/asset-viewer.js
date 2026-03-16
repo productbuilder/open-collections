@@ -1,4 +1,5 @@
 import { viewerStyles } from '../css/viewer.css.js';
+import { resolveItemOriginalUrl, resolveItemViewerMediaUrl } from '../utils/preview-utils.js';
 
 class OpenCollectionsAssetViewerElement extends HTMLElement {
   constructor() {
@@ -121,10 +122,7 @@ class OpenCollectionsAssetViewerElement extends HTMLElement {
     badges.append(sourceBadge, typeBadge, licenseBadge);
 
     const mediaType = (item.media?.type || '').toLowerCase();
-    const isLocal = item.providerId === 'local';
-    const mediaUrl = isLocal
-      ? (item.previewUrl || item.thumbnailPreviewUrl || '')
-      : (item.previewUrl || item.thumbnailPreviewUrl || item.media?.url || item.media?.thumbnailUrl || '');
+    const mediaUrl = resolveItemViewerMediaUrl(item);
     if (mediaUrl && mediaType.includes('image')) {
       const image = document.createElement('img');
       image.className = 'viewer-image';
@@ -147,9 +145,7 @@ class OpenCollectionsAssetViewerElement extends HTMLElement {
       media.appendChild(placeholder);
     }
 
-    const openOriginalUrl = isLocal
-      ? (item.previewUrl || item.thumbnailPreviewUrl || '')
-      : (item.media?.url || mediaUrl);
+    const openOriginalUrl = resolveItemOriginalUrl(item) || mediaUrl;
     if (openOriginalUrl) {
       openOriginal.href = openOriginalUrl;
       openOriginal.classList.remove('is-hidden');

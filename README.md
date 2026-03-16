@@ -11,7 +11,7 @@ Open Collections now contains two focused applications in one repository:
 - Site demo: `./site/demo/`
 - Site docs: `./site/docs/`
 - Site examples: `./site/examples/`
-- Collector app: `./src/apps/collector/`
+- Collector app: `./src/apps/manager/`
 - Browser app: `./src/apps/browser/`
 - WordPress plugin scaffold: `./wordpress/open-collections/`
 
@@ -42,7 +42,7 @@ python -m http.server 8080
 Then open:
 
 - <http://localhost:8080/>
-- <http://localhost:8080/src/apps/collector/>
+- <http://localhost:8080/src/apps/manager/>
 - <http://localhost:8080/src/apps/browser/>
 - <http://localhost:8080/site/demo/>
 
@@ -51,7 +51,7 @@ Then open:
 ```text
 src/
   apps/
-    collector/
+    manager/
     browser/
     configurator/
   desktop/

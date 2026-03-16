@@ -1,4 +1,4 @@
-import '../../../apps/collector/src/index.js';
+import '../../../apps/manager/src/index.js';
 import '../../../apps/configurator/src/index.js';
 
 const APPS = {

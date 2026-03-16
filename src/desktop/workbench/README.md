@@ -2,7 +2,7 @@
 
 This is a lightweight shared desktop shell that hosts both existing Web Component apps:
 
-- `src/apps/collector`
+- `src/apps/manager`
 - `src/apps/configurator`
 
 ## Run in desktop mode

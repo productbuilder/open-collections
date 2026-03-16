@@ -12,8 +12,8 @@ Open Collections Manager is the writable collection-management app.
 
 ## Entry
 
-- App host page: `/src/apps/collector/`
-- Web component script: `/src/apps/collector/src/index.js`
+- App host page: `/src/apps/manager/`
+- Web component script: `/src/apps/manager/src/index.js`
 
 ## Current storage sources
 
@@ -37,6 +37,3 @@ Open Collections Manager is the writable collection-management app.
 - GitHub publish uploads `media/*`, `thumbs/*.thumb.jpg`, and updates `collection.json`.
 - Publishing remains separate from OPFS and uses storage providers.
 - Secrets (PATs, OAuth tokens, passwords) are never persisted in OPFS.
-
-
-> TODO: internal directory naming still uses `src/apps/collector/`; plan a safe follow-up rename to `src/apps/manager/` with import/path updates.

@@ -2356,3 +2356,11 @@ if (!customElements.get('open-collections-manager')) {
   customElements.define('open-collections-manager', OpenCollectionsManagerElement);
 }
 
+if (!customElements.get('timemap-collector')) {
+  customElements.define('timemap-collector', OpenCollectionsManagerElement);
+}
+
+if (!customElements.get('timemap-manager')) {
+  customElements.define('timemap-manager', OpenCollectionsManagerElement);
+}
+

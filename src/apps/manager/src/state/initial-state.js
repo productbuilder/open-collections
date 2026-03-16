@@ -4,7 +4,7 @@
     assets: [],
     selectedItemId: null,
     viewerItemId: null,
-    selectedProviderId: 'github',
+    selectedProviderId: 'example',
     activeSourceFilter: 'all',
     selectedCollectionId: 'all',
     currentLevel: 'collections',

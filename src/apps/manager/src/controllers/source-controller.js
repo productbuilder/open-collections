@@ -1,4 +1,3 @@
-import { normalizeGoogleDriveManifestUrl } from '../../../../packages/provider-gdrive/src/index.js';
 import { MANAGER_CONFIG } from '../config.js';
 import { makeSourceId } from '../utils/id-utils.js';
 
@@ -10,25 +9,7 @@ export function setSelectedProvider(app, providerId) {
 
   app.state.selectedProviderId = providerId;
   app.dom.sourceManager?.setSelectedProvider(providerId);
-  if (providerId === 'gdrive') {
-    renderGoogleDriveMode(app);
-  }
   app.renderCapabilities(app.providerFactories[providerId]?.getCapabilities?.() || selected.capabilities || {});
-}
-
-export function renderGoogleDriveMode(app) {
-  app.dom.sourceManager?.renderGoogleDriveMode();
-  const mode = app.dom.sourceManager?.getGoogleDriveSourceMode() || 'auth-manifest-file';
-  const isAuthMode = mode === 'auth-manifest-file';
-  if (app.state.selectedProviderId === 'gdrive') {
-    app.renderCapabilities({
-      canListAssets: true,
-      canGetAsset: true,
-      canSaveMetadata: false,
-      canExportCollection: true,
-      authRequired: isAuthMode,
-    });
-  }
 }
 
 export function collectCurrentProviderConfig(app, providerId) {
@@ -41,8 +22,8 @@ export function collectCurrentProviderConfig(app, providerId) {
       config.localDirectoryHandle = app.selectedLocalDirectoryHandle;
     }
   }
-  if (providerId === 'gdrive') {
-    config.oauthScopes = MANAGER_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly';
+  if (providerId === 'example') {
+    config.path = MANAGER_CONFIG.defaultLocalManifestPath;
   }
   return config;
 }
@@ -53,44 +34,12 @@ export function sourceDisplayLabelFor(app, providerId, config, fallbackLabel) {
     return repo || 'GitHub';
   }
 
-  if (providerId === 'public-url') {
-    const manifestUrl = (config.manifestUrl || '').trim();
-    if (!manifestUrl) {
-      return 'Public URL';
-    }
-
-    try {
-      const parsed = new URL(manifestUrl);
-      const parts = parsed.pathname.split('/').filter(Boolean);
-      if (parsed.hostname.includes('githubusercontent.com') && parts.length >= 2) {
-        return parts[1];
-      }
-
-      const file = parts[parts.length - 1] || '';
-      const name = file.replace(/\.[^.]+$/, '');
-      if (name && !['collection', 'manifest', 'index'].includes(name.toLowerCase())) {
-        return name;
-      }
-
-      return parsed.hostname.replace(/^www\./i, '') || 'Public URL';
-    } catch (error) {
-      return 'Public URL';
-    }
-  }
-
-  if (providerId === 'gdrive') {
-    const manifestTitle = (config._manifestTitle || '').trim();
-    if (manifestTitle) {
-      return manifestTitle;
-    }
-    if ((config.sourceMode || '') === 'auth-manifest-file') {
-      return 'Google Drive (Auth)';
-    }
-    return 'Google Drive';
+  if (providerId === 'example') {
+    return 'Built-in examples';
   }
 
   if (providerId === 'local') {
-    return (config.localDirectoryName || '').trim() || app.hostNameFromPath(config.path, 'Local folder');
+    return (config.localDirectoryName || '').trim() || app.hostNameFromPath(config.path, 'Folder on this device');
   }
 
   return fallbackLabel || 'Source';
@@ -107,17 +56,8 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
     return `${base} @ ${branch}:${scope}`;
   }
 
-  if (providerId === 'public-url') {
-    return (config.manifestUrl || '').trim() || 'Public URL manifest';
-  }
-
-  if (providerId === 'gdrive') {
-    const fileId = (config._normalizedFileId || config.fileId || '').trim();
-    const mode = (config.sourceMode || '').trim() || 'public-manifest-url';
-    if (fileId) {
-      return mode === 'auth-manifest-file' ? `Google Drive API file ${fileId}` : `Google Drive file ${fileId}`;
-    }
-    return mode === 'auth-manifest-file' ? 'Google Drive API manifest' : 'Google Drive manifest';
+  if (providerId === 'example') {
+    return MANAGER_CONFIG.defaultLocalManifestPath;
   }
 
   if (providerId === 'local') {
@@ -125,7 +65,7 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
     if (folderName) {
       return `${folderName} (host root)`;
     }
-    return (config.path || '').trim() || 'Local folder';
+    return (config.path || '').trim() || 'Folder on this device';
   }
 
   return fallbackLabel || 'Source';
@@ -142,18 +82,10 @@ export function sanitizeSourceConfig(app, providerId, config = {}) {
     };
   }
 
-  if (providerId === 'public-url') {
+  if (providerId === 'example') {
     return {
-      manifestUrl: (config.manifestUrl || '').trim(),
-    };
-  }
-
-  if (providerId === 'gdrive') {
-    return {
-      sourceMode: (config.sourceMode || 'public-manifest-url').trim() || 'public-manifest-url',
-      manifestUrl: (config.manifestUrl || '').trim(),
-      fileId: (config.fileId || '').trim(),
-      oauthClientId: (config.oauthClientId || '').trim(),
+      path: MANAGER_CONFIG.defaultLocalManifestPath,
+      localDirectoryName: '',
     };
   }
 
@@ -205,15 +137,6 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
 
   const provider = providerFactory();
 
-  if (providerId === 'gdrive' && config.sourceMode === 'public-manifest-url' && config.manifestUrl) {
-    const normalized = normalizeGoogleDriveManifestUrl(config.manifestUrl);
-    if (!normalized.ok) {
-      app.setConnectionStatus(normalized.message || 'Invalid Google Drive file URL.', false);
-      app.setStatus(normalized.message || 'Invalid Google Drive file URL.', 'warn');
-      return;
-    }
-  }
-
   try {
     const result = await provider.connect(config);
     app.renderCapabilities(provider);
@@ -230,11 +153,6 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
 
     const loaded = await provider.listAssets();
     const derivedConfig = { ...config };
-    if (providerId === 'gdrive') {
-      derivedConfig._manifestTitle = result.sourceDisplayLabel || '';
-      derivedConfig._normalizedFileId = result.fileId || '';
-      derivedConfig._normalizedManifestUrl = result.normalizedManifestUrl || '';
-    }
     if (providerId === 'local' && result.sourceDisplayLabel) {
       derivedConfig.localDirectoryName = result.sourceDisplayLabel;
     }
@@ -251,7 +169,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       label: detailLabel,
       displayLabel,
       detailLabel,
-      config: { ...config, ...(providerId === 'gdrive' ? { fileId: result.fileId || '' } : {}) },
+      config: { ...config },
       capabilities: provider.getCapabilities(),
       status: result.message,
       authMode:
@@ -261,13 +179,13 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
             : 'public'
           : providerId === 'local' && config.localDirectoryHandle
             ? 'local-folder'
-            : providerId === 'gdrive' && config.sourceMode === 'auth-manifest-file'
-              ? 'google-auth'
+            : providerId === 'example'
+              ? 'example'
               : 'public',
       itemCount: loaded.length,
       provider,
       needsReconnect: false,
-      needsCredentials: providerId === 'gdrive' && config.sourceMode === 'auth-manifest-file' ? !(config.accessToken || '').trim() : false,
+      needsCredentials: false,
       collections: [],
       selectedCollectionId: null,
     };
@@ -332,21 +250,9 @@ export function inspectSource(app, sourceId) {
     nextConfigValues.githubBranch = source.config.branch || 'main';
     nextConfigValues.githubPath = source.config.path || '';
   }
-  if (source.providerId === 'public-url') {
-    nextConfigValues.publicUrlInput = source.config.manifestUrl || '';
-  }
-  if (source.providerId === 'gdrive') {
-    nextConfigValues.gdriveSourceMode = source.config.sourceMode || 'public-manifest-url';
-    nextConfigValues.gdriveUrlInput = source.config.manifestUrl || '';
-    nextConfigValues.gdriveFileIdInput = source.config.fileId || '';
-    nextConfigValues.gdriveClientIdInput = source.config.oauthClientId || MANAGER_CONFIG.googleDriveOAuth?.clientId || '';
-    nextConfigValues.gdriveAccessTokenInput = '';
-    app.setGoogleDriveAuthStatus(
-      source.config.sourceMode === 'auth-manifest-file'
-        ? 'Re-authentication required before refresh.'
-        : 'Public shared URL mode selected.',
-      source.config.sourceMode === 'auth-manifest-file' ? 'warn' : 'neutral',
-    );
+  if (source.providerId === 'example') {
+    nextConfigValues.localPathInput = MANAGER_CONFIG.defaultLocalManifestPath;
+    nextConfigValues.localFolderName = '';
   }
   if (source.providerId === 'local') {
     nextConfigValues.localPathInput = source.config.path || MANAGER_CONFIG.defaultLocalManifestPath;
@@ -389,8 +295,7 @@ export async function refreshSource(app, sourceId) {
         status: result.message,
         needsReconnect: true,
         needsCredentials:
-          source.providerId === 'github' ||
-          (source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'),
+          source.providerId === 'github',
       };
       app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
       app.renderSourcesList();
@@ -403,11 +308,6 @@ export async function refreshSource(app, sourceId) {
 
     const loaded = await provider.listAssets();
     const refreshedConfig = { ...refreshConfig };
-    if (source.providerId === 'gdrive') {
-      refreshedConfig._manifestTitle = result.sourceDisplayLabel || source.displayLabel || '';
-      refreshedConfig._normalizedFileId = result.fileId || source.config?.fileId || '';
-      refreshedConfig._normalizedManifestUrl = result.normalizedManifestUrl || '';
-    }
     if (source.providerId === 'local' && result.sourceDisplayLabel) {
       refreshedConfig.localDirectoryName = result.sourceDisplayLabel;
     }
@@ -421,21 +321,11 @@ export async function refreshSource(app, sourceId) {
       capabilities: provider.getCapabilities(),
       itemCount: loaded.length,
       status: result.message,
-      authMode:
-        source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'
-          ? 'google-auth'
-          : source.authMode,
+      authMode: source.authMode,
       displayLabel,
       detailLabel,
       label: detailLabel,
-      config:
-        source.providerId === 'gdrive'
-          ? {
-              ...refreshConfig,
-              fileId: result.fileId || source.config?.fileId || '',
-              sourceMode: source.config?.sourceMode || 'public-manifest-url',
-            }
-          : refreshConfig,
+      config: refreshConfig,
       collections: source.collections || [],
       selectedCollectionId: source.selectedCollectionId || null,
       needsReconnect: false,
@@ -487,8 +377,7 @@ export async function refreshSource(app, sourceId) {
       status: `Refresh error: ${error.message}`,
       needsReconnect: true,
       needsCredentials:
-        source.providerId === 'github' ||
-        (source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file'),
+        source.providerId === 'github',
     };
     app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
     app.renderSourcesList();

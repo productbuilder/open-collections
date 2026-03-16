@@ -1,10 +1,5 @@
 import { createLocalProvider } from '../../../packages/provider-local/src/index.js';
-import { createPublicUrlProvider } from '../../../packages/provider-public-url/src/index.js';
 import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
-import {
-  createGoogleDriveProvider,
-  requestGoogleDriveAccessToken,
-} from '../../../packages/provider-gdrive/src/index.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
@@ -18,7 +13,6 @@ import {
   inspectSource,
   refreshSource,
   removeSource,
-  renderGoogleDriveMode,
   sanitizeSourceConfig,
   setSelectedProvider,
   sourceDetailLabelFor,
@@ -98,42 +92,52 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.selectedLocalDirectoryHandle = null;
 
     this.providerFactories = {
+      example: createLocalProvider(),
       local: createLocalProvider(),
-      'public-url': createPublicUrlProvider(),
       github: createGithubProvider(),
-      gdrive: createGoogleDriveProvider(),
     };
 
     this.providers = {
+      example: createLocalProvider,
       local: createLocalProvider,
-      'public-url': createPublicUrlProvider,
       github: createGithubProvider,
-      gdrive: createGoogleDriveProvider,
     };
 
     this.providerCatalog = [
       {
+        ...this.providerFactories.example.getDescriptor(),
+        id: 'example',
+        category: 'example',
+        label: 'Built-in example collections',
+        description: 'Connect instantly to the demo host from this repository.',
+      },
+      {
         ...this.providerFactories.local.getDescriptor(),
-        label: 'Local folder',
-        description: 'Use a folder on this device as a local host (browser support required).',
+        category: 'local',
+        label: 'Folder on this device',
+        description: 'Use a folder on this device as a writable local host (browser support required).',
       },
       {
         ...this.providerFactories.github.getDescriptor(),
-        label: 'GitHub storage',
-        description: 'Writable storage source for managed collections (recommended).',
-      },
-      {
-        ...this.providerFactories.gdrive.getDescriptor(),
-        label: 'Google Drive',
-        description: 'Connected Drive source (currently read-only import for managed collections).',
+        category: 'remote',
+        label: 'Git host',
+        description: 'Connect a Git-backed host for managed collections.',
       },
       {
         id: 's3',
+        category: 'remote',
         label: 'S3-compatible storage',
-        category: 'external',
         enabled: false,
         statusLabel: 'Coming soon',
         description: 'Writable object storage source for institutional collection management.',
+      },
+      {
+        id: 'custom-domain',
+        category: 'remote',
+        label: 'Custom domain',
+        enabled: false,
+        statusLabel: 'Planned',
+        description: 'Connect a custom-hosted manifest endpoint.',
       },
     ];
 
@@ -147,9 +151,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.setStatus('No hosts connected yet.', 'neutral');
     this.refreshWorkingStatus();
     this.setConnectionStatus('No hosts connected.', 'neutral');
-    this.renderCapabilities(this.providerFactories.local.getCapabilities());
+    this.renderCapabilities(this.providerFactories.example.getCapabilities());
     this.renderProviderCatalog();
-    this.setSelectedProvider('local');
+    this.setSelectedProvider('example');
     this.renderSourcesList();
     this.renderSourceFilter();
     this.renderAssets();
@@ -266,47 +270,6 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   setSelectedProvider(providerId) {
     return setSelectedProvider(this, providerId);
-  }
-
-  renderGoogleDriveMode() {
-    return renderGoogleDriveMode(this);
-  }
-
-  setGoogleDriveAuthStatus(text, tone = 'neutral') {
-    this.dom.sourceManager?.setGoogleDriveAuthStatus(text, tone);
-  }
-
-  async connectGoogleDriveAuth() {
-    const gdriveConfig = this.dom.sourceManager?.getProviderConfig('gdrive') || {};
-    const sourceMode = gdriveConfig.sourceMode || 'auth-manifest-file';
-    if (sourceMode !== 'auth-manifest-file') {
-      this.setGoogleDriveAuthStatus('Switch to authenticated mode to connect Google Drive.', 'warn');
-      return;
-    }
-
-    const clientId = (gdriveConfig.oauthClientId || '').trim();
-    if (!clientId) {
-      this.setGoogleDriveAuthStatus('Enter a Google OAuth Client ID to start authentication.', 'warn');
-      return;
-    }
-
-    this.setGoogleDriveAuthStatus('Connecting to Google Drive...', 'neutral');
-
-    try {
-      const tokenResult = await requestGoogleDriveAccessToken({
-        clientId,
-        scope: MANAGER_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly',
-      });
-
-      this.dom.sourceManager?.setConfigValues({ gdriveAccessTokenInput: tokenResult.accessToken || '' });
-      this.setGoogleDriveAuthStatus('Connected. Access token is loaded for this session.', 'ok');
-      this.setConnectionStatus('Google Drive authentication completed for this session.', 'ok');
-      this.setStatus('Google Drive authenticated. Add source to load the selected manifest file.', 'ok');
-    } catch (error) {
-      this.setGoogleDriveAuthStatus(error.message, 'warn');
-      this.setConnectionStatus(`Google Drive auth failed: ${error.message}`, 'warn');
-      this.setStatus(`Google Drive auth failed: ${error.message}`, 'warn');
-    }
   }
 
   setStatus(text, tone = 'neutral') {

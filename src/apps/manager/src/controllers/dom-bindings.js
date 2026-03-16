@@ -49,10 +49,8 @@ export function initializeDomDefaults(app) {
   app.dom.sourceManager?.setConfigValues({
     localPathInput: MANAGER_CONFIG.defaultLocalManifestPath,
     localFolderName: '',
-    gdriveClientIdInput: MANAGER_CONFIG.googleDriveOAuth?.clientId || '',
     githubBranch: 'main',
   });
-  app.dom.sourceManager?.setGoogleDriveAuthStatus('Disconnected.', 'neutral');
   app.dom.collectionId.value = MANAGER_CONFIG.defaultCollectionMeta.id;
   app.dom.collectionTitle.value = MANAGER_CONFIG.defaultCollectionMeta.title;
   app.dom.collectionDescription.value = MANAGER_CONFIG.defaultCollectionMeta.description;
@@ -112,12 +110,6 @@ export function bindDomEvents(app) {
     app.renderEditor();
     app.renderSourceContext();
     app.refreshWorkingStatus();
-  });
-  app.dom.sourceManager.addEventListener('gdrive-mode-change', () => {
-    app.renderGoogleDriveMode();
-  });
-  app.dom.sourceManager.addEventListener('gdrive-connect-auth', async () => {
-    await app.connectGoogleDriveAuth();
   });
   app.dom.sourceManager.addEventListener('pick-local-folder', async () => {
     await app.pickLocalFolder();

@@ -2355,10 +2355,3 @@ class OpenCollectionsManagerElement extends HTMLElement {
 if (!customElements.get('open-collections-manager')) {
   customElements.define('open-collections-manager', OpenCollectionsManagerElement);
 }
-
-class TimemapManagerElement extends OpenCollectionsManagerElement {}
-
-if (!customElements.get('timemap-manager')) {
-  customElements.define('timemap-manager', TimemapManagerElement);
-}
-

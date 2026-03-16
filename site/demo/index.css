@@ -1,6 +1,6 @@
-/* Demo host-side styling for timemap-manager */
+/* Demo host-side styling for open-collections-manager */
 
-timemap-manager {
+open-collections-manager {
 	display: block;
 	max-width: 100%;
 }
@@ -16,7 +16,7 @@ timemap-manager {
 }
 
 @media (max-width: 760px) {
-	timemap-manager {
+	open-collections-manager {
 		min-height: 70vh;
 	}
 

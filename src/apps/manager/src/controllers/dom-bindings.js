@@ -79,6 +79,17 @@ export function bindDomEvents(app) {
   app.dom.sourceManager.addEventListener('connect-provider', async () => {
     await app.connectCurrentProvider();
   });
+  app.dom.sourceManager.addEventListener('add-example-host', async () => {
+    app.setSelectedProvider('example');
+    await app.connectCurrentProvider();
+  });
+  app.dom.sourceManager.addEventListener('add-local-folder-host', async () => {
+    app.setSelectedProvider('local');
+    const didPick = await app.pickLocalFolder();
+    if (didPick) {
+      await app.connectCurrentProvider();
+    }
+  });
   app.dom.sourceManager.addEventListener('refresh-source', async (event) => {
     const sourceId = event.detail?.sourceId || '';
     if (sourceId) {

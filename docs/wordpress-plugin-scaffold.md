@@ -45,4 +45,4 @@ Plugin scaffold lives at:
 
 ## Collection Manager usage in plugin
 
-The plugin does not reimplement Collection Manager. It mounts the existing custom element (`timemap-manager`) and passes environment/configuration values. This preserves portability across WordPress and non-WordPress deployments.
+The plugin does not reimplement Collection Manager. It mounts the existing custom element (`open-collections-manager`) and passes environment/configuration values. This preserves portability across WordPress and non-WordPress deployments.

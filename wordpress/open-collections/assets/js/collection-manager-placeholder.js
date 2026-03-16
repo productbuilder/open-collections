@@ -4,6 +4,6 @@ class OpenCollectionsPlaceholder extends HTMLElement {
 	}
 }
 
-if (!customElements.get('timemap-manager')) {
-	customElements.define('timemap-manager', OpenCollectionsPlaceholder);
+if (!customElements.get('open-collections-manager')) {
+	customElements.define('open-collections-manager', OpenCollectionsPlaceholder);
 }

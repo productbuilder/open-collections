@@ -36,6 +36,32 @@ import {
   saveLocalDraft,
   saveSourcesToStorage,
 } from './controllers/workspace-controller.js';
+import {
+  activeCollectionRootPath,
+  collectionLabelFor,
+  currentCollectionMeta,
+  ensureCollectionForSource,
+  findSelectedCollectionMeta,
+  openNewCollectionDialog,
+  refreshSourceCollectionsAndCounts,
+  renderCollectionFilter,
+  renderWorkspaceContext,
+  setCollectionMetaFields,
+} from './controllers/collection-controller.js';
+import {
+  closeViewer,
+  findSelectedItem,
+  getVisibleAssets,
+  openViewer,
+  renderAssets,
+  renderEditor,
+  renderMetadataMode,
+  renderViewer,
+  resolveMetadataMode,
+  selectItem,
+  setBrowserViewMode,
+  syncMetadataModeFromState,
+} from './controllers/selection-controller.js';
 import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
@@ -369,35 +395,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   activeCollectionRootPath() {
-    const collectionId = (this.state.selectedCollectionId || '').trim();
-    if (!collectionId || collectionId === 'all') {
-      return '';
-    }
-    const activeSource = this.state.activeSourceFilter !== 'all' ? this.getSourceById(this.state.activeSourceFilter) : null;
-    if (activeSource) {
-      const sourceCollection = (activeSource.collections || []).find((entry) => entry.id === collectionId);
-      if (sourceCollection?.rootPath) {
-        return this.normalizeCollectionRootPath(sourceCollection.rootPath, collectionId);
-      }
-    }
-    const localCollection = this.state.localDraftCollections.find((entry) => entry.id === collectionId);
-    if (localCollection?.rootPath) {
-      return this.normalizeCollectionRootPath(localCollection.rootPath, collectionId);
-    }
-    return this.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
+    return activeCollectionRootPath(this);
   }
 
   renderWorkspaceContext() {
-    const source =
-      this.state.activeSourceFilter !== 'all'
-        ? this.getSourceById(this.state.activeSourceFilter)
-        : null;
-    const sourceLabel = source?.displayLabel || source?.label || 'none';
-    const collectionId = this.state.selectedCollectionId && this.state.selectedCollectionId !== 'all'
-      ? this.state.selectedCollectionId
-      : 'none';
-    const rootPath = collectionId !== 'none' ? this.activeCollectionRootPath() : 'n/a';
-    this.dom.managerHeader?.setWorkspaceContext(`Host: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`);
+    return renderWorkspaceContext(this);
   }
 
   readableTitleFromFilename(name, fallbackId) {
@@ -407,22 +409,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   openNewCollectionDialog() {
-    this.dom.newCollectionTitle.value = '';
-    this.dom.newCollectionSlug.value = '';
-    this.dom.newCollectionDescription.value = '';
-    this.dom.newCollectionLicense.value = '';
-    this.dom.newCollectionPublisher.value = '';
-    this.dom.newCollectionLanguage.value = '';
-    this.openDialog(this.dom.newCollectionDialog);
+    return openNewCollectionDialog(this);
   }
 
   setCollectionMetaFields(meta = {}) {
-    this.dom.collectionId.value = meta.id || this.dom.collectionId.value;
-    this.dom.collectionTitle.value = meta.title || this.dom.collectionTitle.value;
-    this.dom.collectionDescription.value = meta.description || '';
-    this.dom.collectionLicense.value = meta.license || '';
-    this.dom.collectionPublisher.value = meta.publisher || '';
-    this.dom.collectionLanguage.value = meta.language || '';
+    return setCollectionMetaFields(this, meta);
   }
 
   collectionIdExists(collectionId) {
@@ -504,58 +495,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   ensureCollectionForSource(source) {
-    const preferred = (this.state.selectedCollectionId || '').trim();
-    const existing = source.collections || [];
-    if (source.providerId === 'local') {
-      if (preferred && preferred !== 'all' && existing.some((entry) => entry.id === preferred)) {
-        source.selectedCollectionId = preferred;
-        return preferred;
-      }
-      if (source.selectedCollectionId && existing.some((entry) => entry.id === source.selectedCollectionId)) {
-        return source.selectedCollectionId;
-      }
-      const firstLocal = existing[0]?.id || '';
-      if (firstLocal) {
-        source.selectedCollectionId = firstLocal;
-      }
-      return firstLocal;
-    }
-
-    if (preferred && preferred !== 'all') {
-      if (!existing.some((entry) => entry.id === preferred)) {
-        const localEntry = this.state.localDraftCollections.find((entry) => entry.id === preferred);
-        source.collections = [
-          ...existing,
-          {
-            id: preferred,
-            title: localEntry?.title || preferred,
-            rootPath: this.normalizeCollectionRootPath(localEntry?.rootPath || `${preferred}/`, preferred),
-          },
-        ];
-      }
-      source.selectedCollectionId = preferred;
-      return preferred;
-    }
-
-    if (source.selectedCollectionId && existing.some((entry) => entry.id === source.selectedCollectionId)) {
-      return source.selectedCollectionId;
-    }
-
-    const first = existing[0]?.id;
-    if (first) {
-      source.selectedCollectionId = first;
-      return first;
-    }
-
-    const fallback = `${source.id}::default-collection`;
-    source.collections = [{ id: fallback, title: source.displayLabel || source.label || 'Default collection' }];
-    source.selectedCollectionId = fallback;
-    return fallback;
+    return ensureCollectionForSource(this, source);
   }
 
   collectionLabelFor(source, collectionId) {
-    const found = (source.collections || []).find((entry) => entry.id === collectionId);
-    return found?.title || collectionId;
+    return collectionLabelFor(source, collectionId);
   }
 
   collectionAssetPath(workspaceId, kind = 'original', extension = '.jpg') {
@@ -589,20 +533,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   refreshSourceCollectionsAndCounts(sourceId) {
-    const source = this.getSourceById(sourceId);
-    if (!source) {
-      return;
-    }
-    const sourceAssets = this.state.assets.filter((item) => item.sourceId === sourceId);
-    const nextCollections = this.buildCollectionsForSource(source, sourceAssets);
-    source.collections = nextCollections.map((collection) => {
-      const existing = (source.collections || []).find((entry) => entry.id === collection.id);
-      return existing ? { ...existing, ...collection } : collection;
-    });
-    source.itemCount = sourceAssets.length;
-    if (!source.collections.some((entry) => entry.id === source.selectedCollectionId)) {
-      source.selectedCollectionId = source.collections[0]?.id || null;
-    }
+    return refreshSourceCollectionsAndCounts(this, sourceId);
   }
 
   async ingestImageFiles(files) {
@@ -622,14 +553,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   getVisibleAssets() {
-    let visible = this.state.assets;
-    if (this.state.activeSourceFilter !== 'all') {
-      visible = visible.filter((item) => item.sourceId === this.state.activeSourceFilter);
-    }
-    if (this.state.selectedCollectionId !== 'all') {
-      visible = visible.filter((item) => item.collectionId === this.state.selectedCollectionId);
-    }
-    return visible;
+    return getVisibleAssets(this);
   }
 
   renderSourceFilter() {
@@ -648,32 +572,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderCollectionFilter() {
-    const previous = this.state.selectedCollectionId || 'all';
-    const options = [{ value: 'all', label: 'All collections' }];
-
-    let collections = [];
-    if (this.state.activeSourceFilter !== 'all') {
-      const activeSource = this.getSourceById(this.state.activeSourceFilter);
-      collections = activeSource?.collections || [];
-      if (previous !== 'all' && !collections.some((entry) => entry.id === previous)) {
-        const localEntry = this.state.localDraftCollections.find((entry) => entry.id === previous);
-        if (localEntry) {
-          collections = [...collections, localEntry];
-        }
-      }
-    } else if (this.state.localDraftCollections.length > 0) {
-      collections = this.state.localDraftCollections;
-    }
-
-    for (const collection of collections) {
-      options.push({ value: collection.id, label: collection.title || collection.id });
-    }
-
-    const stillExists = previous === 'all' || collections.some((entry) => entry.id === previous);
-    this.state.selectedCollectionId = stillExists ? previous : 'all';
-    this.dom.collectionBrowser.setCollectionOptions(options, this.state.selectedCollectionId);
-    this.renderWorkspaceContext();
-    this.renderSourceContext();
+    return renderCollectionFilter(this);
   }
 
   formatSourceBadge(item) {
@@ -862,39 +761,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   openViewer(itemId) {
-    const item = this.state.assets.find((entry) => entry.workspaceId === itemId);
-    if (!item) {
-      return;
-    }
-
-    this.state.viewerItemId = itemId;
-    if (this.state.selectedItemId !== itemId) {
-      this.state.selectedItemId = itemId;
-      this.syncMetadataModeFromState();
-      this.renderAssets();
-      this.renderEditor();
-      if (this.isMobileViewport()) {
-        this.openMobileEditor();
-      }
-    }
-
-    this.renderViewer();
-    this.dom.assetViewer?.open();
+    return openViewer(this, itemId);
   }
 
   closeViewer() {
-    this.state.viewerItemId = null;
-    this.dom.assetViewer?.clear();
-    this.dom.assetViewer?.close();
+    return closeViewer(this);
   }
 
   renderViewer() {
-    const item = this.state.assets.find((entry) => entry.workspaceId === this.state.viewerItemId);
-    if (!item) {
-      this.closeViewer();
-      return;
-    }
-    this.dom.assetViewer?.setItem(item, (entry) => this.formatSourceBadge(entry));
+    return renderViewer(this);
   }
 
   renderSourceContext() {
@@ -950,16 +825,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   findSelectedCollectionMeta() {
-    const id = this.state.selectedCollectionId;
-    if (!id || id === 'all') {
-      return null;
-    }
-    if (this.state.activeSourceFilter !== 'all') {
-      const source = this.getSourceById(this.state.activeSourceFilter);
-      const found = source?.collections?.find((entry) => entry.id === id);
-      if (found) return found;
-    }
-    return this.state.localDraftCollections.find((entry) => entry.id === id) || null;
+    return findSelectedCollectionMeta(this);
   }
 
   openCollectionView(collectionId) {
@@ -975,146 +841,35 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderAssets() {
-    this.renderSourceContext();
-
-    const activeLevel = this.state.currentLevel === 'items' ? 'items' : 'collections';
-    const activeViewMode = this.state.browserViewModes?.[activeLevel] || 'cards';
-    this.applyInspectorModeForViewMode(activeViewMode);
-
-    if (this.state.currentLevel === 'collections') {
-      let collections = [];
-      if (this.state.activeSourceFilter !== 'all') {
-        const src = this.getSourceById(this.state.activeSourceFilter);
-        collections = src?.collections || [];
-      } else {
-        collections = this.state.localDraftCollections;
-      }
-
-      this.dom.collectionBrowser.update({
-        currentLevel: 'collections',
-        viewportTitle: 'Collections',
-        assetCountText: `${collections.length} collections`,
-        collections,
-        items: [],
-        selectedCollectionId: this.state.selectedCollectionId,
-        selectedItemId: null,
-        viewModes: this.state.browserViewModes,
-      });
-      return;
-    }
-
-    const visibleAssets = this.getVisibleAssets().filter((item) => item.collectionId === this.state.openedCollectionId);
-    const collection = this.findSelectedCollectionMeta();
-    this.dom.collectionBrowser.update({
-      currentLevel: 'items',
-      viewportTitle: collection?.title || this.state.openedCollectionId || 'Collection',
-      assetCountText: `${visibleAssets.length} items`,
-      collections: [],
-      items: visibleAssets,
-      selectedCollectionId: this.state.selectedCollectionId,
-      selectedItemId: this.state.selectedItemId,
-      viewModes: this.state.browserViewModes,
-    });
+    return renderAssets(this);
   }
 
   selectItem(itemId) {
-    if (this.state.selectedItemId === itemId) {
-      if (this.isMobileViewport()) {
-        this.openMobileEditor();
-      }
-      return;
-    }
-
-    this.state.selectedItemId = itemId;
-    this.syncMetadataModeFromState();
-    this.renderAssets();
-    this.renderEditor();
-    if (this.isMobileViewport()) {
-      this.openMobileEditor();
-    }
-    if (this.state.opfsAvailable) {
-      this.persistWorkspaceToOpfs().catch(() => {});
-    }
+    return selectItem(this, itemId);
   }
 
   findSelectedItem() {
-    return this.state.assets.find((item) => item.workspaceId === this.state.selectedItemId) || null;
+    return findSelectedItem(this);
   }
 
   resolveMetadataMode() {
-    if (this.state.currentLevel === 'collections') {
-      this.state.selectedItemId = null;
-      const selectedCollection = this.findSelectedCollectionMeta();
-      return selectedCollection ? 'collection' : 'none';
-    }
-
-    if (this.state.currentLevel === 'items') {
-      if (!this.state.openedCollectionId) {
-        this.state.selectedItemId = null;
-        return 'none';
-      }
-      const visibleItems = this.getVisibleAssets().filter((item) => item.collectionId === this.state.openedCollectionId);
-      const hasSelectedItem = visibleItems.some((item) => item.workspaceId === this.state.selectedItemId);
-      if (!hasSelectedItem) {
-        this.state.selectedItemId = null;
-      }
-      return hasSelectedItem ? 'item' : 'none';
-    }
-
-    this.state.selectedItemId = null;
-    return 'none';
+    return resolveMetadataMode(this);
   }
 
   syncMetadataModeFromState() {
-    const mode = this.resolveMetadataMode();
-    this.state.metadataMode = mode;
-    return mode;
+    return syncMetadataModeFromState(this);
   }
 
   renderMetadataMode(mode) {
-    this.state.metadataMode = mode;
-    this.renderEditor();
+    return renderMetadataMode(this, mode);
   }
 
   setBrowserViewMode(level, mode) {
-    const normalizedLevel = level === 'items' ? 'items' : 'collections';
-    const normalizedMode = mode === 'rows' ? 'rows' : 'cards';
-    this.state.browserViewModes = {
-      ...this.state.browserViewModes,
-      [normalizedLevel]: normalizedMode,
-    };
-    const activeLevel = this.state.currentLevel === 'items' ? 'items' : 'collections';
-    if (normalizedLevel === activeLevel) {
-      this.applyInspectorModeForViewMode(normalizedMode);
-    }
+    return setBrowserViewMode(this, level, mode);
   }
 
   renderEditor() {
-    const metadataMode = this.syncMetadataModeFromState();
-    if (metadataMode === 'collection') {
-      this.dom.metadataEditor.setView({
-        mode: 'collection',
-        collection: this.findSelectedCollectionMeta(),
-      });
-      this.syncEditorVisibility();
-      return;
-    }
-
-    if (metadataMode === 'item') {
-      const selected = this.findSelectedItem();
-      const selectedSource = selected ? this.getSourceById(selected.sourceId) : null;
-      const canSave = Boolean(selectedSource?.capabilities?.canSaveMetadata);
-      this.dom.metadataEditor.setView({
-        mode: 'item',
-        item: selected,
-        canSaveItem: canSave,
-      });
-      this.syncEditorVisibility();
-      return;
-    }
-
-    this.dom.metadataEditor.setView({ mode: 'none' });
-    this.syncEditorVisibility();
+    return renderEditor(this);
   }
 
   collectEditorPatch() {
@@ -1216,17 +971,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   currentCollectionMeta() {
-    const collectionId = this.dom.collectionId.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.id;
-    return {
-      id: collectionId,
-      title: this.dom.collectionTitle.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.title,
-      description:
-        this.dom.collectionDescription.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.description,
-      license: this.dom.collectionLicense.value.trim(),
-      publisher: this.dom.collectionPublisher.value.trim(),
-      language: this.dom.collectionLanguage.value.trim(),
-      rootPath: this.activeCollectionRootPath() || this.normalizeCollectionRootPath(`${collectionId}/`, collectionId),
-    };
+    return currentCollectionMeta(this);
   }
 
   toManifestItem(item) {

@@ -603,13 +603,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
       });
       this.dom.sourceManager?.setLocalFolderStatus(`Selected folder: ${folderName}`, 'ok');
       this.setStatus(`Selected local folder: ${folderName}`, 'ok');
+      return true;
     } catch (error) {
       if (error?.name === 'AbortError') {
         this.dom.sourceManager?.setLocalFolderStatus('Folder selection cancelled.', 'neutral');
-        return;
+        return false;
       }
       this.dom.sourceManager?.setLocalFolderStatus(`Folder selection failed: ${error.message}`, 'warn');
       this.setStatus(`Folder selection failed: ${error.message}`, 'warn');
+      return false;
     }
   }
 

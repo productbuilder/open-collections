@@ -11,6 +11,7 @@ import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
 import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
+import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
 import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
@@ -38,6 +39,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   constructor() {
     super();
 
+    // State buckets: workspace persistence, provider/source connectivity, active collection, selection, and UI mode.
     this.state = createInitialState();
 
     this.opfsStorage = createOpfsStorage();
@@ -124,266 +126,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   cacheDom() {
-    const root = this.shadow;
-    this.dom = {
-      managerHeader: root.getElementById('managerHeader'),
-      paneLayout: root.getElementById('paneLayout'),
-      collectionBrowser: root.getElementById('collectionBrowser'),
-      metadataEditor: root.getElementById('metadataEditor'),
-      sourceManager: root.getElementById('sourceManager'),
-      assetViewer: root.getElementById('assetViewer'),
-      providerDialog: root.getElementById('providerDialog'),
-      hostMenuDialog: root.getElementById('hostMenuDialog'),
-      sourcePickerDialog: root.getElementById('sourcePickerDialog'),
-      sourcePickerList: root.getElementById('sourcePickerList'),
-      publishDialog: root.getElementById('publishDialog'),
-      newCollectionDialog: root.getElementById('newCollectionDialog'),
-      registerDialog: root.getElementById('registerDialog'),
-      headerMenuDialog: root.getElementById('headerMenuDialog'),
-      openSourcePickerFromHostBtn: root.getElementById('openSourcePickerFromHostBtn'),
-      openAddHostFromHostBtn: root.getElementById('openAddHostFromHostBtn'),
-      openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
-      storageOptionsDialog: root.getElementById('storageOptionsDialog'),
-      collectionId: root.getElementById('collectionId'),
-      collectionTitle: root.getElementById('collectionTitle'),
-      collectionDescription: root.getElementById('collectionDescription'),
-      collectionLicense: root.getElementById('collectionLicense'),
-      collectionPublisher: root.getElementById('collectionPublisher'),
-      collectionLanguage: root.getElementById('collectionLanguage'),
-      newCollectionTitle: root.getElementById('newCollectionTitle'),
-      newCollectionSlug: root.getElementById('newCollectionSlug'),
-      newCollectionDescription: root.getElementById('newCollectionDescription'),
-      newCollectionLicense: root.getElementById('newCollectionLicense'),
-      newCollectionPublisher: root.getElementById('newCollectionPublisher'),
-      newCollectionLanguage: root.getElementById('newCollectionLanguage'),
-      createCollectionBtn: root.getElementById('createCollectionBtn'),
-      generateManifestBtn: root.getElementById('generateManifestBtn'),
-      publishToSourceBtn: root.getElementById('publishToSourceBtn'),
-      copyManifestBtn: root.getElementById('copyManifestBtn'),
-      downloadManifestBtn: root.getElementById('downloadManifestBtn'),
-      saveLocalDraftBtn: root.getElementById('saveLocalDraftBtn'),
-      restoreLocalDraftBtn: root.getElementById('restoreLocalDraftBtn'),
-      discardLocalDraftBtn: root.getElementById('discardLocalDraftBtn'),
-      localDraftStatus: root.getElementById('localDraftStatus'),
-      manifestPreview: root.getElementById('manifestPreview'),
-    };
-
-    this.dom.sourceManager?.setConfigValues({
-      localPathInput: MANAGER_CONFIG.defaultLocalManifestPath,
-      localFolderName: '',
-      gdriveClientIdInput: MANAGER_CONFIG.googleDriveOAuth?.clientId || '',
-      githubBranch: 'main',
-    });
-    this.dom.sourceManager?.setGoogleDriveAuthStatus('Disconnected.', 'neutral');
-    this.dom.collectionId.value = MANAGER_CONFIG.defaultCollectionMeta.id;
-    this.dom.collectionTitle.value = MANAGER_CONFIG.defaultCollectionMeta.title;
-    this.dom.collectionDescription.value = MANAGER_CONFIG.defaultCollectionMeta.description;
-    this.dom.collectionLicense.value = '';
-    this.dom.collectionPublisher.value = '';
-    this.dom.collectionLanguage.value = '';
-    this.dom.manifestPreview.textContent = '{}';
+    this.dom = cacheDomElements(this.shadow);
+    initializeDomDefaults(this);
   }
 
   bindEvents() {
-    if (this._eventsBound) {
-      return;
-    }
-
-    this._eventsBound = true;
-
-    this.dom.managerHeader.addEventListener('open-host-menu', () => this.openDialog(this.dom.hostMenuDialog));
-    this.dom.managerHeader.addEventListener('open-header-menu', () => this.openDialog(this.dom.headerMenuDialog));
-    this.dom.sourceManager.addEventListener('open-storage-options', () => this.openDialog(this.dom.storageOptionsDialog));
-    this.dom.sourceManager.addEventListener('select-provider', (event) => {
-      const providerId = event.detail?.providerId || '';
-      if (providerId) {
-        this.setSelectedProvider(providerId);
-      }
-    });
-    this.dom.sourceManager.addEventListener('connect-provider', async () => {
-      await this.connectCurrentProvider();
-    });
-    this.dom.sourceManager.addEventListener('refresh-source', async (event) => {
-      const sourceId = event.detail?.sourceId || '';
-      if (sourceId) {
-        await this.refreshSource(sourceId);
-      }
-    });
-    this.dom.sourceManager.addEventListener('inspect-source', (event) => {
-      const sourceId = event.detail?.sourceId || '';
-      if (sourceId) {
-        this.inspectSource(sourceId);
-      }
-    });
-    this.dom.sourceManager.addEventListener('remove-source', (event) => {
-      const sourceId = event.detail?.sourceId || '';
-      if (sourceId) {
-        this.removeSource(sourceId);
-      }
-    });
-    this.dom.sourceManager.addEventListener('show-only-source', (event) => {
-      const sourceId = event.detail?.sourceId || '';
-      if (!sourceId) {
-        return;
-      }
-      this.state.activeSourceFilter = sourceId;
-      this.renderSourceFilter();
-      const visible = this.getVisibleAssets();
-      this.state.selectedItemId = visible[0]?.workspaceId || null;
-      this.renderAssets();
-      this.renderEditor();
-    });
-    this.dom.sourceManager.addEventListener('gdrive-mode-change', () => {
-      this.renderGoogleDriveMode();
-    });
-    this.dom.sourceManager.addEventListener('gdrive-connect-auth', async () => {
-      await this.connectGoogleDriveAuth();
-    });
-    this.dom.sourceManager.addEventListener('pick-local-folder', async () => {
-      await this.pickLocalFolder();
-    });
-    this.dom.openSourcePickerFromHostBtn.addEventListener('click', () => {
-      this.closeDialog(this.dom.hostMenuDialog);
-      this.renderSourcePicker();
-      this.openDialog(this.dom.sourcePickerDialog);
-    });
-    this.dom.openAddHostFromHostBtn.addEventListener('click', () => {
-      this.closeDialog(this.dom.hostMenuDialog);
-      this.openDialog(this.dom.providerDialog);
-    });
-    this.dom.openRegisterFromMenuBtn.addEventListener('click', () => {
-      this.closeDialog(this.dom.headerMenuDialog);
-      this.openDialog(this.dom.registerDialog);
-    });
-    this.dom.collectionBrowser.addEventListener('back-to-collections', () => this.leaveCollectionView());
-    this.dom.metadataEditor.addEventListener('close-editor', () => this.closeMobileEditor());
-    this.dom.assetViewer.addEventListener('close-viewer', () => {
-      this.state.viewerItemId = null;
-    });
-    this.dom.collectionBrowser.addEventListener('source-filter-change', (event) => {
-      this.state.activeSourceFilter = event.detail?.value || 'all';
-      this.state.selectedCollectionId = 'all';
-      this.state.currentLevel = 'collections';
-      this.state.openedCollectionId = null;
-      this.state.selectedItemId = null;
-      this.renderCollectionFilter();
-      this.syncMetadataModeFromState();
-      this.closeMobileEditor();
-      this.renderSourceContext();
-      this.renderAssets();
-      this.renderEditor();
-      if (this.state.opfsAvailable) {
-        this.persistWorkspaceToOpfs().catch(() => {});
-      }
-    });
-    this.dom.collectionBrowser.addEventListener('collection-filter-change', (event) => {
-      this.state.selectedCollectionId = event.detail?.value || 'all';
-      if (this.state.currentLevel === 'items') {
-        if (this.state.selectedCollectionId === 'all') {
-          this.state.currentLevel = 'collections';
-          this.state.openedCollectionId = null;
-          this.state.selectedItemId = null;
-          this.closeMobileEditor();
-        } else if (this.state.openedCollectionId !== this.state.selectedCollectionId) {
-          this.state.openedCollectionId = this.state.selectedCollectionId;
-          this.state.selectedItemId = null;
-        }
-      }
-      this.syncMetadataModeFromState();
-      this.renderAssets();
-      this.renderEditor();
-      if (this.state.opfsAvailable) {
-        this.persistWorkspaceToOpfs().catch(() => {});
-      }
-    });
-    this.dom.collectionBrowser.addEventListener('collection-select', (event) => {
-      this.state.selectedCollectionId = event.detail?.collectionId || 'all';
-      this.state.currentLevel = 'collections';
-      this.state.openedCollectionId = null;
-      this.state.selectedItemId = null;
-      this.syncMetadataModeFromState();
-      this.renderAssets();
-      this.renderEditor();
-      if (this.isMobileViewport()) {
-        this.openMobileEditor();
-      }
-    });
-    this.dom.collectionBrowser.addEventListener('collection-open', (event) => {
-      this.openCollectionView(event.detail?.collectionId || '');
-    });
-    this.dom.collectionBrowser.addEventListener('item-select', (event) => {
-      this.selectItem(event.detail?.workspaceId || '');
-    });
-    this.dom.collectionBrowser.addEventListener('item-view', (event) => {
-      this.openViewer(event.detail?.workspaceId || '');
-    });
-    this.dom.collectionBrowser.addEventListener('view-mode-change', (event) => {
-      this.setBrowserViewMode(event.detail?.level || 'collections', event.detail?.mode || 'cards');
-    });
-    this.dom.collectionBrowser.addEventListener('add-collection', () => {
-      this.openNewCollectionDialog();
-    });
-    this.dom.collectionBrowser.addEventListener('files-selected', async (event) => {
-      const files = Array.isArray(event.detail?.files) ? event.detail.files : [];
-      if (files.length > 0) {
-        await this.ingestImageFiles(files);
-      }
-    });
-    this.dom.collectionBrowser.addEventListener('drop-target-change', (event) => {
-      this.setDropTargetState(Boolean(event.detail?.active));
-    });
-    this.dom.metadataEditor.addEventListener('save-item', async (event) => {
-      const selected = this.findSelectedItem();
-      if (!selected) {
-        return;
-      }
-      const patch = event.detail?.patch || this.collectEditorPatch();
-      await this.updateItem(selected.workspaceId, patch, { explicitSave: true });
-    });
-    this.dom.metadataEditor.addEventListener('save-collection', async (event) => {
-      const patch = event.detail?.patch || null;
-      await this.saveSelectedCollectionMetadata(patch);
-    });
-
-    this.shadow.querySelectorAll('[data-close]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const dialogId = button.getAttribute('data-close');
-        this.closeDialog(this.shadow.getElementById(dialogId));
-      });
-    });
-    this.dom.newCollectionTitle.addEventListener('input', () => {
-      const currentSlug = (this.dom.newCollectionSlug.value || '').trim();
-      if (!currentSlug) {
-        this.dom.newCollectionSlug.value = this.slugifySegment(this.dom.newCollectionTitle.value.trim(), 'new-collection');
-      }
-    });
-    this.dom.createCollectionBtn.addEventListener('click', async () => {
-      await this.createNewCollectionDraft();
-    });
-
-    this.dom.generateManifestBtn.addEventListener('click', async () => {
-      await this.generateManifest();
-    });
-
-    this.dom.copyManifestBtn.addEventListener('click', async () => {
-      await this.copyManifestToClipboard();
-    });
-
-    this.dom.downloadManifestBtn.addEventListener('click', () => {
-      this.downloadManifest();
-    });
-    this.dom.publishToSourceBtn.addEventListener('click', async () => {
-      await this.publishActiveSourceDraft();
-    });
-    this.dom.saveLocalDraftBtn.addEventListener('click', async () => {
-      await this.saveLocalDraft();
-    });
-    this.dom.restoreLocalDraftBtn.addEventListener('click', async () => {
-      await this.restoreLocalDraft();
-    });
-    this.dom.discardLocalDraftBtn.addEventListener('click', async () => {
-      await this.discardLocalDraft();
-    });
+    bindDomEvents(this);
   }
 
   openDialog(dialog) {

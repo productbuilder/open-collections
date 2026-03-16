@@ -1,10 +1,10 @@
 {
-  "name": "@timemap/collector-app",
+  "name": "@timemap/manager-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "description": "Open Collections Manager application (edit, publish, register placeholder).",
   "scripts": {
-    "start": "echo \"Serve repo root and open /src/apps/collector/\""
+    "start": "echo \"Serve repo root and open /src/apps/manager/\""
   }
 }

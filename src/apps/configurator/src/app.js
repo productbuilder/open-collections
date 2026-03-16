@@ -1,5 +1,5 @@
 
-import '../../collector/src/components/pane-layout.js';
+import '../../manager/src/components/pane-layout.js';
 import './components/configurator-header.js';
 import './components/configurator-section-browser.js';
 import './components/configurator-inspector.js';
@@ -3539,4 +3539,3 @@ if (!customElements.get('open-configurator-manager')) {
 }
 
 export { OpenConfiguratorManagerElement };
-

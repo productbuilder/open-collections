@@ -143,6 +143,7 @@ export async function createNewCollectionDraft(manager) {
         await manager.saveLocalDraft();
       }
       manager.setStatus(`Created collection ${nextCollectionId} in local host ${activeSource.displayLabel || activeSource.label}.`, 'ok');
+      manager.markSavedToSource();
       return;
     } catch (error) {
       manager.setStatus(`Local collection creation failed: ${error.message}`, 'warn');
@@ -188,6 +189,7 @@ export async function createNewCollectionDraft(manager) {
     await manager.saveLocalDraft();
   }
   manager.setStatus(`Created local draft collection ${slug}.`, 'ok');
+  manager.markDirty();
 }
 
 export function openCollectionView(manager, collectionId) {
@@ -279,6 +281,7 @@ export async function saveSelectedCollectionMetadata(manager, patch = null) {
       manager.renderAssets();
       manager.renderEditor();
       manager.setStatus(`Saved collection metadata for ${selected.id}.`, 'ok');
+      manager.markSavedToSource();
       return;
     } catch (error) {
       manager.setStatus(`Saving collection metadata failed: ${error.message}`, 'warn');
@@ -296,4 +299,5 @@ export async function saveSelectedCollectionMetadata(manager, patch = null) {
   manager.renderAssets();
   manager.renderEditor();
   manager.setStatus(`Saved collection metadata for ${selected.id}.`, 'ok');
+  manager.markDirty();
 }

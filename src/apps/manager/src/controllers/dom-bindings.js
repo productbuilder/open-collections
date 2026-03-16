@@ -110,6 +110,8 @@ export function bindDomEvents(app) {
     app.state.selectedItemId = visible[0]?.workspaceId || null;
     app.renderAssets();
     app.renderEditor();
+    app.renderSourceContext();
+    app.refreshWorkingStatus();
   });
   app.dom.sourceManager.addEventListener('gdrive-mode-change', () => {
     app.renderGoogleDriveMode();
@@ -133,7 +135,10 @@ export function bindDomEvents(app) {
     app.closeDialog(app.dom.headerMenuDialog);
     app.openDialog(app.dom.registerDialog);
   });
-  app.dom.collectionBrowser.addEventListener('back-to-collections', () => app.leaveCollectionView());
+  app.dom.collectionBrowser.addEventListener('back-to-collections', () => {
+    app.leaveCollectionView();
+    app.refreshWorkingStatus();
+  });
   app.dom.metadataEditor.addEventListener('close-editor', () => app.closeMobileEditor());
   app.dom.assetViewer.addEventListener('close-viewer', () => {
     app.state.viewerItemId = null;
@@ -150,6 +155,7 @@ export function bindDomEvents(app) {
     app.renderSourceContext();
     app.renderAssets();
     app.renderEditor();
+    app.refreshWorkingStatus();
     if (app.state.opfsAvailable) {
       app.persistWorkspaceToOpfs().catch(() => {});
     }
@@ -170,6 +176,7 @@ export function bindDomEvents(app) {
     app.syncMetadataModeFromState();
     app.renderAssets();
     app.renderEditor();
+    app.refreshWorkingStatus();
     if (app.state.opfsAvailable) {
       app.persistWorkspaceToOpfs().catch(() => {});
     }
@@ -182,12 +189,14 @@ export function bindDomEvents(app) {
     app.syncMetadataModeFromState();
     app.renderAssets();
     app.renderEditor();
+    app.refreshWorkingStatus();
     if (app.isMobileViewport()) {
       app.openMobileEditor();
     }
   });
   app.dom.collectionBrowser.addEventListener('collection-open', (event) => {
     app.openCollectionView(event.detail?.collectionId || '');
+    app.refreshWorkingStatus();
   });
   app.dom.collectionBrowser.addEventListener('item-select', (event) => {
     app.selectItem(event.detail?.workspaceId || '');

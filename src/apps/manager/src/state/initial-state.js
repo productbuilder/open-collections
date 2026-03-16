@@ -16,6 +16,11 @@
     opfsAvailable: false,
     opfsStatus: 'Checking local draft storage...',
     lastLocalSaveAt: '',
+    hasLocalDraft: false,
+    hasUnsavedChanges: false,
+    lastSaveTarget: '',
+    publishInProgress: false,
+    publishError: '',
     isDropTargetActive: false,
     localDraftCollections: [],
     browserViewModes: {

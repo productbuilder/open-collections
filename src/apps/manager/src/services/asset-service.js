@@ -270,6 +270,7 @@ export async function ingestImageFiles(manager, files) {
       `${created.length} file${created.length === 1 ? '' : 's'} saved to local host collection ${collectionId}.`,
       'ok',
     );
+    manager.markSavedToSource();
     return;
   }
 
@@ -361,4 +362,5 @@ export async function ingestImageFiles(manager, files) {
     `${created.length} file${created.length === 1 ? '' : 's'} added to local draft. Ready to publish.`,
     'ok',
   );
+  manager.markDirty();
 }

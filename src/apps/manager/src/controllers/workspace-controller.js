@@ -142,6 +142,7 @@ export function applyLocalDraftPayload(app, payload) {
 
   app.renderAssets();
   app.renderEditor();
+  app.setWorkingStateFlags({ hasLocalDraft: true, publishError: '' });
 }
 
 export function saveSourcesToStorage(app) {
@@ -232,6 +233,7 @@ export async function restoreRememberedSources(app) {
   app.closeMobileEditor();
 
   app.setStatus(`Restored ${restored.length} remembered storage source definitions.`, 'neutral');
+  app.refreshWorkingStatus();
   app.setConnectionStatus('Remembered storage sources loaded. Refresh to reconnect.', 'neutral');
   app.renderSourcesList();
   app.renderSourceFilter();

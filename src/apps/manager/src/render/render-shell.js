@@ -199,15 +199,6 @@ export function renderShell(shadowRoot) {
                     <td>Primary hosting</td>
                   </tr>
                   <tr>
-                    <td>Google Drive</td>
-                    <td>Collaboration and import source for existing files</td>
-                    <td>Medium</td>
-                    <td>Medium</td>
-                    <td>Medium</td>
-                    <td>Medium</td>
-                    <td>Good source</td>
-                  </tr>
-                  <tr>
                     <td>OneDrive</td>
                     <td>Internal collaboration and source ingestion</td>
                     <td>Medium</td>
@@ -250,7 +241,7 @@ export function renderShell(shadowRoot) {
 
           <section class="storage-section">
             <h3 class="storage-heading">Cloud drives in browser-first workflows</h3>
-            <p class="panel-subtext">Google Drive, OneDrive, and Dropbox are useful source systems, but they are usually weaker as final public hosting for browser-first manifest delivery.</p>
+            <p class="panel-subtext">OneDrive and Dropbox are useful source systems, but they are usually weaker as final public hosting for browser-first manifest delivery.</p>
             <p class="panel-subtext">Use them for collaboration/import, then publish to GitHub, Cloudflare, S3-compatible storage, or static hosting for stable public access.</p>
           </section>
 
@@ -259,7 +250,7 @@ export function renderShell(shadowRoot) {
             <ul class="storage-list">
               <li><strong>Small heritage organizations</strong> -> GitHub</li>
               <li><strong>Technical teams or institutions</strong> -> S3-compatible storage or Cloudflare R2</li>
-              <li><strong>Files already in Google Drive or OneDrive</strong> -> import from drive, then publish to stronger public hosting</li>
+              <li><strong>Files already in OneDrive</strong> -> import from drive, then publish to stronger public hosting</li>
               <li><strong>Archival public preservation</strong> -> Internet Archive or Wikimedia Commons where appropriate</li>
             </ul>
           </section>

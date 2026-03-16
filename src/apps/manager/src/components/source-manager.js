@@ -7,12 +7,11 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     this.model = {
       providerCatalog: [],
       sources: [],
-      selectedProviderId: 'github',
+      selectedProviderId: 'example',
+      selectedHostCategoryId: 'example',
       capabilities: {},
       connectionStatusText: 'Not connected.',
       connectionStatusTone: 'neutral',
-      gdriveAuthStatusText: 'Disconnected.',
-      gdriveAuthStatusTone: 'neutral',
       localFolderStatusText: 'No folder selected.',
       localFolderStatusTone: 'neutral',
       configValues: {
@@ -21,12 +20,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         githubRepo: '',
         githubBranch: 'main',
         githubPath: '',
-        publicUrlInput: '',
-        gdriveSourceMode: 'auth-manifest-file',
-        gdriveUrlInput: '',
-        gdriveClientIdInput: '',
-        gdriveFileIdInput: '',
-        gdriveAccessTokenInput: '',
         localPathInput: '',
         localFolderName: '',
       },
@@ -40,6 +33,21 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   bindEvents() {
+    this.shadowRoot.getElementById('hostCategoryCatalog')?.addEventListener('click', (event) => {
+      const card = event.target.closest('.provider-card');
+      if (!card) {
+        return;
+      }
+      const categoryId = card.dataset.categoryId || '';
+      if (!categoryId || card.classList.contains('is-disabled')) {
+        return;
+      }
+      this.model.selectedHostCategoryId = categoryId;
+      this.renderHostCategories();
+      this.renderProviderCatalog();
+      this.renderProviderVisibility();
+    });
+
     this.shadowRoot.getElementById('providerCatalog')?.addEventListener('click', (event) => {
       const card = event.target.closest('.provider-card');
       if (!card) {
@@ -86,14 +94,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.dispatch('pick-local-folder');
     });
 
-    this.shadowRoot.getElementById('gdriveSourceMode')?.addEventListener('change', () => {
-      this.renderGoogleDriveMode();
-      this.dispatch('gdrive-mode-change', { mode: this.getGoogleDriveSourceMode() });
-    });
-
-    this.shadowRoot.getElementById('gdriveConnectAuthBtn')?.addEventListener('click', () => {
-      this.dispatch('gdrive-connect-auth');
-    });
   }
 
   dispatch(name, detail = {}) {
@@ -108,30 +108,33 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     if (!this.isReady()) {
       return;
     }
+    this.renderHostCategories();
     this.renderProviderCatalog();
     this.renderSourcesList();
     this.renderProviderVisibility();
     this.applyConfigValues();
-    this.renderGoogleDriveMode();
     this.setCapabilities(this.model.capabilities);
     this.setConnectionStatus(this.model.connectionStatusText, this.model.connectionStatusTone);
-    this.setGoogleDriveAuthStatus(this.model.gdriveAuthStatusText, this.model.gdriveAuthStatusTone);
     this.setLocalFolderStatus(this.model.localFolderStatusText, this.model.localFolderStatusTone);
   }
 
   setProviderCatalog(catalog = []) {
     this.model.providerCatalog = Array.isArray(catalog) ? catalog : [];
     if (this.isReady()) {
+      this.renderHostCategories();
       this.renderProviderCatalog();
       this.renderProviderVisibility();
     }
   }
 
   setSelectedProvider(providerId) {
-    this.model.selectedProviderId = providerId || 'github';
+    this.model.selectedProviderId = providerId || 'example';
+    const selected = this.providerById(this.model.selectedProviderId);
+    this.model.selectedHostCategoryId = selected?.category || 'example';
     if (!this.isReady()) {
       return;
     }
+    this.renderHostCategories();
     this.renderProviderCatalog();
     this.renderProviderVisibility();
   }
@@ -163,22 +166,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     this.model.capabilities = capabilities || {};
   }
 
-  setGoogleDriveAuthStatus(text, tone = 'neutral') {
-    this.model.gdriveAuthStatusText = text || '';
-    this.model.gdriveAuthStatusTone = tone || 'neutral';
-    const colors = {
-      neutral: '#64748b',
-      ok: '#166534',
-      warn: '#9a3412',
-    };
-    const node = this.shadowRoot?.getElementById('gdriveAuthStatus');
-    if (!node) {
-      return;
-    }
-    node.textContent = this.model.gdriveAuthStatusText;
-    node.style.color = colors[this.model.gdriveAuthStatusTone] || colors.neutral;
-  }
-
   setLocalFolderStatus(text, tone = 'neutral') {
     this.model.localFolderStatusText = text || 'No folder selected.';
     this.model.localFolderStatusTone = tone || 'neutral';
@@ -201,9 +188,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       ...(nextValues || {}),
     };
     this.applyConfigValues();
-    if (Object.prototype.hasOwnProperty.call(nextValues || {}, 'gdriveSourceMode')) {
-      this.renderGoogleDriveMode();
-    }
     if (Object.prototype.hasOwnProperty.call(nextValues || {}, 'localFolderName')) {
       const folderName = String(nextValues.localFolderName || '').trim();
       this.setLocalFolderStatus(folderName ? `Selected folder: ${folderName}` : 'No folder selected.', folderName ? 'ok' : 'neutral');
@@ -221,12 +205,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       githubRepo: 'githubRepo',
       githubBranch: 'githubBranch',
       githubPath: 'githubPath',
-      publicUrlInput: 'publicUrlInput',
-      gdriveSourceMode: 'gdriveSourceMode',
-      gdriveUrlInput: 'gdriveUrlInput',
-      gdriveClientIdInput: 'gdriveClientIdInput',
-      gdriveFileIdInput: 'gdriveFileIdInput',
-      gdriveAccessTokenInput: 'gdriveAccessTokenInput',
       localPathInput: 'localPathInput',
       localFolderName: 'localFolderName',
     };
@@ -243,10 +221,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
   }
 
-  getGoogleDriveSourceMode() {
-    return this.shadowRoot?.getElementById('gdriveSourceMode')?.value || this.model.configValues.gdriveSourceMode || 'auth-manifest-file';
-  }
-
   getProviderConfig(providerId) {
     const root = this.shadowRoot;
     const config = {};
@@ -259,16 +233,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       config.localDirectoryName = root.getElementById('localFolderName')?.value.trim() || '';
     }
 
-    if (providerId === 'public-url') {
-      config.manifestUrl = root.getElementById('publicUrlInput')?.value.trim() || '';
-    }
-
-    if (providerId === 'gdrive') {
-      config.sourceMode = root.getElementById('gdriveSourceMode')?.value || 'auth-manifest-file';
-      config.manifestUrl = root.getElementById('gdriveUrlInput')?.value.trim() || '';
-      config.fileId = root.getElementById('gdriveFileIdInput')?.value.trim() || '';
-      config.accessToken = root.getElementById('gdriveAccessTokenInput')?.value.trim() || '';
-      config.oauthClientId = root.getElementById('gdriveClientIdInput')?.value.trim() || '';
+    if (providerId === 'example') {
+      config.path = root.getElementById('localPathInput')?.value.trim() || '';
     }
 
     if (providerId === 'github') {
@@ -282,33 +248,41 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     return config;
   }
 
-  renderGoogleDriveMode() {
-    const mode = this.getGoogleDriveSourceMode();
-    const isAuthMode = mode === 'auth-manifest-file';
-    const authConfig = this.shadowRoot?.getElementById('gdriveAuthConfig');
-    const publicConfig = this.shadowRoot?.getElementById('gdrivePublicConfig');
-    if (authConfig) {
-      authConfig.classList.toggle('is-hidden', !isAuthMode);
-    }
-    if (publicConfig) {
-      publicConfig.classList.toggle('is-hidden', isAuthMode);
-    }
-    if (isAuthMode) {
-      const text = (this.shadowRoot?.getElementById('gdriveAuthStatus')?.textContent || '').trim();
-      if (!text) {
-        this.setGoogleDriveAuthStatus('Disconnected.', 'neutral');
-      }
-      return;
-    }
-    const accessTokenInput = this.shadowRoot?.getElementById('gdriveAccessTokenInput');
-    if (accessTokenInput) {
-      accessTokenInput.value = '';
-    }
-    this.setGoogleDriveAuthStatus('Public shared URL mode selected.', 'neutral');
-  }
-
   providerById(providerId) {
     return this.model.providerCatalog.find((entry) => entry.id === providerId) || null;
+  }
+
+  providersForSelectedCategory() {
+    return this.model.providerCatalog.filter((entry) => entry.category === this.model.selectedHostCategoryId);
+  }
+
+  renderHostCategories() {
+    const wrap = this.shadowRoot?.getElementById('hostCategoryCatalog');
+    if (!wrap) {
+      return;
+    }
+    const categories = [
+      { id: 'example', label: 'Example', description: 'Built-in demo collections from this repository.' },
+      { id: 'local', label: 'Local', description: 'A writable folder on this device via browser APIs.' },
+      { id: 'remote', label: 'Remote', description: 'Hosted backends for sharing collections online.' },
+    ];
+    wrap.innerHTML = '';
+    for (const category of categories) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'provider-card';
+      button.dataset.categoryId = category.id;
+      if (this.model.selectedHostCategoryId === category.id) {
+        button.classList.add('is-selected');
+      }
+      button.innerHTML = `
+        <div class="provider-card-label-row">
+          <strong>${category.label}</strong>
+        </div>
+        <span class="panel-subtext">${category.description}</span>
+      `;
+      wrap.appendChild(button);
+    }
   }
 
   renderProviderVisibility() {
@@ -321,9 +295,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
     const sections = {
       github: this.shadowRoot?.getElementById('githubConfig'),
-      'public-url': this.shadowRoot?.getElementById('publicUrlConfig'),
-      gdrive: this.shadowRoot?.getElementById('gdriveConfig'),
       local: this.shadowRoot?.getElementById('localConfig'),
+      example: this.shadowRoot?.getElementById('exampleConfig'),
       placeholder: this.shadowRoot?.getElementById('placeholderConfig'),
     };
 
@@ -335,11 +308,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
     if (this.model.selectedProviderId === 'github') {
       sections.github?.classList.remove('is-hidden');
-    } else if (this.model.selectedProviderId === 'gdrive') {
-      sections.gdrive?.classList.remove('is-hidden');
-      this.renderGoogleDriveMode();
-    } else if (this.model.selectedProviderId === 'public-url') {
-      sections['public-url']?.classList.remove('is-hidden');
+    } else if (this.model.selectedProviderId === 'example') {
+      sections.example?.classList.remove('is-hidden');
     } else if (this.model.selectedProviderId === 'local') {
       sections.local?.classList.remove('is-hidden');
     } else {
@@ -358,7 +328,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       return;
     }
     wrap.innerHTML = '';
-    for (const entry of this.model.providerCatalog) {
+    for (const entry of this.providersForSelectedCategory()) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'provider-card';
@@ -421,9 +391,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       const authBadge = document.createElement('span');
       authBadge.className = 'pill';
       if (source.needsCredentials) {
-        authBadge.textContent = source.providerId === 'gdrive' ? 'Re-auth required' : 'Token required';
-      } else if (source.authMode === 'google-auth') {
-        authBadge.textContent = 'Google auth';
+        authBadge.textContent = 'Token required';
       } else if (source.authMode === 'token') {
         authBadge.textContent = 'Token auth';
       } else {
@@ -469,16 +437,26 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       <div class="source-manager">
         <div class="provider-layout single-column">
           <div>
-            <p class="config-section-title">Choose host provider</p>
+            <p class="config-section-title">Choose where your collections live</p>
+            <p class="panel-subtext">Select a host category, then pick a host type.</p>
+            <div id="hostCategoryCatalog" class="provider-list"></div>
+          </div>
+          <div>
+            <p class="config-section-title">Choose host type</p>
             <div id="providerCatalog" class="provider-list"></div>
           </div>
           <div id="providerConfig" class="provider-config">
             <p id="providerConfigTitle" class="config-section-title">Host configuration</p>
 
+            <div id="exampleConfig" class="is-hidden">
+              <p class="panel-subtext">Built-in example collections from this repo.</p>
+              <p class="panel-subtext">No setup required.</p>
+            </div>
+
             <div id="localConfig" class="is-hidden">
               <p class="panel-subtext">Pick a folder from your computer to use as a local host.</p>
               <div class="dialog-actions">
-                <button class="btn" id="pickLocalFolderBtn" type="button">Select folder</button>
+                <button class="btn" id="pickLocalFolderBtn" type="button">Folder on this device</button>
               </div>
               <p id="localFolderStatus" class="panel-subtext">No folder selected.</p>
               <div class="field-row is-hidden"><label for="localPathInput">Collection path</label><input id="localPathInput" type="text" /></div>
@@ -491,38 +469,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
               <div class="field-row"><label for="githubRepo">Repository name</label><input id="githubRepo" type="text" /></div>
               <div class="field-row"><label for="githubBranch">Branch</label><input id="githubBranch" type="text" value="main" /></div>
               <div class="field-row"><label for="githubPath">Folder path (optional)</label><input id="githubPath" type="text" placeholder="media/" /></div>
-            </div>
-
-            <div id="publicUrlConfig" class="is-hidden">
-              <div class="field-row"><label for="publicUrlInput">Manifest URL</label><input id="publicUrlInput" type="text" placeholder="https://example.org/collection.json" /></div>
-            </div>
-
-            <div id="gdriveConfig" class="is-hidden">
-              <div class="field-row">
-                <label for="gdriveSourceMode">Google Drive source mode</label>
-                <select id="gdriveSourceMode">
-                  <option value="auth-manifest-file">Authenticated manifest file (Drive API)</option>
-                  <option value="public-manifest-url">Public shared manifest URL</option>
-                </select>
-              </div>
-
-              <div id="gdriveAuthConfig">
-                <p class="panel-subtext">Connect your Google account to access Drive files.</p>
-                <p class="panel-subtext">Authenticated Google Drive sources are currently read-only.</p>
-                <div class="field-row"><label for="gdriveClientIdInput">Google OAuth Client ID</label><input id="gdriveClientIdInput" type="text" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com" /></div>
-                <div class="field-row"><label for="gdriveFileIdInput">Drive file ID (collection.json)</label><input id="gdriveFileIdInput" type="text" placeholder="1diFAVD17-_b7O22fYRLqB7dqWv0cgWNi" /></div>
-                <div class="dialog-actions">
-                  <button class="btn" id="gdriveConnectAuthBtn" type="button">Connect Google Drive</button>
-                </div>
-                <div class="field-row"><label for="gdriveAccessTokenInput">Access token (session only, optional override)</label><input id="gdriveAccessTokenInput" type="password" placeholder="Automatically filled after Google auth" /></div>
-                <p id="gdriveAuthStatus" class="panel-subtext">Disconnected.</p>
-              </div>
-
-              <div id="gdrivePublicConfig" class="is-hidden">
-                <div class="field-row"><label for="gdriveUrlInput">Google Drive shared file URL</label><input id="gdriveUrlInput" type="text" placeholder="https://drive.google.com/file/d/FILE_ID/view" /></div>
-                <p class="panel-subtext">Paste a public Google Drive file link to a shared <code>collection.json</code> manifest.</p>
-                <p class="panel-subtext">The file must be shared as Anyone with the link -> Viewer.</p>
-              </div>
             </div>
 
             <div id="placeholderConfig" class="is-hidden">

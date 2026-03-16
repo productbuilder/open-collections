@@ -203,9 +203,6 @@ export async function restoreRememberedSources(app) {
         if (entry.providerId === 'github') {
           return 'Remembered storage source. Token is not stored; re-enter token if repository requires it.';
         }
-        if (entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file') {
-          return 'Remembered storage source. Google access token is session-only; reconnect authentication before refresh.';
-        }
         if (entry.providerId === 'local' && entry.config?.localDirectoryName) {
           return 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
         }
@@ -214,13 +211,11 @@ export async function restoreRememberedSources(app) {
       authMode:
         entry.providerId === 'github'
           ? 'token'
-          : entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file'
-            ? 'google-auth'
-            : entry.authMode || 'public',
+          : entry.authMode || 'public',
       itemCount: Number(entry.itemCount) || 0,
       provider: null,
       needsReconnect: true,
-      needsCredentials: entry.providerId === 'github' || (entry.providerId === 'gdrive' && entry.config?.sourceMode === 'auth-manifest-file'),
+      needsCredentials: entry.providerId === 'github',
     }));
 
   app.state.sources = restored;
@@ -243,7 +238,6 @@ export async function restoreRememberedSources(app) {
   for (const source of restored) {
     if (
       source.providerId !== 'github' &&
-      !(source.providerId === 'gdrive' && source.config?.sourceMode === 'auth-manifest-file') &&
       !(source.providerId === 'local' && source.config?.localDirectoryName)
     ) {
       await app.refreshSource(source.id);

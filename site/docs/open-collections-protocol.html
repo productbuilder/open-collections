@@ -157,8 +157,77 @@
 						</p>
 					</section>
 
+
 					<section>
-						<h2>5. Large collections and scalability (optional)</h2>
+						<h2>5. Item detail files in a flat collection layout</h2>
+						<p>
+							Treat <code>collection.json</code> as a collection index, not a full record store. Keep item
+							summaries lightweight so the manifest stays easy to publish, cache, and synchronize.
+						</p>
+						<p>
+							In practice, <code>collection.json</code> should carry discovery fields such as item identity, title,
+							type, thumbnail, media URL, update time, and a <code>detailUrl</code>. Put richer descriptive,
+							technical, or domain-specific metadata in the linked item detail file.
+						</p>
+						<p>
+							A preferred publication pattern is a flat collection directory where
+							<code>collection.json</code>, media files, thumbnails, and item detail JSON files live together.
+							Nested per-item directories are optional and not required by this protocol.
+						</p>
+						<p class="code-label">Example flat collection layout</p>
+						<pre><code>/collection.json
+/map-123.jpg
+/map-123.thumb.jpg
+/map-123.json
+/poster-045.tif
+/poster-045.json</code></pre>
+						<p>
+							This same layout supports a sidecar JSON pattern, where each media file has a nearby detail file
+							(e.g., <code>map-123.jpg</code> with <code>map-123.json</code>) and the manifest links to it with
+							<code>detailUrl</code>.
+						</p>
+						<p class="code-label">Example manifest item (lightweight summary)</p>
+						<pre><code>{
+  "id": "map-123",
+  "title": "Harbor map, 1898",
+  "type": "image",
+  "thumbnailUrl": "map-123.thumb.jpg",
+  "mediaUrl": "map-123.jpg",
+  "detailUrl": "map-123.json",
+  "updatedAt": "2025-09-01T12:00:00Z"
+}</code></pre>
+						<p class="code-label">Example item detail file (rich metadata)</p>
+						<pre><code>{
+  "id": "map-123",
+  "canonicalUrl": "https://museum-example.org/collections/harbor/map-123.json",
+  "title": "Harbor map, 1898",
+  "date": "1898",
+  "attribution": "Museum Example",
+  "license": "CC BY 4.0",
+  "rightsStatement": "https://rightsstatements.org/vocab/InC/1.0/",
+  "description": "Survey map showing harbor expansion plans.",
+  "assets": [
+    {
+      "role": "full",
+      "url": "https://museum-example.org/collections/harbor/map-123.jpg",
+      "mimeType": "image/jpeg"
+    }
+  ],
+  "extensions": {
+    "ocp:geo": {
+      "lat": 51.9244,
+      "lon": 4.4777
+    }
+  }
+}</code></pre>
+						<p>
+							Collections may also reference media or metadata files stored in other collection directories when
+							needed, provided URLs remain stable and item relationships stay clear.
+						</p>
+					</section>
+
+					<section>
+						<h2>6. Large collections and scalability (optional)</h2>
 						<p>
 							For very large collections, a single manifest that lists every item can become impractical. In
 							those cases, publishers can add <strong>Collection Access Capabilities</strong>.
@@ -204,7 +273,7 @@
 					</section>
 
 					<section>
-						<h2>6. Versioning, identity, extensions, and rights</h2>
+						<h2>7. Versioning, identity, extensions, and rights</h2>
 						<ul>
 							<li>
 								<strong>Protocol versioning:</strong> include a top-level <code>protocolVersion</code> (for
@@ -234,7 +303,7 @@
 					</section>
 
 					<section>
-						<h2>7. Domain discovery (DCD)</h2>
+						<h2>8. Domain discovery (DCD)</h2>
 						<p>
 							DCD is a small file at <code>/.well-known/collections.json</code> that declares which collections a
 							domain considers authoritative.
@@ -254,7 +323,7 @@
 					</section>
 
 					<section>
-						<h2>8. Linked collections</h2>
+						<h2>9. Linked collections</h2>
 						<p>A collection can reference other collections for federation and reuse.</p>
 						<p class="code-label">Example linked collection entry</p>
 						<pre><code>{
@@ -276,7 +345,7 @@
 					</section>
 
 					<section>
-						<h2>9. Protocol maturity and next steps</h2>
+						<h2>10. Protocol maturity and next steps</h2>
 						<p>
 							The protocol model is conceptually strong and already useful for publication. It is also still
 							maturing.
@@ -292,7 +361,7 @@
 					</section>
 
 					<section>
-						<h2>10. Practical next steps</h2>
+						<h2>11. Practical next steps</h2>
 						<ul>
 							<li><a href="./get-started.html">Publish a collection</a></li>
 							<li>

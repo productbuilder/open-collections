@@ -1,6 +1,6 @@
 import { configuratorSectionBrowserStyles } from '../css/section-browser.css.js';
-import '../../../collector/src/components/panel-shell.js';
-import '../../../collector/src/components/view-toggle.js';
+import '../../../manager/src/components/panel-shell.js';
+import '../../../manager/src/components/view-toggle.js';
 
 function valueType(value) {
   if (Array.isArray(value)) return 'array';

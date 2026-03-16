@@ -13,14 +13,14 @@ npm install
 npm run tauri:dev
 ```
 
-The Tauri window opens a simple launcher where you can choose Collector or Configurator.
+The Tauri window opens a simple launcher where you can choose Manager or Configurator.
 
 ## Architecture notes
 
 - The desktop shell UI lives in `src/desktop/workbench`.
 - The native bridge lives in `src/desktop/workbench/src-tauri`.
 - Shared file/folder/storage APIs live in `src/shared/platform`.
-- Collector and Configurator remain browser-first Web Component apps.
+- Manager and Configurator remain browser-first Web Component apps.
 
 ## Platform layer
 

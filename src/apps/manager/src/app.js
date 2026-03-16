@@ -6,9 +6,9 @@ import {
   normalizeGoogleDriveManifestUrl,
   requestGoogleDriveAccessToken,
 } from '../../../packages/provider-gdrive/src/index.js';
-import { COLLECTOR_CONFIG } from './config.js';
+import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
-import { pickLocalHostDirectory } from './platform/collector-source-api.js';
+import { pickLocalHostDirectory } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
 import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
 import './components/manager-header.js';
@@ -29,7 +29,7 @@ import * as CollectionService from './services/collection-service.js';
 import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 
-const SOURCES_STORAGE_KEY = 'timemap_collector_sources_v1';
+const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -169,15 +169,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
     };
 
     this.dom.sourceManager?.setConfigValues({
-      localPathInput: COLLECTOR_CONFIG.defaultLocalManifestPath,
+      localPathInput: MANAGER_CONFIG.defaultLocalManifestPath,
       localFolderName: '',
-      gdriveClientIdInput: COLLECTOR_CONFIG.googleDriveOAuth?.clientId || '',
+      gdriveClientIdInput: MANAGER_CONFIG.googleDriveOAuth?.clientId || '',
       githubBranch: 'main',
     });
     this.dom.sourceManager?.setGoogleDriveAuthStatus('Disconnected.', 'neutral');
-    this.dom.collectionId.value = COLLECTOR_CONFIG.defaultCollectionMeta.id;
-    this.dom.collectionTitle.value = COLLECTOR_CONFIG.defaultCollectionMeta.title;
-    this.dom.collectionDescription.value = COLLECTOR_CONFIG.defaultCollectionMeta.description;
+    this.dom.collectionId.value = MANAGER_CONFIG.defaultCollectionMeta.id;
+    this.dom.collectionTitle.value = MANAGER_CONFIG.defaultCollectionMeta.title;
+    this.dom.collectionDescription.value = MANAGER_CONFIG.defaultCollectionMeta.description;
     this.dom.collectionLicense.value = '';
     this.dom.collectionPublisher.value = '';
     this.dom.collectionLanguage.value = '';
@@ -518,7 +518,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     try {
       const tokenResult = await requestGoogleDriveAccessToken({
         clientId,
-        scope: COLLECTOR_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly',
+        scope: MANAGER_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly',
       });
 
       this.dom.sourceManager?.setConfigValues({ gdriveAccessTokenInput: tokenResult.accessToken || '' });
@@ -566,7 +566,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   draftCollectionId() {
     return (
       this.dom.collectionId.value.trim() ||
-      COLLECTOR_CONFIG.defaultCollectionMeta.id ||
+      MANAGER_CONFIG.defaultCollectionMeta.id ||
       'collection-draft'
     );
   }
@@ -945,13 +945,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (providerId === 'local') {
       config.localDirectoryName = (config.localDirectoryName || '').trim();
       config.path = (config.path || '').trim()
-        || (config.localDirectoryName ? config.localDirectoryName : COLLECTOR_CONFIG.defaultLocalManifestPath);
+        || (config.localDirectoryName ? config.localDirectoryName : MANAGER_CONFIG.defaultLocalManifestPath);
       if (this.selectedLocalDirectoryHandle && this.selectedLocalDirectoryHandle.kind === 'directory') {
         config.localDirectoryHandle = this.selectedLocalDirectoryHandle;
       }
     }
     if (providerId === 'gdrive') {
-      config.oauthScopes = COLLECTOR_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly';
+      config.oauthScopes = MANAGER_CONFIG.googleDriveOAuth?.scope || 'https://www.googleapis.com/auth/drive.readonly';
     }
     return config;
   }
@@ -1088,7 +1088,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     if (providerId === 'local') {
       return {
-        path: (config.path || '').trim() || COLLECTOR_CONFIG.defaultLocalManifestPath,
+        path: (config.path || '').trim() || MANAGER_CONFIG.defaultLocalManifestPath,
         localDirectoryName: (config.localDirectoryName || '').trim(),
       };
     }
@@ -1958,7 +1958,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       nextConfigValues.gdriveSourceMode = source.config.sourceMode || 'public-manifest-url';
       nextConfigValues.gdriveUrlInput = source.config.manifestUrl || '';
       nextConfigValues.gdriveFileIdInput = source.config.fileId || '';
-      nextConfigValues.gdriveClientIdInput = source.config.oauthClientId || COLLECTOR_CONFIG.googleDriveOAuth?.clientId || '';
+      nextConfigValues.gdriveClientIdInput = source.config.oauthClientId || MANAGER_CONFIG.googleDriveOAuth?.clientId || '';
       nextConfigValues.gdriveAccessTokenInput = '';
       this.setGoogleDriveAuthStatus(
         source.config.sourceMode === 'auth-manifest-file'
@@ -1968,7 +1968,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       );
     }
     if (source.providerId === 'local') {
-      nextConfigValues.localPathInput = source.config.path || COLLECTOR_CONFIG.defaultLocalManifestPath;
+      nextConfigValues.localPathInput = source.config.path || MANAGER_CONFIG.defaultLocalManifestPath;
       nextConfigValues.localFolderName = source.config.localDirectoryName || '';
       this.selectedLocalDirectoryHandle =
         source.config?.localDirectoryHandle && source.config.localDirectoryHandle.kind === 'directory'
@@ -2152,12 +2152,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   currentCollectionMeta() {
-    const collectionId = this.dom.collectionId.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.id;
+    const collectionId = this.dom.collectionId.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.id;
     return {
       id: collectionId,
-      title: this.dom.collectionTitle.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.title,
+      title: this.dom.collectionTitle.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.title,
       description:
-        this.dom.collectionDescription.value.trim() || COLLECTOR_CONFIG.defaultCollectionMeta.description,
+        this.dom.collectionDescription.value.trim() || MANAGER_CONFIG.defaultCollectionMeta.description,
       license: this.dom.collectionLicense.value.trim(),
       publisher: this.dom.collectionPublisher.value.trim(),
       language: this.dom.collectionLanguage.value.trim(),
@@ -2354,10 +2354,6 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
 if (!customElements.get('open-collections-manager')) {
   customElements.define('open-collections-manager', OpenCollectionsManagerElement);
-}
-
-if (!customElements.get('timemap-collector')) {
-  customElements.define('timemap-collector', OpenCollectionsManagerElement);
 }
 
 if (!customElements.get('timemap-manager')) {

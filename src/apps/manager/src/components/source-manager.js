@@ -8,7 +8,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       providerCatalog: [],
       sources: [],
       selectedProviderId: 'example',
-      selectedHostCategoryId: 'example',
+      addHostLevel: 'root',
+      remoteSubtype: '',
       capabilities: {},
       connectionStatusText: 'Not connected.',
       connectionStatusTone: 'neutral',
@@ -33,22 +34,24 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   bindEvents() {
-    this.shadowRoot.getElementById('hostCategoryCatalog')?.addEventListener('click', (event) => {
-      const card = event.target.closest('.provider-card');
-      if (!card) {
-        return;
-      }
-      const categoryId = card.dataset.categoryId || '';
-      if (!categoryId || card.classList.contains('is-disabled')) {
-        return;
-      }
-      this.model.selectedHostCategoryId = categoryId;
-      this.renderHostCategories();
-      this.renderProviderCatalog();
-      this.renderProviderVisibility();
+    this.shadowRoot.getElementById('addExampleHostBtn')?.addEventListener('click', () => {
+      this.dispatch('add-example-host');
     });
 
-    this.shadowRoot.getElementById('providerCatalog')?.addEventListener('click', (event) => {
+    this.shadowRoot.getElementById('addLocalFolderHostBtn')?.addEventListener('click', () => {
+      this.dispatch('add-local-folder-host');
+    });
+
+    this.shadowRoot.getElementById('remoteSubtypeCatalog')?.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-remote-subtype]');
+      const remoteSubtype = button?.dataset.remoteSubtype || '';
+      if (!remoteSubtype) {
+        return;
+      }
+      this.openRemoteSubtype(remoteSubtype);
+    });
+
+    this.shadowRoot.getElementById('remoteProviderCatalog')?.addEventListener('click', (event) => {
       const card = event.target.closest('.provider-card');
       if (!card) {
         return;
@@ -58,6 +61,28 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         return;
       }
       this.dispatch('select-provider', { providerId });
+      this.model.addHostLevel = 'remote-config';
+      this.renderRemoteFlow();
+      this.renderProviderVisibility();
+    });
+
+    this.shadowRoot.getElementById('remoteBackBtn')?.addEventListener('click', () => {
+      if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
+        this.model.addHostLevel = 'remote-providers';
+      } else {
+        this.model.addHostLevel = 'root';
+        this.model.remoteSubtype = '';
+      }
+      this.renderRemoteFlow();
+      this.renderProviderVisibility();
+    });
+
+    this.shadowRoot.getElementById('openStorageOptionsBtn')?.addEventListener('click', () => {
+      this.dispatch('open-storage-options');
+    });
+
+    this.shadowRoot.getElementById('connectBtn')?.addEventListener('click', () => {
+      this.dispatch('connect-provider');
     });
 
     this.shadowRoot.getElementById('sourceList')?.addEventListener('click', (event) => {
@@ -81,19 +106,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         this.dispatch('show-only-source', { sourceId });
       }
     });
-
-    this.shadowRoot.getElementById('openStorageOptionsBtn')?.addEventListener('click', () => {
-      this.dispatch('open-storage-options');
-    });
-
-    this.shadowRoot.getElementById('connectBtn')?.addEventListener('click', () => {
-      this.dispatch('connect-provider');
-    });
-
-    this.shadowRoot.getElementById('pickLocalFolderBtn')?.addEventListener('click', () => {
-      this.dispatch('pick-local-folder');
-    });
-
   }
 
   dispatch(name, detail = {}) {
@@ -101,15 +113,14 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   isReady() {
-    return Boolean(this.shadowRoot?.getElementById('providerCatalog'));
+    return Boolean(this.shadowRoot?.getElementById('rootActions'));
   }
 
   applyState() {
     if (!this.isReady()) {
       return;
     }
-    this.renderHostCategories();
-    this.renderProviderCatalog();
+    this.renderRemoteFlow();
     this.renderSourcesList();
     this.renderProviderVisibility();
     this.applyConfigValues();
@@ -121,21 +132,16 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   setProviderCatalog(catalog = []) {
     this.model.providerCatalog = Array.isArray(catalog) ? catalog : [];
     if (this.isReady()) {
-      this.renderHostCategories();
-      this.renderProviderCatalog();
+      this.renderRemoteFlow();
       this.renderProviderVisibility();
     }
   }
 
   setSelectedProvider(providerId) {
     this.model.selectedProviderId = providerId || 'example';
-    const selected = this.providerById(this.model.selectedProviderId);
-    this.model.selectedHostCategoryId = selected?.category || 'example';
     if (!this.isReady()) {
       return;
     }
-    this.renderHostCategories();
-    this.renderProviderCatalog();
     this.renderProviderVisibility();
   }
 
@@ -252,51 +258,32 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     return this.model.providerCatalog.find((entry) => entry.id === providerId) || null;
   }
 
-  providersForSelectedCategory() {
-    return this.model.providerCatalog.filter((entry) => entry.category === this.model.selectedHostCategoryId);
+  providersForCategory(categoryId) {
+    return this.model.providerCatalog.filter((entry) => entry.category === categoryId);
   }
 
-  renderHostCategories() {
-    const wrap = this.shadowRoot?.getElementById('hostCategoryCatalog');
-    if (!wrap) {
-      return;
+  openRemoteSubtype(remoteSubtype) {
+    this.model.remoteSubtype = remoteSubtype;
+    if (remoteSubtype === 'git') {
+      this.model.addHostLevel = 'remote-providers';
+    } else {
+      this.model.addHostLevel = 'remote-config';
+      this.dispatch('select-provider', { providerId: remoteSubtype === 's3' ? 's3' : 'custom-domain' });
     }
-    const categories = [
-      { id: 'example', label: 'Example', description: 'Built-in demo collections from this repository.' },
-      { id: 'local', label: 'Local', description: 'A writable folder on this device via browser APIs.' },
-      { id: 'remote', label: 'Remote', description: 'Hosted backends for sharing collections online.' },
-    ];
-    wrap.innerHTML = '';
-    for (const category of categories) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'provider-card';
-      button.dataset.categoryId = category.id;
-      if (this.model.selectedHostCategoryId === category.id) {
-        button.classList.add('is-selected');
-      }
-      button.innerHTML = `
-        <div class="provider-card-label-row">
-          <strong>${category.label}</strong>
-        </div>
-        <span class="panel-subtext">${category.description}</span>
-      `;
-      wrap.appendChild(button);
-    }
+    this.renderRemoteFlow();
+    this.renderProviderVisibility();
   }
 
   renderProviderVisibility() {
     const selected = this.providerById(this.model.selectedProviderId);
-    const providerLabel = selected?.label || this.model.selectedProviderId || 'Host';
+    const providerLabel = selected?.label || this.model.selectedProviderId || 'Remote host';
     const providerConfigTitle = this.shadowRoot?.getElementById('providerConfigTitle');
     if (providerConfigTitle) {
-      providerConfigTitle.textContent = `${providerLabel} host configuration`;
+      providerConfigTitle.textContent = `${providerLabel} configuration`;
     }
 
     const sections = {
       github: this.shadowRoot?.getElementById('githubConfig'),
-      local: this.shadowRoot?.getElementById('localConfig'),
-      example: this.shadowRoot?.getElementById('exampleConfig'),
       placeholder: this.shadowRoot?.getElementById('placeholderConfig'),
     };
 
@@ -306,29 +293,73 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       }
     });
 
+    const connectBtn = this.shadowRoot?.getElementById('connectBtn');
+    if (this.model.addHostLevel !== 'remote-config') {
+      if (connectBtn) {
+        connectBtn.disabled = true;
+      }
+      return;
+    }
+
     if (this.model.selectedProviderId === 'github') {
       sections.github?.classList.remove('is-hidden');
-    } else if (this.model.selectedProviderId === 'example') {
-      sections.example?.classList.remove('is-hidden');
-    } else if (this.model.selectedProviderId === 'local') {
-      sections.local?.classList.remove('is-hidden');
     } else {
       sections.placeholder?.classList.remove('is-hidden');
     }
 
-    const connectBtn = this.shadowRoot?.getElementById('connectBtn');
     if (connectBtn) {
-      connectBtn.disabled = selected?.enabled === false;
+      connectBtn.disabled = selected?.enabled === false || this.model.selectedProviderId !== 'github';
     }
   }
 
-  renderProviderCatalog() {
-    const wrap = this.shadowRoot?.getElementById('providerCatalog');
+  renderRemoteFlow() {
+    const rootActions = this.shadowRoot?.getElementById('rootActions');
+    const remoteFlow = this.shadowRoot?.getElementById('remoteFlow');
+    const backBtn = this.shadowRoot?.getElementById('remoteBackBtn');
+    const breadcrumb = this.shadowRoot?.getElementById('remoteFlowBreadcrumb');
+    const providerPanel = this.shadowRoot?.getElementById('remoteProviderPanel');
+    const configPanel = this.shadowRoot?.getElementById('providerConfig');
+    if (!rootActions || !remoteFlow || !backBtn || !breadcrumb || !providerPanel || !configPanel) {
+      return;
+    }
+
+    const inRoot = this.model.addHostLevel === 'root';
+    rootActions.classList.toggle('is-hidden', !inRoot);
+    remoteFlow.classList.toggle('is-hidden', inRoot);
+    backBtn.classList.toggle('is-hidden', inRoot);
+
+    if (inRoot) {
+      breadcrumb.textContent = '';
+      return;
+    }
+
+    const subtitleByType = {
+      git: 'Remote host / Git repository',
+      s3: 'Remote host / Object storage',
+      domain: 'Remote host / Custom domain',
+    };
+    breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote host';
+
+    const showingProviders = this.model.addHostLevel === 'remote-providers';
+    providerPanel.classList.toggle('is-hidden', !showingProviders);
+    configPanel.classList.toggle('is-hidden', !this.model.addHostLevel.startsWith('remote-'));
+
+    if (showingProviders) {
+      this.renderRemoteProviderCatalog();
+    }
+  }
+
+  renderRemoteProviderCatalog() {
+    const wrap = this.shadowRoot?.getElementById('remoteProviderPanel');
     if (!wrap) {
       return;
     }
     wrap.innerHTML = '';
-    for (const entry of this.providersForSelectedCategory()) {
+    for (const entry of this.providersForCategory('remote')) {
+      if (this.model.remoteSubtype === 'git' && entry.id !== 'github') {
+        continue;
+      }
+
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'provider-card';
@@ -436,58 +467,66 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       <style>${sourceManagerStyles}</style>
       <div class="source-manager">
         <div class="provider-layout single-column">
-          <div>
-            <p class="config-section-title">Choose where your collections live</p>
-            <p class="panel-subtext">Select a host category, then pick a host type.</p>
-            <div id="hostCategoryCatalog" class="provider-list"></div>
-          </div>
-          <div>
-            <p class="config-section-title">Choose host type</p>
-            <div id="providerCatalog" class="provider-list"></div>
-          </div>
-          <div id="providerConfig" class="provider-config">
-            <p id="providerConfigTitle" class="config-section-title">Host configuration</p>
-
-            <div id="exampleConfig" class="is-hidden">
-              <p class="panel-subtext">Built-in example collections from this repo.</p>
-              <p class="panel-subtext">No setup required.</p>
-            </div>
-
-            <div id="localConfig" class="is-hidden">
-              <p class="panel-subtext">Pick a folder from your computer to use as a local host.</p>
-              <div class="dialog-actions">
-                <button class="btn" id="pickLocalFolderBtn" type="button">Folder on this device</button>
+          <div id="rootActions">
+            <p class="config-section-title">Add a host</p>
+            <div class="provider-list">
+              <button class="provider-card" id="addExampleHostBtn" type="button">
+                <div class="provider-card-label-row"><strong>Add example host</strong></div>
+                <span class="panel-subtext">Connect instantly to the built-in demo host.</span>
+              </button>
+              <button class="provider-card" id="addLocalFolderHostBtn" type="button">
+                <div class="provider-card-label-row"><strong>Add local folder host</strong></div>
+                <span class="panel-subtext">Pick a folder and add it as a writable local host.</span>
+              </button>
+              <div class="provider-config remote-card">
+                <p class="config-section-title">Remote host</p>
+                <p class="panel-subtext">Connect to hosted infrastructure.</p>
+                <div id="remoteSubtypeCatalog" class="dialog-actions">
+                  <button class="btn" type="button" data-remote-subtype="git">Git repository</button>
+                  <button class="btn" type="button" data-remote-subtype="s3">Object storage (S3 compatible)</button>
+                  <button class="btn" type="button" data-remote-subtype="domain">Custom domain</button>
+                </div>
               </div>
-              <p id="localFolderStatus" class="panel-subtext">No folder selected.</p>
+            </div>
+          </div>
+
+          <div id="remoteFlow" class="is-hidden">
+            <div class="dialog-actions">
+              <button class="btn" id="remoteBackBtn" type="button">Back</button>
+            </div>
+            <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>
+            <div id="remoteProviderPanel" class="provider-list"></div>
+
+            <div id="providerConfig" class="provider-config is-hidden">
+              <p id="providerConfigTitle" class="config-section-title">Host configuration</p>
+              <p id="localFolderStatus" class="panel-subtext is-hidden">No folder selected.</p>
               <div class="field-row is-hidden"><label for="localPathInput">Collection path</label><input id="localPathInput" type="text" /></div>
               <input id="localFolderName" type="hidden" value="" />
-            </div>
 
-            <div id="githubConfig" class="is-hidden">
-              <div class="field-row"><label for="githubToken">GitHub token (PAT)</label><input id="githubToken" type="password" /></div>
-              <div class="field-row"><label for="githubOwner">Repository owner</label><input id="githubOwner" type="text" /></div>
-              <div class="field-row"><label for="githubRepo">Repository name</label><input id="githubRepo" type="text" /></div>
-              <div class="field-row"><label for="githubBranch">Branch</label><input id="githubBranch" type="text" value="main" /></div>
-              <div class="field-row"><label for="githubPath">Folder path (optional)</label><input id="githubPath" type="text" placeholder="media/" /></div>
-            </div>
+              <div id="githubConfig" class="is-hidden">
+                <div class="field-row"><label for="githubToken">GitHub token (PAT)</label><input id="githubToken" type="password" /></div>
+                <div class="field-row"><label for="githubOwner">Repository owner</label><input id="githubOwner" type="text" /></div>
+                <div class="field-row"><label for="githubRepo">Repository name</label><input id="githubRepo" type="text" /></div>
+                <div class="field-row"><label for="githubBranch">Branch</label><input id="githubBranch" type="text" value="main" /></div>
+                <div class="field-row"><label for="githubPath">Folder path (optional)</label><input id="githubPath" type="text" placeholder="media/" /></div>
+              </div>
 
-            <div id="placeholderConfig" class="is-hidden">
-              <div class="empty">This provider is planned and not yet available in this MVP.</div>
-            </div>
+              <div id="placeholderConfig" class="is-hidden">
+                <div class="empty">This remote host type is not available yet in this MVP.</div>
+              </div>
 
-            <div class="dialog-actions">
-              <button class="btn btn-primary" id="connectBtn" type="button">Add host</button>
+              <div class="dialog-actions">
+                <button class="btn btn-primary" id="connectBtn" type="button">Add host</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <p class="config-section-title">Connected hosts</p>
+        <div class="is-hidden">
           <div id="sourceList" class="source-list"></div>
           <button class="btn storage-help-btn" id="openStorageOptionsBtn" type="button">Storage options</button>
+          <p id="connectionStatus" class="panel-subtext">Not connected.</p>
         </div>
-
-        <p id="connectionStatus" class="panel-subtext">Not connected.</p>
       </div>
     `;
   }

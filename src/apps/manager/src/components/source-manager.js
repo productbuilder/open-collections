@@ -60,10 +60,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       if (!providerId || card.classList.contains('is-disabled')) {
         return;
       }
-      this.dispatch('select-provider', { providerId });
-      this.model.addHostLevel = 'remote-config';
-      this.renderRemoteFlow();
-      this.renderProviderVisibility();
+      this.openProviderConfig(providerId);
     });
 
     this.shadowRoot.getElementById('remoteBackBtn')?.addEventListener('click', () => {
@@ -85,27 +82,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.dispatch('connect-provider');
     });
 
-    this.shadowRoot.getElementById('sourceList')?.addEventListener('click', (event) => {
-      const actionButton = event.target.closest('button[data-action][data-source-id]');
-      if (!actionButton) {
-        return;
-      }
-      const action = actionButton.dataset.action || '';
-      const sourceId = actionButton.dataset.sourceId || '';
-      if (!sourceId) {
-        return;
-      }
-
-      if (action === 'refresh') {
-        this.dispatch('refresh-source', { sourceId });
-      } else if (action === 'inspect') {
-        this.dispatch('inspect-source', { sourceId });
-      } else if (action === 'remove') {
-        this.dispatch('remove-source', { sourceId });
-      } else if (action === 'show-only') {
-        this.dispatch('show-only-source', { sourceId });
-      }
-    });
   }
 
   dispatch(name, detail = {}) {
@@ -270,6 +246,17 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.model.addHostLevel = 'remote-config';
       this.dispatch('select-provider', { providerId: remoteSubtype === 's3' ? 's3' : 'custom-domain' });
     }
+    this.renderRemoteFlow();
+    this.renderProviderVisibility();
+  }
+
+  openProviderConfig(providerId) {
+    if (!providerId) {
+      return;
+    }
+    this.model.selectedProviderId = providerId;
+    this.model.addHostLevel = 'remote-config';
+    this.dispatch('select-provider', { providerId });
     this.renderRemoteFlow();
     this.renderProviderVisibility();
   }
@@ -525,11 +512,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
           </div>
         </div>
 
-        <div class="is-hidden">
-          <div id="sourceList" class="source-list"></div>
-          <button class="btn storage-help-btn" id="openStorageOptionsBtn" type="button">Storage options</button>
-          <p id="connectionStatus" class="panel-subtext">Not connected.</p>
-        </div>
+        <p id="connectionStatus" class="panel-subtext">Not connected.</p>
       </div>
     `;
   }

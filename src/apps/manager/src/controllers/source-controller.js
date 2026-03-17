@@ -74,6 +74,8 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
 export function sanitizeSourceConfig(app, providerId, config = {}) {
   void app;
   if (providerId === 'github') {
+    // NOTE: keep credentials/session secrets out of persisted workspace state.
+    // TODO(desktop-secure-storage): move token persistence to OS-backed secure storage when available.
     return {
       owner: (config.owner || '').trim(),
       repo: (config.repo || '').trim(),

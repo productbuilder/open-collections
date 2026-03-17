@@ -1,4 +1,5 @@
 import { ComponentBase, normalizeCollection } from '../../../library/core/src/index.js';
+import { BROWSER_CONFIG } from './config.js';
 
 class TimemapBrowserElement extends ComponentBase {
   constructor() {
@@ -16,8 +17,24 @@ class TimemapBrowserElement extends ComponentBase {
   connectedCallback() {
     this.bindEvents();
     this.setStatus('Load a collection manifest to browse.', 'neutral');
+    this.initializeStartupManifest();
     this.renderGrid();
     this.renderDetail();
+  }
+
+  initializeStartupManifest() {
+    const startupManifestUrl = this.resolveStartupManifestUrl();
+    if (!startupManifestUrl) {
+      return;
+    }
+    this.dom.manifestUrlInput.value = startupManifestUrl;
+    this.loadCollection({ manifestUrl: startupManifestUrl, announceInput: false });
+  }
+
+  resolveStartupManifestUrl() {
+    const attrStartupUrl = this.getAttribute('startup-manifest-url') || this.dataset.startupManifestUrl || '';
+    const queryStartupUrl = new URLSearchParams(window.location.search).get('manifest') || '';
+    return attrStartupUrl.trim() || queryStartupUrl.trim() || BROWSER_CONFIG.defaultManifestUrl;
   }
 
   renderShell() {
@@ -113,9 +130,24 @@ class TimemapBrowserElement extends ComponentBase {
     this.dom.loadBtn.addEventListener('click', async () => {
       await this.loadCollection();
     });
+    this.dom.manifestUrlInput.addEventListener('keydown', async (event) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+      event.preventDefault();
+      await this.loadCollection();
+    });
     this.dom.closeViewerBtn.addEventListener('click', () => {
       this.closeDialog(this.dom.viewerDialog);
     });
+  }
+
+  announceManifestUrl(manifestUrl) {
+    this.dispatchEvent(new CustomEvent('browser-manifest-url-change', {
+      detail: { manifestUrl },
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   setStatus(text, tone = 'neutral') {
@@ -128,11 +160,15 @@ class TimemapBrowserElement extends ComponentBase {
     this.dom.statusText.style.color = colors[tone] || colors.neutral;
   }
 
-  async loadCollection() {
-    const manifestUrl = this.dom.manifestUrlInput.value.trim();
+  async loadCollection({ manifestUrl: explicitManifestUrl, announceInput = true } = {}) {
+    const manifestUrl = (explicitManifestUrl || this.dom.manifestUrlInput.value).trim();
     if (!manifestUrl) {
       this.setStatus('Enter a manifest URL.', 'warn');
       return;
+    }
+
+    if (announceInput) {
+      this.announceManifestUrl(manifestUrl);
     }
 
     this.setStatus('Loading collection...', 'neutral');
@@ -146,6 +182,7 @@ class TimemapBrowserElement extends ComponentBase {
       this.state.collection = normalizeCollection(json);
       this.state.selectedId = this.state.collection.items[0]?.id || null;
       this.setStatus(`Loaded ${this.state.collection.title} (${this.state.collection.items.length} items).`, 'ok');
+      this.announceManifestUrl(manifestUrl);
       this.renderGrid();
       this.renderDetail();
     } catch (error) {

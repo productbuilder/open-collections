@@ -154,6 +154,7 @@ export function toPersistedSource(app, source) {
     status: source.status || '',
     needsReconnect: Boolean(source.needsReconnect),
     needsCredentials: Boolean(source.needsCredentials),
+    lastPublishResult: source.lastPublishResult || null,
   };
 }
 
@@ -231,6 +232,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       needsCredentials: false,
       collections: [],
       selectedCollectionId: null,
+      lastPublishResult: null,
     };
 
     if (providerId === 'github' || providerId === 's3') {
@@ -397,6 +399,7 @@ export async function refreshSource(app, sourceId) {
       selectedCollectionId: source.selectedCollectionId || null,
       needsReconnect: false,
       needsCredentials: false,
+      lastPublishResult: source.lastPublishResult || null,
     };
     const normalized = app.normalizeSourceAssets(updatedSource, loaded);
     const providerCollections = Array.isArray(result.collections)

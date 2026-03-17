@@ -11,6 +11,13 @@ function hasPublishableSelection(state) {
   return Boolean(source.capabilities?.canPublish);
 }
 
+function activeSource(state) {
+  if (!state || state.activeSourceFilter === 'all') {
+    return null;
+  }
+  return state.sources.find((entry) => entry.id === state.activeSourceFilter) || null;
+}
+
 function hasPendingPublishAssets(state) {
   if (!state || state.activeSourceFilter === 'all' || !state.selectedCollectionId || state.selectedCollectionId === 'all') {
     return false;
@@ -26,56 +33,98 @@ function hasPendingPublishAssets(state) {
 }
 
 export function computeWorkingStatus(state) {
-  if (state.publishError) {
-    return {
-      id: 'publish-error',
-      label: 'Publish error',
-      detail: 'Last publish attempt failed. Fix the error and try again.',
-      tone: 'warn',
-    };
-  }
+  const source = activeSource(state);
+  const canPublish = Boolean(source?.capabilities?.canPublish);
+  const hasSelection = hasPublishableSelection(state);
+  const hasPendingAssets = hasPendingPublishAssets(state);
+  const hasUnpublishedChanges = Boolean(state.hasUnsavedChanges) || hasPendingAssets;
 
   if (state.publishInProgress) {
     return {
       id: 'publishing',
       label: 'Publishing',
-      detail: 'Publishing collection to the active host.',
+      detail: 'Publishing draft changes to the active host.',
       tone: 'neutral',
     };
   }
 
-  if (state.hasUnsavedChanges) {
+  if (state.publishError) {
     return {
-      id: 'dirty',
-      label: 'Unsaved changes',
-      detail: 'You have local changes that are not saved to the active host.',
+      id: 'publish-failed',
+      label: 'Publish failed',
+      detail: state.lastPublishResult?.detail || 'Last publish attempt failed. Fix the issue and publish again.',
       tone: 'warn',
     };
   }
 
-  if (hasPublishableSelection(state) && hasPendingPublishAssets(state)) {
+  if (source?.needsCredentials) {
+    return {
+      id: 'credentials-missing',
+      label: 'Credentials missing',
+      detail: 'The active host is missing credentials. Reconnect before publishing.',
+      tone: 'warn',
+    };
+  }
+
+  if (source?.needsReconnect) {
+    return {
+      id: 'host-needs-reconnect',
+      label: 'Host needs reconnect',
+      detail: 'The active host is remembered but not connected. Refresh/reconnect to publish.',
+      tone: 'warn',
+    };
+  }
+
+  if (source && !canPublish) {
+    return {
+      id: 'read-only-host',
+      label: 'Read-only host',
+      detail: 'Active host is connected but cannot publish from this manager yet.',
+      tone: 'neutral',
+    };
+  }
+
+  if (hasUnpublishedChanges && canPublish && hasSelection) {
     return {
       id: 'ready-to-publish',
       label: 'Ready to publish',
-      detail: 'Draft assets are ready to upload for the selected collection.',
+      detail: 'Unpublished draft changes detected. Publish will update the remote host.',
+      tone: 'ok',
+    };
+  }
+
+  if (hasUnpublishedChanges) {
+    return {
+      id: 'unpublished-changes',
+      label: 'Unpublished changes',
+      detail: 'You have draft-only changes that are not published yet.',
+      tone: 'warn',
+    };
+  }
+
+  if (state.lastPublishResult?.ok) {
+    return {
+      id: 'published',
+      label: 'Published',
+      detail: state.lastPublishResult.detail || 'Last publish completed successfully.',
       tone: 'ok',
     };
   }
 
   if (state.lastSaveTarget === 'source') {
     return {
-      id: 'saved',
-      label: 'Saved',
-      detail: 'Changes are saved to the active host.',
+      id: 'published',
+      label: 'Published',
+      detail: 'Latest changes are saved to the active host.',
       tone: 'ok',
     };
   }
 
-  if (state.hasLocalDraft) {
+  if (state.hasLocalDraft || state.lastSaveTarget === 'draft') {
     return {
       id: 'draft',
-      label: 'Local draft',
-      detail: 'Working in a local draft workspace.',
+      label: 'Draft only',
+      detail: 'Working in local draft mode. Connect a publishable host when ready.',
       tone: 'neutral',
     };
   }

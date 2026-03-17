@@ -613,6 +613,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   renderSourcesList() {
     this.dom.sourceManager?.setSources(this.state.sources);
+    this.dom.sourceManager?.setActiveSourceId(this.state.activeSourceFilter || 'all');
   }
 
   collectCurrentProviderConfig(providerId) {
@@ -648,6 +649,53 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   sourceDetailLabelFor(providerId, config, fallbackLabel) {
     return sourceDetailLabelFor(this, providerId, config, fallbackLabel);
+  }
+
+  publishDestinationDetail(source, collectionRootPath = '') {
+    if (!source) {
+      return '';
+    }
+
+    if (source.providerId === 'github') {
+      const owner = (source.config?.owner || '').trim() || 'owner';
+      const repo = (source.config?.repo || '').trim() || 'repo';
+      const branch = (source.config?.branch || 'main').trim() || 'main';
+      const basePath = (source.config?.path || '').trim();
+      const root = collectionRootPath || '';
+      const fullPath = [basePath, root].filter(Boolean).join('/').replace(/\/+/g, '/').replace(/^\/+/, '') || '/';
+      return `GitHub ${owner}/${repo} @ ${branch}:${fullPath}`;
+    }
+
+    if (source.providerId === 's3') {
+      const bucket = (source.config?.bucket || '').trim() || 'bucket';
+      const basePath = (source.config?.basePath || '').trim();
+      const root = collectionRootPath || '';
+      const prefix = [basePath, root].filter(Boolean).join('/').replace(/\/+/g, '/').replace(/^\/+/, '');
+      return prefix ? `S3 s3://${bucket}/${prefix}` : `S3 s3://${bucket}`;
+    }
+
+    if (source.providerId === 'local' || source.providerId === 'example') {
+      const root = (collectionRootPath || '').replace(/^\/+/, '');
+      return root ? `Local host path ${root}` : 'Local host';
+    }
+
+    return source.detailLabel || source.displayLabel || source.providerLabel || 'Active host';
+  }
+
+  activeHostStateLabel(source) {
+    if (!source) {
+      return 'No active host';
+    }
+    if (source.needsCredentials) {
+      return 'Credentials missing';
+    }
+    if (source.needsReconnect) {
+      return 'Needs reconnect';
+    }
+    if (!source.capabilities?.canPublish) {
+      return 'Read-only';
+    }
+    return 'Connected + publishable';
   }
 
   sanitizeSourceConfig(providerId, config = {}) {
@@ -803,9 +851,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   renderSourceContext() {
     const source = this.getSourceById(this.state.activeSourceFilter);
-    const label = source
+    const sourceName = source
       ? (source.displayLabel || source.label || source.providerLabel || 'Host')
       : 'Select host';
+    const sourceState = this.activeHostStateLabel(source);
+    const label = source ? `${sourceName} (${sourceState})` : sourceName;
     this.dom.managerHeader?.setHostLabel(label);
     this.refreshWorkingStatus();
   }
@@ -1127,7 +1177,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     } else {
       this.setStatus(`Publishing ${pending.length} asset(s) to the active host...`, 'neutral');
     }
-    this.setWorkingStateFlags({ publishInProgress: true, publishError: '' });
+    this.setWorkingStateFlags({ publishInProgress: true, publishError: '', lastPublishResult: null });
 
     this.state.assets = this.state.assets.map((item) => {
       if (!pending.some((entry) => entry.workspaceId === item.workspaceId)) {
@@ -1207,7 +1257,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
         };
       });
 
-      source.status = `Published ${manifest.id} to ${collectionRootPath}`;
+      const destinationDetail = this.publishDestinationDetail(source, collectionRootPath);
+      const publishSummary = {
+        ok: true,
+        hostId: source.id,
+        hostLabel: source.displayLabel || source.label || source.providerLabel || 'Host',
+        providerId: source.providerId,
+        destination: destinationDetail,
+        detail: `Published ${manifest.id} to ${destinationDetail}`,
+        at: new Date().toISOString(),
+      };
+      source.status = publishSummary.detail;
+      source.lastPublishResult = publishSummary;
       this.state.manifest = manifest;
       this.dom.manifestPreview.textContent = JSON.stringify(manifest, null, 2);
       this.refreshSourceCollectionsAndCounts(source.id);
@@ -1226,10 +1287,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
       if (this.state.opfsAvailable) {
         await this.saveLocalDraft();
       }
-      this.setStatus('Publish complete. Collection manifest and assets were published to the active host.', 'ok');
+      this.setStatus(`Publish complete via ${publishSummary.hostLabel}. Destination: ${publishSummary.destination}.`, 'ok');
       this.setWorkingStateFlags({
         publishInProgress: false,
         publishError: '',
+        lastPublishResult: publishSummary,
         hasUnsavedChanges: false,
         lastSaveTarget: 'source',
       });
@@ -1246,8 +1308,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
       });
       this.renderAssets();
       this.renderEditor();
-      this.setStatus(`Publish failed: ${error.message}`, 'warn');
-      this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.' });
+      const destinationDetail = this.publishDestinationDetail(source, collectionRootPath);
+      const failureSummary = {
+        ok: false,
+        hostId: source.id,
+        hostLabel: source.displayLabel || source.label || source.providerLabel || 'Host',
+        providerId: source.providerId,
+        destination: destinationDetail,
+        detail: `Publish to ${destinationDetail} failed: ${error.message || 'Unknown error.'}`,
+        at: new Date().toISOString(),
+      };
+      source.status = failureSummary.detail;
+      source.lastPublishResult = failureSummary;
+      this.setStatus(failureSummary.detail, 'warn');
+      this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.', lastPublishResult: failureSummary });
     }
   }
 

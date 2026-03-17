@@ -7,6 +7,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     this.model = {
       providerCatalog: [],
       sources: [],
+      activeSourceId: 'all',
       selectedProviderId: 'example',
       addHostLevel: 'root',
       remoteSubtype: '',
@@ -129,6 +130,13 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
   setSources(sources = []) {
     this.model.sources = Array.isArray(sources) ? sources : [];
+    if (this.isReady()) {
+      this.renderSourcesList();
+    }
+  }
+
+  setActiveSourceId(sourceId = 'all') {
+    this.model.activeSourceId = sourceId || 'all';
     if (this.isReady()) {
       this.renderSourcesList();
     }
@@ -399,6 +407,19 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
   }
 
+  hostStateFor(source) {
+    if (source.needsCredentials) {
+      return { label: 'Credentials missing', tone: 'warn' };
+    }
+    if (source.needsReconnect) {
+      return { label: 'Needs reconnect', tone: 'warn' };
+    }
+    if (source.capabilities?.canPublish) {
+      return { label: 'Publishable', tone: 'ok' };
+    }
+    return { label: 'Read-only', tone: 'neutral' };
+  }
+
   renderSourcesList() {
     const list = this.shadowRoot?.getElementById('sourceList');
     if (!list) {
@@ -417,6 +438,10 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     for (const source of this.model.sources) {
       const card = document.createElement('article');
       card.className = 'source-card';
+      const isActive = this.model.activeSourceId === source.id;
+      if (isActive) {
+        card.classList.add('is-active');
+      }
 
       const top = document.createElement('div');
       top.className = 'source-card-top';
@@ -459,18 +484,34 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       status.className = 'panel-subtext';
       status.textContent = source.status || 'Connected';
 
+      const hostState = this.hostStateFor(source);
       const meta = document.createElement('div');
       meta.className = 'source-card-meta';
       const statusPill = document.createElement('span');
-      statusPill.className = 'pill';
-      statusPill.textContent = source.needsReconnect ? 'Needs reconnect' : (source.capabilities?.canPublish ? 'Ready to publish' : 'Connected');
+      statusPill.className = `pill ${hostState.tone === 'warn' ? 'is-warn' : hostState.tone === 'ok' ? 'is-ok' : ''}`.trim();
+      statusPill.textContent = hostState.label;
+      const activePill = document.createElement('span');
+      activePill.className = `pill ${isActive ? 'is-ok' : ''}`.trim();
+      activePill.textContent = isActive ? 'Active host' : 'Inactive';
+      const publishPill = document.createElement('span');
+      publishPill.className = `pill ${source.capabilities?.canPublish ? 'is-ok' : 'is-muted'}`.trim();
+      publishPill.textContent = source.capabilities?.canPublish ? 'Can publish' : 'Cannot publish';
       const countPill = document.createElement('span');
       countPill.className = 'pill';
       countPill.textContent = `${source.itemCount || 0} items`;
       const collectionPill = document.createElement('span');
       collectionPill.className = 'pill';
       collectionPill.textContent = `${source.collections?.length || 0} collections`;
-      meta.append(statusPill, countPill, collectionPill);
+      meta.append(activePill, statusPill, publishPill, countPill, collectionPill);
+
+      if (source.lastPublishResult?.detail) {
+        const publishDetail = document.createElement('p');
+        publishDetail.className = 'panel-subtext';
+        publishDetail.textContent = `Last publish: ${source.lastPublishResult.detail}`;
+        card.append(top, status, publishDetail, meta);
+      } else {
+        card.append(top, status, meta);
+      }
 
       const actions = document.createElement('div');
       actions.className = 'source-card-actions';
@@ -481,7 +522,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         <button type="button" class="btn" data-action="remove" data-source-id="${source.id}">Remove</button>
       `;
 
-      card.append(top, status, meta, actions);
+      card.append(actions);
       list.appendChild(card);
     }
   }

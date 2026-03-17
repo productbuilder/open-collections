@@ -27,6 +27,11 @@ export const sourceManagerStyles = `
     gap: 0.45rem;
   }
 
+  .source-card.is-active {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1px #bfdbfe inset;
+  }
+
   .source-card-top {
     display: flex;
     align-items: flex-start;
@@ -141,6 +146,18 @@ export const sourceManagerStyles = `
     font-size: 0.72rem;
     color: #475569;
     background: #f8fafc;
+  }
+
+  .pill.is-ok {
+    color: #166534;
+    border-color: #86efac;
+    background: #f0fdf4;
+  }
+
+  .pill.is-warn {
+    color: #9a3412;
+    border-color: #fdba74;
+    background: #fff7ed;
   }
 
   .pill.is-muted {

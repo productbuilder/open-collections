@@ -163,5 +163,17 @@ export const tauriPlatform = createPlatformApi({
     return invoke('platform_load_workspace_state');
   },
 
+  async setCredential({ namespace, account, secret }) {
+    await invoke('platform_set_credential', { namespace, account, secret: String(secret ?? '') });
+  },
+
+  async getCredential({ namespace, account }) {
+    return invoke('platform_get_credential', { namespace, account });
+  },
+
+  async deleteCredential({ namespace, account }) {
+    await invoke('platform_delete_credential', { namespace, account });
+  },
+
   reviveHandle,
 });

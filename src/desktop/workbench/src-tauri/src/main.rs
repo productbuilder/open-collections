@@ -1,3 +1,4 @@
+use keyring::Entry;
 use rfd::FileDialog;
 use serde::Serialize;
 use serde_json::Value;
@@ -158,6 +159,33 @@ fn platform_load_workspace_state<R: tauri::Runtime>(app: tauri::AppHandle<R>) ->
     Ok(Some(value))
 }
 
+
+
+#[tauri::command]
+fn platform_set_credential(namespace: String, account: String, secret: String) -> Result<(), String> {
+    let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
+    entry.set_password(&secret).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn platform_get_credential(namespace: String, account: String) -> Result<Option<String>, String> {
+    let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
+    match entry.get_password() {
+        Ok(secret) => Ok(Some(secret)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+#[tauri::command]
+fn platform_delete_credential(namespace: String, account: String) -> Result<(), String> {
+    let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
+    match entry.delete_credential() {
+        Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -173,6 +201,9 @@ fn main() {
             platform_read_directory,
             platform_remember_workspace_state,
             platform_load_workspace_state,
+            platform_set_credential,
+            platform_get_credential,
+            platform_delete_credential,
         ])
         .run(tauri::generate_context!())
         .expect("error while running open collections workbench");

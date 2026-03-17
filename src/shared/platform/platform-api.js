@@ -19,6 +19,9 @@ export function createPlatformApi(implementation) {
     'writeTextFile',
     'rememberWorkspaceState',
     'loadWorkspaceState',
+    'setCredential',
+    'getCredential',
+    'deleteCredential',
     'reviveHandle',
   ];
 

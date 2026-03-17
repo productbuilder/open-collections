@@ -2,6 +2,7 @@ import * as DraftService from '../services/draft-service.js';
 import { makeSourceId } from '../utils/id-utils.js';
 
 const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
+const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
 
 export function currentWorkspaceSnapshot(app) {
   return {
@@ -150,6 +151,12 @@ export function saveSourcesToStorage(app) {
 
   try {
     window.localStorage.setItem(SOURCES_STORAGE_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(
+      WORKSPACE_SELECTION_STORAGE_KEY,
+      JSON.stringify({
+        selectedSourceId: app.state.activeSourceFilter || 'all',
+      }),
+    );
   } catch (error) {
     // Ignore storage failures in restricted/private browser modes.
   }
@@ -188,9 +195,14 @@ export async function restoreRememberedSources(app) {
     return;
   }
 
-  const restored = remembered
-    .filter((entry) => entry && typeof entry === 'object')
-    .map((entry) => ({
+  const restored = [];
+  const seen = new Set();
+  for (const entry of remembered) {
+    if (!entry || typeof entry !== 'object') {
+      continue;
+    }
+
+    const source = {
       id: entry.id || makeSourceId(entry.providerId || 'source'),
       providerId: entry.providerId,
       providerLabel: entry.providerLabel || app.providerCatalog.find((p) => p.id === entry.providerId)?.label || 'Source',
@@ -199,29 +211,49 @@ export async function restoreRememberedSources(app) {
       label: entry.detailLabel || entry.label || entry.displayLabel || 'Source',
       config: app.sanitizeSourceConfig(entry.providerId, entry.config || {}),
       capabilities: entry.capabilities || app.providerFactories[entry.providerId]?.getCapabilities?.() || {},
-      status: (() => {
-        if (entry.providerId === 'github') {
-          return 'Remembered storage source. Token is not stored; re-enter token if repository requires it.';
-        }
-        if (entry.providerId === 'local' && entry.config?.localDirectoryName) {
-          return 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
-        }
-        return 'Remembered storage source. Click Refresh to reconnect.';
-      })(),
-      authMode:
-        entry.providerId === 'github'
-          ? 'token'
-          : entry.authMode || 'public',
+      status: 'Remembered storage source. Click Refresh to reconnect.',
+      authMode: entry.authMode || 'public',
       itemCount: Number(entry.itemCount) || 0,
       provider: null,
       needsReconnect: true,
-      needsCredentials: entry.providerId === 'github',
-    }));
+      needsCredentials: false,
+    };
+
+    const identity = app.sourceIdentityKey(source);
+    if (seen.has(identity)) {
+      continue;
+    }
+    seen.add(identity);
+
+    if (source.providerId === 'github') {
+      const configWithToken = await app.credentialStore.loadSourceSecret(source, source.config || {});
+      source.config = configWithToken;
+      source.authMode = (configWithToken.token || '').trim() ? 'token' : 'public';
+      source.needsCredentials = !(configWithToken.token || '').trim();
+      source.status = source.needsCredentials
+        ? 'Remembered GitHub host. Credentials were not found in secure storage; reconnect required.'
+        : 'Remembered GitHub host. Token restored from secure desktop storage.';
+    } else if (source.providerId === 'local' && source.config?.localDirectoryName) {
+      source.status = 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
+    }
+
+    restored.push(source);
+  }
+
+  let desiredActiveSourceId = 'all';
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(WORKSPACE_SELECTION_STORAGE_KEY) || '{}');
+    desiredActiveSourceId = stored.selectedSourceId || 'all';
+  } catch (error) {
+    desiredActiveSourceId = 'all';
+  }
 
   app.state.sources = restored;
   app.state.assets = [];
   app.state.selectedItemId = null;
-  app.state.activeSourceFilter = 'all';
+  app.state.activeSourceFilter = restored.some((source) => source.id === desiredActiveSourceId)
+    ? desiredActiveSourceId
+    : 'all';
   app.state.currentLevel = 'collections';
   app.state.openedCollectionId = null;
   app.syncMetadataModeFromState();

@@ -206,7 +206,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       app.sourceDetailLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
     const pendingRepair = app.pendingSourceRepair || null;
     const repairingSource = pendingRepair?.sourceId ? app.getSourceById(pendingRepair.sourceId) : null;
-    const source = {
+    const draftSource = {
       id: repairingSource?.id || makeSourceId(providerId),
       providerId,
       providerLabel: selectedProvider?.label || providerId,
@@ -237,6 +237,18 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       lastPublishResult: repairingSource?.lastPublishResult || null,
     };
 
+    const existingWithSameIdentity = !repairingSource
+      ? app.state.sources.find((entry) => app.sourceIdentityKey(entry) === app.sourceIdentityKey(draftSource))
+      : null;
+    const targetSource = existingWithSameIdentity || repairingSource;
+    const source = {
+      ...draftSource,
+      id: targetSource?.id || draftSource.id,
+      collections: targetSource?.collections || draftSource.collections,
+      selectedCollectionId: targetSource?.selectedCollectionId || draftSource.selectedCollectionId,
+      lastPublishResult: targetSource?.lastPublishResult || draftSource.lastPublishResult,
+    };
+
     if (providerId === 'github' || providerId === 's3') {
       try {
         await app.credentialStore.storeSourceSecret(source, config);
@@ -261,9 +273,9 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     if (providerId === 'local' && config.localDirectoryHandle) {
       app.selectedLocalDirectoryHandle = config.localDirectoryHandle;
     }
-    if (repairingSource) {
-      app.state.sources = app.state.sources.map((entry) => (entry.id === repairingSource.id ? source : entry));
-      app.mergeSourceAssets(repairingSource.id, normalizedWithCollections);
+    if (targetSource) {
+      app.state.sources = app.state.sources.map((entry) => (entry.id === targetSource.id ? source : entry));
+      app.mergeSourceAssets(targetSource.id, normalizedWithCollections);
     } else {
       app.state.sources = [...app.state.sources, source];
       app.state.assets = [...app.state.assets, ...normalizedWithCollections];
@@ -282,7 +294,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.dom.manifestPreview.textContent = '{}';
 
     app.setStatus(
-      repairingSource
+      targetSource
         ? `Reconnected storage source ${displayLabel} (${loaded.length} items).`
         : `Added storage source ${displayLabel} (${loaded.length} items).`,
       'ok',

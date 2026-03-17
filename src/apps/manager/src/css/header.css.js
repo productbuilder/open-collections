@@ -110,8 +110,10 @@ export const headerStyles = `
     }
 
     .top-actions {
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       margin-left: auto;
+      row-gap: 0.35rem;
     }
 
     .btn {

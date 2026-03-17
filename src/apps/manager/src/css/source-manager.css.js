@@ -45,6 +45,11 @@ export const sourceManagerStyles = `
     font-weight: 700;
   }
 
+  .source-card-label,
+  .panel-subtext {
+    overflow-wrap: anywhere;
+  }
+
   .source-card-actions {
     display: flex;
     gap: 0.4rem;
@@ -251,5 +256,22 @@ export const sourceManagerStyles = `
     overflow: auto;
     white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  @media (max-width: 760px) {
+    .provider-card-label-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .dialog-actions {
+      width: 100%;
+    }
+
+    .dialog-actions .btn {
+      flex: 1;
+      min-width: 0;
+    }
   }
 `;

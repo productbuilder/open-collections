@@ -61,7 +61,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'credentials-missing',
       label: 'Credentials missing',
-      detail: 'The active host is missing credentials. Reconnect before publishing.',
+      detail: 'The active host is missing credentials. Use Update credentials, then publish again.',
       tone: 'warn',
     };
   }
@@ -70,7 +70,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'host-needs-reconnect',
       label: 'Host needs reconnect',
-      detail: 'The active host is remembered but not connected. Refresh/reconnect to publish.',
+      detail: 'The active host is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
       tone: 'warn',
     };
   }
@@ -79,7 +79,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'read-only-host',
       label: 'Read-only host',
-      detail: 'Active host is connected but cannot publish from this manager yet.',
+      detail: 'Active host is connected but read-only for publish uploads.',
       tone: 'neutral',
     };
   }

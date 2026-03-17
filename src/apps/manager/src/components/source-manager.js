@@ -258,8 +258,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     return this.model.providerCatalog.find((entry) => entry.id === providerId) || null;
   }
 
-  providersForCategory(categoryId) {
-    return this.model.providerCatalog.filter((entry) => entry.category === categoryId);
+  providersForCategory(categoryId, predicate = null) {
+    return this.model.providerCatalog.filter((entry) => entry.category === categoryId && (!predicate || predicate(entry)));
   }
 
   openRemoteSubtype(remoteSubtype) {
@@ -334,15 +334,20 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
 
     const subtitleByType = {
-      git: 'Remote host / Git repository',
+      git: 'Remote host / Git repository / Provider',
       s3: 'Remote host / Object storage',
       domain: 'Remote host / Custom domain',
     };
-    breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote host';
+    if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
+      breadcrumb.textContent = 'Remote host / Git repository / GitHub configuration';
+    } else {
+      breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote host';
+    }
 
     const showingProviders = this.model.addHostLevel === 'remote-providers';
+    const showingConfig = this.model.addHostLevel === 'remote-config';
     providerPanel.classList.toggle('is-hidden', !showingProviders);
-    configPanel.classList.toggle('is-hidden', !this.model.addHostLevel.startsWith('remote-'));
+    configPanel.classList.toggle('is-hidden', !showingConfig);
 
     if (showingProviders) {
       this.renderRemoteProviderCatalog();
@@ -355,10 +360,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       return;
     }
     wrap.innerHTML = '';
-    for (const entry of this.providersForCategory('remote')) {
-      if (this.model.remoteSubtype === 'git' && entry.id !== 'github') {
-        continue;
-      }
+    const providers = this.providersForCategory('remote', (entry) => entry.remoteSubtype === this.model.remoteSubtype);
+    for (const entry of providers) {
 
       const button = document.createElement('button');
       button.type = 'button';

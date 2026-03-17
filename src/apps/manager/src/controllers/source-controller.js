@@ -204,8 +204,10 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     const detailLabel =
       result.sourceDetailLabel ||
       app.sourceDetailLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
+    const pendingRepair = app.pendingSourceRepair || null;
+    const repairingSource = pendingRepair?.sourceId ? app.getSourceById(pendingRepair.sourceId) : null;
     const source = {
-      id: makeSourceId(providerId),
+      id: repairingSource?.id || makeSourceId(providerId),
       providerId,
       providerLabel: selectedProvider?.label || providerId,
       label: detailLabel,
@@ -230,9 +232,9 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       provider,
       needsReconnect: false,
       needsCredentials: false,
-      collections: [],
-      selectedCollectionId: null,
-      lastPublishResult: null,
+      collections: repairingSource?.collections || [],
+      selectedCollectionId: repairingSource?.selectedCollectionId || null,
+      lastPublishResult: repairingSource?.lastPublishResult || null,
     };
 
     if (providerId === 'github' || providerId === 's3') {
@@ -259,8 +261,13 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     if (providerId === 'local' && config.localDirectoryHandle) {
       app.selectedLocalDirectoryHandle = config.localDirectoryHandle;
     }
-    app.state.sources = [...app.state.sources, source];
-    app.state.assets = [...app.state.assets, ...normalizedWithCollections];
+    if (repairingSource) {
+      app.state.sources = app.state.sources.map((entry) => (entry.id === repairingSource.id ? source : entry));
+      app.mergeSourceAssets(repairingSource.id, normalizedWithCollections);
+    } else {
+      app.state.sources = [...app.state.sources, source];
+      app.state.assets = [...app.state.assets, ...normalizedWithCollections];
+    }
     if (providerId === 'local') {
       await app.hydrateLocalSourceAssetPreviews(source.id);
     }
@@ -274,17 +281,24 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.state.manifest = null;
     app.dom.manifestPreview.textContent = '{}';
 
-    app.setStatus(`Added storage source ${displayLabel} (${loaded.length} items).`, 'ok');
+    app.setStatus(
+      repairingSource
+        ? `Reconnected storage source ${displayLabel} (${loaded.length} items).`
+        : `Added storage source ${displayLabel} (${loaded.length} items).`,
+      'ok',
+    );
     app.setWorkingStateFlags({ publishError: '' });
     app.renderSourcesList();
     app.renderSourceFilter();
     app.renderAssets();
     app.renderEditor();
     app.saveSourcesToStorage();
+    app.clearPendingSourceRepair();
     app.closeDialog(app.dom.providerDialog);
     app.renderSourcePicker();
     app.openDialog(app.dom.sourcePickerDialog);
   } catch (error) {
+    app.clearPendingSourceRepair();
     app.setConnectionStatus(`Connection error: ${error.message}`, false);
     app.setStatus(`Connection error: ${error.message}`, 'warn');
     app.refreshWorkingStatus();
@@ -331,7 +345,7 @@ export function inspectSource(app, sourceId) {
   app.setConnectionStatus(`Inspecting storage source: ${source.label}`, true);
 }
 
-export async function refreshSource(app, sourceId) {
+export async function refreshSource(app, sourceId, options = {}) {
   const source = app.getSourceById(sourceId);
   if (!source) {
     return;
@@ -345,7 +359,7 @@ export async function refreshSource(app, sourceId) {
 
   try {
     const provider = providerFactory();
-    let refreshConfig = { ...(source.config || {}) };
+    let refreshConfig = { ...(source.config || {}), ...(options.configOverrides || {}) };
     if (source.providerId === 'github' && !(refreshConfig.token || '').trim()) {
       refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
     }
@@ -441,6 +455,7 @@ export async function refreshSource(app, sourceId) {
     app.renderAssets();
     app.renderEditor();
     app.saveSourcesToStorage();
+    app.clearPendingSourceRepair();
   } catch (error) {
     const next = {
       ...source,
@@ -454,6 +469,7 @@ export async function refreshSource(app, sourceId) {
     app.setConnectionStatus(`Refresh error: ${error.message}`, false);
     app.setStatus(`Refresh error: ${error.message}`, 'warn');
     app.refreshWorkingStatus();
+    app.clearPendingSourceRepair();
   }
 }
 
@@ -463,6 +479,9 @@ export function removeSource(app, sourceId) {
     return;
   }
 
+  if (app.pendingSourceRepair?.sourceId === sourceId) {
+    app.clearPendingSourceRepair();
+  }
   app.credentialStore.deleteSourceSecret(source).catch(() => {});
   app.state.sources = app.state.sources.filter((entry) => entry.id !== sourceId);
   app.state.assets = app.state.assets.filter((entry) => entry.sourceId !== sourceId);

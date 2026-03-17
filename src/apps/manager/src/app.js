@@ -74,6 +74,7 @@ import * as AssetService from './services/asset-service.js';
 import * as CollectionService from './services/collection-service.js';
 import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
+import { createCredentialStore } from './services/credential-store.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -86,6 +87,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state = createInitialState();
 
     this.opfsStorage = createOpfsStorage();
+    this.credentialStore = createCredentialStore();
     this._autosaveTimer = null;
     this.localAssetBlobs = new Map();
     this.objectUrls = new Set();

@@ -2,6 +2,13 @@ import { PLATFORM_TYPES, createPlatformApi } from './platform-api.js';
 
 const WORKSPACE_KEY = 'open-collections:workspace-state:v1';
 
+
+const sessionCredentials = new Map();
+
+function credentialKey(namespace, account) {
+  return `${String(namespace || '')}::${String(account || '')}`;
+}
+
 async function pickSingleFile(accept = '.json,application/json,text/plain') {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
@@ -138,6 +145,19 @@ export const browserPlatform = createPlatformApi({
       return null;
     }
     return JSON.parse(raw);
+  },
+
+  async setCredential({ namespace, account, secret }) {
+    sessionCredentials.set(credentialKey(namespace, account), String(secret ?? ''));
+  },
+
+  async getCredential({ namespace, account }) {
+    const value = sessionCredentials.get(credentialKey(namespace, account));
+    return typeof value === 'string' ? value : null;
+  },
+
+  async deleteCredential({ namespace, account }) {
+    sessionCredentials.delete(credentialKey(namespace, account));
   },
 
   reviveHandle(raw) {

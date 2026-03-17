@@ -5,30 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Open Collections Workbench</title>
     <style>
-      body { margin: 0; font-family: system-ui, sans-serif; background: #0f1218; color: #e7ecf3; }
-      .launcher { display: grid; gap: 12px; padding: 20px; max-width: 420px; margin: 48px auto; }
-      .launcher button { padding: 12px 16px; border-radius: 10px; border: 1px solid #2b3342; background: #182033; color: inherit; cursor: pointer; text-align: left; }
-      .bar { display: none; gap: 8px; align-items: center; padding: 10px; border-bottom: 1px solid #2b3342; background: #151b29; }
-      .bar.show { display: flex; }
-      .bar button { padding: 6px 10px; }
-      .host { height: calc(100vh - 48px); }
-      .hidden { display: none; }
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f1218;
+        color: #e7ecf3;
+      }
+
+      .shell {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .shell-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.6rem 0.8rem;
+        border-bottom: 1px solid #2b3342;
+        background: #151b29;
+      }
+
+      .shell-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .switcher {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .switch-btn {
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 0.35rem 0.65rem;
+        background: #111827;
+        color: #e2e8f0;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .switch-btn:hover {
+        border-color: #4b5563;
+        background: #1f2937;
+      }
+
+      .switch-btn.is-active {
+        border-color: #0f6cc6;
+        background: #0f6cc6;
+        color: #ffffff;
+      }
+
+      .host {
+        min-height: 0;
+        min-width: 0;
+        overflow: hidden;
+        background: #0f1218;
+      }
+
+      .host > * {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
     </style>
   </head>
   <body>
-    <div id="launcher" class="launcher">
-      <h1>Open Collections Workbench</h1>
-      <p>Choose which app to launch in this desktop shell.</p>
-      <button type="button" data-launch="manager">Manager</button>
-      <button type="button" data-launch="configurator">Configurator</button>
+    <div class="shell">
+      <header class="shell-bar">
+        <h1 class="shell-title">Open Collections Workbench</h1>
+        <nav class="switcher" aria-label="App switcher">
+          <button id="switchManager" class="switch-btn" type="button" data-app="manager">Manager</button>
+          <button id="switchBrowser" class="switch-btn" type="button" data-app="browser">Browser</button>
+        </nav>
+      </header>
+      <main id="host" class="host"></main>
     </div>
-
-    <div id="bar" class="bar">
-      <button id="backBtn" type="button">← Launcher</button>
-      <strong id="appTitle">App</strong>
-    </div>
-
-    <div id="host" class="host hidden"></div>
 
     <script type="module" src="./src/main.js"></script>
   </body>

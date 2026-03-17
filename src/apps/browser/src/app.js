@@ -23,9 +23,16 @@ class TimemapBrowserElement extends ComponentBase {
   renderShell() {
     this.shadow.innerHTML = `
       <style>
-        :host { display:block; font-family: "Segoe UI", Tahoma, sans-serif; color:#111827; }
+        :host {
+          display:block;
+          height:100%;
+          min-height:0;
+          font-family: "Segoe UI", Tahoma, sans-serif;
+          color:#111827;
+        }
         * { box-sizing: border-box; }
         .shell { min-height: min(100dvh, 100vh); display:grid; grid-template-rows:auto 1fr; background:#f3f5f8; }
+        :host([data-workbench-embed]) .shell { height:100%; min-height:0; }
         .topbar { padding:0.8rem 1rem; border-bottom:1px solid #e2e8f0; background:#fff; display:grid; gap:0.55rem; }
         .title { margin:0; font-size:1rem; }
         .status { margin:0; font-size:0.85rem; color:#64748b; }

@@ -3,6 +3,8 @@ export const shellStyles = `
     display: block;
     color: #111827;
     font-family: "Segoe UI", Tahoma, sans-serif;
+    height: 100%;
+    min-height: 0;
   }
 
   * {
@@ -22,6 +24,13 @@ export const shellStyles = `
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  :host([data-workbench-embed]) .app-shell {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
   }
 
   #paneLayout {

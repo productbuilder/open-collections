@@ -3,7 +3,7 @@
 This is a lightweight shared desktop shell that hosts both existing Web Component apps:
 
 - `src/apps/manager`
-- `src/apps/configurator`
+- `src/apps/browser`
 
 ## Run in desktop mode
 
@@ -13,14 +13,15 @@ npm install
 npm run tauri:dev
 ```
 
-The Tauri window opens a simple launcher where you can choose Manager or Configurator.
+The Tauri window opens Manager by default. Use the shell bar to switch between Manager and Browser.
+The shell is full-window and embeds the selected app directly (no launcher screen).
 
 ## Architecture notes
 
 - The desktop shell UI lives in `src/desktop/workbench`.
 - The native bridge lives in `src/desktop/workbench/src-tauri`.
 - Shared file/folder/storage APIs live in `src/shared/platform`.
-- Manager and Configurator remain browser-first Web Component apps.
+- Manager and Browser remain browser-first Web Component apps.
 
 ## Platform layer
 

@@ -1,27 +1,64 @@
-import { createWorkbenchLauncher } from './launcher.js';
+import '../../../apps/manager/src/index.js';
+import '../../../apps/browser/src/index.js';
 
-const launcherEl = document.getElementById('launcher');
-const barEl = document.getElementById('bar');
+const STORAGE_KEY = 'open-collections-workbench:active-app:v1';
+
+const APPS = {
+  manager: {
+    id: 'manager',
+    title: 'Manager',
+    tag: 'open-collections-manager',
+  },
+  browser: {
+    id: 'browser',
+    title: 'Browser',
+    tag: 'timemap-browser',
+  },
+};
+
 const hostEl = document.getElementById('host');
-const titleEl = document.getElementById('appTitle');
-const backBtn = document.getElementById('backBtn');
+const switcherButtons = Array.from(document.querySelectorAll('button[data-app]'));
 
-const workbench = createWorkbenchLauncher({ launcherEl, barEl, hostEl, titleEl });
-
-launcherEl.addEventListener('click', (event) => {
-  const button = event.target.closest('button[data-launch]');
-  if (!button) {
-    return;
+function resolveStartupAppId() {
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('app');
+  if (fromQuery && APPS[fromQuery]) {
+    return fromQuery;
   }
-  workbench.launch(button.dataset.launch);
-});
 
-backBtn.addEventListener('click', () => {
-  workbench.showLauncher();
-});
+  const remembered = window.localStorage.getItem(STORAGE_KEY);
+  if (remembered && APPS[remembered]) {
+    return remembered;
+  }
 
-const params = new URLSearchParams(window.location.search);
-const startupApp = params.get('app');
-if (startupApp) {
-  workbench.launch(startupApp);
+  return 'manager';
 }
+
+function setActiveButton(appId) {
+  for (const button of switcherButtons) {
+    const isActive = button.dataset.app === appId;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  }
+}
+
+function mountApp(appId) {
+  const app = APPS[appId] || APPS.manager;
+  const element = document.createElement(app.tag);
+  element.setAttribute('data-workbench-embed', 'true');
+  hostEl.replaceChildren(element);
+  setActiveButton(app.id);
+  window.localStorage.setItem(STORAGE_KEY, app.id);
+}
+
+for (const button of switcherButtons) {
+  button.addEventListener('click', () => {
+    const appId = button.dataset.app;
+    if (!appId || !APPS[appId]) {
+      return;
+    }
+    mountApp(appId);
+  });
+}
+
+mountApp(resolveStartupAppId());

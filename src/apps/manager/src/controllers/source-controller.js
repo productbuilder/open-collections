@@ -362,7 +362,7 @@ export async function refreshSource(app, sourceId) {
         ...source,
         status: result.message,
         needsReconnect: true,
-        needsCredentials: Boolean(source.capabilities?.requiresCredentials),
+        needsCredentials: Boolean(result.capabilities?.requiresCredentials) && !Boolean(result.capabilities?.hasCredentials),
       };
       app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
       app.renderSourcesList();
@@ -443,7 +443,7 @@ export async function refreshSource(app, sourceId) {
       ...source,
       status: `Refresh error: ${error.message}`,
       needsReconnect: true,
-      needsCredentials: Boolean(source.capabilities?.requiresCredentials),
+      needsCredentials: Boolean(source.capabilities?.requiresCredentials) && !Boolean(source.capabilities?.hasCredentials),
     };
     app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
     app.renderSourcesList();

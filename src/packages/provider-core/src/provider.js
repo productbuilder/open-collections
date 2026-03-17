@@ -9,6 +9,15 @@ export const READ_ONLY_CAPABILITIES = {
   canGetAsset: true,
   canSaveMetadata: false,
   canExportCollection: true,
+  canRead: true,
+  canWrite: false,
+  canPublish: false,
+  canStoreAssets: false,
+  canStoreManifest: false,
+  requiresCredentials: false,
+  supportsReconnect: true,
+  supportsPull: true,
+  supportsPush: false,
 };
 
 export const READ_WRITE_CAPABILITIES = {
@@ -16,6 +25,15 @@ export const READ_WRITE_CAPABILITIES = {
   canGetAsset: true,
   canSaveMetadata: true,
   canExportCollection: true,
+  canRead: true,
+  canWrite: true,
+  canPublish: false,
+  canStoreAssets: false,
+  canStoreManifest: true,
+  requiresCredentials: false,
+  supportsReconnect: true,
+  supportsPull: true,
+  supportsPush: true,
 };
 
 export function createProviderDescriptor(definition) {

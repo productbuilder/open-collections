@@ -1,9 +1,48 @@
 import { getPlatform } from '../../../../shared/platform/index.js';
 
-const CREDENTIAL_NAMESPACE = 'open-collections.manager.github-token.v1';
+const CREDENTIAL_NAMESPACES = {
+  github: 'open-collections.manager.github-token.v1',
+  s3: 'open-collections.manager.s3-credentials.v1',
+};
 
 function sourceAccountId(source = {}) {
   return `${source.providerId || 'unknown'}::${source.id || ''}`;
+}
+
+function secretPayloadFor(source, config = {}) {
+  if (source?.providerId === 'github') {
+    return {
+      token: (config.token || '').trim(),
+    };
+  }
+
+  if (source?.providerId === 's3') {
+    return {
+      accessKey: (config.accessKey || '').trim(),
+      secretKey: config.secretKey || '',
+    };
+  }
+
+  return null;
+}
+
+function mergeSecretPayload(source, config = {}, payload = null) {
+  if (source?.providerId === 'github') {
+    return {
+      ...config,
+      token: (payload?.token || '').trim(),
+    };
+  }
+
+  if (source?.providerId === 's3') {
+    return {
+      ...config,
+      accessKey: (payload?.accessKey || '').trim(),
+      secretKey: payload?.secretKey || '',
+    };
+  }
+
+  return { ...config };
 }
 
 export function createCredentialStore() {
@@ -11,44 +50,62 @@ export function createCredentialStore() {
 
   return {
     async storeSourceSecret(source, config = {}) {
-      if (source?.providerId !== 'github') {
+      const namespace = CREDENTIAL_NAMESPACES[source?.providerId];
+      if (!namespace) {
         return;
       }
-      const token = (config.token || '').trim();
+
+      const payload = secretPayloadFor(source, config);
       const account = sourceAccountId(source);
-      if (!account) {
+      if (!account || !payload) {
         return;
       }
-      if (!token) {
-        await platform.deleteCredential({ namespace: CREDENTIAL_NAMESPACE, account });
+
+      const hasSecret = Object.values(payload).some((value) => String(value || '').trim());
+      if (!hasSecret) {
+        await platform.deleteCredential({ namespace, account });
         return;
       }
-      await platform.setCredential({ namespace: CREDENTIAL_NAMESPACE, account, secret: token });
+
+      await platform.setCredential({ namespace, account, secret: JSON.stringify(payload) });
     },
 
     async loadSourceSecret(source, config = {}) {
-      if (source?.providerId !== 'github') {
+      const namespace = CREDENTIAL_NAMESPACES[source?.providerId];
+      if (!namespace) {
         return { ...config };
       }
+
       const account = sourceAccountId(source);
-      const token = account
-        ? await platform.getCredential({ namespace: CREDENTIAL_NAMESPACE, account })
+      const stored = account
+        ? await platform.getCredential({ namespace, account })
         : null;
-      return {
-        ...config,
-        token: (token || '').trim(),
-      };
+
+      if (!stored) {
+        return mergeSecretPayload(source, config, null);
+      }
+
+      if (source?.providerId === 'github') {
+        return mergeSecretPayload(source, config, { token: stored });
+      }
+
+      try {
+        return mergeSecretPayload(source, config, JSON.parse(stored));
+      } catch (_error) {
+        return mergeSecretPayload(source, config, null);
+      }
     },
 
     async deleteSourceSecret(source) {
-      if (source?.providerId !== 'github') {
+      const namespace = CREDENTIAL_NAMESPACES[source?.providerId];
+      if (!namespace) {
         return;
       }
       const account = sourceAccountId(source);
       if (!account) {
         return;
       }
-      await platform.deleteCredential({ namespace: CREDENTIAL_NAMESPACE, account });
+      await platform.deleteCredential({ namespace, account });
     },
   };
 }

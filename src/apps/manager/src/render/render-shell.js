@@ -55,7 +55,7 @@ export function renderShell(shadowRoot) {
           <div class="field-row"><label for="collectionLanguage">Collection language</label><input id="collectionLanguage" type="text" /></div>
           <div class="dialog-actions">
             <button class="btn btn-primary" id="generateManifestBtn" type="button">Generate collection.json</button>
-            <button class="btn btn-primary" id="publishToSourceBtn" type="button">Upload to GitHub</button>
+            <button class="btn btn-primary" id="publishToSourceBtn" type="button">Publish to active host</button>
             <button class="btn" id="copyManifestBtn" type="button">Copy</button>
             <button class="btn" id="downloadManifestBtn" type="button">Download</button>
             <button class="btn" id="saveLocalDraftBtn" type="button">Save locally</button>

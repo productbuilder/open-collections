@@ -31,6 +31,15 @@ export interface ProviderCapabilities {
   canGetAsset: boolean;
   canSaveMetadata: boolean;
   canExportCollection: boolean;
+  canRead?: boolean;
+  canWrite?: boolean;
+  canPublish?: boolean;
+  canStoreAssets?: boolean;
+  canStoreManifest?: boolean;
+  requiresCredentials?: boolean;
+  supportsReconnect?: boolean;
+  supportsPull?: boolean;
+  supportsPush?: boolean;
 }
 
 export interface ProviderConnectionResult {

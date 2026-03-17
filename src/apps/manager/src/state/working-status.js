@@ -8,7 +8,7 @@ function hasPublishableSelection(state) {
     return false;
   }
 
-  return source.providerId === 'github';
+  return Boolean(source.capabilities?.canPublish);
 }
 
 function hasPendingPublishAssets(state) {

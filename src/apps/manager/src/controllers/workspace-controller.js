@@ -217,6 +217,7 @@ export async function restoreRememberedSources(app) {
       provider: null,
       needsReconnect: true,
       needsCredentials: false,
+      lastPublishResult: entry.lastPublishResult || null,
     };
 
     const identity = app.sourceIdentityKey(source);

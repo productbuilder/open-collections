@@ -21,6 +21,7 @@
     lastSaveTarget: '',
     publishInProgress: false,
     publishError: '',
+    lastPublishResult: null,
     isDropTargetActive: false,
     localDraftCollections: [],
     browserViewModes: {

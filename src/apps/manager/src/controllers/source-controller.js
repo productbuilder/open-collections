@@ -192,6 +192,14 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       selectedCollectionId: null,
     };
 
+    if (providerId === 'github') {
+      try {
+        await app.credentialStore.storeSourceSecret(source, config);
+      } catch (error) {
+        app.setStatus(`Connected, but secure token storage failed: ${error.message}`, 'warn');
+      }
+    }
+
     const normalized = app.normalizeSourceAssets(source, loaded);
     const providerCollections = Array.isArray(result.collections)
       ? app.normalizeCollectionsFromProvider(result.collections)
@@ -286,7 +294,10 @@ export async function refreshSource(app, sourceId) {
 
   try {
     const provider = providerFactory();
-    const refreshConfig = { ...(source.config || {}) };
+    let refreshConfig = { ...(source.config || {}) };
+    if (source.providerId === 'github' && !(refreshConfig.token || '').trim()) {
+      refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
+    }
     if (source.providerId === 'local' && app.selectedLocalDirectoryHandle) {
       refreshConfig.localDirectoryHandle = app.selectedLocalDirectoryHandle;
       if (!refreshConfig.localDirectoryName) {
@@ -399,6 +410,7 @@ export function removeSource(app, sourceId) {
     return;
   }
 
+  app.credentialStore.deleteSourceSecret(source).catch(() => {});
   app.state.sources = app.state.sources.filter((entry) => entry.id !== sourceId);
   app.state.assets = app.state.assets.filter((entry) => entry.sourceId !== sourceId);
   if (app.state.sources.length === 0) {

@@ -1088,7 +1088,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     if (!source.capabilities?.canPublish) {
-      this.setStatus('Selected host is connected, but publish upload is not implemented for this provider yet.', 'warn');
+      if (source.needsCredentials) {
+        this.setStatus('Publish blocked: this host is missing credentials. Reconnect and re-enter credentials.', 'warn');
+      } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
+        this.setStatus('Publish blocked: this host needs reconnect/validation before publishing.', 'warn');
+      } else {
+        this.setStatus('Publish blocked: this host does not currently support publish uploads.', 'warn');
+      }
       return;
     }
 

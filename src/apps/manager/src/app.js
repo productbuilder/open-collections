@@ -1,5 +1,6 @@
 import { createLocalProvider } from '../../../packages/provider-local/src/index.js';
 import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
+import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
@@ -97,12 +98,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
       example: createLocalProvider(),
       local: createLocalProvider(),
       github: createGithubProvider(),
+      s3: createS3Provider(),
     };
 
     this.providers = {
       example: createLocalProvider,
       local: createLocalProvider,
       github: createGithubProvider,
+      s3: createS3Provider,
     };
 
     this.providerCatalog = [
@@ -146,13 +149,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
         description: 'Gitea repository hosts are planned but not yet available in this MVP.',
       },
       {
+        ...this.providerFactories.s3.getDescriptor(),
         id: 's3',
         category: 'remote',
         remoteSubtype: 's3',
         label: 'S3-compatible storage',
-        enabled: false,
-        statusLabel: 'Coming soon',
-        description: 'Writable object storage source for institutional collection management.',
+        statusLabel: 'Foundation',
+        description: 'Configure an S3-compatible object storage host as a publish target in a local-first workflow.',
       },
       {
         id: 'custom-domain',
@@ -1084,8 +1087,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return;
     }
 
-    if (source.providerId !== 'github') {
-      this.setStatus('Publish upload is currently implemented for GitHub sources only.', 'warn');
+    if (!source.capabilities?.canPublish) {
+      this.setStatus('Selected host is connected, but publish upload is not implemented for this provider yet.', 'warn');
       return;
     }
 
@@ -1114,9 +1117,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
     );
 
     if (pending.length === 0) {
-      this.setStatus('No pending local assets. Uploading manifest only...', 'neutral');
+      this.setStatus('No pending local assets. Publishing manifest only...', 'neutral');
     } else {
-      this.setStatus(`Uploading ${pending.length} asset(s) to GitHub...`, 'neutral');
+      this.setStatus(`Publishing ${pending.length} asset(s) to the active host...`, 'neutral');
     }
     this.setWorkingStateFlags({ publishInProgress: true, publishError: '' });
 
@@ -1217,7 +1220,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       if (this.state.opfsAvailable) {
         await this.saveLocalDraft();
       }
-      this.setStatus('Upload complete. GitHub media, thumbnails, and collection.json published.', 'ok');
+      this.setStatus('Publish complete. Collection manifest and assets were published to the active host.', 'ok');
       this.setWorkingStateFlags({
         publishInProgress: false,
         publishError: '',
@@ -1237,7 +1240,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       });
       this.renderAssets();
       this.renderEditor();
-      this.setStatus(`Upload failed: ${error.message}`, 'warn');
+      this.setStatus(`Publish failed: ${error.message}`, 'warn');
       this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.' });
     }
   }

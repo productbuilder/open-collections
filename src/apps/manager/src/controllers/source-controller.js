@@ -22,6 +22,18 @@ export function collectCurrentProviderConfig(app, providerId) {
       config.localDirectoryHandle = app.selectedLocalDirectoryHandle;
     }
   }
+
+  if (providerId === 's3') {
+    return {
+      endpoint: (config.endpoint || '').trim(),
+      bucket: (config.bucket || '').trim(),
+      region: (config.region || '').trim(),
+      basePath: (config.basePath || '').trim(),
+      accessKey: (config.accessKey || '').trim(),
+      secretKey: config.secretKey || '',
+    };
+  }
+
   if (providerId === 'example') {
     config.path = MANAGER_CONFIG.defaultLocalManifestPath;
   }
@@ -36,6 +48,11 @@ export function sourceDisplayLabelFor(app, providerId, config, fallbackLabel) {
 
   if (providerId === 'example') {
     return 'Built-in examples';
+  }
+
+  if (providerId === 's3') {
+    const bucket = (config.bucket || '').trim();
+    return bucket || 'S3-compatible storage';
   }
 
   if (providerId === 'local') {
@@ -60,6 +77,18 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
     return MANAGER_CONFIG.defaultLocalManifestPath;
   }
 
+  if (providerId === 's3') {
+    const endpoint = (config.endpoint || '').trim();
+    const bucket = (config.bucket || '').trim();
+    const region = (config.region || '').trim();
+    const basePath = (config.basePath || '').trim();
+    const base = endpoint || 'S3 endpoint';
+    const bucketPart = bucket ? `/${bucket}` : '';
+    const prefixPart = basePath ? `/${basePath.replace(/^\/+/, '')}` : '';
+    const regionPart = region ? ` (${region})` : '';
+    return `${base}${bucketPart}${prefixPart}${regionPart}`;
+  }
+
   if (providerId === 'local') {
     const folderName = (config.localDirectoryName || '').trim();
     if (folderName) {
@@ -81,6 +110,16 @@ export function sanitizeSourceConfig(app, providerId, config = {}) {
       repo: (config.repo || '').trim(),
       branch: (config.branch || 'main').trim() || 'main',
       path: (config.path || '').trim(),
+    };
+  }
+
+  if (providerId === 's3') {
+    // NOTE: keep object storage credentials out of persisted workspace state.
+    return {
+      endpoint: (config.endpoint || '').trim(),
+      bucket: (config.bucket || '').trim(),
+      region: (config.region || '').trim(),
+      basePath: (config.basePath || '').trim(),
     };
   }
 
@@ -181,9 +220,11 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
             : 'public'
           : providerId === 'local' && config.localDirectoryHandle
             ? 'local-folder'
-            : providerId === 'example'
-              ? 'example'
-              : 'public',
+            : providerId === 's3'
+              ? 'access-key'
+              : providerId === 'example'
+                ? 'example'
+                : 'public',
       itemCount: loaded.length,
       provider,
       needsReconnect: false,
@@ -192,11 +233,11 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       selectedCollectionId: null,
     };
 
-    if (providerId === 'github') {
+    if (providerId === 'github' || providerId === 's3') {
       try {
         await app.credentialStore.storeSourceSecret(source, config);
       } catch (error) {
-        app.setStatus(`Connected, but secure token storage failed: ${error.message}`, 'warn');
+        app.setStatus(`Connected, but secure credential storage failed: ${error.message}`, 'warn');
       }
     }
 
@@ -263,6 +304,14 @@ export function inspectSource(app, sourceId) {
     nextConfigValues.githubBranch = source.config.branch || 'main';
     nextConfigValues.githubPath = source.config.path || '';
   }
+  if (source.providerId === 's3') {
+    nextConfigValues.s3Endpoint = source.config.endpoint || '';
+    nextConfigValues.s3Bucket = source.config.bucket || '';
+    nextConfigValues.s3Region = source.config.region || '';
+    nextConfigValues.s3BasePath = source.config.basePath || '';
+    nextConfigValues.s3AccessKey = source.config.accessKey || '';
+    nextConfigValues.s3SecretKey = source.config.secretKey || '';
+  }
   if (source.providerId === 'example') {
     nextConfigValues.localPathInput = MANAGER_CONFIG.defaultLocalManifestPath;
     nextConfigValues.localFolderName = '';
@@ -298,6 +347,9 @@ export async function refreshSource(app, sourceId) {
     if (source.providerId === 'github' && !(refreshConfig.token || '').trim()) {
       refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
     }
+    if (source.providerId === 's3' && (!(refreshConfig.accessKey || '').trim() || !(refreshConfig.secretKey || '').trim())) {
+      refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
+    }
     if (source.providerId === 'local' && app.selectedLocalDirectoryHandle) {
       refreshConfig.localDirectoryHandle = app.selectedLocalDirectoryHandle;
       if (!refreshConfig.localDirectoryName) {
@@ -310,8 +362,7 @@ export async function refreshSource(app, sourceId) {
         ...source,
         status: result.message,
         needsReconnect: true,
-        needsCredentials:
-          source.providerId === 'github',
+        needsCredentials: Boolean(source.capabilities?.requiresCredentials),
       };
       app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
       app.renderSourcesList();
@@ -337,7 +388,7 @@ export async function refreshSource(app, sourceId) {
       capabilities: provider.getCapabilities(),
       itemCount: loaded.length,
       status: result.message,
-      authMode: source.authMode,
+      authMode: source.providerId === 's3' ? 'access-key' : source.authMode,
       displayLabel,
       detailLabel,
       label: detailLabel,
@@ -392,8 +443,7 @@ export async function refreshSource(app, sourceId) {
       ...source,
       status: `Refresh error: ${error.message}`,
       needsReconnect: true,
-      needsCredentials:
-        source.providerId === 'github',
+      needsCredentials: Boolean(source.capabilities?.requiresCredentials),
     };
     app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
     app.renderSourcesList();

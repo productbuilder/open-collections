@@ -23,6 +23,12 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         githubPath: '',
         localPathInput: '',
         localFolderName: '',
+        s3Endpoint: '',
+        s3Bucket: '',
+        s3Region: '',
+        s3BasePath: '',
+        s3AccessKey: '',
+        s3SecretKey: '',
       },
     };
   }
@@ -64,7 +70,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     });
 
     this.shadowRoot.getElementById('remoteBackBtn')?.addEventListener('click', () => {
-      if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
+      if (this.model.addHostLevel === 'remote-config' && ['git', 's3', 'domain'].includes(this.model.remoteSubtype)) {
         this.model.addHostLevel = 'remote-providers';
       } else {
         this.model.addHostLevel = 'root';
@@ -189,6 +195,12 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       githubPath: 'githubPath',
       localPathInput: 'localPathInput',
       localFolderName: 'localFolderName',
+      s3Endpoint: 's3Endpoint',
+      s3Bucket: 's3Bucket',
+      s3Region: 's3Region',
+      s3BasePath: 's3BasePath',
+      s3AccessKey: 's3AccessKey',
+      s3SecretKey: 's3SecretKey',
     };
     for (const [key, id] of Object.entries(mapping)) {
       const input = this.shadowRoot.getElementById(id);
@@ -227,6 +239,15 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       config.path = root.getElementById('githubPath')?.value || '';
     }
 
+    if (providerId === 's3') {
+      config.endpoint = root.getElementById('s3Endpoint')?.value || '';
+      config.bucket = root.getElementById('s3Bucket')?.value || '';
+      config.region = root.getElementById('s3Region')?.value || '';
+      config.basePath = root.getElementById('s3BasePath')?.value || '';
+      config.accessKey = root.getElementById('s3AccessKey')?.value || '';
+      config.secretKey = root.getElementById('s3SecretKey')?.value || '';
+    }
+
     return config;
   }
 
@@ -240,11 +261,11 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
   openRemoteSubtype(remoteSubtype) {
     this.model.remoteSubtype = remoteSubtype;
-    if (remoteSubtype === 'git') {
+    if (remoteSubtype === 'git' || remoteSubtype === 's3') {
       this.model.addHostLevel = 'remote-providers';
     } else {
       this.model.addHostLevel = 'remote-config';
-      this.dispatch('select-provider', { providerId: remoteSubtype === 's3' ? 's3' : 'custom-domain' });
+      this.dispatch('select-provider', { providerId: 'custom-domain' });
     }
     this.renderRemoteFlow();
     this.renderProviderVisibility();
@@ -271,6 +292,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
     const sections = {
       github: this.shadowRoot?.getElementById('githubConfig'),
+      s3: this.shadowRoot?.getElementById('s3Config'),
       placeholder: this.shadowRoot?.getElementById('placeholderConfig'),
     };
 
@@ -290,12 +312,14 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
     if (this.model.selectedProviderId === 'github') {
       sections.github?.classList.remove('is-hidden');
+    } else if (this.model.selectedProviderId === 's3') {
+      sections.s3?.classList.remove('is-hidden');
     } else {
       sections.placeholder?.classList.remove('is-hidden');
     }
 
     if (connectBtn) {
-      connectBtn.disabled = selected?.enabled === false || this.model.selectedProviderId !== 'github';
+      connectBtn.disabled = selected?.enabled === false || !['github', 's3'].includes(this.model.selectedProviderId);
     }
   }
 
@@ -327,6 +351,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     };
     if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
       breadcrumb.textContent = 'Remote host / Git repository / GitHub configuration';
+    } else if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 's3') {
+      breadcrumb.textContent = 'Remote host / Object storage / S3-compatible configuration';
     } else {
       breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote host';
     }
@@ -408,13 +434,21 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       badges.className = 'badge-row';
       const readBadge = document.createElement('span');
       readBadge.className = 'pill';
-      readBadge.textContent = source.capabilities?.canSaveMetadata ? 'Read + Write' : 'Read';
+      if (source.capabilities?.canPublish) {
+        readBadge.textContent = 'Publish target';
+      } else if (source.capabilities?.canSaveMetadata) {
+        readBadge.textContent = 'Read + Write';
+      } else {
+        readBadge.textContent = 'Read';
+      }
       const authBadge = document.createElement('span');
       authBadge.className = 'pill';
       if (source.needsCredentials) {
-        authBadge.textContent = 'Token required';
+        authBadge.textContent = source.providerId === 's3' ? 'Credentials required' : 'Token required';
       } else if (source.authMode === 'token') {
         authBadge.textContent = 'Token auth';
+      } else if (source.authMode === 'access-key') {
+        authBadge.textContent = 'Access key auth';
       } else {
         authBadge.textContent = 'Public';
       }
@@ -429,7 +463,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       meta.className = 'source-card-meta';
       const statusPill = document.createElement('span');
       statusPill.className = 'pill';
-      statusPill.textContent = source.needsReconnect ? 'Needs reconnect' : 'Connected';
+      statusPill.textContent = source.needsReconnect ? 'Needs reconnect' : (source.capabilities?.canPublish ? 'Ready to publish' : 'Connected');
       const countPill = document.createElement('span');
       countPill.className = 'pill';
       countPill.textContent = `${source.itemCount || 0} items`;
@@ -470,7 +504,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
               </button>
               <div class="provider-config remote-card">
                 <p class="config-section-title">Remote host</p>
-                <p class="panel-subtext">Connect to hosted infrastructure.</p>
+                <p class="panel-subtext">Connect a remote publish target for your local-first workflow.</p>
                 <div id="remoteSubtypeCatalog" class="dialog-actions">
                   <button class="btn" type="button" data-remote-subtype="git">Git repository</button>
                   <button class="btn" type="button" data-remote-subtype="s3">Object storage (S3 compatible)</button>
@@ -499,6 +533,16 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
                 <div class="field-row"><label for="githubRepo">Repository name</label><input id="githubRepo" type="text" /></div>
                 <div class="field-row"><label for="githubBranch">Branch</label><input id="githubBranch" type="text" value="main" /></div>
                 <div class="field-row"><label for="githubPath">Folder path (optional)</label><input id="githubPath" type="text" placeholder="media/" /></div>
+              </div>
+
+              <div id="s3Config" class="is-hidden">
+                <p class="panel-subtext">S3-compatible hosts are configured now as publish targets. Upload/pull will be added next.</p>
+                <div class="field-row"><label for="s3Endpoint">Endpoint URL</label><input id="s3Endpoint" type="text" placeholder="https://s3.example.org" /></div>
+                <div class="field-row"><label for="s3Bucket">Bucket</label><input id="s3Bucket" type="text" /></div>
+                <div class="field-row"><label for="s3Region">Region</label><input id="s3Region" type="text" placeholder="us-east-1" /></div>
+                <div class="field-row"><label for="s3BasePath">Base path / prefix (optional)</label><input id="s3BasePath" type="text" placeholder="collections/" /></div>
+                <div class="field-row"><label for="s3AccessKey">Access key</label><input id="s3AccessKey" type="password" /></div>
+                <div class="field-row"><label for="s3SecretKey">Secret key</label><input id="s3SecretKey" type="password" /></div>
               </div>
 
               <div id="placeholderConfig" class="is-hidden">

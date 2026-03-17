@@ -233,6 +233,14 @@ export async function restoreRememberedSources(app) {
       source.status = source.needsCredentials
         ? 'Remembered GitHub host. Credentials were not found in secure storage; reconnect required.'
         : 'Remembered GitHub host. Token restored from secure desktop storage.';
+    } else if (source.providerId === 's3') {
+      const configWithSecret = await app.credentialStore.loadSourceSecret(source, source.config || {});
+      source.config = configWithSecret;
+      source.authMode = (configWithSecret.accessKey || '').trim() ? 'access-key' : 'public';
+      source.needsCredentials = !((configWithSecret.accessKey || '').trim() && (configWithSecret.secretKey || '').trim());
+      source.status = source.needsCredentials
+        ? 'Remembered S3-compatible host. Credentials were not found in secure storage; reconnect required.'
+        : 'Remembered S3-compatible host. Credentials restored from secure storage.';
     } else if (source.providerId === 'local' && source.config?.localDirectoryName) {
       source.status = 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
     }
@@ -270,6 +278,7 @@ export async function restoreRememberedSources(app) {
   for (const source of restored) {
     if (
       source.providerId !== 'github' &&
+      source.providerId !== 's3' &&
       !(source.providerId === 'local' && source.config?.localDirectoryName)
     ) {
       await app.refreshSource(source.id);

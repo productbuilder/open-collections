@@ -330,17 +330,37 @@ export function createGithubProvider() {
   }
 
   function updateCapabilities() {
+    const hasCredentials = Boolean(token && owner && repo);
+    const canPush = Boolean(hasCredentials && hasWriteAccess);
     const canWrite = Boolean(token && collection && manifestPath && manifestSha && hasWriteAccess);
     capabilities = canWrite
       ? {
           ...READ_WRITE_CAPABILITIES,
-          canUploadAssets: true,
-          canPublishCollection: true,
+          canRead: true,
+          canWrite: true,
+          canPublish: canPush,
+          canStoreAssets: canPush,
+          canStoreManifest: true,
+          requiresCredentials: true,
+          supportsReconnect: true,
+          supportsPull: true,
+          supportsPush: canPush,
+          canUploadAssets: canPush,
+          canPublishCollection: canPush,
         }
       : {
           ...READ_ONLY_CAPABILITIES,
-          canUploadAssets: Boolean(token && owner && repo && hasWriteAccess),
-          canPublishCollection: Boolean(token && owner && repo && hasWriteAccess),
+          canRead: true,
+          canWrite: false,
+          canPublish: canPush,
+          canStoreAssets: canPush,
+          canStoreManifest: canPush,
+          requiresCredentials: true,
+          supportsReconnect: true,
+          supportsPull: true,
+          supportsPush: canPush,
+          canUploadAssets: canPush,
+          canPublishCollection: canPush,
         };
   }
 

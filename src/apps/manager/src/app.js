@@ -93,6 +93,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.localAssetBlobs = new Map();
     this.objectUrls = new Set();
     this.selectedLocalDirectoryHandle = null;
+    this.pendingSourceRepair = null;
 
     this.providerFactories = {
       example: createLocalProvider(),
@@ -579,6 +580,38 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return this.state.sources.find((entry) => entry.id === sourceId) || null;
   }
 
+  clearPendingSourceRepair() {
+    this.pendingSourceRepair = null;
+  }
+
+  prepareSourceRepair(sourceId, mode = 'reconnect') {
+    const source = this.getSourceById(sourceId);
+    if (!source) {
+      return null;
+    }
+    this.pendingSourceRepair = { sourceId, mode };
+    return source;
+  }
+
+  sourceRepairGuidance(source) {
+    if (!source) {
+      return '';
+    }
+    if (source.providerId === 'local' && source.needsReconnect) {
+      return 'Folder access must be re-selected. Publish remains blocked until reconnect succeeds.';
+    }
+    if (source.needsCredentials) {
+      return 'Missing credentials. Update credentials to reconnect and unblock publish.';
+    }
+    if (source.needsReconnect) {
+      return 'Host needs reconnect before publish is available.';
+    }
+    if (!source.capabilities?.canPublish) {
+      return 'Connected read-only host. Publish is currently unavailable.';
+    }
+    return '';
+  }
+
   getVisibleAssets() {
     return getVisibleAssets(this);
   }
@@ -925,6 +958,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
       meta.className = 'panel-subtext';
       meta.textContent = `${source.collections?.length || 0} collections`;
 
+      const status = document.createElement('p');
+      status.className = 'panel-subtext';
+      status.textContent = source.status || 'Connected';
+
+      const guidance = this.sourceRepairGuidance(source);
+      const guidanceNode = document.createElement('p');
+      guidanceNode.className = 'panel-subtext';
+      guidanceNode.textContent = guidance || (source.capabilities?.canPublish ? 'Ready to publish from this host.' : 'Connected host.');
+
       const actions = document.createElement('div');
       actions.className = 'dialog-actions';
 
@@ -938,6 +980,54 @@ class OpenCollectionsManagerElement extends HTMLElement {
         this.renderSourcePicker();
       });
 
+      if (source.providerId === 'local' && source.needsReconnect) {
+        const reselectBtn = document.createElement('button');
+        reselectBtn.className = 'btn btn-primary';
+        reselectBtn.type = 'button';
+        reselectBtn.textContent = 'Re-select folder';
+        reselectBtn.addEventListener('click', async () => {
+          this.prepareSourceRepair(source.id, 'folder');
+          const didPick = await this.pickLocalFolder();
+          if (didPick) {
+            await this.refreshSource(source.id, { configOverrides: { localDirectoryHandle: this.selectedLocalDirectoryHandle } });
+          }
+          this.renderSourcePicker();
+        });
+        actions.append(reselectBtn);
+      } else if ((source.providerId === 'github' || source.providerId === 's3') && source.needsCredentials) {
+        const credsBtn = document.createElement('button');
+        credsBtn.className = 'btn btn-primary';
+        credsBtn.type = 'button';
+        credsBtn.textContent = 'Update credentials';
+        credsBtn.addEventListener('click', () => {
+          this.prepareSourceRepair(source.id, 'credentials');
+          this.inspectSource(source.id);
+          this.openDialog(this.dom.providerDialog);
+        });
+        actions.append(credsBtn);
+      } else if (source.needsReconnect) {
+        const reconnectBtn = document.createElement('button');
+        reconnectBtn.className = 'btn btn-primary';
+        reconnectBtn.type = 'button';
+        reconnectBtn.textContent = 'Reconnect host';
+        reconnectBtn.addEventListener('click', async () => {
+          this.prepareSourceRepair(source.id, 'reconnect');
+          await this.refreshSource(source.id);
+          this.renderSourcePicker();
+        });
+        actions.append(reconnectBtn);
+      }
+
+      const refreshBtn = document.createElement('button');
+      refreshBtn.className = 'btn';
+      refreshBtn.type = 'button';
+      refreshBtn.textContent = 'Refresh host';
+      refreshBtn.addEventListener('click', async () => {
+        this.prepareSourceRepair(source.id, 'refresh');
+        await this.refreshSource(source.id);
+        this.renderSourcePicker();
+      });
+
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn';
       removeBtn.type = 'button';
@@ -947,8 +1037,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
         this.renderSourcePicker();
       });
 
-      actions.append(useBtn, removeBtn);
-      card.append(type, meta, actions);
+      actions.append(useBtn, refreshBtn, removeBtn);
+      card.append(type, meta, status, guidanceNode, actions);
       wrap.appendChild(card);
     }
   }
@@ -1096,8 +1186,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return inspectSource(this, sourceId);
   }
 
-  async refreshSource(sourceId) {
-    return refreshSource(this, sourceId);
+  async refreshSource(sourceId, options = {}) {
+    return refreshSource(this, sourceId, options);
   }
 
   removeSource(sourceId) {

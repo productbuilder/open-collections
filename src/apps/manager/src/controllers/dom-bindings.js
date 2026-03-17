@@ -81,10 +81,12 @@ export function bindDomEvents(app) {
     await app.connectCurrentProvider();
   });
   app.dom.sourceManager.addEventListener('add-example-host', async () => {
+    app.clearPendingSourceRepair();
     app.setSelectedProvider('example');
     await app.connectCurrentProvider();
   });
   app.dom.sourceManager.addEventListener('add-local-folder-host', async () => {
+    app.clearPendingSourceRepair();
     app.setSelectedProvider('local');
     const didPick = await app.pickLocalFolder();
     if (didPick) {
@@ -102,6 +104,34 @@ export function bindDomEvents(app) {
     if (sourceId) {
       app.inspectSource(sourceId);
     }
+  });
+  app.dom.sourceManager.addEventListener('repair-source-credentials', (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (!sourceId) {
+      return;
+    }
+    app.prepareSourceRepair(sourceId, 'credentials');
+    app.inspectSource(sourceId);
+    app.openDialog(app.dom.providerDialog);
+  });
+  app.dom.sourceManager.addEventListener('repair-source-folder', async (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (!sourceId) {
+      return;
+    }
+    app.prepareSourceRepair(sourceId, 'folder');
+    const didPick = await app.pickLocalFolder();
+    if (didPick) {
+      await app.refreshSource(sourceId, { configOverrides: { localDirectoryHandle: app.selectedLocalDirectoryHandle } });
+    }
+  });
+  app.dom.sourceManager.addEventListener('repair-source-reconnect', async (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (!sourceId) {
+      return;
+    }
+    app.prepareSourceRepair(sourceId, 'reconnect');
+    await app.refreshSource(sourceId);
   });
   app.dom.sourceManager.addEventListener('remove-source', (event) => {
     const sourceId = event.detail?.sourceId || '';
@@ -127,6 +157,7 @@ export function bindDomEvents(app) {
     await app.pickLocalFolder();
   });
   app.dom.openAddHostFromHostBtn.addEventListener('click', () => {
+    app.clearPendingSourceRepair();
     app.openDialog(app.dom.providerDialog);
   });
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {

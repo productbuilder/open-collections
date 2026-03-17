@@ -269,7 +269,11 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       collectionLabel: item.collectionLabel || collections.find((entry) => entry.id === (item.collectionId || defaultCollectionId))?.title || '',
     }));
     source.collections = collections;
-    source.selectedCollectionId = defaultCollectionId;
+    const preferredCollectionId =
+      (targetSource?.selectedCollectionId && collections.some((entry) => entry.id === targetSource.selectedCollectionId))
+        ? targetSource.selectedCollectionId
+        : defaultCollectionId;
+    source.selectedCollectionId = preferredCollectionId;
     if (providerId === 'local' && config.localDirectoryHandle) {
       app.selectedLocalDirectoryHandle = config.localDirectoryHandle;
     }
@@ -378,10 +382,18 @@ export async function refreshSource(app, sourceId, options = {}) {
     if (source.providerId === 's3' && (!(refreshConfig.accessKey || '').trim() || !(refreshConfig.secretKey || '').trim())) {
       refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
     }
-    if (source.providerId === 'local' && app.selectedLocalDirectoryHandle) {
-      refreshConfig.localDirectoryHandle = app.selectedLocalDirectoryHandle;
-      if (!refreshConfig.localDirectoryName) {
-        refreshConfig.localDirectoryName = app.selectedLocalDirectoryHandle.name || refreshConfig.localDirectoryName || '';
+    if (source.providerId === 'local') {
+      const explicitHandle = options.configOverrides?.localDirectoryHandle;
+      const repairHandle =
+        app.pendingSourceRepair?.sourceId === sourceId && app.pendingSourceRepair?.mode === 'folder'
+          ? app.selectedLocalDirectoryHandle
+          : null;
+      const handle = explicitHandle || refreshConfig.localDirectoryHandle || repairHandle;
+      if (handle) {
+        refreshConfig.localDirectoryHandle = handle;
+        if (!refreshConfig.localDirectoryName) {
+          refreshConfig.localDirectoryName = handle.name || refreshConfig.localDirectoryName || '';
+        }
       }
     }
     const result = await provider.connect(refreshConfig);

@@ -51,7 +51,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.openRemoteSubtype(remoteSubtype);
     });
 
-    this.shadowRoot.getElementById('remoteProviderCatalog')?.addEventListener('click', (event) => {
+    this.shadowRoot.getElementById('remoteProviderPanel')?.addEventListener('click', (event) => {
       const card = event.target.closest('.provider-card');
       if (!card) {
         return;

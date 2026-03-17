@@ -164,6 +164,10 @@ export const shellStyles = `
     flex-wrap: wrap;
   }
 
+  .dialog-actions .btn {
+    min-width: 0;
+  }
+
   .source-card {
     border: 1px solid #dbe3ec;
     border-radius: 8px;
@@ -303,6 +307,9 @@ export const shellStyles = `
       border-radius: 7px;
     }
 
+    .dialog-actions .btn {
+      flex: 1 1 calc(50% - 0.5rem);
+    }
 
     dialog,
     .host-dialog {

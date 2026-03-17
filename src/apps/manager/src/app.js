@@ -728,7 +728,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (!source.capabilities?.canPublish) {
       return 'Read-only';
     }
-    return 'Connected + publishable';
+    return 'Connected (publishable)';
   }
 
   sanitizeSourceConfig(providerId, config = {}) {
@@ -965,7 +965,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const guidance = this.sourceRepairGuidance(source);
       const guidanceNode = document.createElement('p');
       guidanceNode.className = 'panel-subtext';
-      guidanceNode.textContent = guidance || (source.capabilities?.canPublish ? 'Ready to publish from this host.' : 'Connected host.');
+      guidanceNode.textContent = guidance || (source.capabilities?.canPublish ? 'Ready to publish from this host.' : 'Connected host (read-only).');
 
       const actions = document.createElement('div');
       actions.className = 'dialog-actions';
@@ -1009,7 +1009,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         const reconnectBtn = document.createElement('button');
         reconnectBtn.className = 'btn btn-primary';
         reconnectBtn.type = 'button';
-        reconnectBtn.textContent = 'Reconnect host';
+        reconnectBtn.textContent = 'Reconnect now';
         reconnectBtn.addEventListener('click', async () => {
           this.prepareSourceRepair(source.id, 'reconnect');
           await this.refreshSource(source.id);
@@ -1021,7 +1021,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const refreshBtn = document.createElement('button');
       refreshBtn.className = 'btn';
       refreshBtn.type = 'button';
-      refreshBtn.textContent = 'Refresh host';
+      refreshBtn.textContent = source.needsReconnect ? 'Retry reconnect' : 'Refresh host';
       refreshBtn.addEventListener('click', async () => {
         this.prepareSourceRepair(source.id, 'refresh');
         await this.refreshSource(source.id);
@@ -1377,6 +1377,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       if (this.state.opfsAvailable) {
         await this.saveLocalDraft();
       }
+      this.saveSourcesToStorage();
       this.setStatus(`Publish complete via ${publishSummary.hostLabel}. Destination: ${publishSummary.destination}.`, 'ok');
       this.setWorkingStateFlags({
         publishInProgress: false,
@@ -1410,6 +1411,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       };
       source.status = failureSummary.detail;
       source.lastPublishResult = failureSummary;
+      this.saveSourcesToStorage();
       this.setStatus(failureSummary.detail, 'warn');
       this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.', lastPublishResult: failureSummary });
     }

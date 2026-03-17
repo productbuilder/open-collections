@@ -105,7 +105,7 @@ export const shellStyles = `
   }
 
   dialog {
-    width: min(780px, 94vw);
+    width: min(760px, 94vw);
     border: 1px solid #dbe3ec;
     border-radius: 12px;
     padding: 0;
@@ -120,7 +120,11 @@ export const shellStyles = `
   .dialog-shell {
     display: grid;
     grid-template-rows: auto 1fr;
-    max-height: min(82vh, 760px);
+    max-height: min(84vh, 760px);
+  }
+
+  .host-dialog {
+    width: min(760px, 94vw);
   }
 
   .dialog-header {
@@ -169,6 +173,12 @@ export const shellStyles = `
   .source-list {
     display: grid;
     gap: 0.55rem;
+  }
+
+  .source-card.is-active-source {
+    border-color: #0f6cc6;
+    box-shadow: 0 0 0 1px #66a6e8 inset;
+    background: #f5faff;
   }
 
   .storage-dialog {
@@ -282,6 +292,21 @@ export const shellStyles = `
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;
+    }
+
+
+    dialog,
+    .host-dialog {
+      width: min(94vw, 680px);
+      margin: auto;
+    }
+
+    .dialog-shell {
+      max-height: min(86vh, 720px);
+    }
+
+    .dialog-body {
+      overflow-y: auto;
     }
   }
 `;

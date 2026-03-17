@@ -805,10 +805,52 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.refreshWorkingStatus();
   }
 
+  sourceIdentityKey(source) {
+    if (!source || typeof source !== 'object') {
+      return '';
+    }
+    const providerId = source.providerId || 'unknown';
+    const config = this.sanitizeSourceConfig(providerId, source.config || {});
+    const hasConfig = Object.keys(config).length > 0;
+    return hasConfig
+      ? `${providerId}:${JSON.stringify(config)}`
+      : `${providerId}:${source.id || source.displayLabel || source.label || ''}`;
+  }
+
+  uniqueSourcesForManageHosts(sources = []) {
+    const result = [];
+    const seen = new Set();
+    for (const source of sources) {
+      const key = this.sourceIdentityKey(source);
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      result.push(source);
+    }
+    return result;
+  }
+
+  activateSource(source) {
+    this.state.activeSourceFilter = source.id;
+    this.state.currentLevel = 'collections';
+    this.state.openedCollectionId = null;
+    this.state.selectedCollectionId = source.selectedCollectionId || 'all';
+    this.state.selectedItemId = null;
+    this.syncMetadataModeFromState();
+    this.closeMobileEditor();
+    this.renderSourceFilter();
+    this.renderSourceContext();
+    this.renderAssets();
+    this.renderEditor();
+    this.refreshWorkingStatus();
+  }
+
   renderSourcePicker() {
     const wrap = this.dom.sourcePickerList;
     wrap.innerHTML = '';
-    if (this.state.sources.length === 0) {
+    const uniqueSources = this.uniqueSourcesForManageHosts(this.state.sources);
+    if (uniqueSources.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
       empty.textContent = 'No hosts connected yet. Use Add host to connect one.';
@@ -816,9 +858,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return;
     }
 
-    for (const source of this.state.sources) {
+    for (const source of uniqueSources) {
+      const isActive = this.state.activeSourceFilter === source.id;
       const card = document.createElement('article');
-      card.className = 'source-card';
+      card.className = `source-card${isActive ? ' is-active-source' : ''}`;
       const label = source.displayLabel || source.label || source.providerLabel || 'Host';
       const type = document.createElement('p');
       type.className = 'source-card-label';
@@ -826,26 +869,31 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const meta = document.createElement('p');
       meta.className = 'panel-subtext';
       meta.textContent = `${source.collections?.length || 0} collections`;
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-primary';
-      btn.type = 'button';
-      btn.textContent = 'Use host';
-      btn.addEventListener('click', () => {
-        this.state.activeSourceFilter = source.id;
-        this.state.currentLevel = 'collections';
-        this.state.openedCollectionId = null;
-        this.state.selectedCollectionId = source.selectedCollectionId || 'all';
-        this.state.selectedItemId = null;
-        this.syncMetadataModeFromState();
-        this.closeMobileEditor();
-        this.renderSourceFilter();
-        this.renderSourceContext();
-        this.renderAssets();
-        this.renderEditor();
-        this.refreshWorkingStatus();
-        this.closeDialog(this.dom.sourcePickerDialog);
+
+      const actions = document.createElement('div');
+      actions.className = 'dialog-actions';
+
+      const useBtn = document.createElement('button');
+      useBtn.className = `btn${isActive ? '' : ' btn-primary'}`;
+      useBtn.type = 'button';
+      useBtn.textContent = isActive ? 'Using host' : 'Set host';
+      useBtn.disabled = isActive;
+      useBtn.addEventListener('click', () => {
+        this.activateSource(source);
+        this.renderSourcePicker();
       });
-      card.append(type, meta, btn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn';
+      removeBtn.type = 'button';
+      removeBtn.textContent = 'Remove host';
+      removeBtn.addEventListener('click', () => {
+        this.removeSource(source.id);
+        this.renderSourcePicker();
+      });
+
+      actions.append(useBtn, removeBtn);
+      card.append(type, meta, actions);
       wrap.appendChild(card);
     }
   }

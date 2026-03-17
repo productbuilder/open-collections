@@ -228,6 +228,9 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.renderAssets();
     app.renderEditor();
     app.saveSourcesToStorage();
+    app.closeDialog(app.dom.providerDialog);
+    app.renderSourcePicker();
+    app.openDialog(app.dom.sourcePickerDialog);
   } catch (error) {
     app.setConnectionStatus(`Connection error: ${error.message}`, false);
     app.setStatus(`Connection error: ${error.message}`, 'warn');

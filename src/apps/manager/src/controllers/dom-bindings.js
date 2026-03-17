@@ -9,14 +9,12 @@ export function cacheDomElements(root) {
     sourceManager: root.getElementById('sourceManager'),
     assetViewer: root.getElementById('assetViewer'),
     providerDialog: root.getElementById('providerDialog'),
-    hostMenuDialog: root.getElementById('hostMenuDialog'),
     sourcePickerDialog: root.getElementById('sourcePickerDialog'),
     sourcePickerList: root.getElementById('sourcePickerList'),
     publishDialog: root.getElementById('publishDialog'),
     newCollectionDialog: root.getElementById('newCollectionDialog'),
     registerDialog: root.getElementById('registerDialog'),
     headerMenuDialog: root.getElementById('headerMenuDialog'),
-    openSourcePickerFromHostBtn: root.getElementById('openSourcePickerFromHostBtn'),
     openAddHostFromHostBtn: root.getElementById('openAddHostFromHostBtn'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
@@ -67,7 +65,10 @@ export function bindDomEvents(app) {
 
   app._eventsBound = true;
 
-  app.dom.managerHeader.addEventListener('open-host-menu', () => app.openDialog(app.dom.hostMenuDialog));
+  app.dom.managerHeader.addEventListener('open-host-menu', () => {
+    app.renderSourcePicker();
+    app.openDialog(app.dom.sourcePickerDialog);
+  });
   app.dom.managerHeader.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
   app.dom.sourceManager.addEventListener('open-storage-options', () => app.openDialog(app.dom.storageOptionsDialog));
   app.dom.sourceManager.addEventListener('select-provider', (event) => {
@@ -125,13 +126,7 @@ export function bindDomEvents(app) {
   app.dom.sourceManager.addEventListener('pick-local-folder', async () => {
     await app.pickLocalFolder();
   });
-  app.dom.openSourcePickerFromHostBtn.addEventListener('click', () => {
-    app.closeDialog(app.dom.hostMenuDialog);
-    app.renderSourcePicker();
-    app.openDialog(app.dom.sourcePickerDialog);
-  });
   app.dom.openAddHostFromHostBtn.addEventListener('click', () => {
-    app.closeDialog(app.dom.hostMenuDialog);
     app.openDialog(app.dom.providerDialog);
   });
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {

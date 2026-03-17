@@ -13,7 +13,7 @@ export function renderShell(shadowRoot) {
       </open-pane-layout>
     </div>
 
-    <dialog id="providerDialog" aria-label="Add host">
+    <dialog id="providerDialog" class="host-dialog" aria-label="Add host">
       <div class="dialog-shell">
         <div class="dialog-header">
           <h2 class="dialog-title">Add host</h2>
@@ -27,26 +27,14 @@ export function renderShell(shadowRoot) {
 
 
 
-    <dialog id="hostMenuDialog" aria-label="Host options">
+    <dialog id="sourcePickerDialog" class="host-dialog" aria-label="Manage hosts">
       <div class="dialog-shell">
         <div class="dialog-header">
-          <h2 class="dialog-title">Host</h2>
-          <button class="btn" data-close="hostMenuDialog" type="button">Close</button>
-        </div>
-        <div class="dialog-body">
+          <h2 class="dialog-title">Manage hosts</h2>
           <div class="dialog-actions">
-            <button class="btn" id="openSourcePickerFromHostBtn" type="button">Switch host</button>
-            <button class="btn" id="openAddHostFromHostBtn" type="button">Add host</button>
+            <button class="btn btn-primary" id="openAddHostFromHostBtn" type="button">Add host</button>
+            <button class="btn" data-close="sourcePickerDialog" type="button">Close</button>
           </div>
-        </div>
-      </div>
-    </dialog>
-
-    <dialog id="sourcePickerDialog" aria-label="Select host">
-      <div class="dialog-shell">
-        <div class="dialog-header">
-          <h2 class="dialog-title">Select host</h2>
-          <button class="btn" data-close="sourcePickerDialog" type="button">Close</button>
         </div>
         <div id="sourcePickerList" class="dialog-body source-list"></div>
       </div>

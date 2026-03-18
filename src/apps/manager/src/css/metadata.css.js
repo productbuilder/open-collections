@@ -58,6 +58,7 @@ export const metadataStyles = `
 
   .editor-header-actions {
     display: flex;
+    justify-content:center;
     align-items: center;
     gap: 0.5rem;
   }

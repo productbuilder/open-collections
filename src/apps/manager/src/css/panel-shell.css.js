@@ -65,7 +65,7 @@ export const panelShellStyles = `
   }
 
   .toolbar {
-    padding: 0 0 0.65rem;
+    <!-- padding: 0 0 0.65rem; -->
   }
 
   .body {
@@ -94,7 +94,7 @@ export const panelShellStyles = `
     }
 
     .toolbar {
-      padding-bottom: 0.5rem;
+      <!-- padding-bottom: 0.5rem; -->
     }
 
     .panel-subtext {

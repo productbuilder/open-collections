@@ -1,5 +1,7 @@
 const DOCS_NAV_ITEMS = [
 	{ href: './', label: 'Overview' },
+	{ href: './open-collections-desktop-getting-started.html', label: 'Desktop getting started' },
+	{ href: './open-collections-desktop-v0.1.0-release-notes.html', label: 'Desktop v0.1.0 release notes' },
 	{ href: './get-started.html', label: 'Get started' },
 	{ href: './open-collections-protocol.html', label: 'Protocol' },
 	{ href: './optional-collection-access-capabilities.html', label: 'Optional capabilities' },

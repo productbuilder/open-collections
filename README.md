@@ -33,7 +33,13 @@ Open Collections now contains two focused applications in one repository:
 
 ## Run locally
 
-Serve repository root as static files:
+Install workspace dependencies once from the repository root:
+
+```bash
+pnpm install
+```
+
+Serve repository root as static files for the browser-first apps:
 
 ```bash
 python -m http.server 8080
@@ -67,6 +73,7 @@ src/
     provider-gdrive/
     provider-local/
     provider-public-url/
+    provider-s3/
 
 site/
   demo/
@@ -93,3 +100,7 @@ index.html
 
 - Desktop workbench shell (Tauri) is available under `src/desktop/workbench` and can launch Collector or Configurator from one native window.
 - Shared browser/desktop file APIs are centralized in `src/shared/platform` to avoid direct Tauri API calls in app components.
+
+## Workspace
+
+This repository now uses a single `pnpm` workspace rooted at the repo root. Workspace packages stay in their existing directories under `src/apps`, `src/packages`, `src/library`, `src/shared`, and `src/desktop` so the current product layout and relative-import runtime behavior remain unchanged.

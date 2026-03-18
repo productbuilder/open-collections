@@ -6,5 +6,8 @@
   "description": "TimeMap Browser application (read-only collection browsing).",
   "scripts": {
     "start": "echo \"Serve repo root and open /src/apps/browser/\""
+  },
+  "dependencies": {
+    "@timemap/library-core": "workspace:*"
   }
 }

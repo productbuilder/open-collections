@@ -6,5 +6,12 @@
   "description": "Open Collections Manager application (edit, publish, register placeholder).",
   "scripts": {
     "start": "echo \"Serve repo root and open /src/apps/manager/\""
+  },
+  "dependencies": {
+    "@timemap/collector-schema": "workspace:*",
+    "@timemap/provider-github": "workspace:*",
+    "@timemap/provider-local": "workspace:*",
+    "@timemap/provider-s3": "workspace:*",
+    "@timemap/shared-platform": "workspace:*"
   }
 }

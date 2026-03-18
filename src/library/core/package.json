@@ -3,5 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Minimal shared core utilities for TimeMap apps."
+  "description": "Minimal shared core utilities for TimeMap apps.",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  }
 }

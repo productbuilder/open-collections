@@ -1,0 +1,6 @@
+packages:
+  - src/apps/*
+  - src/desktop/workbench
+  - src/library/core
+  - src/packages/*
+  - src/shared/platform

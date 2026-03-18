@@ -11,5 +11,10 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"
+  },
+  "description": "Tauri desktop shell that hosts the Open Collections web apps.",
+  "dependencies": {
+    "@timemap/browser-app": "workspace:*",
+    "@timemap/manager-app": "workspace:*"
   }
 }

@@ -1,6 +1,6 @@
 # Example Test Collection
 
-This folder contains an MVP dataset for TimeMap Collector.
+This folder contains an MVP dataset for Open Collections Manager.
 
 ## Contents
 
@@ -11,7 +11,7 @@ This folder contains an MVP dataset for TimeMap Collector.
 - exercise card/grid browsing in the Collector UI
 - test mixed metadata completeness
 - test mixed rights/license values
-- validate manifest export and TimeMap handoff shape
+- validate manifest export and Open Collections handoff shape
 
 ## Notes
 

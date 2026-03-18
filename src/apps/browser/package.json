@@ -1,13 +1,13 @@
 {
-  "name": "@timemap/browser-app",
+  "name": "@open-collections/browser-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "TimeMap Browser application (read-only collection browsing).",
+  "description": "Open Collections Browser application (read-only collection browsing).",
   "scripts": {
     "start": "echo \"Serve repo root and open /src/apps/browser/\""
   },
   "dependencies": {
-    "@timemap/library-core": "workspace:*"
+    "@open-collections/library-core": "workspace:*"
   }
 }

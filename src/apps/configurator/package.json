@@ -1,5 +1,5 @@
 {
-  "name": "@timemap/configurator-app",
+  "name": "@open-collections/configurator-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,6 +8,6 @@
     "start": "echo \"Serve repo root and open /src/apps/configurator/\""
   },
   "dependencies": {
-    "@timemap/shared-platform": "workspace:*"
+    "@open-collections/shared-platform": "workspace:*"
   }
 }

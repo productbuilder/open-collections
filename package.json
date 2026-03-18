@@ -6,12 +6,12 @@
   "scripts": {
     "build": "pnpm desktop:stage",
     "dev": "pnpm desktop:dev",
-    "desktop:dev": "pnpm --filter @timemap/workbench-desktop tauri:dev",
-    "desktop:build": "pnpm --filter @timemap/workbench-desktop tauri:build",
-    "desktop:info": "pnpm --filter @timemap/workbench-desktop tauri:info",
-    "desktop:stage": "pnpm --filter @timemap/workbench-desktop stage:frontend",
-    "manager:start": "pnpm --filter @timemap/manager-app start",
-    "browser:start": "pnpm --filter @timemap/browser-app start",
-    "configurator:start": "pnpm --filter @timemap/configurator-app start"
+    "desktop:dev": "pnpm --filter @open-collections/workbench-desktop tauri:dev",
+    "desktop:build": "pnpm --filter @open-collections/workbench-desktop tauri:build",
+    "desktop:info": "pnpm --filter @open-collections/workbench-desktop tauri:info",
+    "desktop:stage": "pnpm --filter @open-collections/workbench-desktop stage:frontend",
+    "manager:start": "pnpm --filter @open-collections/manager-app start",
+    "browser:start": "pnpm --filter @open-collections/browser-app start",
+    "configurator:start": "pnpm --filter @open-collections/configurator-app start"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@timemap/provider-core",
+  "name": "@open-collections/provider-core",
   "private": true,
   "version": "0.1.0",
   "type": "module",

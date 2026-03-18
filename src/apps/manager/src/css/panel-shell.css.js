@@ -1,6 +1,7 @@
 export const panelShellStyles = `
   :host {
     display: block;
+    height: 100%;
     min-height: 0;
   }
 
@@ -10,7 +11,7 @@ export const panelShellStyles = `
 
   .panel-shell {
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -65,18 +66,18 @@ export const panelShellStyles = `
   }
 
   .toolbar {
-    <!-- padding: 0 0 0.65rem; -->
+    padding: 0 0 0.65rem;
   }
 
   .body {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr);
+    display: block;
     min-height: 0;
     overflow: hidden;
   }
 
   .body > slot {
     display: block;
+    height: 100%;
     min-height: 0;
   }
 
@@ -94,7 +95,7 @@ export const panelShellStyles = `
     }
 
     .toolbar {
-      <!-- padding-bottom: 0.5rem; -->
+      padding-bottom: 0.5rem;
     }
 
     .panel-subtext {

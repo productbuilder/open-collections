@@ -40,12 +40,9 @@ class OpenPanelShellElement extends HTMLElement {
             <h2 class="panel-title">${title}</h2>
             <p class="panel-subtext">${subtitle}</p>
           </div>
-          <div class="header-actions">
-            <div class="toolbar"><slot name="toolbar"></slot></div>
-            <div class="header-actions"><slot name="header-actions"></slot></div>
-          </div>
+          <div class="header-actions"><slot name="header-actions"></slot></div>
         </header>
-        
+        <div class="toolbar"><slot name="toolbar"></slot></div>
         <div class="body"><slot></slot></div>
       </section>
     `;

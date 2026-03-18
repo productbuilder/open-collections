@@ -1,7 +1,9 @@
 export const browserStyles = `
   :host {
     display: block;
+    height: 100%;
     min-height: 0;
+    overflow: hidden;
     padding: 0.95rem;
   }
 
@@ -11,7 +13,8 @@ export const browserStyles = `
 
   .viewport-panel {
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    height: 100%;
     min-height: 0;
     overflow: hidden;
     background: transparent;
@@ -84,13 +87,15 @@ export const browserStyles = `
     display: block;
     height: 100%;
     padding: 0;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
     position: relative;
+    overscroll-behavior: contain;
   }
 
   #browserHost {
-    min-height: 0;
+    min-height: 100%;
   }
 
   .drop-overlay {

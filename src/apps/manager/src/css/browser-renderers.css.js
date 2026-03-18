@@ -12,6 +12,7 @@ export const browserRendererStyles = `
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     grid-auto-rows: 1fr;
     align-items: stretch;
+    align-content: start;
     gap: 0.7rem;
   }
 
@@ -44,6 +45,8 @@ export const browserRendererStyles = `
   .thumb-frame {
     width: 100%;
     height: 125px;
+    display: block;
+    flex-shrink: 0;
     border-radius: 7px;
     border: 1px solid #dbe3ec;
     overflow: hidden;
@@ -76,6 +79,12 @@ export const browserRendererStyles = `
     margin: 0;
     font-size: 0.88rem;
     font-weight: 700;
+    line-height: 1.2;
+    min-height: 2.1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .badge-row {
@@ -182,7 +191,6 @@ export const browserRendererStyles = `
       gap: 0.55rem;
     }
 
-    .thumb,
     .thumb-frame {
       height: 108px;
     }

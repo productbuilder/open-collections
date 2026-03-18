@@ -250,6 +250,36 @@ class OpenCollectionsManagerElement extends HTMLElement {
     dialog.removeAttribute('open');
   }
 
+  setProviderDialogHeader(title = 'Add host') {
+    const normalizedTitle = String(title || '').trim() || 'Add host';
+    if (this.dom?.providerDialog) {
+      this.dom.providerDialog.setAttribute('aria-label', normalizedTitle);
+      const heading = this.dom.providerDialog.querySelector('.dialog-title');
+      if (heading) {
+        heading.textContent = normalizedTitle;
+      }
+    }
+  }
+
+  openAddHostDialog() {
+    this.clearPendingSourceRepair();
+    this.dom.sourceManager?.resetFlow?.();
+    this.setProviderDialogHeader('Add host');
+    this.openDialog(this.dom.providerDialog);
+  }
+
+  openCredentialRepairDialog(sourceId) {
+    const source = this.prepareSourceRepair(sourceId, 'credentials');
+    if (!source || !['github', 's3'].includes(source.providerId)) {
+      return;
+    }
+    const providerLabel = source.providerLabel || (source.providerId === 'github' ? 'GitHub' : 'S3-compatible');
+    this.inspectSource(source.id);
+    this.dom.sourceManager?.openRepairCredentials?.(source.providerId);
+    this.setProviderDialogHeader(`Update ${providerLabel} credentials`);
+    this.openDialog(this.dom.providerDialog);
+  }
+
   isMobileViewport() {
     return typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
   }
@@ -657,13 +687,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
     try {
       const handle = await pickLocalHostDirectory();
       const folderName = (handle?.name || '').trim() || 'Selected folder';
+      const folderPath = String(handle?.path || '').trim();
       this.selectedLocalDirectoryHandle = handle || null;
       this.dom.sourceManager?.setConfigValues({
         localFolderName: folderName,
-        localPathInput: folderName,
+        localPathInput: folderPath || folderName,
       });
-      this.dom.sourceManager?.setLocalFolderStatus(`Selected folder: ${folderName}`, 'ok');
-      this.setStatus(`Selected local folder: ${folderName}`, 'ok');
+      this.dom.sourceManager?.setLocalFolderStatus(`Selected folder: ${folderPath || folderName}`, 'ok');
+      this.setStatus(`Selected local folder: ${folderPath || folderName}`, 'ok');
       return true;
     } catch (error) {
       if (error?.name === 'AbortError') {
@@ -1000,9 +1031,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         credsBtn.type = 'button';
         credsBtn.textContent = 'Update credentials';
         credsBtn.addEventListener('click', () => {
-          this.prepareSourceRepair(source.id, 'credentials');
-          this.inspectSource(source.id);
-          this.openDialog(this.dom.providerDialog);
+          this.openCredentialRepairDialog(source.id);
         });
         actions.append(credsBtn);
       } else if (source.needsReconnect) {

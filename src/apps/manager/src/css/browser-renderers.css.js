@@ -10,6 +10,8 @@ export const browserRendererStyles = `
   .asset-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
     gap: 0.7rem;
   }
 
@@ -19,7 +21,10 @@ export const browserRendererStyles = `
     padding: 0.55rem;
     background: #ffffff;
     display: grid;
+    grid-template-rows: auto minmax(2.4rem, auto) auto auto;
+    align-content: start;
     gap: 0.5rem;
+    height: 100%;
     cursor: pointer;
     transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
   }
@@ -36,19 +41,29 @@ export const browserRendererStyles = `
     background: #f5faff;
   }
 
-  .thumb {
+  .thumb-frame {
     width: 100%;
     height: 125px;
-    object-fit: cover;
     border-radius: 7px;
     border: 1px solid #dbe3ec;
+    overflow: hidden;
     background: #eef2f7;
+  }
+
+  .thumb {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
   .thumb-placeholder {
     width: 100%;
-    height: 125px;
-    border-radius: 7px;
+    height: 100%;
+    border-radius: 0;
     border: 1px dashed #cbd5e1;
     display: grid;
     place-items: center;
@@ -168,7 +183,7 @@ export const browserRendererStyles = `
     }
 
     .thumb,
-    .thumb-placeholder {
+    .thumb-frame {
       height: 108px;
     }
 

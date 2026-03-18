@@ -11,6 +11,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       selectedProviderId: 'example',
       addHostLevel: 'root',
       remoteSubtype: '',
+      flowMode: 'add',
+      repairProviderId: '',
       capabilities: {},
       connectionStatusText: 'Not connected.',
       connectionStatusTone: 'neutral',
@@ -71,6 +73,10 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     });
 
     this.shadowRoot.getElementById('remoteBackBtn')?.addEventListener('click', () => {
+      if (this.model.flowMode === 'repair') {
+        this.resetFlow();
+        return;
+      }
       if (this.model.addHostLevel === 'remote-config' && ['git', 's3', 'domain'].includes(this.model.remoteSubtype)) {
         this.model.addHostLevel = 'remote-providers';
       } else {
@@ -268,6 +274,8 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   openRemoteSubtype(remoteSubtype) {
+    this.model.flowMode = 'add';
+    this.model.repairProviderId = '';
     this.model.remoteSubtype = remoteSubtype;
     if (remoteSubtype === 'git' || remoteSubtype === 's3') {
       this.model.addHostLevel = 'remote-providers';
@@ -283,9 +291,35 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     if (!providerId) {
       return;
     }
+    this.model.flowMode = 'add';
+    this.model.repairProviderId = '';
     this.model.selectedProviderId = providerId;
+    this.model.remoteSubtype = providerId === 'github' ? 'git' : providerId === 's3' ? 's3' : this.model.remoteSubtype;
     this.model.addHostLevel = 'remote-config';
     this.dispatch('select-provider', { providerId });
+    this.renderRemoteFlow();
+    this.renderProviderVisibility();
+  }
+
+  openRepairCredentials(providerId) {
+    if (!providerId || !['github', 's3'].includes(providerId)) {
+      return;
+    }
+    this.model.flowMode = 'repair';
+    this.model.repairProviderId = providerId;
+    this.model.selectedProviderId = providerId;
+    this.model.remoteSubtype = providerId === 'github' ? 'git' : 's3';
+    this.model.addHostLevel = 'remote-config';
+    this.dispatch('select-provider', { providerId });
+    this.renderRemoteFlow();
+    this.renderProviderVisibility();
+  }
+
+  resetFlow() {
+    this.model.flowMode = 'add';
+    this.model.repairProviderId = '';
+    this.model.addHostLevel = 'root';
+    this.model.remoteSubtype = '';
     this.renderRemoteFlow();
     this.renderProviderVisibility();
   }
@@ -293,9 +327,12 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   renderProviderVisibility() {
     const selected = this.providerById(this.model.selectedProviderId);
     const providerLabel = selected?.label || this.model.selectedProviderId || 'Remote host';
+    const isRepairFlow = this.model.flowMode === 'repair' && this.model.repairProviderId === this.model.selectedProviderId;
     const providerConfigTitle = this.shadowRoot?.getElementById('providerConfigTitle');
     if (providerConfigTitle) {
-      providerConfigTitle.textContent = `${providerLabel} configuration`;
+      providerConfigTitle.textContent = isRepairFlow
+        ? `Update ${providerLabel} credentials`
+        : `${providerLabel} configuration`;
     }
 
     const sections = {
@@ -327,6 +364,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
 
     if (connectBtn) {
+      connectBtn.textContent = isRepairFlow ? 'Reconnect host' : 'Add host';
       connectBtn.disabled = selected?.enabled === false || !['github', 's3'].includes(this.model.selectedProviderId);
     }
   }
@@ -342,7 +380,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       return;
     }
 
-    const inRoot = this.model.addHostLevel === 'root';
+    const inRoot = this.model.addHostLevel === 'root' && this.model.flowMode !== 'repair';
     rootActions.classList.toggle('is-hidden', !inRoot);
     remoteFlow.classList.toggle('is-hidden', inRoot);
     backBtn.classList.toggle('is-hidden', inRoot);

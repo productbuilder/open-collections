@@ -31,12 +31,12 @@ class OpenItemCardGridElement extends HTMLElement {
     const url = resolveItemPreviewUrl(item);
 
     if (!url) {
-      return '<div class="thumb-placeholder">No preview</div>';
+      return '<div class="thumb-frame"><div class="thumb-placeholder">No preview</div></div>';
     }
     if (mediaType.includes('video')) {
-      return `<video class="thumb" src="${url}" muted playsinline preload="metadata"></video>`;
+      return `<div class="thumb-frame"><video class="thumb" src="${url}" muted playsinline preload="metadata"></video></div>`;
     }
-    return `<img class="thumb" src="${url}" alt="${item.title || item.id}" />`;
+    return `<div class="thumb-frame"><img class="thumb" src="${url}" alt="${item.title || item.id}" /></div>`;
   }
 
   render() {

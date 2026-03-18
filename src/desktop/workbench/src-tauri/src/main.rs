@@ -90,13 +90,28 @@ fn platform_read_text_file(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn platform_read_binary_file(path: String) -> Result<Vec<u8>, String> {
+    fs::read(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn platform_write_text_file(path: String, text: String) -> Result<(), String> {
     fs::write(path, text).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
+fn platform_write_binary_file(path: String, bytes: Vec<u8>) -> Result<(), String> {
+    fs::write(path, bytes).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn platform_join_path(base: String, name: String) -> Result<String, String> {
     Ok(Path::new(&base).join(name).to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+fn platform_create_directory(path: String) -> Result<(), String> {
+    fs::create_dir_all(path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -194,8 +209,11 @@ fn main() {
             platform_save_text_file,
             platform_open_directory,
             platform_read_text_file,
+            platform_read_binary_file,
             platform_write_text_file,
+            platform_write_binary_file,
             platform_join_path,
+            platform_create_directory,
             platform_file_exists,
             platform_directory_exists,
             platform_read_directory,

@@ -16,6 +16,22 @@ npm run tauri:dev
 The Tauri window opens Manager by default. Use the shell bar to switch between Manager and Browser.
 The shell is full-window and embeds the selected app directly (no launcher screen).
 
+## Windows release artifacts
+
+```bash
+cd src/desktop/workbench
+npm run tauri:build
+```
+
+Build output is written under `src/desktop/workbench/src-tauri/target/release/bundle/`.
+
+Recommended distribution artifacts:
+
+- `nsis/Open Collections Workbench_0.1.0_x64-setup.exe` (primary installer for preview users)
+- `msi/Open Collections Workbench_0.1.0_x64_en-US.msi` (alternative enterprise-friendly installer)
+
+The raw binary `target/release/open-collections-workbench.exe` is mainly a direct run/debug artifact, not the preferred install package.
+
 ## Architecture notes
 
 - The desktop shell UI lives in `src/desktop/workbench`.

@@ -70,9 +70,14 @@ export const panelShellStyles = `
 
   .body {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
+  }
+
+  .body > slot {
+    display: block;
+    min-height: 0;
   }
 
   .is-hidden {

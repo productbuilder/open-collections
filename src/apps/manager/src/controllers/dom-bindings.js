@@ -110,9 +110,7 @@ export function bindDomEvents(app) {
     if (!sourceId) {
       return;
     }
-    app.prepareSourceRepair(sourceId, 'credentials');
-    app.inspectSource(sourceId);
-    app.openDialog(app.dom.providerDialog);
+    app.openCredentialRepairDialog(sourceId);
   });
   app.dom.sourceManager.addEventListener('repair-source-folder', async (event) => {
     const sourceId = event.detail?.sourceId || '';
@@ -157,8 +155,7 @@ export function bindDomEvents(app) {
     await app.pickLocalFolder();
   });
   app.dom.openAddHostFromHostBtn.addEventListener('click', () => {
-    app.clearPendingSourceRepair();
-    app.openDialog(app.dom.providerDialog);
+    app.openAddHostDialog();
   });
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {
     app.closeDialog(app.dom.headerMenuDialog);

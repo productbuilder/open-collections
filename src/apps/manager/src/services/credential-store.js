@@ -6,7 +6,57 @@ const CREDENTIAL_NAMESPACES = {
 };
 
 function sourceAccountId(source = {}) {
-  return `${source.providerId || 'unknown'}::${source.id || ''}`;
+  const sourceId = String(source.id || '').trim();
+  if (!sourceId) {
+    return '';
+  }
+  return `${source.providerId || 'unknown'}::${sourceId}`;
+}
+
+function normalizeSegment(value) {
+  return String(value || '').trim();
+}
+
+function githubStableAccount(config = {}) {
+  const owner = normalizeSegment(config.owner).toLowerCase();
+  const repo = normalizeSegment(config.repo).toLowerCase();
+  const branch = normalizeSegment(config.branch || 'main') || 'main';
+  const path = normalizeSegment(config.path || '/');
+  if (!owner || !repo) {
+    return '';
+  }
+  return `github::${owner}/${repo}@${branch}:${path}`;
+}
+
+function s3StableAccount(config = {}) {
+  const endpoint = normalizeSegment(config.endpoint).toLowerCase();
+  const bucket = normalizeSegment(config.bucket).toLowerCase();
+  const region = normalizeSegment(config.region).toLowerCase();
+  const basePath = normalizeSegment(config.basePath);
+  if (!endpoint || !bucket) {
+    return '';
+  }
+  return `s3::${endpoint}/${bucket}:${region}:${basePath}`;
+}
+
+function credentialAccountsFor(source = {}, config = {}) {
+  const accounts = [];
+  if (source?.providerId === 'github') {
+    const stable = githubStableAccount(config);
+    if (stable) {
+      accounts.push(stable);
+    }
+  } else if (source?.providerId === 's3') {
+    const stable = s3StableAccount(config);
+    if (stable) {
+      accounts.push(stable);
+    }
+  }
+  const legacy = sourceAccountId(source);
+  if (legacy && !accounts.includes(legacy)) {
+    accounts.push(legacy);
+  }
+  return accounts.filter(Boolean);
 }
 
 function secretPayloadFor(source, config = {}) {
@@ -45,6 +95,22 @@ function mergeSecretPayload(source, config = {}, payload = null) {
   return { ...config };
 }
 
+function decodeGithubSecret(stored) {
+  const raw = String(stored || '').trim();
+  if (!raw) {
+    return '';
+  }
+  if (raw.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(raw);
+      return String(parsed?.token || '').trim();
+    } catch (_error) {
+      return '';
+    }
+  }
+  return raw;
+}
+
 export function createCredentialStore() {
   const platform = getPlatform();
 
@@ -56,18 +122,20 @@ export function createCredentialStore() {
       }
 
       const payload = secretPayloadFor(source, config);
-      const account = sourceAccountId(source);
-      if (!account || !payload) {
+      const accounts = credentialAccountsFor(source, config);
+      if (accounts.length === 0 || !payload) {
         return;
       }
 
       const hasSecret = Object.values(payload).some((value) => String(value || '').trim());
       if (!hasSecret) {
-        await platform.deleteCredential({ namespace, account });
+        await Promise.all(accounts.map((account) => platform.deleteCredential({ namespace, account }).catch(() => {})));
         return;
       }
-
-      await platform.setCredential({ namespace, account, secret: JSON.stringify(payload) });
+      const secret = source?.providerId === 'github'
+        ? String(payload.token || '')
+        : JSON.stringify(payload);
+      await Promise.all(accounts.map((account) => platform.setCredential({ namespace, account, secret })));
     },
 
     async loadSourceSecret(source, config = {}) {
@@ -76,17 +144,26 @@ export function createCredentialStore() {
         return { ...config };
       }
 
-      const account = sourceAccountId(source);
-      const stored = account
-        ? await platform.getCredential({ namespace, account })
-        : null;
+      const accounts = credentialAccountsFor(source, config);
+      let stored = null;
+      for (const account of accounts) {
+        try {
+          stored = await platform.getCredential({ namespace, account });
+        } catch (error) {
+          console.warn(`Credential lookup failed for ${source?.providerId || 'source'} account "${account}": ${error.message}`);
+          stored = null;
+        }
+        if (stored) {
+          break;
+        }
+      }
 
       if (!stored) {
         return mergeSecretPayload(source, config, null);
       }
 
       if (source?.providerId === 'github') {
-        return mergeSecretPayload(source, config, { token: stored });
+        return mergeSecretPayload(source, config, { token: decodeGithubSecret(stored) });
       }
 
       try {
@@ -101,11 +178,11 @@ export function createCredentialStore() {
       if (!namespace) {
         return;
       }
-      const account = sourceAccountId(source);
-      if (!account) {
+      const accounts = credentialAccountsFor(source, source?.config || {});
+      if (accounts.length === 0) {
         return;
       }
-      await platform.deleteCredential({ namespace, account });
+      await Promise.all(accounts.map((account) => platform.deleteCredential({ namespace, account }).catch(() => {})));
     },
   };
 }

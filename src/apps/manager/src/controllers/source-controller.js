@@ -1,6 +1,27 @@
 import { MANAGER_CONFIG } from '../config.js';
 import { makeSourceId } from '../utils/id-utils.js';
 
+function localDirectoryPathFromHandle(handle) {
+  const path = typeof handle?.path === 'string' ? handle.path.trim() : '';
+  return path || '';
+}
+
+function serializeLocalDirectoryHandle(handle) {
+  if (!handle || handle.kind !== 'directory') {
+    return null;
+  }
+  const path = localDirectoryPathFromHandle(handle);
+  if (!path) {
+    return null;
+  }
+  const fallbackName = path.split(/[\\/]/).filter(Boolean).pop() || '';
+  return {
+    kind: 'directory',
+    path,
+    name: String(handle.name || fallbackName).trim() || fallbackName,
+  };
+}
+
 export function setSelectedProvider(app, providerId) {
   const selected = app.providerCatalog.find((entry) => entry.id === providerId);
   if (!selected) {
@@ -16,11 +37,22 @@ export function collectCurrentProviderConfig(app, providerId) {
   const config = app.dom.sourceManager?.getProviderConfig(providerId) || {};
   if (providerId === 'local') {
     config.localDirectoryName = (config.localDirectoryName || '').trim();
+    const selectedHandle =
+      app.selectedLocalDirectoryHandle && app.selectedLocalDirectoryHandle.kind === 'directory'
+        ? app.selectedLocalDirectoryHandle
+        : null;
+    if (selectedHandle) {
+      config.localDirectoryHandle = selectedHandle;
+      const handlePath = localDirectoryPathFromHandle(selectedHandle);
+      if (handlePath) {
+        config.path = handlePath;
+      }
+      if (!config.localDirectoryName) {
+        config.localDirectoryName = String(selectedHandle.name || '').trim();
+      }
+    }
     config.path = (config.path || '').trim()
       || (config.localDirectoryName ? config.localDirectoryName : MANAGER_CONFIG.defaultLocalManifestPath);
-    if (app.selectedLocalDirectoryHandle && app.selectedLocalDirectoryHandle.kind === 'directory') {
-      config.localDirectoryHandle = app.selectedLocalDirectoryHandle;
-    }
   }
 
   if (providerId === 's3') {
@@ -131,9 +163,13 @@ export function sanitizeSourceConfig(app, providerId, config = {}) {
   }
 
   if (providerId === 'local') {
+    const serializedHandle = serializeLocalDirectoryHandle(config.localDirectoryHandle);
+    const localDirectoryPath = (config.localDirectoryPath || serializedHandle?.path || '').trim();
     return {
       path: (config.path || '').trim() || MANAGER_CONFIG.defaultLocalManifestPath,
       localDirectoryName: (config.localDirectoryName || '').trim(),
+      ...(serializedHandle ? { localDirectoryHandle: serializedHandle } : {}),
+      ...(localDirectoryPath ? { localDirectoryPath } : {}),
     };
   }
 
@@ -457,6 +493,9 @@ export async function refreshSource(app, sourceId, options = {}) {
         : defaultCollectionId;
 
     app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? updatedSource : entry));
+    if (source.providerId === 'local' && refreshedConfig.localDirectoryHandle?.kind === 'directory') {
+      app.selectedLocalDirectoryHandle = refreshedConfig.localDirectoryHandle;
+    }
     app.mergeSourceAssets(sourceId, normalizedWithCollections);
     if (source.providerId === 'local') {
       await app.hydrateLocalSourceAssetPreviews(sourceId);

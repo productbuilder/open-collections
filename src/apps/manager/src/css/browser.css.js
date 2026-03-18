@@ -81,10 +81,16 @@ export const browserStyles = `
   }
 
   .asset-wrap {
+    display: block;
+    height: 100%;
     padding: 0;
     overflow: auto;
     min-height: 0;
     position: relative;
+  }
+
+  #browserHost {
+    min-height: 0;
   }
 
   .drop-overlay {

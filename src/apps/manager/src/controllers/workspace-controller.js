@@ -1,5 +1,6 @@
 import * as DraftService from '../services/draft-service.js';
 import { makeSourceId } from '../utils/id-utils.js';
+import { getPlatformType, PLATFORM_TYPES, revivePlatformHandle } from '../../../../shared/platform/index.js';
 
 const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
@@ -173,6 +174,8 @@ export function saveSourcesToStorage(app) {
 }
 
 export async function restoreRememberedSources(app) {
+  const isTauriDesktop = getPlatformType() === PLATFORM_TYPES.TAURI;
+  const isFilesystemLikePath = (value) => /^[a-z]:[\\/]/i.test(value) || value.startsWith('\\\\') || value.includes('\\');
   let remembered = [];
 
   if (app.state.opfsAvailable) {
@@ -219,6 +222,34 @@ export async function restoreRememberedSources(app) {
       needsCredentials: false,
       lastPublishResult: entry.lastPublishResult || null,
     };
+    if (source.providerId === 'local') {
+      const rawHandle =
+        entry.config?.localDirectoryHandle && typeof entry.config.localDirectoryHandle === 'object'
+          ? entry.config.localDirectoryHandle
+          : null;
+      const configuredPath = String(entry.config?.path || '').trim();
+      const fallbackPath = String(entry.config?.localDirectoryPath || (isFilesystemLikePath(configuredPath) ? configuredPath : '')).trim();
+      const fallbackName = String(entry.config?.localDirectoryName || '').trim();
+      const revived = revivePlatformHandle(
+        rawHandle
+          || (fallbackPath
+            ? {
+                kind: 'directory',
+                path: fallbackPath,
+                name: fallbackName,
+              }
+            : null),
+      );
+      if (revived?.kind === 'directory') {
+        source.config = {
+          ...source.config,
+          localDirectoryHandle: revived,
+          localDirectoryPath: String(revived.path || fallbackPath).trim() || fallbackPath,
+          localDirectoryName: source.config?.localDirectoryName || String(revived.name || fallbackName).trim(),
+          path: source.config?.path || String(revived.path || fallbackPath).trim(),
+        };
+      }
+    }
 
     const identity = app.sourceIdentityKey(source);
     if (seen.has(identity)) {
@@ -242,6 +273,10 @@ export async function restoreRememberedSources(app) {
       source.status = source.needsCredentials
         ? 'Remembered S3-compatible host. Credentials were not found in secure storage; reconnect required.'
         : 'Remembered S3-compatible host. Credentials restored from secure storage.';
+    } else if (source.providerId === 'local' && source.config?.localDirectoryHandle) {
+      source.status = isTauriDesktop
+        ? 'Remembered local host. Restoring folder access from desktop workspace state.'
+        : 'Remembered local host. Attempting reconnect with stored folder handle.';
     } else if (source.providerId === 'local' && source.config?.localDirectoryName) {
       source.status = 'Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.';
     }
@@ -258,6 +293,8 @@ export async function restoreRememberedSources(app) {
   }
 
   app.state.sources = restored;
+  const firstLocalHandle = restored.find((source) => source.providerId === 'local' && source.config?.localDirectoryHandle)?.config?.localDirectoryHandle || null;
+  app.selectedLocalDirectoryHandle = firstLocalHandle;
   app.state.assets = [];
   app.state.selectedItemId = null;
   app.state.activeSourceFilter = restored.some((source) => source.id === desiredActiveSourceId)
@@ -277,13 +314,14 @@ export async function restoreRememberedSources(app) {
   app.renderEditor();
 
   for (const source of restored) {
-    if (
-      source.providerId !== 'github' &&
-      source.providerId !== 's3' &&
-      !(source.providerId === 'local' && source.config?.localDirectoryName)
-    ) {
-      await app.refreshSource(source.id);
+    const shouldAutoRefresh =
+      source.providerId === 'local'
+        ? Boolean(source.config?.localDirectoryHandle)
+        : source.providerId !== 'github' && source.providerId !== 's3';
+    if (!shouldAutoRefresh) {
+      continue;
     }
+    await app.refreshSource(source.id);
   }
 }
 

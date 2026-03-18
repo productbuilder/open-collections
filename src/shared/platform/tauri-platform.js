@@ -15,6 +15,28 @@ async function invoke(command, args = {}) {
   return fn(command, args);
 }
 
+function createFsError(name, message) {
+  const error = new Error(message);
+  error.name = name;
+  return error;
+}
+
+function toByteArray(value) {
+  if (value == null) {
+    return [];
+  }
+  if (typeof value === 'string') {
+    return null;
+  }
+  if (value instanceof ArrayBuffer) {
+    return Array.from(new Uint8Array(value));
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Array.from(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+  }
+  return null;
+}
+
 class TauriFileHandle {
   constructor(path) {
     this.kind = 'file';
@@ -23,20 +45,29 @@ class TauriFileHandle {
   }
 
   async getFile() {
-    const text = await invoke('platform_read_text_file', { path: this.path });
-    return {
-      name: this.name,
-      async text() {
-        return text;
-      },
-    };
+    const bytes = await invoke('platform_read_binary_file', { path: this.path });
+    const payload = Uint8Array.from(Array.isArray(bytes) ? bytes : []);
+    if (typeof File === 'function') {
+      return new File([payload], this.name || 'file');
+    }
+    return new Blob([payload]);
   }
 
   async createWritable() {
     const path = this.path;
     return {
-      async write(text) {
-        await invoke('platform_write_text_file', { path, text: String(text ?? '') });
+      async write(value) {
+        if (value instanceof Blob) {
+          const bytes = Array.from(new Uint8Array(await value.arrayBuffer()));
+          await invoke('platform_write_binary_file', { path, bytes });
+          return;
+        }
+        const bytes = toByteArray(value);
+        if (bytes) {
+          await invoke('platform_write_binary_file', { path, bytes });
+          return;
+        }
+        await invoke('platform_write_text_file', { path, text: String(value ?? '') });
       },
       async close() {},
     };
@@ -50,20 +81,28 @@ class TauriDirectoryHandle {
     this.name = this.path.split(/[/\\]/).pop() || this.path;
   }
 
-  async getDirectoryHandle(name) {
+  async getDirectoryHandle(name, options = {}) {
     const nextPath = await invoke('platform_join_path', { base: this.path, name });
     const exists = await invoke('platform_directory_exists', { path: nextPath });
+    if (!exists && options?.create) {
+      await invoke('platform_create_directory', { path: nextPath });
+      return new TauriDirectoryHandle(nextPath);
+    }
     if (!exists) {
-      throw new Error(`Directory not found: ${name}`);
+      throw createFsError('NotFoundError', `Directory not found: ${name}`);
     }
     return new TauriDirectoryHandle(nextPath);
   }
 
-  async getFileHandle(name) {
+  async getFileHandle(name, options = {}) {
     const nextPath = await invoke('platform_join_path', { base: this.path, name });
     const exists = await invoke('platform_file_exists', { path: nextPath });
+    if (!exists && options?.create) {
+      await invoke('platform_write_binary_file', { path: nextPath, bytes: [] });
+      return new TauriFileHandle(nextPath);
+    }
     if (!exists) {
-      throw new Error(`File not found: ${name}`);
+      throw createFsError('NotFoundError', `File not found: ${name}`);
     }
     return new TauriFileHandle(nextPath);
   }

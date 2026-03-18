@@ -9,8 +9,12 @@
       "cwd": "..",
       "wait": false
     },
+    "beforeBuildCommand": {
+      "script": "node ./scripts/stage-frontend.mjs",
+      "cwd": ".."
+    },
     "devUrl": "http://127.0.0.1:1420/src/desktop/workbench/index.html",
-    "frontendDist": "../../.."
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [

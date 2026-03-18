@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "stage:frontend": "node ./scripts/stage-frontend.mjs",
     "tauri:dev": "node ./scripts/run-tauri.mjs dev",
     "tauri:build": "node ./scripts/run-tauri.mjs build",
     "tauri:info": "node ./scripts/run-tauri.mjs info"

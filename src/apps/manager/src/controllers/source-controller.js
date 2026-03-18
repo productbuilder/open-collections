@@ -22,6 +22,40 @@ function serializeLocalDirectoryHandle(handle) {
   };
 }
 
+function summarizeCredentialConfig(providerId, config = {}) {
+  if (providerId === 'github') {
+    return {
+      owner: String(config.owner || '').trim(),
+      repo: String(config.repo || '').trim(),
+      branch: String(config.branch || '').trim() || 'main',
+      path: String(config.path || '').trim(),
+      hasToken: Boolean(String(config.token || '').trim()),
+      tokenLength: String(config.token || '').length,
+    };
+  }
+  if (providerId === 's3') {
+    return {
+      endpoint: String(config.endpoint || '').trim(),
+      bucket: String(config.bucket || '').trim(),
+      region: String(config.region || '').trim(),
+      basePath: String(config.basePath || '').trim(),
+      hasAccessKey: Boolean(String(config.accessKey || '').trim()),
+      accessKeyLength: String(config.accessKey || '').length,
+      hasSecretKey: Boolean(String(config.secretKey || '').trim()),
+      secretKeyLength: String(config.secretKey || '').length,
+    };
+  }
+  return {};
+}
+
+function logCredentialTrace(stage, payload = {}) {
+  try {
+    console.info(`[source-controller][credentials] ${stage}`, payload);
+  } catch (_error) {
+    // ignore logging failures
+  }
+}
+
 export function setSelectedProvider(app, providerId) {
   const selected = app.providerCatalog.find((entry) => entry.id === providerId);
   if (!selected) {
@@ -287,8 +321,22 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
 
     if (providerId === 'github' || providerId === 's3') {
       try {
+        logCredentialTrace('store:start', {
+          sourceId: source.id,
+          providerId,
+          summary: summarizeCredentialConfig(providerId, config),
+        });
         await app.credentialStore.storeSourceSecret(source, config);
+        logCredentialTrace('store:ok', {
+          sourceId: source.id,
+          providerId,
+        });
       } catch (error) {
+        logCredentialTrace('store:error', {
+          sourceId: source.id,
+          providerId,
+          error: error?.message || String(error),
+        });
         app.setStatus(`Connected, but secure credential storage failed: ${error.message}`, 'warn');
       }
     }
@@ -413,10 +461,30 @@ export async function refreshSource(app, sourceId, options = {}) {
     const provider = providerFactory();
     let refreshConfig = { ...(source.config || {}), ...(options.configOverrides || {}) };
     if (source.providerId === 'github' && !(refreshConfig.token || '').trim()) {
+      logCredentialTrace('refresh:load-secret:start', {
+        sourceId,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
+      });
       refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
+      logCredentialTrace('refresh:load-secret:done', {
+        sourceId,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
+      });
     }
     if (source.providerId === 's3' && (!(refreshConfig.accessKey || '').trim() || !(refreshConfig.secretKey || '').trim())) {
+      logCredentialTrace('refresh:load-secret:start', {
+        sourceId,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
+      });
       refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
+      logCredentialTrace('refresh:load-secret:done', {
+        sourceId,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
+      });
     }
     if (source.providerId === 'local') {
       const explicitHandle = options.configOverrides?.localDirectoryHandle;

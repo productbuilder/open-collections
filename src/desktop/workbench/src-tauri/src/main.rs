@@ -1,4 +1,5 @@
 use keyring::Entry;
+use keyring::credential::CredentialPersistence;
 use rfd::FileDialog;
 use serde::Serialize;
 use serde_json::Value;
@@ -18,6 +19,23 @@ struct DirEntryResult {
     path: String,
     name: String,
     kind: String,
+}
+
+fn log_keyring_event(event: &str, namespace: &str, account: &str, detail: &str) {
+    eprintln!(
+        "[tauri-keyring] {} namespace=\"{}\" account=\"{}\" {}",
+        event, namespace, account, detail
+    );
+}
+
+fn keyring_persistence_label() -> &'static str {
+    match keyring::default::default_credential_builder().persistence() {
+        CredentialPersistence::EntryOnly => "entry-only",
+        CredentialPersistence::ProcessOnly => "process-only",
+        CredentialPersistence::UntilReboot => "until-reboot",
+        CredentialPersistence::UntilDelete => "until-delete",
+        _ => "unknown",
+    }
 }
 
 fn open_file_with_filter_json(only_json: bool) -> Result<Option<OpenFileResult>, String> {
@@ -178,26 +196,116 @@ fn platform_load_workspace_state<R: tauri::Runtime>(app: tauri::AppHandle<R>) ->
 
 #[tauri::command]
 fn platform_set_credential(namespace: String, account: String, secret: String) -> Result<(), String> {
+    log_keyring_event(
+        "set:start",
+        &namespace,
+        &account,
+        &format!(
+            "secret_length={} persistence={}",
+            secret.len(),
+            keyring_persistence_label()
+        ),
+    );
     let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
-    entry.set_password(&secret).map_err(|e| e.to_string())
+    match entry.set_password(&secret) {
+        Ok(()) => {
+            log_keyring_event("set:ok", &namespace, &account, "");
+            match entry.get_password() {
+                Ok(read_back) => {
+                    if read_back == secret {
+                        log_keyring_event(
+                            "set:verify:ok",
+                            &namespace,
+                            &account,
+                            &format!("secret_length={}", read_back.len()),
+                        );
+                        Ok(())
+                    } else {
+                        log_keyring_event(
+                            "set:verify:mismatch",
+                            &namespace,
+                            &account,
+                            &format!(
+                                "expected_length={} actual_length={}",
+                                secret.len(),
+                                read_back.len()
+                            ),
+                        );
+                        Err("Credential write verification failed: read-back value did not match.".to_string())
+                    }
+                }
+                Err(error) => {
+                    log_keyring_event(
+                        "set:verify:error",
+                        &namespace,
+                        &account,
+                        &format!("error={}", error),
+                    );
+                    Err(format!(
+                        "Credential write verification failed: unable to read back saved credential ({error})"
+                    ))
+                }
+            }
+        }
+        Err(error) => {
+            log_keyring_event("set:error", &namespace, &account, &format!("error={}", error));
+            Err(error.to_string())
+        }
+    }
 }
 
 #[tauri::command]
 fn platform_get_credential(namespace: String, account: String) -> Result<Option<String>, String> {
+    log_keyring_event(
+        "get:start",
+        &namespace,
+        &account,
+        &format!("persistence={}", keyring_persistence_label()),
+    );
     let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
     match entry.get_password() {
-        Ok(secret) => Ok(Some(secret)),
-        Err(keyring::Error::NoEntry) => Ok(None),
-        Err(error) => Err(error.to_string()),
+        Ok(secret) => {
+            log_keyring_event(
+                "get:hit",
+                &namespace,
+                &account,
+                &format!("secret_length={}", secret.len()),
+            );
+            Ok(Some(secret))
+        }
+        Err(keyring::Error::NoEntry) => {
+            log_keyring_event("get:miss", &namespace, &account, "");
+            Ok(None)
+        }
+        Err(error) => {
+            log_keyring_event("get:error", &namespace, &account, &format!("error={}", error));
+            Err(error.to_string())
+        }
     }
 }
 
 #[tauri::command]
 fn platform_delete_credential(namespace: String, account: String) -> Result<(), String> {
+    log_keyring_event(
+        "delete:start",
+        &namespace,
+        &account,
+        &format!("persistence={}", keyring_persistence_label()),
+    );
     let entry = Entry::new(&namespace, &account).map_err(|e| e.to_string())?;
     match entry.delete_credential() {
-        Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(error) => Err(error.to_string()),
+        Ok(_) => {
+            log_keyring_event("delete:ok", &namespace, &account, "");
+            Ok(())
+        }
+        Err(keyring::Error::NoEntry) => {
+            log_keyring_event("delete:miss", &namespace, &account, "");
+            Ok(())
+        }
+        Err(error) => {
+            log_keyring_event("delete:error", &namespace, &account, &format!("error={}", error));
+            Err(error.to_string())
+        }
     }
 }
 

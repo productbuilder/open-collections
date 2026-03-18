@@ -15,6 +15,14 @@ async function invoke(command, args = {}) {
   return fn(command, args);
 }
 
+function logCredentialBridge(event, payload = {}) {
+  try {
+    console.info(`[tauri-platform][credentials] ${event}`, payload);
+  } catch (_error) {
+    // ignore logging failures
+  }
+}
+
 function createFsError(name, message) {
   const error = new Error(message);
   error.name = name;
@@ -203,15 +211,62 @@ export const tauriPlatform = createPlatformApi({
   },
 
   async setCredential({ namespace, account, secret }) {
-    await invoke('platform_set_credential', { namespace, account, secret: String(secret ?? '') });
+    const normalizedSecret = String(secret ?? '');
+    logCredentialBridge('set:start', {
+      namespace,
+      account,
+      secretLength: normalizedSecret.length,
+    });
+    try {
+      await invoke('platform_set_credential', { namespace, account, secret: normalizedSecret });
+      logCredentialBridge('set:ok', {
+        namespace,
+        account,
+      });
+    } catch (error) {
+      logCredentialBridge('set:error', {
+        namespace,
+        account,
+        error: error?.message || String(error),
+      });
+      throw error;
+    }
   },
 
   async getCredential({ namespace, account }) {
-    return invoke('platform_get_credential', { namespace, account });
+    logCredentialBridge('get:start', { namespace, account });
+    try {
+      const value = await invoke('platform_get_credential', { namespace, account });
+      logCredentialBridge('get:done', {
+        namespace,
+        account,
+        found: Boolean(value),
+        secretLength: value ? String(value).length : 0,
+      });
+      return value;
+    } catch (error) {
+      logCredentialBridge('get:error', {
+        namespace,
+        account,
+        error: error?.message || String(error),
+      });
+      throw error;
+    }
   },
 
   async deleteCredential({ namespace, account }) {
-    await invoke('platform_delete_credential', { namespace, account });
+    logCredentialBridge('delete:start', { namespace, account });
+    try {
+      await invoke('platform_delete_credential', { namespace, account });
+      logCredentialBridge('delete:ok', { namespace, account });
+    } catch (error) {
+      logCredentialBridge('delete:error', {
+        namespace,
+        account,
+        error: error?.message || String(error),
+      });
+      throw error;
+    }
   },
 
   reviveHandle,

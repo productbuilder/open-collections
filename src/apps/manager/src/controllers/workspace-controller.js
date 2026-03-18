@@ -5,6 +5,57 @@ import { getPlatformType, PLATFORM_TYPES, revivePlatformHandle } from '../../../
 const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
 
+function summarizeCredentialConfig(providerId, config = {}) {
+  if (providerId === 'github') {
+    return {
+      owner: String(config.owner || '').trim(),
+      repo: String(config.repo || '').trim(),
+      branch: String(config.branch || '').trim() || 'main',
+      path: String(config.path || '').trim(),
+      hasToken: Boolean(String(config.token || '').trim()),
+      tokenLength: String(config.token || '').length,
+    };
+  }
+  if (providerId === 's3') {
+    return {
+      endpoint: String(config.endpoint || '').trim(),
+      bucket: String(config.bucket || '').trim(),
+      region: String(config.region || '').trim(),
+      basePath: String(config.basePath || '').trim(),
+      hasAccessKey: Boolean(String(config.accessKey || '').trim()),
+      accessKeyLength: String(config.accessKey || '').length,
+      hasSecretKey: Boolean(String(config.secretKey || '').trim()),
+      secretKeyLength: String(config.secretKey || '').length,
+    };
+  }
+  return {};
+}
+
+function logCredentialRestore(stage, payload = {}) {
+  try {
+    console.info(`[workspace-controller][credentials] ${stage}`, payload);
+  } catch (_error) {
+    // ignore logging failures
+  }
+}
+
+function shouldAutoReconnectRememberedSource(source) {
+  if (!source || typeof source !== 'object') {
+    return false;
+  }
+
+  if (source.providerId === 'local') {
+    return Boolean(source.config?.localDirectoryHandle);
+  }
+
+  if (source.providerId === 'github' || source.providerId === 's3') {
+    // Auto-reconnect remote hosts when non-secret config is remembered and credentials are available.
+    return !source.needsCredentials;
+  }
+
+  return true;
+}
+
 export function currentWorkspaceSnapshot(app) {
   return {
     selectedSourceId: app.state.activeSourceFilter || 'all',
@@ -258,18 +309,42 @@ export async function restoreRememberedSources(app) {
     seen.add(identity);
 
     if (source.providerId === 'github') {
+      logCredentialRestore('restore:load-secret:start', {
+        sourceId: source.id,
+        identity,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, source.config || {}),
+      });
       const configWithToken = await app.credentialStore.loadSourceSecret(source, source.config || {});
       source.config = configWithToken;
       source.authMode = (configWithToken.token || '').trim() ? 'token' : 'public';
       source.needsCredentials = !(configWithToken.token || '').trim();
+      logCredentialRestore('restore:load-secret:done', {
+        sourceId: source.id,
+        identity,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, configWithToken || {}),
+      });
       source.status = source.needsCredentials
         ? 'Remembered GitHub host. Credentials were not found in secure storage; reconnect required.'
         : 'Remembered GitHub host. Token restored from secure desktop storage.';
     } else if (source.providerId === 's3') {
+      logCredentialRestore('restore:load-secret:start', {
+        sourceId: source.id,
+        identity,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, source.config || {}),
+      });
       const configWithSecret = await app.credentialStore.loadSourceSecret(source, source.config || {});
       source.config = configWithSecret;
       source.authMode = (configWithSecret.accessKey || '').trim() ? 'access-key' : 'public';
       source.needsCredentials = !((configWithSecret.accessKey || '').trim() && (configWithSecret.secretKey || '').trim());
+      logCredentialRestore('restore:load-secret:done', {
+        sourceId: source.id,
+        identity,
+        providerId: source.providerId,
+        summary: summarizeCredentialConfig(source.providerId, configWithSecret || {}),
+      });
       source.status = source.needsCredentials
         ? 'Remembered S3-compatible host. Credentials were not found in secure storage; reconnect required.'
         : 'Remembered S3-compatible host. Credentials restored from secure storage.';
@@ -314,10 +389,7 @@ export async function restoreRememberedSources(app) {
   app.renderEditor();
 
   for (const source of restored) {
-    const shouldAutoRefresh =
-      source.providerId === 'local'
-        ? Boolean(source.config?.localDirectoryHandle)
-        : source.providerId !== 'github' && source.providerId !== 's3';
+    const shouldAutoRefresh = shouldAutoReconnectRememberedSource(source);
     if (!shouldAutoRefresh) {
       continue;
     }

@@ -21,6 +21,7 @@ const APPS = {
 
 const hostEl = document.getElementById('host');
 const switcherButtons = Array.from(document.querySelectorAll('button[data-app]'));
+const appInstances = new Map();
 
 function resolveStartupAppId() {
   const params = new URLSearchParams(window.location.search);
@@ -56,10 +57,14 @@ function setActiveButton(appId) {
   }
 }
 
-function mountApp(appId) {
+function createAppElement(appId) {
   const app = APPS[appId] || APPS.manager;
   const element = document.createElement(app.tag);
   element.setAttribute('data-workbench-embed', 'true');
+  element.dataset.workbenchApp = app.id;
+  element.hidden = true;
+  element.setAttribute('aria-hidden', 'true');
+
   if (app.id === 'browser') {
     const startupManifestUrl = resolveStartupBrowserManifestUrl();
     if (startupManifestUrl) {
@@ -74,7 +79,35 @@ function mountApp(appId) {
     });
   }
 
-  hostEl.replaceChildren(element);
+  return element;
+}
+
+function ensureAppMounted(appId) {
+  if (appInstances.has(appId)) {
+    return appInstances.get(appId);
+  }
+
+  const element = createAppElement(appId);
+  appInstances.set(appId, element);
+  hostEl.append(element);
+  return element;
+}
+
+function initializeMountedApps() {
+  ensureAppMounted(APPS.manager.id);
+  ensureAppMounted(APPS.browser.id);
+}
+
+function setActiveApp(appId) {
+  const app = APPS[appId] || APPS.manager;
+  ensureAppMounted(app.id);
+
+  for (const [id, element] of appInstances.entries()) {
+    const isActive = id === app.id;
+    element.hidden = !isActive;
+    element.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+  }
+
   setActiveButton(app.id);
   window.localStorage.setItem(STORAGE_KEYS.activeApp, app.id);
 }
@@ -85,8 +118,9 @@ for (const button of switcherButtons) {
     if (!appId || !APPS[appId]) {
       return;
     }
-    mountApp(appId);
+    setActiveApp(appId);
   });
 }
 
-mountApp(resolveStartupAppId());
+initializeMountedApps();
+setActiveApp(resolveStartupAppId());

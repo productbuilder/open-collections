@@ -1,5 +1,5 @@
 {
-  "name": "@timemap/provider-s3",
+  "name": "@open-collections/provider-s3",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,6 +10,6 @@
     "./index.js": "./src/index.js"
   },
   "dependencies": {
-    "@timemap/provider-core": "workspace:*"
+    "@open-collections/provider-core": "workspace:*"
   }
 }

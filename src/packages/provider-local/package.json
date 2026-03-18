@@ -1,5 +1,5 @@
 {
-  "name": "@timemap/provider-local",
+  "name": "@open-collections/provider-local",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "./index.js": "./src/index.js"
   },
   "dependencies": {
-    "@timemap/collector-schema": "workspace:*",
-    "@timemap/provider-core": "workspace:*"
+    "@open-collections/collector-schema": "workspace:*",
+    "@open-collections/provider-core": "workspace:*"
   }
 }

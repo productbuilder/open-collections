@@ -1,6 +1,6 @@
 # Browser App
 
-TimeMap Browser is the read-only collection browsing app.
+Open Collections Browser is the read-only collection browsing app.
 
 ## Scope
 

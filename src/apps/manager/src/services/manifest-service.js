@@ -1,4 +1,4 @@
-﻿import { validateCollectionShape } from '../../../../packages/collector-schema/src/schema.js';
+﻿import { normalizeMediaRef, validateCollectionShape } from '../../../../packages/collector-schema/src/schema.js';
 
 export function toManifestItem(manager, item) {
   const {
@@ -22,7 +22,10 @@ export function toManifestItem(manager, item) {
     localThumbnailRef,
     ...manifestItem
   } = item;
-  return manifestItem;
+  return {
+    ...manifestItem,
+    media: normalizeMediaRef(manifestItem.media),
+  };
 }
 
 export function buildManifestFromState(manager) {

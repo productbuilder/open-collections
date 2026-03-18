@@ -1,6 +1,7 @@
 import { createLocalProvider } from '../../../packages/provider-local/src/index.js';
 import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
 import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
+import { MEDIA_MODES, normalizeMediaRef } from '../../../packages/collector-schema/src/schema.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory } from './platform/manager-source-api.js';
@@ -794,12 +795,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
   normalizeSourceAssets(source, rawItems) {
     return (rawItems || []).map((item) => {
       const sourceAssetId = item.id;
-      const mediaPath = String(item.media?.url || '').trim();
+      const media = normalizeMediaRef(item.media);
+      const mediaPath = String(media?.url || '').trim();
       const fileName = mediaPath
         ? mediaPath.replace(/\\/g, '/').split('/').filter(Boolean).pop() || mediaPath
         : '';
       return {
         ...item,
+        media,
         fileName: item.fileName || fileName,
         workspaceId: toWorkspaceItemId(source.id, sourceAssetId),
         sourceAssetId,
@@ -1258,6 +1261,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         item.sourceId === source.id &&
         item.collectionId === this.state.selectedCollectionId &&
         item.isLocalDraftAsset &&
+        normalizeMediaRef(item.media).mode === MEDIA_MODES.managed &&
         item.include !== false &&
         item.draftUploadStatus !== 'uploaded',
     );
@@ -1285,6 +1289,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const uploads = [];
     let failedPreparationCount = 0;
     for (const item of pending) {
+      // Referenced media stays as a link in the manifest and is not prepared for upload.
       const original = await this.loadLocalAssetBlob(item, 'original');
       if (!original) {
         failedPreparationCount += 1;
@@ -1337,7 +1342,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         return {
           ...item,
           media: {
-            ...(item.media || {}),
+            ...normalizeMediaRef(item.media),
             url: nextMediaRelativePath,
             thumbnailUrl: nextThumbRelativePath,
           },

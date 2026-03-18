@@ -1,4 +1,4 @@
-import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
+import { normalizeMediaRef, validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 import {
   PROVIDER_AVAILABILITY,
   READ_ONLY_CAPABILITIES,
@@ -110,7 +110,13 @@ function parseCollectionJson(rawText) {
     }
     return {
       ok: true,
-      json,
+      json: {
+        ...json,
+        items: (json.items || []).map((item) => ({
+          ...cloneItem(item),
+          media: normalizeMediaRef(item.media),
+        })),
+      },
     };
   } catch (error) {
     if (/^\s*</.test(rawText)) {
@@ -484,4 +490,3 @@ export function createGoogleDriveProvider() {
     },
   };
 }
-

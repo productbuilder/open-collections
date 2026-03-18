@@ -6,7 +6,7 @@ import {
   createProviderDescriptor,
   providerNotConnectedError,
 } from '../../provider-core/src/provider.js';
-import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
+import { normalizeMediaRef, validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov', '.m4v'];
@@ -244,6 +244,7 @@ export function createGithubProvider() {
 
   function normalizeManifestItem(item, index, manifestFolderPath) {
     const media = item && typeof item.media === 'object' ? item.media : {};
+    const normalizedMedia = normalizeMediaRef(media);
     const mediaUrl = resolveMediaUrl(media.url, manifestFolderPath);
     const thumbnailUrl = resolveMediaUrl(media.thumbnailUrl, manifestFolderPath);
     const mediaType = (media.type || mediaTypeForPath(media.url || '') || mediaTypeForPath(mediaUrl || '') || 'image')
@@ -268,7 +269,7 @@ export function createGithubProvider() {
       tags: Array.isArray(item.tags) ? item.tags : [],
       include: item.include !== false,
       media: {
-        ...media,
+        ...normalizedMedia,
         type: mediaType,
         url: mediaUrl,
         thumbnailUrl: thumbnailUrl || (mediaType === 'image' ? mediaUrl : ''),
@@ -413,6 +414,7 @@ export function createGithubProvider() {
           license: '',
           attribution: owner,
           media: {
+            mode: 'managed',
             type: mediaType,
             url: rawUrl,
             thumbnailUrl: mediaType === 'image' ? rawUrl : undefined,

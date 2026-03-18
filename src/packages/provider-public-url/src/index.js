@@ -1,4 +1,4 @@
-import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
+import { normalizeMediaRef, validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 import {
   PROVIDER_AVAILABILITY,
   READ_ONLY_CAPABILITIES,
@@ -62,7 +62,13 @@ export function createPublicUrlProvider() {
           };
         }
 
-        collection = cloneItem(json);
+        collection = {
+          ...cloneItem(json),
+          items: (json.items || []).map((item) => ({
+            ...cloneItem(item),
+            media: normalizeMediaRef(item.media),
+          })),
+        };
         connected = true;
         return {
           ok: true,

@@ -1,4 +1,4 @@
-import { validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
+import { normalizeMediaRef, validateCollectionShape } from '../../../packages/collector-schema/src/schema.js';
 import {
   PROVIDER_AVAILABILITY,
   READ_ONLY_CAPABILITIES,
@@ -140,6 +140,7 @@ export function createLocalProvider() {
 
     const normalizedItems = (record.manifest.items || []).map((item) => ({
       ...cloneItem(item),
+      media: normalizeMediaRef(item.media),
       collectionId: record.id,
       collectionLabel: record.title,
       collectionRootPath: record.rootPath,
@@ -501,6 +502,7 @@ export function createLocalProvider() {
 
         const normalizedItem = {
           ...cloneItem(manifestItem),
+          media: normalizeMediaRef(manifestItem.media),
           id: providerItemId,
           collectionId: collection.id,
           collectionLabel: collection.title,
@@ -805,6 +807,7 @@ export function createLocalProvider() {
         tags: Array.isArray(payload.tags) ? payload.tags.map((tag) => String(tag || '').trim()).filter(Boolean) : [],
         include: payload.include !== false,
         media: {
+          mode: 'managed',
           type: String(payload.mediaType || 'image').trim() || 'image',
           url: mediaRelativePath,
           ...(thumbnailRelativePath ? { thumbnailUrl: thumbnailRelativePath } : {}),

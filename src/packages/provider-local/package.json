@@ -1,0 +1,16 @@
+{
+  "name": "@timemap/provider-local",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local filesystem and demo-host provider for Open Collections Manager.",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  },
+  "dependencies": {
+    "@timemap/collector-schema": "workspace:*",
+    "@timemap/provider-core": "workspace:*"
+  }
+}

@@ -33,7 +33,7 @@ const args = process.argv.slice(2);
 const cliEntry = path.resolve(process.cwd(), 'node_modules', '@tauri-apps', 'cli', 'tauri.js');
 
 if (!fs.existsSync(cliEntry)) {
-  console.error('Tauri CLI not found. Run `npm install` in src/desktop/workbench first.');
+  console.error('Tauri CLI not found. Run `pnpm install` at the repository root first.');
   process.exit(1);
 }
 

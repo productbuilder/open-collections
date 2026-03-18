@@ -1,0 +1,16 @@
+{
+  "name": "@timemap/provider-public-url",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read-only provider for loading public collection manifests by URL.",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  },
+  "dependencies": {
+    "@timemap/collector-schema": "workspace:*",
+    "@timemap/provider-core": "workspace:*"
+  }
+}

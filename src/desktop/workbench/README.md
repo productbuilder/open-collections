@@ -9,8 +9,8 @@ This is a lightweight shared desktop shell that hosts both existing Web Componen
 
 ```bash
 cd src/desktop/workbench
-npm install
-npm run tauri:dev
+pnpm install
+pnpm tauri:dev
 ```
 
 The Tauri window opens Manager by default. Use the shell bar to switch between Manager and Browser.
@@ -20,7 +20,7 @@ The shell is full-window and embeds the selected app directly (no launcher scree
 
 ```bash
 cd src/desktop/workbench
-npm run tauri:build
+pnpm tauri:build
 ```
 
 Build output is written under `src/desktop/workbench/src-tauri/target/release/bundle/`.

@@ -1,0 +1,17 @@
+{
+  "name": "open-collections",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.18.3",
+  "scripts": {
+    "build": "pnpm desktop:stage",
+    "dev": "pnpm desktop:dev",
+    "desktop:dev": "pnpm --filter @timemap/workbench-desktop tauri:dev",
+    "desktop:build": "pnpm --filter @timemap/workbench-desktop tauri:build",
+    "desktop:info": "pnpm --filter @timemap/workbench-desktop tauri:info",
+    "desktop:stage": "pnpm --filter @timemap/workbench-desktop stage:frontend",
+    "manager:start": "pnpm --filter @timemap/manager-app start",
+    "browser:start": "pnpm --filter @timemap/browser-app start",
+    "configurator:start": "pnpm --filter @timemap/configurator-app start"
+  }
+}

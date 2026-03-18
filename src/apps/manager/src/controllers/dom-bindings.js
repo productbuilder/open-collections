@@ -250,6 +250,9 @@ export function bindDomEvents(app) {
   app.dom.collectionBrowser.addEventListener('add-collection', () => {
     app.openNewCollectionDialog();
   });
+  app.dom.collectionBrowser.addEventListener('publish-collection', async () => {
+    await app.publishActiveSourceDraft();
+  });
   app.dom.collectionBrowser.addEventListener('files-selected', async (event) => {
     const files = Array.isArray(event.detail?.files) ? event.detail.files : [];
     if (files.length > 0) {

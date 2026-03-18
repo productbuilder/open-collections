@@ -372,6 +372,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   refreshWorkingStatus() {
     const workingStatus = computeWorkingStatus(this.state);
+    this.dom.collectionBrowser?.setPublishActionState?.(this.getPublishActionState());
     this.dom.managerHeader?.setWorkingStatus(workingStatus);
   }
 
@@ -1433,6 +1434,87 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return this.getSourceById(this.state.activeSourceFilter);
   }
 
+  resolvePublishCollectionId() {
+    if (this.state.currentLevel === 'items' && this.state.openedCollectionId) {
+      return this.state.openedCollectionId;
+    }
+    const selectedCollectionId = this.state.selectedCollectionId || 'all';
+    return selectedCollectionId === 'all' ? '' : selectedCollectionId;
+  }
+
+  getPublishActionState() {
+    const collectionId = this.resolvePublishCollectionId();
+    const source = this.resolvePublishSource();
+    const visible = this.state.currentLevel === 'items' || Boolean(collectionId);
+
+    if (!visible) {
+      return {
+        label: 'Publish collection',
+        visible: false,
+        disabled: true,
+        reason: 'Select a collection to publish.',
+      };
+    }
+
+    if (this.state.publishInProgress) {
+      return {
+        label: 'Publish collection',
+        visible: true,
+        disabled: true,
+        reason: 'Publishing is already in progress.',
+      };
+    }
+
+    if (!collectionId) {
+      return {
+        label: 'Publish collection',
+        visible: true,
+        disabled: true,
+        reason: 'Open or select a collection to publish.',
+      };
+    }
+
+    if (!source) {
+      return {
+        label: 'Publish collection',
+        visible: true,
+        disabled: true,
+        reason: 'Select a single active host to publish this collection.',
+      };
+    }
+
+    if (!source.capabilities?.canPublish) {
+      let reason = 'The active host does not currently support publishing.';
+      if (source.needsCredentials) {
+        reason = 'Reconnect this host and provide credentials before publishing.';
+      } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
+        reason = 'Reconnect or validate this host before publishing.';
+      }
+      return {
+        label: 'Publish collection',
+        visible: true,
+        disabled: true,
+        reason,
+      };
+    }
+
+    if (!source.provider || typeof source.provider.publishCollection !== 'function') {
+      return {
+        label: 'Publish collection',
+        visible: true,
+        disabled: true,
+        reason: 'This host is connected, but upload publishing is not available yet.',
+      };
+    }
+
+    return {
+      label: 'Publish collection',
+      visible: true,
+      disabled: false,
+      reason: '',
+    };
+  }
+
   async publishActiveSourceDraft() {
     const source = this.resolvePublishSource();
     if (!source) {
@@ -1455,9 +1537,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.setStatus('This source does not support upload publishing yet.', 'warn');
       return;
     }
-    if ((this.state.selectedCollectionId || 'all') === 'all') {
+    const collectionId = this.resolvePublishCollectionId();
+    if (!collectionId) {
       this.setStatus('Select one collection before publishing.', 'warn');
       return;
+    }
+    if (this.state.selectedCollectionId !== collectionId) {
+      this.state.selectedCollectionId = collectionId;
     }
 
     const manifest = await this.generateManifest({ silent: true });
@@ -1469,7 +1555,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const pending = this.state.assets.filter(
       (item) =>
         item.sourceId === source.id &&
-        item.collectionId === this.state.selectedCollectionId &&
+        item.collectionId === collectionId &&
         item.isLocalDraftAsset &&
         normalizeMediaRef(item.media).mode === MEDIA_MODES.managed &&
         item.include !== false &&

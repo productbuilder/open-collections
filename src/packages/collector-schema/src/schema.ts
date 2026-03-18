@@ -58,6 +58,7 @@ export interface Provider {
   listAssets(): Promise<CollectorItem[]>;
   getAsset(id: string): Promise<CollectorItem | null>;
   saveMetadata(id: string, patch: Partial<CollectorItem>): Promise<CollectorItem | null>;
+  removeItemsFromCollection?(collectionId: string, itemIds: string[]): Promise<{ removedIds: string[] }>;
   exportCollection(collectionMeta: Pick<CollectorCollection, 'id' | 'title' | 'description'>): Promise<CollectorCollection>;
   getCapabilities(): ProviderCapabilities;
 }

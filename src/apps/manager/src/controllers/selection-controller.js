@@ -9,6 +9,60 @@ export function getVisibleAssets(app) {
   return visible;
 }
 
+export function getSelectedItemIds(app) {
+  return Array.isArray(app.state.selectedItemIds) ? app.state.selectedItemIds : [];
+}
+
+export function repairSelectionState(app) {
+  const existingIds = new Set(app.state.assets.map((item) => item.workspaceId));
+  let allowedIds = existingIds;
+  if (app.state.currentLevel === 'items' && app.state.openedCollectionId) {
+    allowedIds = new Set(
+      app.state.assets
+        .filter((item) => item.collectionId === app.state.openedCollectionId)
+        .map((item) => item.workspaceId),
+    );
+  }
+
+  app.state.selectedItemIds = getSelectedItemIds(app).filter(
+    (workspaceId) => existingIds.has(workspaceId) && allowedIds.has(workspaceId),
+  );
+  return app.state.selectedItemIds;
+}
+
+export function isItemSelected(app, itemId) {
+  return getSelectedItemIds(app).includes(itemId);
+}
+
+export function toggleItemSelection(app, itemId, selected = null) {
+  if (!itemId) {
+    return getSelectedItemIds(app);
+  }
+  const current = new Set(repairSelectionState(app));
+  const shouldSelect = selected == null ? !current.has(itemId) : Boolean(selected);
+  if (shouldSelect) {
+    current.add(itemId);
+  } else {
+    current.delete(itemId);
+  }
+  app.state.selectedItemIds = [...current];
+  app.renderAssets();
+  app.renderEditor();
+  if (app.state.opfsAvailable) {
+    app.persistWorkspaceToOpfs().catch(() => {});
+  }
+  return app.state.selectedItemIds;
+}
+
+export function clearItemSelection(app) {
+  app.state.selectedItemIds = [];
+  app.renderAssets();
+  app.renderEditor();
+  if (app.state.opfsAvailable) {
+    app.persistWorkspaceToOpfs().catch(() => {});
+  }
+}
+
 export function openViewer(app, itemId) {
   const item = app.state.assets.find((entry) => entry.workspaceId === itemId);
   if (!item) {
@@ -46,6 +100,7 @@ export function renderViewer(app) {
 }
 
 export function renderAssets(app) {
+  repairSelectionState(app);
   app.renderSourceContext();
 
   const activeLevel = app.state.currentLevel === 'items' ? 'items' : 'collections';
@@ -68,7 +123,8 @@ export function renderAssets(app) {
       collections,
       items: [],
       selectedCollectionId: app.state.selectedCollectionId,
-      selectedItemId: null,
+      focusedItemId: null,
+      selectedItemIds: [],
       viewModes: app.state.browserViewModes,
     });
     return;
@@ -83,7 +139,8 @@ export function renderAssets(app) {
     collections: [],
     items: visibleAssets,
     selectedCollectionId: app.state.selectedCollectionId,
-    selectedItemId: app.state.selectedItemId,
+    focusedItemId: app.state.selectedItemId,
+    selectedItemIds: app.state.selectedItemIds,
     viewModes: app.state.browserViewModes,
   });
 }
@@ -113,6 +170,7 @@ export function findSelectedItem(app) {
 }
 
 export function resolveMetadataMode(app) {
+  repairSelectionState(app);
   if (app.state.currentLevel === 'collections') {
     app.state.selectedItemId = null;
     const selectedCollection = app.findSelectedCollectionMeta();
@@ -179,6 +237,7 @@ export function renderEditor(app) {
       mode: 'item',
       item: selected,
       canSaveItem: canSave,
+      canDeleteItem: Boolean(selected),
     });
     app.syncEditorVisibility();
     return;

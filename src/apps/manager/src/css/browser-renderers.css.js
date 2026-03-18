@@ -28,6 +28,7 @@ export const browserRendererStyles = `
     height: 100%;
     cursor: pointer;
     transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+    position: relative;
   }
 
   .asset-card:hover {
@@ -36,10 +37,37 @@ export const browserRendererStyles = `
     background: #f8fbff;
   }
 
-  .asset-card.is-selected {
+  .asset-card.is-focused {
     border-color: #0f6cc6;
     box-shadow: 0 0 0 1px #66a6e8 inset, 0 3px 10px rgba(15, 108, 198, 0.16);
     background: #f5faff;
+  }
+
+  .asset-card.is-selected:not(.is-focused) {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1px #93c5fd inset;
+    background: #f8fbff;
+  }
+
+  .selection-toggle {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #dbe3ec;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .selection-toggle input {
+    margin: 0;
   }
 
   .thumb-frame {
@@ -162,8 +190,12 @@ export const browserRendererStyles = `
     background: #f8fbff;
   }
 
-  .row-table tbody tr.is-selected {
+  .row-table tbody tr.is-focused {
     background: #eef6ff;
+  }
+
+  .row-table tbody tr.is-selected:not(.is-focused) {
+    background: #f8fbff;
   }
 
   .row-thumb,

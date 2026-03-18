@@ -146,6 +146,7 @@ export function bindDomEvents(app) {
     app.renderSourceFilter();
     const visible = app.getVisibleAssets();
     app.state.selectedItemId = visible[0]?.workspaceId || null;
+    app.state.selectedItemIds = [];
     app.renderAssets();
     app.renderEditor();
     app.renderSourceContext();
@@ -175,6 +176,7 @@ export function bindDomEvents(app) {
     app.state.currentLevel = 'collections';
     app.state.openedCollectionId = null;
     app.state.selectedItemId = null;
+    app.state.selectedItemIds = [];
     app.renderCollectionFilter();
     app.syncMetadataModeFromState();
     app.closeMobileEditor();
@@ -193,10 +195,12 @@ export function bindDomEvents(app) {
         app.state.currentLevel = 'collections';
         app.state.openedCollectionId = null;
         app.state.selectedItemId = null;
+        app.state.selectedItemIds = [];
         app.closeMobileEditor();
       } else if (app.state.openedCollectionId !== app.state.selectedCollectionId) {
         app.state.openedCollectionId = app.state.selectedCollectionId;
         app.state.selectedItemId = null;
+        app.state.selectedItemIds = [];
       }
     }
     app.syncMetadataModeFromState();
@@ -212,6 +216,7 @@ export function bindDomEvents(app) {
     app.state.currentLevel = 'collections';
     app.state.openedCollectionId = null;
     app.state.selectedItemId = null;
+    app.state.selectedItemIds = [];
     app.syncMetadataModeFromState();
     app.renderAssets();
     app.renderEditor();
@@ -226,6 +231,15 @@ export function bindDomEvents(app) {
   });
   app.dom.collectionBrowser.addEventListener('item-select', (event) => {
     app.selectItem(event.detail?.workspaceId || '');
+  });
+  app.dom.collectionBrowser.addEventListener('item-toggle-selected', (event) => {
+    app.toggleItemSelection(event.detail?.workspaceId || '', event.detail?.selected);
+  });
+  app.dom.collectionBrowser.addEventListener('clear-item-selection', () => {
+    app.clearItemSelection();
+  });
+  app.dom.collectionBrowser.addEventListener('delete-selected-items', async () => {
+    await app.deleteSelectedItems();
   });
   app.dom.collectionBrowser.addEventListener('item-view', (event) => {
     app.openViewer(event.detail?.workspaceId || '');
@@ -256,6 +270,12 @@ export function bindDomEvents(app) {
   app.dom.metadataEditor.addEventListener('save-collection', async (event) => {
     const patch = event.detail?.patch || null;
     await app.saveSelectedCollectionMetadata(patch);
+  });
+  app.dom.metadataEditor.addEventListener('delete-item', async (event) => {
+    const workspaceId = event.detail?.workspaceId || '';
+    if (workspaceId) {
+      await app.deleteItem(workspaceId);
+    }
   });
 
   app.shadow.querySelectorAll('[data-close]').forEach((button) => {

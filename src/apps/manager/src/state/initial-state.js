@@ -3,6 +3,7 @@
     sources: [],
     assets: [],
     selectedItemId: null,
+    selectedItemIds: [],
     viewerItemId: null,
     selectedProviderId: 'example',
     activeSourceFilter: 'all',

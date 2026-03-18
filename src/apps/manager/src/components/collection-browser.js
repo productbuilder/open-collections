@@ -17,7 +17,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       collections: [],
       items: [],
       selectedCollectionId: null,
-      selectedItemId: null,
+      focusedItemId: null,
+      selectedItemIds: [],
       dropTargetActive: false,
       viewModes: {
         collections: 'cards',
@@ -50,6 +51,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 
     this.shadowRoot.getElementById('viewToggle')?.addEventListener('view-mode-change', (event) => {
       this.setCurrentViewMode(event.detail?.mode || 'cards');
+    });
+    this.shadowRoot.getElementById('deleteSelectedBtn')?.addEventListener('click', () => {
+      this.dispatch('delete-selected-items');
+    });
+    this.shadowRoot.getElementById('clearSelectionBtn')?.addEventListener('click', () => {
+      this.dispatch('clear-item-selection');
     });
 
     this.shadowRoot.getElementById('imageFileInput')?.addEventListener('change', (event) => {
@@ -143,7 +150,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     const panelShell = this.shadowRoot.getElementById('panelShell');
     const addBtn = this.shadowRoot.getElementById('addImagesBtn');
     const viewToggle = this.shadowRoot.getElementById('viewToggle');
-    if (!panelShell || !addBtn || !viewToggle) {
+    const selectionStatus = this.shadowRoot.getElementById('selectionStatus');
+    const deleteSelectedBtn = this.shadowRoot.getElementById('deleteSelectedBtn');
+    const clearSelectionBtn = this.shadowRoot.getElementById('clearSelectionBtn');
+    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn) {
       return;
     }
 
@@ -152,6 +162,13 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
     addBtn.textContent = this.model.currentLevel === 'collections' ? 'Add collection' : 'Add item';
     viewToggle.setAttribute('mode', this.getCurrentViewMode());
+
+    const selectedCount = Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds.length : 0;
+    const showSelectionToolbar = this.model.currentLevel === 'items' && selectedCount > 0;
+    selectionStatus.hidden = !showSelectionToolbar;
+    deleteSelectedBtn.hidden = !showSelectionToolbar;
+    clearSelectionBtn.hidden = !showSelectionToolbar;
+    selectionStatus.textContent = `${selectedCount} selected`;
   }
 
   renderBody() {
@@ -176,7 +193,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     } else {
       renderer.update({
         items: this.model.items,
-        selectedItemId: this.model.selectedItemId,
+        focusedItemId: this.model.focusedItemId,
+        selectedItemIds: this.model.selectedItemIds,
       });
     }
     host.appendChild(renderer);
@@ -189,6 +207,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         <open-panel-shell id="panelShell" title="Collections" subtitle="No assets loaded." show-back="false">
           <div class="viewport-actions" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
+            <span id="selectionStatus" class="selection-status" hidden>0 selected</span>
+            <button class="btn btn-danger" id="deleteSelectedBtn" type="button" hidden>Delete selected</button>
+            <button class="btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
           </div>
           <div class="viewport-actions" slot="header-actions">
             <button class="btn" id="addImagesBtn" type="button">Add item</button>

@@ -61,6 +61,7 @@ export function currentWorkspaceSnapshot(app) {
     selectedSourceId: app.state.activeSourceFilter || 'all',
     selectedCollectionId: app.state.selectedCollectionId || 'all',
     selectedItemId: app.state.selectedItemId || null,
+    selectedItemIds: Array.isArray(app.state.selectedItemIds) ? [...app.state.selectedItemIds] : [],
     collectionMeta: app.currentCollectionMeta(),
     draftCollectionId: app.draftCollectionId(),
     lastLocalSaveAt: app.state.lastLocalSaveAt || '',
@@ -74,6 +75,7 @@ export function buildLocalDraftPayload(app) {
     collectionMeta: app.currentCollectionMeta(),
     manifest: app.state.manifest || null,
     selectedItemId: app.state.selectedItemId || null,
+    selectedItemIds: Array.isArray(app.state.selectedItemIds) ? [...app.state.selectedItemIds] : [],
     selectedSourceId: app.state.activeSourceFilter || 'all',
     selectedCollectionId: app.state.selectedCollectionId || 'all',
     localDraftCollections: app.state.localDraftCollections || [],
@@ -136,6 +138,12 @@ export function applyWorkspaceSnapshot(app, snapshot = {}) {
   ) {
     app.state.selectedItemId = snapshot.selectedItemId;
   }
+  if (Array.isArray(snapshot.selectedItemIds)) {
+    const visibleSelection = snapshot.selectedItemIds.filter(
+      (workspaceId) => typeof workspaceId === 'string' && app.state.assets.some((entry) => entry.workspaceId === workspaceId),
+    );
+    app.state.selectedItemIds = visibleSelection;
+  }
 }
 
 export function applyLocalDraftPayload(app, payload) {
@@ -191,6 +199,11 @@ export function applyLocalDraftPayload(app, payload) {
     app.state.assets.some((entry) => entry.workspaceId === payload.selectedItemId)
   ) {
     app.state.selectedItemId = payload.selectedItemId;
+  }
+  if (Array.isArray(payload.selectedItemIds)) {
+    app.state.selectedItemIds = payload.selectedItemIds.filter(
+      (workspaceId) => typeof workspaceId === 'string' && app.state.assets.some((entry) => entry.workspaceId === workspaceId),
+    );
   }
 
   app.renderAssets();
@@ -372,6 +385,7 @@ export async function restoreRememberedSources(app) {
   app.selectedLocalDirectoryHandle = firstLocalHandle;
   app.state.assets = [];
   app.state.selectedItemId = null;
+  app.state.selectedItemIds = [];
   app.state.activeSourceFilter = restored.some((source) => source.id === desiredActiveSourceId)
     ? desiredActiveSourceId
     : 'all';

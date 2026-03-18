@@ -46,10 +46,14 @@ import {
   setCollectionMetaFields,
 } from './controllers/collection-controller.js';
 import {
+  clearItemSelection,
   closeViewer,
   findSelectedItem,
+  getSelectedItemIds,
   getVisibleAssets,
+  isItemSelected,
   openViewer,
+  repairSelectionState,
   renderAssets,
   renderEditor,
   renderMetadataMode,
@@ -58,6 +62,7 @@ import {
   selectItem,
   setBrowserViewMode,
   syncMetadataModeFromState,
+  toggleItemSelection,
 } from './controllers/selection-controller.js';
 import './components/manager-header.js';
 import './components/collection-browser.js';
@@ -587,6 +592,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return AssetService.rehydrateLocalDraftAssetUrls(this);
   }
 
+  async cleanupRemovedItemArtifacts(item) {
+    return AssetService.cleanupRemovedItemArtifacts(this, item);
+  }
+
   async hydrateLocalSourceAssetPreviews(sourceId) {
     return AssetService.hydrateLocalSourceAssetPreviews(this, sourceId);
   }
@@ -959,6 +968,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state.openedCollectionId = null;
     this.state.selectedCollectionId = source.selectedCollectionId || 'all';
     this.state.selectedItemId = null;
+    this.state.selectedItemIds = [];
     this.syncMetadataModeFromState();
     this.closeMobileEditor();
     this.renderSourceFilter();
@@ -1099,6 +1109,26 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return selectItem(this, itemId);
   }
 
+  getSelectedItemIds() {
+    return getSelectedItemIds(this);
+  }
+
+  isItemSelected(itemId) {
+    return isItemSelected(this, itemId);
+  }
+
+  repairSelectionState() {
+    return repairSelectionState(this);
+  }
+
+  toggleItemSelection(itemId, selected = null) {
+    return toggleItemSelection(this, itemId, selected);
+  }
+
+  clearItemSelection() {
+    return clearItemSelection(this);
+  }
+
   findSelectedItem() {
     return findSelectedItem(this);
   }
@@ -1125,6 +1155,157 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   collectEditorPatch() {
     return this.dom.metadataEditor.getItemPatch();
+  }
+
+  confirmDeleteItems(items) {
+    const count = Array.isArray(items) ? items.length : 0;
+    if (count === 0) {
+      return false;
+    }
+    const heading = count === 1
+      ? 'Remove this item from the collection?'
+      : `Remove ${count} selected items from this collection?`;
+    const body = count === 1
+      ? 'This removes the item from the collection. It does not delete the original media file.'
+      : 'This removes them from the collection. It does not delete the original media files.';
+    return window.confirm(`${heading}\n\n${body}`);
+  }
+
+  repairFocusAfterDeletion(removedIds = []) {
+    const removed = new Set((Array.isArray(removedIds) ? removedIds : []).filter(Boolean));
+    this.state.selectedItemIds = this.getSelectedItemIds().filter((workspaceId) => !removed.has(workspaceId));
+
+    if (this.state.viewerItemId && removed.has(this.state.viewerItemId)) {
+      this.closeViewer();
+    }
+
+    if (!this.state.selectedItemId || !removed.has(this.state.selectedItemId)) {
+      this.repairSelectionState();
+      return;
+    }
+
+    const fallback = this.getVisibleAssets().find((item) => {
+      if (this.state.currentLevel === 'items' && this.state.openedCollectionId) {
+        return item.collectionId === this.state.openedCollectionId && !removed.has(item.workspaceId);
+      }
+      return !removed.has(item.workspaceId);
+    });
+    this.state.selectedItemId = fallback?.workspaceId || null;
+    this.repairSelectionState();
+  }
+
+  async deleteItemsFromState(items = []) {
+    for (const item of items) {
+      await this.cleanupRemovedItemArtifacts(item);
+    }
+    const removedIds = new Set(items.map((item) => item.workspaceId));
+    this.state.assets = this.state.assets.filter((item) => !removedIds.has(item.workspaceId));
+    return [...removedIds];
+  }
+
+  async deleteSelectedItems() {
+    const selectedIds = this.getSelectedItemIds();
+    const items = this.state.assets.filter((item) => selectedIds.includes(item.workspaceId));
+    return this.deleteItems(items, { mode: 'bulk' });
+  }
+
+  async deleteItem(workspaceId) {
+    const item = this.state.assets.find((entry) => entry.workspaceId === workspaceId);
+    if (!item) {
+      this.setStatus('Select an item to remove.', 'warn');
+      return false;
+    }
+    return this.deleteItems([item], { mode: 'single' });
+  }
+
+  async deleteItems(items = [], options = {}) {
+    const candidates = Array.from(
+      new Map((Array.isArray(items) ? items : []).filter(Boolean).map((item) => [item.workspaceId, item])).values(),
+    );
+    if (candidates.length === 0) {
+      this.setStatus('Select one or more items to remove.', 'warn');
+      return false;
+    }
+
+    if (!this.confirmDeleteItems(candidates)) {
+      return false;
+    }
+
+    const grouped = new Map();
+    for (const item of candidates) {
+      const key = `${item.sourceId}::${item.collectionId || ''}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key).push(item);
+    }
+
+    const removedIds = [];
+    let removedCount = 0;
+    let removedLocalDraftItems = false;
+    let removedPersistedItems = false;
+
+    for (const [, groupItems] of grouped.entries()) {
+      const sample = groupItems[0];
+      const source = this.getSourceById(sample.sourceId);
+      const allLocalDraftItems = groupItems.every((item) => item.isLocalDraftAsset);
+
+      if (allLocalDraftItems) {
+        const deletedIds = await this.deleteItemsFromState(groupItems);
+        removedIds.push(...deletedIds);
+        removedCount += deletedIds.length;
+        removedLocalDraftItems = true;
+        if (source?.id) {
+          this.refreshSourceCollectionsAndCounts(source.id);
+        }
+        continue;
+      }
+
+      if (!source?.provider || typeof source.provider.removeItemsFromCollection !== 'function' || !source.capabilities?.canSaveMetadata) {
+        const sourceLabel = source?.displayLabel || source?.label || 'this source';
+        this.setStatus(`Remove failed: ${sourceLabel} does not currently support safe collection removal.`, 'warn');
+        return false;
+      }
+
+      this.setStatus(`Removing ${groupItems.length} item(s) from the collection...`, 'neutral');
+      await source.provider.removeItemsFromCollection(
+        sample.collectionId,
+        groupItems.map((item) => item.sourceAssetId),
+      );
+      const deletedIds = await this.deleteItemsFromState(groupItems);
+      removedIds.push(...deletedIds);
+      removedCount += deletedIds.length;
+      removedPersistedItems = true;
+      this.refreshSourceCollectionsAndCounts(source.id);
+    }
+
+    this.repairFocusAfterDeletion(removedIds);
+    this.renderSourcesList();
+    this.renderSourceFilter();
+    this.renderCollectionFilter();
+    this.renderAssets();
+    this.renderEditor();
+    this.refreshWorkingStatus();
+
+    if (this.state.opfsAvailable) {
+      if (candidates.some((item) => item.isLocalDraftAsset)) {
+        await this.saveLocalDraft();
+      } else {
+        await this.persistWorkspaceToOpfs();
+      }
+    }
+    this.saveSourcesToStorage();
+
+    const actionLabel = options.mode === 'single' ? 'Removed item from the collection.' : `Removed ${removedCount} item(s) from the collection.`;
+    this.setStatus(actionLabel, 'ok');
+    if (removedPersistedItems) {
+      this.markSavedToSource();
+    } else if (removedLocalDraftItems && this.state.opfsAvailable) {
+      this.markSavedToDraft();
+    } else {
+      this.markDirty();
+    }
+    return true;
   }
 
   async updateItem(id, patch, options = {}) {
@@ -1402,6 +1583,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.state.currentLevel = 'collections';
       this.state.openedCollectionId = null;
       this.state.selectedItemId = null;
+      this.state.selectedItemIds = [];
       this.syncMetadataModeFromState();
       this.closeMobileEditor();
       this.renderSourceContext();

@@ -376,6 +376,7 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.state.currentLevel = 'collections';
     app.state.openedCollectionId = null;
     app.state.selectedItemId = null;
+    app.state.selectedItemIds = [];
     app.syncMetadataModeFromState();
     app.closeMobileEditor();
     app.state.manifest = null;
@@ -623,6 +624,9 @@ export function removeSource(app, sourceId) {
   if (app.state.selectedItemId && !app.state.assets.some((item) => item.workspaceId === app.state.selectedItemId)) {
     app.state.selectedItemId = null;
   }
+  app.state.selectedItemIds = app.getSelectedItemIds().filter((workspaceId) =>
+    app.state.assets.some((item) => item.workspaceId === workspaceId),
+  );
   if (app.state.viewerItemId && !app.state.assets.some((item) => item.workspaceId === app.state.viewerItemId)) {
     app.closeViewer();
   }

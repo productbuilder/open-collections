@@ -4,6 +4,7 @@ import '../../../apps/browser/src/index.js';
 const STORAGE_KEYS = {
   activeApp: 'open-collections-workbench:active-app:v1',
   browserManifestUrl: 'open-collections-workbench:browser-manifest-url:v1',
+  browserRecentManifestUrls: 'open-collections-browser:recent-manifest-urls:v1',
 };
 
 const APPS = {
@@ -46,7 +47,20 @@ function resolveStartupBrowserManifestUrl() {
   }
 
   const remembered = window.localStorage.getItem(STORAGE_KEYS.browserManifestUrl) || '';
-  return remembered.trim();
+  if (remembered.trim()) {
+    return remembered.trim();
+  }
+
+  try {
+    const recentUrls = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.browserRecentManifestUrls) || '[]');
+    if (Array.isArray(recentUrls) && typeof recentUrls[0] === 'string' && recentUrls[0].trim()) {
+      return recentUrls[0].trim();
+    }
+  } catch {
+    // Ignore invalid persisted state and continue with the browser default.
+  }
+
+  return '';
 }
 
 function setActiveButton(appId) {

@@ -72,6 +72,27 @@ export const browserStyles = `
     background: #f8fafc;
   }
 
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    border-color: #0f6cc6;
+    background: #0f6cc6;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: #0b5aa6;
+  }
+
+  .btn-primary:disabled {
+    background: #cbd5e1;
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+
   .viewport-actions {
     display: flex;
     align-items: center;

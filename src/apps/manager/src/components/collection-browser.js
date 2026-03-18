@@ -20,6 +20,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       focusedItemId: null,
       selectedItemIds: [],
       dropTargetActive: false,
+      publishAction: {
+        label: 'Publish collection',
+        visible: false,
+        disabled: true,
+        reason: 'Select a collection to publish.',
+      },
       viewModes: {
         collections: 'cards',
         items: 'cards',
@@ -47,6 +53,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       }
       this.dispatch('add-item');
       this.shadowRoot.getElementById('imageFileInput')?.click();
+    });
+    this.shadowRoot.getElementById('publishCollectionBtn')?.addEventListener('click', () => {
+      this.dispatch('publish-collection');
     });
 
     this.shadowRoot.getElementById('viewToggle')?.addEventListener('view-mode-change', (event) => {
@@ -114,6 +123,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     }
   }
 
+  setPublishActionState(action = {}) {
+    this.model.publishAction = {
+      ...this.model.publishAction,
+      ...action,
+    };
+    this.renderFrame();
+  }
+
   getCurrentViewMode() {
     const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
     return this.model.viewModes?.[level] || 'cards';
@@ -153,7 +170,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     const selectionStatus = this.shadowRoot.getElementById('selectionStatus');
     const deleteSelectedBtn = this.shadowRoot.getElementById('deleteSelectedBtn');
     const clearSelectionBtn = this.shadowRoot.getElementById('clearSelectionBtn');
-    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn) {
+    const publishBtn = this.shadowRoot.getElementById('publishCollectionBtn');
+    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn || !publishBtn) {
       return;
     }
 
@@ -162,6 +180,18 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
     addBtn.textContent = this.model.currentLevel === 'collections' ? 'Add collection' : 'Add item';
     viewToggle.setAttribute('mode', this.getCurrentViewMode());
+    const publishAction = this.model.publishAction || {};
+    publishBtn.textContent = publishAction.label || 'Publish collection';
+    publishBtn.hidden = publishAction.visible === false;
+    publishBtn.disabled = publishAction.disabled !== false;
+    const publishReason = publishAction.reason || '';
+    if (publishReason) {
+      publishBtn.title = publishReason;
+      publishBtn.setAttribute('aria-label', `${publishBtn.textContent}. ${publishReason}`);
+    } else {
+      publishBtn.removeAttribute('title');
+      publishBtn.setAttribute('aria-label', publishBtn.textContent);
+    }
 
     const selectedCount = Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds.length : 0;
     const showSelectionToolbar = this.model.currentLevel === 'items' && selectedCount > 0;
@@ -213,6 +243,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div class="viewport-actions" slot="header-actions">
             <button class="btn" id="addImagesBtn" type="button">Add item</button>
+            <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>
           <div id="assetWrap" class="asset-wrap">

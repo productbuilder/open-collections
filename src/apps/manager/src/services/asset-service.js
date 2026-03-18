@@ -1,4 +1,5 @@
-﻿import { isAbsoluteMediaUrl } from '../utils/preview-utils.js';
+﻿import { normalizeMediaRef } from '../../../../packages/collector-schema/src/schema.js';
+import { isAbsoluteMediaUrl } from '../utils/preview-utils.js';
 
 export async function generateThumbnailBlob(manager, file) {
   const bitmap = await createImageBitmap(file);
@@ -93,9 +94,11 @@ export async function rehydrateLocalDraftAssetUrls(manager) {
     }
     if (!item.media?.thumbnailUrl && item.thumbnailRepoPath) {
       item.media = {
-        ...(item.media || {}),
+        ...normalizeMediaRef(item.media),
         thumbnailUrl: item.thumbnailRepoPath,
       };
+    } else {
+      item.media = normalizeMediaRef(item.media);
     }
   }
 }
@@ -317,6 +320,7 @@ export async function ingestImageFiles(manager, files) {
       tags: [],
       include: true,
       media: {
+        mode: 'managed',
         type: 'image',
         url: mediaRepoPath,
         thumbnailUrl: thumbRepoPath,

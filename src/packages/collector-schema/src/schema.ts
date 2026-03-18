@@ -1,4 +1,7 @@
+export type MediaMode = 'managed' | 'referenced';
+
 export interface MediaRef {
+  mode?: MediaMode;
   type?: string;
   url: string;
   thumbnailUrl?: string;

@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use keyring::Entry;
 use keyring::credential::CredentialPersistence;
 use rfd::FileDialog;

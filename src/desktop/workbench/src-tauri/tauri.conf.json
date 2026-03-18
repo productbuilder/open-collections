@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Open Collections Workbench",
+  "productName": "Open Collections",
   "version": "0.1.0",
   "identifier": "org.opencollections.workbench",
   "build": {
@@ -19,7 +19,7 @@
   "app": {
     "windows": [
       {
-        "title": "Open Collections Workbench",
+        "title": "Open Collections",
         "width": 1320,
         "height": 900,
         "resizable": true

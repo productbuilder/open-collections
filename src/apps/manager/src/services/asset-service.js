@@ -103,6 +103,40 @@ export async function rehydrateLocalDraftAssetUrls(manager) {
   }
 }
 
+export async function cleanupRemovedItemArtifacts(manager, item) {
+  if (!item) {
+    return;
+  }
+
+  for (const url of [item.previewUrl, item.thumbnailPreviewUrl]) {
+    if (typeof url === 'string' && url.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (_error) {
+        // Ignore URL revocation failures during cleanup.
+      }
+      manager.objectUrls.delete(url);
+    }
+  }
+
+  manager.localAssetBlobs.delete(item.workspaceId);
+
+  if (!manager.state.opfsAvailable) {
+    return;
+  }
+
+  for (const path of [item.localFileRef, item.localThumbnailRef]) {
+    if (!path) {
+      continue;
+    }
+    try {
+      await manager.opfsStorage.deleteFile(path);
+    } catch (_error) {
+      // Ignore missing local draft files during cleanup.
+    }
+  }
+}
+
 function fileNameFromPath(path = '') {
   const clean = String(path || '').trim().replace(/\\/g, '/');
   if (!clean) {

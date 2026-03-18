@@ -144,6 +144,16 @@ export const metadataStyles = `
     background: #0d5eae;
   }
 
+  .btn-danger {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+  }
+
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+
   .editor-section {
     border-top: 1px solid #e2e8f0;
     padding-top: 0.6rem;

@@ -11,6 +11,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
       item: null,
       canSaveItem: false,
       mobileOpen: false,
+      canDeleteItem: false,
     };
   }
 
@@ -33,6 +34,11 @@ class OpenCollectionsMetadataElement extends HTMLElement {
       }
       if (this.model.mode === 'item') {
         this.dispatch('save-item', { patch: this.getItemPatch() });
+      }
+    });
+    this.shadowRoot.getElementById('headerDeleteBtn')?.addEventListener('click', () => {
+      if (this.model.mode === 'item' && this.model.item?.workspaceId) {
+        this.dispatch('delete-item', { workspaceId: this.model.item.workspaceId });
       }
     });
   }
@@ -100,8 +106,9 @@ class OpenCollectionsMetadataElement extends HTMLElement {
     const collectionForm = this.shadowRoot?.getElementById('collectionEditorForm');
     const itemForm = this.shadowRoot?.getElementById('editorForm');
     const headerSaveBtn = this.shadowRoot?.getElementById('headerSaveBtn');
+    const headerDeleteBtn = this.shadowRoot?.getElementById('headerDeleteBtn');
 
-    if (!title || !context || !empty || !collectionForm || !itemForm || !headerSaveBtn) {
+    if (!title || !context || !empty || !collectionForm || !itemForm || !headerSaveBtn || !headerDeleteBtn) {
       return;
     }
 
@@ -110,6 +117,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
     collectionForm.hidden = true;
     itemForm.hidden = true;
     headerSaveBtn.hidden = true;
+    headerDeleteBtn.hidden = true;
 
     if (mode === 'collection') {
       const selected = this.model.collection || null;
@@ -144,6 +152,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
       itemForm.hidden = false;
       headerSaveBtn.hidden = false;
       headerSaveBtn.textContent = 'Save item';
+      headerDeleteBtn.hidden = !this.model.canDeleteItem;
       const filePath = selected.fileName || selected.media?.url || selected.media?.thumbnailUrl || '';
       context.textContent = this.model.canSaveItem
         ? `${selected.id} - ${selected.sourceDisplayLabel || selected.sourceLabel}${filePath ? ` - ${filePath}` : ''}`
@@ -180,6 +189,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
             <p id="editorContext" class="editor-context"></p>
           </div>
           <div class="editor-header-actions">
+            <button class="btn btn-danger" id="headerDeleteBtn" type="button" hidden>Delete item</button>
             <button class="btn btn-primary" id="headerSaveBtn" type="button" hidden>Save</button>
             <button class="btn editor-close-btn" id="closeEditorBtn" type="button">Close</button>
           </div>

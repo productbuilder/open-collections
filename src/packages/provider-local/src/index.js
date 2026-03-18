@@ -767,6 +767,42 @@ export function createLocalProvider() {
       return { collection: toCollectionSummary(collection) };
     },
 
+    async removeItemsFromCollection(collectionId, itemIds = []) {
+      ensureWritableLocalHost();
+
+      const collection = findCollection(collectionId);
+      if (!collection) {
+        throw new Error(`Collection ${collectionId} was not found in this local host.`);
+      }
+
+      const ids = Array.from(new Set((Array.isArray(itemIds) ? itemIds : []).map((entry) => String(entry || '').trim()).filter(Boolean)));
+      if (ids.length === 0) {
+        return { removedIds: [] };
+      }
+
+      const manifestIdsToRemove = new Set();
+      for (const providerItemId of ids) {
+        const location = itemLocations.get(providerItemId);
+        if (!location || location.collectionId !== collectionId) {
+          continue;
+        }
+        manifestIdsToRemove.add(location.manifestItemId);
+      }
+
+      if (manifestIdsToRemove.size === 0) {
+        throw new Error(`Delete failed: no matching items were found in collection ${collectionId}.`);
+      }
+
+      collection.manifest.items = (collection.manifest.items || []).filter(
+        (entry) => !manifestIdsToRemove.has(String(entry.id || '').trim()),
+      );
+
+      await writeCollectionManifest(collection);
+      await writeCollectionsIndex();
+      rebuildIndex();
+      return { removedIds: ids.filter((providerItemId) => !itemsById.has(providerItemId)) };
+    },
+
     async addAssetToCollection(collectionId, payload = {}) {
       ensureWritableLocalHost();
 

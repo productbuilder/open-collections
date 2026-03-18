@@ -79,6 +79,26 @@ export const browserStyles = `
     flex-wrap: wrap;
   }
 
+  .selection-status {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .btn-danger {
+    border-color: #dc2626;
+    color: #ffffff;
+    background: #dc2626;
+  }
+
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+
   .is-hidden {
     display: none;
   }

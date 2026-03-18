@@ -198,6 +198,7 @@ export function openCollectionView(manager, collectionId) {
   manager.state.openedCollectionId = collectionId;
   manager.state.currentLevel = 'items';
   manager.state.selectedItemId = null;
+  manager.state.selectedItemIds = [];
   manager.syncMetadataModeFromState();
   manager.closeMobileEditor();
   manager.renderAssets();
@@ -208,6 +209,7 @@ export function leaveCollectionView(manager) {
   manager.state.currentLevel = 'collections';
   manager.state.openedCollectionId = null;
   manager.state.selectedItemId = null;
+  manager.state.selectedItemIds = [];
   manager.syncMetadataModeFromState();
   manager.closeMobileEditor();
   manager.renderAssets();

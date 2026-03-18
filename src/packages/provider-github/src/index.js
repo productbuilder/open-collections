@@ -566,6 +566,52 @@ export function createGithubProvider() {
       return cloneItem(updated);
     },
 
+    async removeItemsFromCollection(itemIds = []) {
+      if (!connected) {
+        throw providerNotConnectedError('github');
+      }
+      if (!capabilities.canSaveMetadata) {
+        throw new Error('Delete failed: collection manifest is read-only for this GitHub source.');
+      }
+      if (!collection || !Array.isArray(collection.items)) {
+        throw new Error('Delete failed: no editable collection manifest loaded.');
+      }
+
+      const ids = Array.from(new Set((Array.isArray(itemIds) ? itemIds : []).map((entry) => String(entry || '').trim()).filter(Boolean)));
+      if (ids.length === 0) {
+        return { removedIds: [] };
+      }
+
+      const removableIds = new Set(collection.items.map((entry) => String(entry.id || '').trim()));
+      const nextItems = collection.items.filter((entry) => !ids.includes(String(entry.id || '').trim()));
+      if (nextItems.length === collection.items.length) {
+        throw new Error('Delete failed: no matching manifest items were found.');
+      }
+
+      const removedIds = ids.filter((id) => removableIds.has(id));
+      const nextCollection = cloneItem(collection);
+      nextCollection.items = nextItems;
+
+      const serialized = `${JSON.stringify(nextCollection, null, 2)}\n`;
+      const payload = {
+        message: `Remove ${removedIds.length} item(s) from ${nextCollection.id || 'collection'} via Open Collections Manager`,
+        content: encodeBase64Utf8(serialized),
+        sha: manifestSha,
+        branch,
+      };
+
+      const response = await putRepoContent(manifestPath, payload);
+      const nextSha = response?.content?.sha;
+      if (!nextSha) {
+        throw new Error('Delete failed: missing updated file SHA in GitHub response.');
+      }
+
+      collection = nextCollection;
+      manifestSha = nextSha;
+      items = (collection.items || []).map((entry, index) => normalizeManifestItem(entry, index, manifestRootPath));
+      return { removedIds };
+    },
+
     async exportCollection(collectionMeta) {
       if (!connected) {
         throw providerNotConnectedError('github');

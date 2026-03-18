@@ -5,7 +5,7 @@ class OpenItemCardGridElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.model = { items: [], selectedItemId: null };
+    this.model = { items: [], focusedItemId: null, selectedItemIds: [] };
   }
 
   update(data = {}) {
@@ -41,13 +41,23 @@ class OpenItemCardGridElement extends HTMLElement {
 
   render() {
     const items = Array.isArray(this.model.items) ? this.model.items : [];
+    const selectedIds = new Set(Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds : []);
     if (items.length === 0) {
       this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">This collection has no items yet. Add item to begin.</div>`;
       return;
     }
 
     const cards = items.map((item) => `
-      <article class="asset-card ${this.model.selectedItemId === item.workspaceId ? 'is-selected' : ''}" role="button" tabindex="0" data-id="${item.workspaceId}">
+      <article
+        class="asset-card ${this.model.focusedItemId === item.workspaceId ? 'is-focused' : ''} ${selectedIds.has(item.workspaceId) ? 'is-selected' : ''}"
+        role="button"
+        tabindex="0"
+        data-id="${item.workspaceId}"
+      >
+        <label class="selection-toggle" data-select-wrap="true" aria-label="Select ${item.title || item.id}">
+          <input type="checkbox" data-select-id="${item.workspaceId}" ${selectedIds.has(item.workspaceId) ? 'checked' : ''} />
+          <span>Select</span>
+        </label>
         ${this.createPreviewMarkup(item)}
         <p class="card-title">${item.title || '(Untitled)'}</p>
         <div class="badge-row"><span class="badge">Completeness ${this.requiredFieldScore(item)}</span></div>
@@ -60,6 +70,23 @@ class OpenItemCardGridElement extends HTMLElement {
     this.shadowRoot.querySelectorAll('.asset-card[data-id]').forEach((card) => {
       card.addEventListener('click', () => {
         this.dispatch('item-select', { workspaceId: card.getAttribute('data-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('[data-select-wrap]').forEach((label) => {
+      label.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+    });
+    this.shadowRoot.querySelectorAll('input[data-select-id]').forEach((input) => {
+      input.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+      input.addEventListener('change', (event) => {
+        event.stopPropagation();
+        this.dispatch('item-toggle-selected', {
+          workspaceId: input.getAttribute('data-select-id'),
+          selected: event.target?.checked === true,
+        });
       });
     });
     this.shadowRoot.querySelectorAll('button[data-open-id]').forEach((button) => {

@@ -11,7 +11,14 @@ import './components/workspace-status-bar.js';
 import { renderShell } from './render/render-shell.js';
 import { createInitialState } from './state/initial-state.js';
 import { createWorkspaceService } from './services/workspace-service.js';
-import { buildViewModel, ensureFocusState, resolveActiveWorkspace, toggleSelection } from './controllers/browser-controller.js';
+import {
+  buildViewModel,
+  createExpandedPaths,
+  ensureExpandedPath,
+  ensureFocusState,
+  resolveActiveWorkspace,
+  toggleSelection,
+} from './controllers/browser-controller.js';
 
 class PbWorkspaceBrowserElement extends HTMLElement {
   constructor() {
@@ -50,9 +57,26 @@ class PbWorkspaceBrowserElement extends HTMLElement {
     });
     this.shadowRoot.addEventListener('path-change', (event) => {
       this.state.activePath = event.detail.path;
+      this.state.expandedPaths = Array.from(new Set([
+        ...this.state.expandedPaths,
+        ...ensureExpandedPath(this.state.expandedPaths, this.state.treeNodes, event.detail.path),
+      ]));
       this.state.mobileTreeOpen = false;
       this.ensureFocusedVisibleAsset();
       this.setStatus(`Browsing ${this.state.activePath}`, 'neutral');
+      this.renderApp();
+    });
+    this.shadowRoot.addEventListener('tree-toggle', (event) => {
+      const path = event.detail.path;
+      const expanded = new Set(this.state.expandedPaths);
+      if (expanded.has(path)) {
+        expanded.delete(path);
+      } else {
+        ensureExpandedPath(this.state.expandedPaths, this.state.treeNodes, path).forEach((ancestorPath) => {
+          expanded.add(ancestorPath);
+        });
+      }
+      this.state.expandedPaths = [...expanded];
       this.renderApp();
     });
     this.shadowRoot.addEventListener('view-mode-change', (event) => {
@@ -127,6 +151,7 @@ class PbWorkspaceBrowserElement extends HTMLElement {
     this.state.treeNodes = treeNodes;
     this.state.assets = assets;
     this.state.activePath = treeNodes.find((node) => node.path === '/')?.path || treeNodes[0]?.path || '/';
+    this.state.expandedPaths = createExpandedPaths(treeNodes, this.state.activePath);
     this.state.selectedAssetIds = [];
     this.state.focusedAssetId = assets[0]?.id || null;
     this.state.previewAssetId = null;
@@ -168,6 +193,7 @@ class PbWorkspaceBrowserElement extends HTMLElement {
     this.dom.tree.update({
       treeNodes: this.state.treeNodes,
       activePath: this.state.activePath,
+      expandedPaths: this.state.expandedPaths,
     });
     this.dom.viewport.update({
       assets: viewModel.visibleAssets,

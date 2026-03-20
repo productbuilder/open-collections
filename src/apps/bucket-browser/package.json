@@ -1,0 +1,14 @@
+{
+  "name": "@open-collections/bucket-browser-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared bucket browser workspace app scaffold for Open Collections and Productbuilder.",
+  "scripts": {
+    "start": "echo \"Serve repo root and open /src/apps/bucket-browser/\"",
+    "check": "find src -name '*.js' -print0 | xargs -0 -n1 node --check"
+  },
+  "dependencies": {
+    "@open-collections/library-core": "workspace:*"
+  }
+}

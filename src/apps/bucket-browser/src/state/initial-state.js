@@ -5,6 +5,7 @@ export function createInitialState() {
     assets: [],
     activeWorkspaceId: null,
     activePath: '/',
+    expandedPaths: ['/'],
     currentViewMode: 'grid',
     selectedAssetIds: [],
     focusedAssetId: null,

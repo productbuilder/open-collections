@@ -9,6 +9,77 @@ function normalizePath(path) {
   return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
+function comparePaths(a, b) {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+export function getAncestorPaths(path) {
+  const normalizedPath = normalizePath(path);
+  if (normalizedPath === '/') {
+    return ['/'];
+  }
+
+  const segments = normalizedPath.split('/').filter(Boolean);
+  const ancestors = ['/'];
+  let currentPath = '';
+
+  segments.forEach((segment) => {
+    currentPath += `/${segment}`;
+    ancestors.push(currentPath);
+  });
+
+  return ancestors;
+}
+
+export function createExpandedPaths(treeNodes, activePath = '/') {
+  const availablePaths = new Set(treeNodes.map((node) => normalizePath(node.path)));
+  return getAncestorPaths(activePath).filter((path) => availablePaths.has(path));
+}
+
+export function ensureExpandedPath(expandedPaths, treeNodes, path) {
+  const availablePaths = new Set(treeNodes.map((node) => normalizePath(node.path)));
+  return getAncestorPaths(path).filter((ancestorPath) => availablePaths.has(ancestorPath) || expandedPaths.includes(ancestorPath));
+}
+
+export function buildTreeHierarchy(treeNodes = []) {
+  const nodesByPath = new Map();
+  const roots = [];
+
+  treeNodes.forEach((node) => {
+    const path = normalizePath(node.path);
+    nodesByPath.set(path, {
+      ...node,
+      path,
+      depth: path === '/' ? 0 : path.split('/').filter(Boolean).length,
+      children: [],
+    });
+  });
+
+  const sortedNodes = [...nodesByPath.values()].sort((left, right) => comparePaths(left.path, right.path));
+
+  sortedNodes.forEach((node) => {
+    if (node.path === '/') {
+      roots.push(node);
+      return;
+    }
+
+    const parentPath = node.path.split('/').slice(0, -1).join('/') || '/';
+    const parent = nodesByPath.get(parentPath);
+    if (parent) {
+      parent.children.push(node);
+      return;
+    }
+
+    roots.push(node);
+  });
+
+  sortedNodes.forEach((node) => {
+    node.children.sort((left, right) => comparePaths(left.label || left.path, right.label || right.path));
+  });
+
+  return roots;
+}
+
 export function resolveActiveWorkspace(state) {
   return state.workspaces.find((workspace) => workspace.id === state.activeWorkspaceId) || null;
 }

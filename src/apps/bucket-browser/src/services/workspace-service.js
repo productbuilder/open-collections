@@ -15,16 +15,26 @@ const MOCK_WORKSPACES = [
 
 const MOCK_TREE_BY_WORKSPACE = {
   'open-collections-demo': [
-    { id: 'collections-root', path: '/', label: 'collections/', kind: 'root', depth: 0 },
-    { id: 'collections-images', path: '/images', label: 'images', kind: 'folder', depth: 1 },
-    { id: 'collections-oral-histories', path: '/oral-histories', label: 'oral-histories', kind: 'folder', depth: 1 },
-    { id: 'collections-drafts', path: '/drafts', label: 'drafts', kind: 'folder', depth: 1 },
+    { id: 'collections-root', path: '/', label: 'collections/', kind: 'root' },
+    { id: 'collections-images', path: '/images', label: 'images', kind: 'folder' },
+    { id: 'collections-images-archival', path: '/images/archival', label: 'archival', kind: 'folder' },
+    { id: 'collections-images-archival-glass', path: '/images/archival/glass-plates', label: 'glass-plates', kind: 'folder' },
+    { id: 'collections-images-featured', path: '/images/featured', label: 'featured', kind: 'folder' },
+    { id: 'collections-oral-histories', path: '/oral-histories', label: 'oral-histories', kind: 'folder' },
+    { id: 'collections-oral-histories-transcripts', path: '/oral-histories/transcripts', label: 'transcripts', kind: 'folder' },
+    { id: 'collections-oral-histories-review', path: '/oral-histories/review', label: 'review', kind: 'folder' },
+    { id: 'collections-drafts', path: '/drafts', label: 'drafts', kind: 'folder' },
+    { id: 'collections-drafts-incoming', path: '/drafts/incoming', label: 'incoming', kind: 'folder' },
   ],
   'productbuilder-studio': [
-    { id: 'projects-root', path: '/', label: 'projects/', kind: 'root', depth: 0 },
-    { id: 'projects-alpha', path: '/alpha', label: 'alpha', kind: 'folder', depth: 1 },
-    { id: 'projects-assets', path: '/assets', label: 'assets', kind: 'folder', depth: 1 },
-    { id: 'projects-reviews', path: '/reviews', label: 'reviews', kind: 'folder', depth: 1 },
+    { id: 'projects-root', path: '/', label: 'projects/', kind: 'root' },
+    { id: 'projects-alpha', path: '/alpha', label: 'alpha', kind: 'folder' },
+    { id: 'projects-alpha-design', path: '/alpha/design', label: 'design', kind: 'folder' },
+    { id: 'projects-alpha-design-research', path: '/alpha/design/research', label: 'research', kind: 'folder' },
+    { id: 'projects-assets', path: '/assets', label: 'assets', kind: 'folder' },
+    { id: 'projects-assets-renders', path: '/assets/renders', label: 'renders', kind: 'folder' },
+    { id: 'projects-reviews', path: '/reviews', label: 'reviews', kind: 'folder' },
+    { id: 'projects-reviews-qa', path: '/reviews/qa', label: 'qa', kind: 'folder' },
   ],
 };
 
@@ -43,9 +53,21 @@ const MOCK_ASSETS_BY_WORKSPACE = {
       updatedAt: '2026-03-16',
     },
     {
+      id: 'asset-glass-plate',
+      workspaceId: 'open-collections-demo',
+      path: '/images/archival/glass-plates',
+      name: 'Glass Plate Negative',
+      kind: 'image',
+      sizeLabel: '18.1 MB',
+      syncState: 'local + remote',
+      summary: 'Deeply nested preservation image used to validate recursive tree navigation.',
+      thumbnailLabel: 'GP',
+      updatedAt: '2026-03-20',
+    },
+    {
       id: 'asset-field-notes',
       workspaceId: 'open-collections-demo',
-      path: '/oral-histories',
+      path: '/oral-histories/transcripts',
       name: 'Field Notes Transcript',
       kind: 'document',
       sizeLabel: '480 KB',
@@ -57,7 +79,7 @@ const MOCK_ASSETS_BY_WORKSPACE = {
     {
       id: 'asset-ship-plan',
       workspaceId: 'open-collections-demo',
-      path: '/drafts',
+      path: '/drafts/incoming',
       name: 'Harbor Ship Plan',
       kind: 'image',
       sizeLabel: '6.8 MB',
@@ -71,7 +93,7 @@ const MOCK_ASSETS_BY_WORKSPACE = {
     {
       id: 'asset-alpha-ui',
       workspaceId: 'productbuilder-studio',
-      path: '/alpha',
+      path: '/alpha/design',
       name: 'Alpha UI Board',
       kind: 'image',
       sizeLabel: '4.1 MB',
@@ -83,7 +105,7 @@ const MOCK_ASSETS_BY_WORKSPACE = {
     {
       id: 'asset-build-spec',
       workspaceId: 'productbuilder-studio',
-      path: '/assets',
+      path: '/assets/renders',
       name: 'Build Spec v2',
       kind: 'document',
       sizeLabel: '220 KB',
@@ -95,7 +117,7 @@ const MOCK_ASSETS_BY_WORKSPACE = {
     {
       id: 'asset-review-reel',
       workspaceId: 'productbuilder-studio',
-      path: '/reviews',
+      path: '/reviews/qa',
       name: 'Review Reel',
       kind: 'video',
       sizeLabel: '88 MB',
@@ -126,7 +148,7 @@ export function createWorkspaceService() {
       return {
         actionId,
         assetIds: [...assetIds],
-        message: `Placeholder bulk action \"${actionId}\" queued for ${assetIds.length} asset(s).`,
+        message: `Placeholder bulk action "${actionId}" queued for ${assetIds.length} asset(s).`,
       };
     },
   };

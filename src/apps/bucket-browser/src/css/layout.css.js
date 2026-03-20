@@ -3,7 +3,7 @@ export const layoutStyles = `
   .layout {
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 340px);
     gap: 1px;
     background: #dbe5f0;
     flex: 1;
@@ -13,6 +13,12 @@ export const layoutStyles = `
   .details-pane {
     min-height: 0;
     background: #f8fafc;
+  }
+  .tree-pane {
+    overflow: hidden;
+  }
+  .main-pane,
+  .details-pane {
     overflow: auto;
   }
   @media (max-width: 960px) {
@@ -28,6 +34,7 @@ export const layoutStyles = `
       background: rgba(248, 250, 252, 0.98);
       transform: translateX(-100%);
       transition: transform 180ms ease;
+      overflow: auto;
     }
     .details-pane {
       transform: translateX(100%);

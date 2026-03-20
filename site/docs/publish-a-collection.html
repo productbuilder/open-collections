@@ -3,21 +3,180 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Publish a collection moved | Open Collections</title>
-		<meta http-equiv="refresh" content="0; url=./get-started.html" />
-		<link rel="canonical" href="./get-started.html" />
+		<title>Docs: Publish a collection to GitHub | Open Collections</title>
 		<link rel="stylesheet" href="../../index.css" />
-			<script type="module" src="../shared/site-shell-components.js"></script>
+		<script type="module" src="../shared/site-shell-components.js"></script>
 	</head>
 	<body class="docs-page">
 		<open-collections-site-header base-path="../../" active-page="docs"></open-collections-site-header>
+
 		<main>
-			<header>
-				<h1>Page moved</h1>
-				<p>This guide moved to <a href="./get-started.html">Docs: Get started</a>.</p>
-			</header>
+			<p class="breadcrumbs"><a href="../../">Home</a> / <a href="./">Docs</a> / Publish a collection to GitHub</p>
+			<div class="docs-shell">
+				<aside class="docs-sidebar" aria-label="Docs navigation" data-docs-nav></aside>
+				<div class="docs-content">
+					<header>
+						<p class="eyebrow">End-user guide</p>
+						<h1>Publish a collection to GitHub</h1>
+						<p>Use this guide to set up GitHub as a publish destination for Open Collections Desktop or Collection Manager, publish your first collection, and open the published result on the web.</p>
+						<p>This page is written for collection managers, archivists, researchers, editors, and other users who may not work with GitHub every day. The goal is a simple path from zero setup to a live collection URL.</p>
+					</header>
+
+					<section>
+						<h2>Before you begin</h2>
+						<ul>
+							<li>Open Collections Desktop or Collection Manager is available to you.</li>
+							<li>You have internet access.</li>
+							<li>You have a collection ready to publish, or you are ready to create one.</li>
+							<li>You have a GitHub account, or you are willing to create one.</li>
+						</ul>
+						<p>Helpful way to think about the setup:</p>
+						<ul>
+							<li><strong>GitHub account</strong> = who owns the repository.</li>
+							<li><strong>Public repository</strong> = where the published collection files live.</li>
+							<li><strong>Personal Access Token (PAT)</strong> = the permission token Open Collections uses to publish without using your password.</li>
+							<li><strong>Open Collections connection</strong> = the saved destination configuration inside the app.</li>
+							<li><strong>Publish</strong> = upload or update collection files in that repository.</li>
+							<li><strong>Collection URL</strong> = the web address where people can open the published collection.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>1. Create a GitHub account</h2>
+						<ol>
+							<li>Open <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>.</li>
+							<li>Choose the sign-up option and create your account.</li>
+							<li>Verify your email address if GitHub asks you to do that.</li>
+							<li>Sign in to your new or existing account.</li>
+						</ol>
+						<p>You only need one account. That account will usually own the repository you publish to unless your organization gives you access to a shared organization account.</p>
+					</section>
+
+					<section>
+						<h2>2. Create a public repository</h2>
+						<ol>
+							<li>In GitHub, create a new repository under your account or organization.</li>
+							<li>Choose a simple repository name such as <code>my-collections</code>, <code>open-collections-site</code>, or <code>collections-publisher</code>.</li>
+							<li>Set the repository visibility to <strong>Public</strong>.</li>
+							<li>Create the repository.</li>
+						</ol>
+						<p>A public repository matters because the published collection files need to be available for public web access.</p>
+						<p>If your organization has a technical lead or web administrator, that person may already have created this repository for you. In that case, ask them for the repository owner name, repository name, branch, and path to use in Open Collections.</p>
+					</section>
+
+					<section>
+						<h2>3. Create a GitHub Personal Access Token (PAT)</h2>
+						<ol>
+							<li>While signed in to GitHub, open your account settings.</li>
+							<li>Look for <strong>Developer Settings</strong>.</li>
+							<li>Look for <strong>Personal Access Tokens</strong>.</li>
+							<li>Create a new token.</li>
+							<li>Give it a clear label such as <code>Open Collections publish</code>.</li>
+							<li>Choose an expiration date that fits your organization’s security policy.</li>
+							<li>Grant the minimum repository permissions needed to update repository contents.</li>
+						</ol>
+						<p>The exact labels may vary slightly in GitHub over time. If a screen looks a little different, look for the Personal Access Token area inside Developer Settings and choose the option that allows repository content updates.</p>
+						<p>This token lets Open Collections publish on your behalf without using your GitHub password.</p>
+						<p><strong>Important:</strong> copy the token as soon as GitHub shows it. GitHub may only show the full token once.</p>
+						<p><strong>Keep it safe:</strong> store the token in a secure password manager or approved secure note. Do not paste it into public documents, screenshots, emails, or files that will be committed to a repository.</p>
+					</section>
+
+					<section>
+						<h2>4. Connect the repository in Open Collections Desktop / Collection Manager</h2>
+						<p>In Open Collections, open the area where you add or configure a publish destination. In the current preview interface this is typically the host setup flow: <strong>Add a host</strong> → <strong>Remote host</strong> → <strong>Git repository</strong>. The exact labels may vary slightly as the app evolves.</p>
+						<ol>
+							<li>Open the app and go to the publish destination, repository, or host setup area.</li>
+							<li>Choose the GitHub connection option.</li>
+							<li>Enter the repository details and your PAT.</li>
+							<li>Save or add the host/destination.</li>
+						</ol>
+						<p>Values you will usually enter:</p>
+						<ul>
+							<li><strong>Repository owner:</strong> the GitHub username or organization name.</li>
+							<li><strong>Repository name:</strong> the repository you created.</li>
+							<li><strong>Branch:</strong> usually <code>main</code>.</li>
+							<li><strong>Publish path</strong> or <strong>folder path:</strong> use <code>/collections/</code> as the recommended default.</li>
+							<li><strong>PAT</strong> or <strong>access token:</strong> the token you copied from GitHub.</li>
+						</ul>
+						<p>Recommended example:</p>
+						<ul>
+							<li><strong>Owner:</strong> <code>username</code></li>
+							<li><strong>Repository:</strong> <code>my-collections</code></li>
+							<li><strong>Branch:</strong> <code>main</code></li>
+							<li><strong>Publish path:</strong> <code>/collections/</code></li>
+						</ul>
+						<p>The recommended neutral web path is <code>/collections/</code>. Some organizations may instead use <code>/opencollections/</code> or <code>/webcollections/</code>, but <code>/collections/</code> is the best default unless your organization already has another convention.</p>
+						<p>If your app screen uses the label <strong>Folder path</strong> rather than <strong>Publish path</strong>, enter the same idea there: the folder inside the repository where published collections should be written.</p>
+					</section>
+
+					<section>
+						<h2>5. Publish your first collection</h2>
+						<ol>
+							<li>Create a new collection or open an existing one in Open Collections.</li>
+							<li>Fill in the basic collection metadata such as title, description, and publisher.</li>
+							<li>Add items, records, or media references.</li>
+							<li>Save your local work.</li>
+							<li>Choose <strong>Publish</strong>.</li>
+							<li>Choose the GitHub destination you configured.</li>
+							<li>Confirm the publish action.</li>
+						</ol>
+						<p>In simple terms, Open Collections uploads or updates the collection files in the GitHub repository you connected.</p>
+						<p>For many users, the first successful publish is the moment when a local working collection becomes a web collection that can be reopened and shared.</p>
+					</section>
+
+					<section>
+						<h2>6. Open the published collection in the browser</h2>
+						<p>After publishing, the collection should be reachable through the website or hosting setup connected to that repository.</p>
+						<p>Common examples:</p>
+						<ul>
+							<li><code>https://your-site.example/collections/your-collection-slug/</code></li>
+							<li><code>https://username.github.io/repo-name/collections/your-collection-slug/</code></li>
+						</ul>
+						<p>The exact URL depends on how that repository is hosted on the web. The expected path pattern is usually <code>/collections/...</code>.</p>
+						<p>Some setups may instead use <code>/opencollections/...</code> or <code>/webcollections/...</code>. If you are unsure, ask the person who configured the hosting or look at the public base URL used by your organization.</p>
+						<p>A simple placeholder example is:</p>
+						<pre><code>https://username.github.io/repo-name/collections/your-collection-slug/</code></pre>
+						<p>If your collection does not open immediately, wait a short time and refresh. Some hosting systems take a little time to update after files are published.</p>
+					</section>
+
+					<section>
+						<h2>Troubleshooting</h2>
+						<ul>
+							<li><strong>You did not copy the PAT when GitHub created it:</strong> create a new token and copy it immediately.</li>
+							<li><strong>The PAT does not have enough permission:</strong> create or update a token so it can update repository contents.</li>
+							<li><strong>The repository owner or repository name is wrong:</strong> check the GitHub URL carefully and re-enter the values.</li>
+							<li><strong>The branch is wrong:</strong> most repositories use <code>main</code>, but some teams use a different branch.</li>
+							<li><strong>The publish path is wrong:</strong> confirm whether your team expects <code>/collections/</code>, <code>/opencollections/</code>, <code>/webcollections/</code>, or another folder path.</li>
+							<li><strong>The repository is private:</strong> if public web hosting is expected, confirm that the repository or its hosting output is public.</li>
+							<li><strong>Publishing succeeded but nothing is visible on the web:</strong> the repository may be receiving files correctly, but the public hosting for that repository may not be configured yet.</li>
+							<li><strong>The files are there but the website looks out of date:</strong> wait a little longer and refresh because some hosting systems update with a short delay.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Admin or team setup note</h2>
+						<p>In some organizations, a technical or admin person prepares the publish destination once. They may create the repository, set the branch and path, connect hosting, and provide a ready-to-use destination inside Open Collections.</p>
+						<p>When that setup exists, normal collection users often only need to choose the prepared destination and publish. This is usually the easiest and safest model for team workflows.</p>
+					</section>
+
+					<section>
+						<h2>What success looks like</h2>
+						<p>When everything is set up, you should have:</p>
+						<ul>
+							<li>a GitHub account</li>
+							<li>a public GitHub repository</li>
+							<li>a PAT stored safely</li>
+							<li>a saved GitHub destination in Open Collections</li>
+							<li>a published collection in that repository</li>
+							<li>a browser URL that opens the collection on the web</li>
+						</ul>
+						<p>That full path gives you a repeatable publishing workflow: edit locally, publish to GitHub, and share the collection URL.</p>
+					</section>
+				</div>
+			</div>
 		</main>
 
+		<script src="./docs-nav.js"></script>
 		<open-collections-site-footer base-path="../../"></open-collections-site-footer>
 	</body>
 </html>

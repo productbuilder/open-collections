@@ -5,3 +5,7 @@ const platform = getPlatform();
 export async function pickLocalHostDirectory() {
   return platform.openDirectory();
 }
+
+export async function subscribeToManagerFileDrops(listener) {
+  return platform.subscribeToFileDrops(listener);
+}

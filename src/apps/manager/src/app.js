@@ -4,7 +4,7 @@ import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
 import { MEDIA_MODES, normalizeMediaRef } from '../../../packages/collector-schema/src/schema.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
-import { pickLocalHostDirectory } from './platform/manager-source-api.js';
+import { pickLocalHostDirectory, subscribeToManagerFileDrops } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
 import { computeWorkingStatus } from './state/working-status.js';
 import { toWorkspaceItemId } from './utils/id-utils.js';
@@ -96,6 +96,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.opfsStorage = createOpfsStorage();
     this.credentialStore = createCredentialStore();
     this._autosaveTimer = null;
+    this._platformDropCleanup = null;
+    this._platformDropReady = null;
     this.localAssetBlobs = new Map();
     this.objectUrls = new Set();
     this.selectedLocalDirectoryHandle = null;
@@ -200,6 +202,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.syncEditorVisibility();
     this._handleWindowResize = () => this.syncEditorVisibility();
     window.addEventListener('resize', this._handleWindowResize);
+    this.initializePlatformFileDrops();
   }
 
   disconnectedCallback() {
@@ -207,6 +210,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
       window.removeEventListener('resize', this._handleWindowResize);
       this._handleWindowResize = null;
     }
+    if (this._platformDropCleanup) {
+      this._platformDropCleanup();
+      this._platformDropCleanup = null;
+    }
+    this._platformDropReady = null;
   }
 
   renderShell() {
@@ -422,6 +430,47 @@ class OpenCollectionsManagerElement extends HTMLElement {
   setDropTargetState(active) {
     this.state.isDropTargetActive = Boolean(active);
     this.dom.collectionBrowser?.setDropTargetActive(this.state.isDropTargetActive);
+  }
+
+  canAcceptPlatformFileDrops() {
+    return this.isConnected && !this.hidden;
+  }
+
+  async initializePlatformFileDrops() {
+    if (this._platformDropCleanup || this._platformDropReady) {
+      return this._platformDropReady;
+    }
+
+    this._platformDropReady = subscribeToManagerFileDrops(async (event) => {
+      if (!this.canAcceptPlatformFileDrops()) {
+        return;
+      }
+
+      const type = event?.type || '';
+      if (type === 'enter' || type === 'over') {
+        this.setDropTargetState(true);
+        return;
+      }
+      if (type === 'leave') {
+        this.setDropTargetState(false);
+        return;
+      }
+      if (type === 'drop') {
+        this.setDropTargetState(false);
+        const files = Array.isArray(event?.files) ? event.files : [];
+        if (files.length > 0) {
+          await this.ingestImageFiles(files);
+        }
+      }
+    }).then((cleanup) => {
+      this._platformDropCleanup = typeof cleanup === 'function' ? cleanup : null;
+      return this._platformDropCleanup;
+    }).catch((error) => {
+      console.warn('[open-collections-manager] Failed to initialize platform file drops.', error);
+      return null;
+    });
+
+    return this._platformDropReady;
   }
 
   isSupportedImageFile(file) {

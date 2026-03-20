@@ -44,6 +44,32 @@ class PbWorkspaceTreeElement extends HTMLElement {
     });
   }
 
+  renderChevronIcon(isExpanded) {
+    return `
+      <svg class="icon icon-chevron ${isExpanded ? 'is-expanded' : ''}" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M6 3.75 10.5 8 6 12.25" />
+      </svg>
+    `;
+  }
+
+  renderFolderIcon(kind) {
+    if (kind === 'root') {
+      return `
+        <svg class="icon icon-workspace" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M2.25 3.5h4l1.1 1.5h6.4v7.5a1 1 0 0 1-1 1h-9.5a1 1 0 0 1-1-1z" />
+          <path d="M2.25 5h11.5" />
+        </svg>
+      `;
+    }
+
+    return `
+      <svg class="icon icon-folder" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M1.75 4.25h4.1l1.15 1.5h7.25v5.75a1 1 0 0 1-1 1H2.75a1 1 0 0 1-1-1z" />
+        <path d="M1.75 5.75h12.5" />
+      </svg>
+    `;
+  }
+
   renderNode(node, expandedPaths) {
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedPaths.has(node.path);
@@ -63,7 +89,7 @@ class PbWorkspaceTreeElement extends HTMLElement {
             aria-label="${isExpanded ? 'Collapse' : 'Expand'} ${node.label}"
             ${hasChildren ? '' : 'disabled'}
           >
-            <span class="caret ${isExpanded ? 'is-expanded' : ''}">▸</span>
+            ${this.renderChevronIcon(isExpanded)}
           </button>
           <button
             class="tree-select ${isActive ? 'is-active' : ''}"
@@ -72,7 +98,7 @@ class PbWorkspaceTreeElement extends HTMLElement {
             data-path="${node.path}"
             title="${node.path}"
           >
-            <span class="folder-icon">${node.kind === 'root' ? '⌂' : '🗀'}</span>
+            <span class="folder-icon">${this.renderFolderIcon(node.kind)}</span>
             <span class="tree-label">${node.label}</span>
           </button>
         </div>

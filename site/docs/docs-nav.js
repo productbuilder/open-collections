@@ -4,6 +4,7 @@ const DOCS_NAV_ITEMS = [
 	{ href: './open-collections-desktop-v0.1.0-release-notes.html', label: 'Desktop v0.1.0 release notes' },
 	{ href: './open-collections-desktop-v0.1.0-release-checklist.html', label: 'Desktop v0.1.0 release checklist' },
 	{ href: './get-started.html', label: 'Get started' },
+	{ href: './publish-a-collection.html', label: 'Publish to GitHub' },
 	{ href: './open-collections-protocol.html', label: 'Protocol' },
 	{ href: './optional-collection-access-capabilities.html', label: 'Optional capabilities' },
 	{ href: './hosting-and-storage.html', label: 'Hosting and storage' },

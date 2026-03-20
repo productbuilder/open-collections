@@ -140,9 +140,142 @@ function reviveHandle(raw) {
   return null;
 }
 
+function inferMimeTypeFromPath(path = '') {
+  const normalizedPath = String(path || '').toLowerCase();
+  if (normalizedPath.endsWith('.jpg') || normalizedPath.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  }
+  if (normalizedPath.endsWith('.png')) {
+    return 'image/png';
+  }
+  if (normalizedPath.endsWith('.webp')) {
+    return 'image/webp';
+  }
+  if (normalizedPath.endsWith('.gif')) {
+    return 'image/gif';
+  }
+  return '';
+}
+
+function fileNameFromPath(path = '') {
+  return String(path || '').split(/[/\\]/).pop() || '';
+}
+
+async function fileFromPath(path) {
+  const normalizedPath = String(path || '').trim();
+  if (!normalizedPath) {
+    return null;
+  }
+
+  const bytes = await invoke('platform_read_binary_file', { path: normalizedPath });
+  const payload = Uint8Array.from(Array.isArray(bytes) ? bytes : []);
+  const fileName = fileNameFromPath(normalizedPath) || 'file';
+  const type = inferMimeTypeFromPath(normalizedPath);
+
+  if (typeof File === 'function') {
+    return new File([payload], fileName, { type });
+  }
+
+  const blob = new Blob([payload], { type });
+  return Object.assign(blob, {
+    name: fileName,
+    path: normalizedPath,
+    lastModified: Date.now(),
+  });
+}
+
+async function filesFromPaths(paths = []) {
+  const files = await Promise.all((Array.isArray(paths) ? paths : []).map(async (path) => {
+    try {
+      return await fileFromPath(path);
+    } catch (_error) {
+      return null;
+    }
+  }));
+  return files.filter(Boolean);
+}
+
+function normalizeDropPayload(type, payload = {}) {
+  return {
+    type,
+    paths: Array.isArray(payload.paths) ? payload.paths.map((path) => String(path || '')).filter(Boolean) : [],
+    position: payload.position || null,
+  };
+}
+
+async function subscribeWithWebviewApi(handler) {
+  const getCurrentWebview = window.__TAURI__?.webview?.getCurrentWebview;
+  if (typeof getCurrentWebview !== 'function') {
+    return null;
+  }
+
+  const webview = getCurrentWebview();
+  if (!webview || typeof webview.onDragDropEvent !== 'function') {
+    return null;
+  }
+
+  return webview.onDragDropEvent(async (event) => {
+    const payload = normalizeDropPayload(event?.payload?.type, event?.payload || {});
+    if (payload.type === 'drop') {
+      payload.files = await filesFromPaths(payload.paths);
+    }
+    await handler(payload);
+  });
+}
+
+async function subscribeWithEventApi(handler) {
+  const eventApi = window.__TAURI__?.event;
+  const listen = eventApi?.listen;
+  const events = eventApi?.TauriEvent;
+  if (typeof listen !== 'function' || !events) {
+    return null;
+  }
+
+  const registrations = await Promise.all([
+    ['enter', events.DRAG_ENTER],
+    ['over', events.DRAG_OVER],
+    ['leave', events.DRAG_LEAVE],
+    ['drop', events.DRAG_DROP],
+  ].map(async ([type, eventName]) => listen(eventName, async (event) => {
+    const payload = normalizeDropPayload(type, event?.payload || {});
+    if (type === 'drop') {
+      payload.files = await filesFromPaths(payload.paths);
+    }
+    await handler(payload);
+  })));
+
+  return () => {
+    for (const unlisten of registrations) {
+      try {
+        unlisten();
+      } catch (_error) {
+        // Ignore cleanup failures during teardown.
+      }
+    }
+  };
+}
+
 export const tauriPlatform = createPlatformApi({
   getPlatformType() {
     return PLATFORM_TYPES.TAURI;
+  },
+
+  async subscribeToFileDrops(handler) {
+    if (typeof handler !== 'function') {
+      return () => {};
+    }
+
+    const webviewUnlisten = await subscribeWithWebviewApi(handler);
+    if (typeof webviewUnlisten === 'function') {
+      return webviewUnlisten;
+    }
+
+    const eventUnlisten = await subscribeWithEventApi(handler);
+    if (typeof eventUnlisten === 'function') {
+      return eventUnlisten;
+    }
+
+    return () => {};
   },
 
   async openTextFile() {

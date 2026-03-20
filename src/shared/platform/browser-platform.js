@@ -74,6 +74,10 @@ export const browserPlatform = createPlatformApi({
     return PLATFORM_TYPES.BROWSER;
   },
 
+  async subscribeToFileDrops() {
+    return () => {};
+  },
+
   async openTextFile() {
     return openFileWithPicker([{ description: 'Text files', accept: { 'text/plain': ['.txt', '.md', '.json'] } }]);
   },

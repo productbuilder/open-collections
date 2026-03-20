@@ -10,6 +10,7 @@ export function createPlatformApi(implementation) {
 
   const required = [
     'getPlatformType',
+    'subscribeToFileDrops',
     'openTextFile',
     'openJsonFile',
     'saveTextFile',

@@ -121,7 +121,15 @@ export async function createNewCollectionDraft(manager) {
       if (!manager.state.localDraftCollections.some((entry) => entry.id === nextCollectionId)) {
         manager.state.localDraftCollections = [
           ...manager.state.localDraftCollections,
-          { id: nextCollectionId, title: nextMeta.title, rootPath: nextMeta.rootPath },
+          {
+            id: nextCollectionId,
+            title: nextMeta.title,
+            description: nextMeta.description,
+            license: nextMeta.license,
+            publisher: nextMeta.publisher,
+            language: nextMeta.language,
+            rootPath: nextMeta.rootPath,
+          },
         ];
       }
 
@@ -156,7 +164,15 @@ export async function createNewCollectionDraft(manager) {
   manager.dom.manifestPreview.textContent = JSON.stringify(manager.state.manifest, null, 2);
   manager.state.selectedItemId = null;
   if (!manager.state.localDraftCollections.some((entry) => entry.id === slug)) {
-    manager.state.localDraftCollections = [...manager.state.localDraftCollections, { id: slug, title, rootPath: meta.rootPath }];
+    manager.state.localDraftCollections = [...manager.state.localDraftCollections, {
+      id: slug,
+      title,
+      description: meta.description,
+      license: meta.license,
+      publisher: meta.publisher,
+      language: meta.language,
+      rootPath: meta.rootPath,
+    }];
   }
 
   if (manager.state.activeSourceFilter !== 'all') {
@@ -166,7 +182,15 @@ export async function createNewCollectionDraft(manager) {
       if (!exists) {
         source.collections = [
           ...(source.collections || []),
-          { id: slug, title, rootPath: meta.rootPath },
+          {
+            id: slug,
+            title,
+            description: meta.description,
+            license: meta.license,
+            publisher: meta.publisher,
+            language: meta.language,
+            rootPath: meta.rootPath,
+          },
         ];
       }
       source.selectedCollectionId = slug;
@@ -277,6 +301,12 @@ export async function saveSelectedCollectionMetadata(manager, patch = null) {
           : item,
       );
 
+      manager.setCollectionMetaFields({
+        ...selected,
+        ...nextPatch,
+        ...updatedCollection,
+        rootPath: normalizedRootPath,
+      });
       manager.renderSourcesList();
       manager.renderSourceFilter();
       manager.renderCollectionFilter();
@@ -298,6 +328,10 @@ export async function saveSelectedCollectionMetadata(manager, patch = null) {
     }
   }
   manager.state.localDraftCollections = manager.state.localDraftCollections.map((entry) => entry.id === selected.id ? { ...entry, ...nextPatch } : entry);
+  manager.setCollectionMetaFields({ ...selected, ...nextPatch });
+  manager.renderSourcesList();
+  manager.renderSourceFilter();
+  manager.renderCollectionFilter();
   manager.renderAssets();
   manager.renderEditor();
   manager.setStatus(`Saved collection metadata for ${selected.id}.`, 'ok');

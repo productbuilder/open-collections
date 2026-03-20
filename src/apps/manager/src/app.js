@@ -77,6 +77,7 @@ import {
   joinCollectionRootPath as joinCollectionRootPathUtil,
 } from './utils/path-utils.js';
 import { renderShell } from './render/render-shell.js';
+import { deriveItemEditorState, getItemOverridePatch, resolveItemMetadata } from './utils/metadata-inheritance.js';
 import * as AssetService from './services/asset-service.js';
 import * as CollectionService from './services/collection-service.js';
 import * as ManifestService from './services/manifest-service.js';
@@ -1204,7 +1205,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   collectEditorPatch() {
-    return this.dom.metadataEditor.getItemPatch();
+    const selected = this.findSelectedItem();
+    return selected
+      ? this.buildItemPatchFromEditor(this.dom.metadataEditor.getItemPatch(), selected)
+      : this.dom.metadataEditor.getItemPatch();
   }
 
   confirmDeleteItems(items) {
@@ -1459,6 +1463,60 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   currentCollectionMeta() {
     return currentCollectionMeta(this);
+  }
+
+  findCollectionMetaById(collectionId, sourceId = '') {
+    const normalizedId = String(collectionId || '').trim();
+    if (!normalizedId || normalizedId === 'all') {
+      return null;
+    }
+
+    const localDraftCollection = this.state.localDraftCollections.find((entry) => entry.id === normalizedId) || null;
+
+    if (sourceId) {
+      const source = this.getSourceById(sourceId);
+      const sourceCollection = source?.collections?.find((entry) => entry.id === normalizedId);
+      if (sourceCollection) {
+        return localDraftCollection ? { ...sourceCollection, ...localDraftCollection } : sourceCollection;
+      }
+    }
+
+    for (const source of this.state.sources) {
+      const sourceCollection = (source.collections || []).find((entry) => entry.id === normalizedId);
+      if (sourceCollection) {
+        return localDraftCollection ? { ...sourceCollection, ...localDraftCollection } : sourceCollection;
+      }
+    }
+
+    return localDraftCollection;
+  }
+
+  resolveItemMetadata(item) {
+    const collection = this.findCollectionMetaById(item?.collectionId, item?.sourceId) || {};
+    return resolveItemMetadata(item, collection);
+  }
+
+  resolveItemForDisplay(item) {
+    const resolved = this.resolveItemMetadata(item);
+    return {
+      ...item,
+      description: resolved.description || '',
+      license: resolved.license || '',
+      attribution: resolved.attribution || '',
+      language: resolved.language || '',
+      metadataResolution: resolved.metadataResolution || {},
+      overrides: item?.overrides && typeof item.overrides === 'object' ? { ...item.overrides } : {},
+    };
+  }
+
+  deriveItemEditorState(item) {
+    const collection = this.findCollectionMetaById(item?.collectionId, item?.sourceId) || {};
+    return deriveItemEditorState(item, collection);
+  }
+
+  buildItemPatchFromEditor(editorState, previousItem) {
+    const collection = this.findCollectionMetaById(previousItem?.collectionId, previousItem?.sourceId) || {};
+    return getItemOverridePatch(editorState, collection, previousItem);
   }
 
   toManifestItem(item) {

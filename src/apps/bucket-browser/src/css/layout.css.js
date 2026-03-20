@@ -1,6 +1,7 @@
 export const layoutStyles = `
   :host { display: block; min-height: 0; }
   .layout {
+    height:100%;
     min-height: 0;
     display: grid;
     grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 340px);

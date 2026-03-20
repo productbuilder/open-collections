@@ -1,6 +1,9 @@
 ﻿import { normalizeMediaRef, validateCollectionShape } from '../../../../packages/collector-schema/src/schema.js';
+import { resolveItemMetadata } from '../utils/metadata-inheritance.js';
 
 export function toManifestItem(manager, item) {
+  const collection = manager.findCollectionMetaById(item?.collectionId, item?.sourceId) || {};
+  const resolvedItem = resolveItemMetadata(item, collection);
   const {
     workspaceId,
     sourceId,
@@ -20,8 +23,10 @@ export function toManifestItem(manager, item) {
     uploadError,
     localFileRef,
     localThumbnailRef,
+    metadataResolution,
+    overrides,
     ...manifestItem
-  } = item;
+  } = resolvedItem;
   return {
     ...manifestItem,
     media: normalizeMediaRef(manifestItem.media),

@@ -58,7 +58,7 @@ export const metadataStyles = `
 
   .editor-header-actions {
     display: flex;
-    justify-content:center;
+    justify-content: center;
     align-items: center;
     gap: 0.5rem;
   }
@@ -154,6 +154,16 @@ export const metadataStyles = `
     background: #b91c1c;
   }
 
+  .btn-secondary {
+    color: #0f6cc6;
+    border-color: #bfdbfe;
+    background: #eff6ff;
+  }
+
+  .btn-secondary:hover {
+    background: #dbeafe;
+  }
+
   .editor-section {
     border-top: 1px solid #e2e8f0;
     padding-top: 0.6rem;
@@ -168,6 +178,51 @@ export const metadataStyles = `
     text-transform: uppercase;
     color: #64748b;
     font-weight: 700;
+  }
+
+  .section-help,
+  .field-help {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  .override-field {
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .override-field.is-override-active {
+    background: #ffffff;
+    border-color: #bfdbfe;
+    box-shadow: inset 0 0 0 1px rgba(15, 108, 198, 0.08);
+  }
+
+  .override-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .override-row-header label {
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .inheritance-preview {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    padding: 0.65rem 0.75rem;
+    white-space: pre-wrap;
   }
 
   .empty {
@@ -219,6 +274,11 @@ export const metadataStyles = `
 
     .editor-wrap {
       padding: 0.8rem;
+    }
+
+    .override-row-header {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
     .editor-close-btn {

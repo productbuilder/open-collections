@@ -267,7 +267,8 @@ export function bindDomEvents(app) {
     if (!selected) {
       return;
     }
-    const patch = event.detail?.patch || app.collectEditorPatch();
+    const rawEditorState = event.detail?.patch || app.dom.metadataEditor.getItemPatch();
+    const patch = app.buildItemPatchFromEditor(rawEditorState, selected);
     await app.updateItem(selected.workspaceId, patch, { explicitSave: true });
   });
   app.dom.metadataEditor.addEventListener('save-collection', async (event) => {

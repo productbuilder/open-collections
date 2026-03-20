@@ -1,5 +1,36 @@
 import { metadataStyles } from '../css/metadata.css.js';
 
+const ITEM_OVERRIDE_FIELD_CONFIG = {
+  description: {
+    label: 'Description',
+    inputId: 'itemOverrideDescription',
+    hintId: 'itemOverrideDescriptionHint',
+    previewId: 'itemOverrideDescriptionPreview',
+    tag: 'textarea',
+  },
+  license: {
+    label: 'License',
+    inputId: 'itemOverrideLicense',
+    hintId: 'itemOverrideLicenseHint',
+    previewId: 'itemOverrideLicensePreview',
+    tag: 'input',
+  },
+  attribution: {
+    label: 'Attribution',
+    inputId: 'itemOverrideAttribution',
+    hintId: 'itemOverrideAttributionHint',
+    previewId: 'itemOverrideAttributionPreview',
+    tag: 'input',
+  },
+  language: {
+    label: 'Language',
+    inputId: 'itemOverrideLanguage',
+    hintId: 'itemOverrideLanguageHint',
+    previewId: 'itemOverrideLanguagePreview',
+    tag: 'input',
+  },
+};
+
 class OpenCollectionsMetadataElement extends HTMLElement {
   constructor() {
     super();
@@ -41,6 +72,18 @@ class OpenCollectionsMetadataElement extends HTMLElement {
         this.dispatch('delete-item', { workspaceId: this.model.item.workspaceId });
       }
     });
+
+    this.shadowRoot.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-override-toggle]') : null;
+      if (!button) {
+        return;
+      }
+      const field = button.getAttribute('data-override-toggle') || '';
+      if (!field) {
+        return;
+      }
+      this.setOverrideEnabled(field, !this.isOverrideEnabled(field));
+    });
   }
 
   dispatch(name, detail = {}) {
@@ -81,21 +124,115 @@ class OpenCollectionsMetadataElement extends HTMLElement {
   }
 
   getItemPatch() {
+    const overrides = {};
+    const overrideStates = {};
+
+    for (const [field, config] of Object.entries(ITEM_OVERRIDE_FIELD_CONFIG)) {
+      const enabled = this.isOverrideEnabled(field);
+      overrideStates[field] = enabled;
+      overrides[field] = this.shadowRoot.getElementById(config.inputId)?.value.trim() || '';
+    }
+
     return {
       title: this.shadowRoot.getElementById('itemTitle')?.value.trim() || '',
-      description: this.shadowRoot.getElementById('itemDescription')?.value.trim() || '',
       creator: this.shadowRoot.getElementById('itemCreator')?.value.trim() || '',
       date: this.shadowRoot.getElementById('itemDate')?.value.trim() || '',
       location: this.shadowRoot.getElementById('itemLocation')?.value.trim() || '',
-      license: this.shadowRoot.getElementById('itemLicense')?.value.trim() || '',
-      attribution: this.shadowRoot.getElementById('itemAttribution')?.value.trim() || '',
       source: this.shadowRoot.getElementById('itemSource')?.value.trim() || '',
       tags: this.tagsToArray(this.shadowRoot.getElementById('itemTags')?.value || ''),
       include: Boolean(this.shadowRoot.getElementById('itemInclude')?.checked),
-      media: {
-        type: this.shadowRoot.getElementById('itemType')?.value.trim() || '',
-      },
+      mediaType: this.shadowRoot.getElementById('itemType')?.value.trim() || '',
+      overrides,
+      overrideStates,
     };
+  }
+
+  isOverrideEnabled(field) {
+    const container = this.shadowRoot?.querySelector(`[data-override-row="${field}"]`);
+    return container?.dataset.overrideEnabled === 'true';
+  }
+
+  setOverrideEnabled(field, enabled) {
+    const container = this.shadowRoot?.querySelector(`[data-override-row="${field}"]`);
+    if (!container) {
+      return;
+    }
+
+    const state = this.model.item?.overrideFields?.[field] || {};
+    const nextEnabled = Boolean(enabled);
+    container.dataset.overrideEnabled = nextEnabled ? 'true' : 'false';
+    container.classList.toggle('is-override-active', nextEnabled);
+
+    const inputWrap = container.querySelector('[data-override-editor]');
+    const preview = container.querySelector('[data-override-preview]');
+    const hint = container.querySelector('[data-override-hint]');
+    const button = container.querySelector('[data-override-toggle]');
+
+    if (inputWrap) {
+      inputWrap.hidden = !nextEnabled;
+    }
+    if (preview) {
+      preview.hidden = nextEnabled;
+    }
+    if (hint) {
+      hint.textContent = nextEnabled
+        ? 'Saved only for this item. Remove the override to use the collection value again.'
+        : this.inheritedHelpText(state);
+    }
+    if (button) {
+      button.textContent = nextEnabled ? 'Use collection default' : 'Override';
+    }
+  }
+
+  inheritedHelpText(state = {}) {
+    if (state.isInherited && state.inheritedValue) {
+      return 'Inherited from collection.';
+    }
+    if (state.isInherited && !state.inheritedValue) {
+      return 'Collection default is empty. Add an override only if this item needs its own value.';
+    }
+    if (state.source === 'item') {
+      return 'Using the item value because there is no collection default.';
+    }
+    if (state.source === 'legacy-raw') {
+      return 'This item already had its own value before collection defaults were introduced.';
+    }
+    return 'Add an override only when this item needs to differ from the collection.';
+  }
+
+  inheritedPreviewText(state = {}) {
+    if (state.isInherited && state.inheritedValue) {
+      return `${state.inheritedValue} (inherited from collection)`;
+    }
+    if (state.isInherited) {
+      return 'Inherited value is currently empty.';
+    }
+    if (state.source === 'item' && state.resolvedValue) {
+      return `${state.resolvedValue} (item value)`;
+    }
+    return state.resolvedValue || 'No value yet.';
+  }
+
+  applyOverrideView(field, state = {}) {
+    const config = ITEM_OVERRIDE_FIELD_CONFIG[field];
+    if (!config) {
+      return;
+    }
+
+    const input = this.shadowRoot.getElementById(config.inputId);
+    const preview = this.shadowRoot.getElementById(config.previewId);
+    const hint = this.shadowRoot.getElementById(config.hintId);
+    if (input) {
+      input.value = state.overrideActive ? state.overrideValue || '' : state.resolvedValue || '';
+    }
+    if (preview) {
+      preview.textContent = this.inheritedPreviewText(state);
+    }
+    if (hint) {
+      hint.textContent = this.inheritedHelpText(state);
+    }
+
+    this.setOverrideEnabled(field, Boolean(state.overrideActive));
   }
 
   applyView() {
@@ -112,7 +249,6 @@ class OpenCollectionsMetadataElement extends HTMLElement {
       return;
     }
 
-    // Enforce mutually exclusive editor states.
     empty.hidden = true;
     collectionForm.hidden = true;
     itemForm.hidden = true;
@@ -158,24 +294,45 @@ class OpenCollectionsMetadataElement extends HTMLElement {
         ? `${selected.id} - ${selected.sourceDisplayLabel || selected.sourceLabel}${filePath ? ` - ${filePath}` : ''}`
         : `${selected.id} - ${selected.sourceDisplayLabel || selected.sourceLabel} (local edits)${filePath ? ` - ${filePath}` : ''}`;
 
-      this.shadowRoot.getElementById('itemTitle').value = selected.title || '';
-      this.shadowRoot.getElementById('itemDescription').value = selected.description || '';
-      this.shadowRoot.getElementById('itemType').value = selected.media?.type || '';
+      this.shadowRoot.getElementById('itemTitle').value = selected.itemSpecific?.title || selected.title || '';
+      this.shadowRoot.getElementById('itemType').value = selected.itemSpecific?.mediaType || selected.media?.type || '';
       this.shadowRoot.getElementById('itemFilePath').value = filePath;
-      this.shadowRoot.getElementById('itemCreator').value = selected.creator || '';
-      this.shadowRoot.getElementById('itemDate').value = selected.date || '';
-      this.shadowRoot.getElementById('itemLocation').value = selected.location || '';
-      this.shadowRoot.getElementById('itemLicense').value = selected.license || '';
-      this.shadowRoot.getElementById('itemAttribution').value = selected.attribution || '';
-      this.shadowRoot.getElementById('itemSource').value = selected.source || '';
-      this.shadowRoot.getElementById('itemTags').value = Array.isArray(selected.tags) ? selected.tags.join(', ') : '';
-      this.shadowRoot.getElementById('itemInclude').checked = selected.include !== false;
+      this.shadowRoot.getElementById('itemCreator').value = selected.itemSpecific?.creator || selected.creator || '';
+      this.shadowRoot.getElementById('itemDate').value = selected.itemSpecific?.date || selected.date || '';
+      this.shadowRoot.getElementById('itemLocation').value = selected.itemSpecific?.location || selected.location || '';
+      this.shadowRoot.getElementById('itemSource').value = selected.itemSpecific?.source || selected.source || '';
+      this.shadowRoot.getElementById('itemTags').value = Array.isArray(selected.itemSpecific?.tags) ? selected.itemSpecific.tags.join(', ') : '';
+      this.shadowRoot.getElementById('itemInclude').checked = selected.itemSpecific?.include !== false;
+
+      for (const field of Object.keys(ITEM_OVERRIDE_FIELD_CONFIG)) {
+        this.applyOverrideView(field, selected.overrideFields?.[field] || {});
+      }
       return;
     }
 
     title.textContent = 'Metadata editor';
     context.textContent = 'Select a collection or item.';
     empty.hidden = false;
+  }
+
+  renderOverrideField(field, label, { tag, inputId, hintId, previewId }) {
+    const inputMarkup = tag === 'textarea'
+      ? `<textarea id="${inputId}"></textarea>`
+      : `<input id="${inputId}" type="text" />`;
+
+    return `
+      <div class="field-row override-field" data-override-row="${field}" data-override-enabled="false">
+        <div class="override-row-header">
+          <label for="${inputId}">${label}</label>
+          <button class="btn btn-secondary" data-override-toggle="${field}" type="button">Override</button>
+        </div>
+        <p id="${hintId}" class="field-help" data-override-hint></p>
+        <div id="${previewId}" class="inheritance-preview" data-override-preview></div>
+        <div data-override-editor hidden>
+          ${inputMarkup}
+        </div>
+      </div>
+    `;
   }
 
   render() {
@@ -210,30 +367,32 @@ class OpenCollectionsMetadataElement extends HTMLElement {
           </form>
           <form id="editorForm" class="editor-wrap" hidden>
             <div class="editor-section">
-              <p class="editor-section-title">Basic</p>
+              <p class="editor-section-title">Item-specific</p>
               <div class="field-row"><label for="itemTitle">Title</label><input id="itemTitle" type="text" /></div>
-              <div class="field-row"><label for="itemDescription">Description</label><textarea id="itemDescription"></textarea></div>
               <div class="field-row"><label for="itemType">Type / Format</label><input id="itemType" type="text" /></div>
               <div class="field-row"><label for="itemFilePath">File</label><input id="itemFilePath" type="text" readonly /></div>
             </div>
             <div class="editor-section">
               <p class="editor-section-title">Authorship</p>
               <div class="field-row"><label for="itemCreator">Creator</label><input id="itemCreator" type="text" /></div>
-              <div class="field-row"><label for="itemAttribution">Attribution</label><input id="itemAttribution" type="text" /></div>
             </div>
             <div class="editor-section">
               <p class="editor-section-title">Context</p>
               <div class="field-row"><label for="itemDate">Date / Period</label><input id="itemDate" type="text" /></div>
               <div class="field-row"><label for="itemLocation">Location</label><input id="itemLocation" type="text" /></div>
-            </div>
-            <div class="editor-section">
-              <p class="editor-section-title">Rights</p>
-              <div class="field-row"><label for="itemLicense">License</label><input id="itemLicense" type="text" /></div>
               <div class="field-row"><label for="itemSource">Source</label><input id="itemSource" type="text" /></div>
             </div>
             <div class="editor-section">
               <p class="editor-section-title">Classification</p>
               <div class="field-row"><label for="itemTags">Tags / Keywords (comma separated)</label><input id="itemTags" type="text" /></div>
+            </div>
+            <div class="editor-section">
+              <p class="editor-section-title">Override shared metadata</p>
+              <p class="section-help">Collection metadata is the default. Only create an override when this item needs to differ.</p>
+              ${this.renderOverrideField('description', 'Description', ITEM_OVERRIDE_FIELD_CONFIG.description)}
+              ${this.renderOverrideField('license', 'License', ITEM_OVERRIDE_FIELD_CONFIG.license)}
+              ${this.renderOverrideField('attribution', 'Attribution', ITEM_OVERRIDE_FIELD_CONFIG.attribution)}
+              ${this.renderOverrideField('language', 'Language', ITEM_OVERRIDE_FIELD_CONFIG.language)}
             </div>
             <label class="checkbox-row" for="itemInclude"><span>Include in manifest</span><input id="itemInclude" type="checkbox" /></label>
           </form>

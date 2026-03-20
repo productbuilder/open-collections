@@ -96,7 +96,7 @@ export function renderViewer(app) {
     app.closeViewer();
     return;
   }
-  app.dom.assetViewer?.setItem(item, (entry) => app.formatSourceBadge(entry));
+  app.dom.assetViewer?.setItem(app.resolveItemForDisplay(item), (entry) => app.formatSourceBadge(entry));
 }
 
 export function renderAssets(app) {
@@ -130,7 +130,9 @@ export function renderAssets(app) {
     return;
   }
 
-  const visibleAssets = app.getVisibleAssets().filter((item) => item.collectionId === app.state.openedCollectionId);
+  const visibleAssets = app.getVisibleAssets()
+    .filter((item) => item.collectionId === app.state.openedCollectionId)
+    .map((item) => app.resolveItemForDisplay(item));
   const collection = app.findSelectedCollectionMeta();
   app.dom.collectionBrowser.update({
     currentLevel: 'items',
@@ -235,7 +237,7 @@ export function renderEditor(app) {
     const canSave = Boolean(selectedSource?.capabilities?.canSaveMetadata);
     app.dom.metadataEditor.setView({
       mode: 'item',
-      item: selected,
+      item: selected ? app.deriveItemEditorState(selected) : null,
       canSaveItem: canSave,
       canDeleteItem: Boolean(selected),
     });

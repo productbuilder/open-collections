@@ -5,6 +5,18 @@ import { getPlatformType, PLATFORM_TYPES, revivePlatformHandle } from '../../../
 const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
 
+function normalizeLocalDraftCollectionEntry(app, entry = {}) {
+  return {
+    id: String(entry.id || ''),
+    title: entry.title || String(entry.id || ''),
+    description: entry.description || '',
+    license: entry.license || '',
+    publisher: entry.publisher || '',
+    language: entry.language || '',
+    rootPath: app.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
+  };
+}
+
 function summarizeCredentialConfig(providerId, config = {}) {
   if (providerId === 'github') {
     return {
@@ -104,11 +116,7 @@ export function applyWorkspaceSnapshot(app, snapshot = {}) {
   if (Array.isArray(snapshot.localDraftCollections)) {
     app.state.localDraftCollections = snapshot.localDraftCollections
       .filter((entry) => entry && entry.id)
-      .map((entry) => ({
-        id: String(entry.id),
-        title: entry.title || String(entry.id),
-        rootPath: app.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
-      }));
+      .map((entry) => normalizeLocalDraftCollectionEntry(app, entry));
   }
 
   if (snapshot.collectionMeta && typeof snapshot.collectionMeta === 'object') {
@@ -153,11 +161,7 @@ export function applyLocalDraftPayload(app, payload) {
   if (Array.isArray(payload.localDraftCollections)) {
     app.state.localDraftCollections = payload.localDraftCollections
       .filter((entry) => entry && entry.id)
-      .map((entry) => ({
-        id: String(entry.id),
-        title: entry.title || String(entry.id),
-        rootPath: app.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
-      }));
+      .map((entry) => normalizeLocalDraftCollectionEntry(app, entry));
   }
 
   if (payload.collectionMeta && typeof payload.collectionMeta === 'object') {

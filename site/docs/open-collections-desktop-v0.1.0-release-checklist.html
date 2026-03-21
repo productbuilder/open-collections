@@ -28,9 +28,9 @@
 					<section>
 						<h2>Artifact checklist</h2>
 						<ul>
-							<li>Replace the current placeholder file at <code>site/downloads/open-collections-desktop-v0.1.0.exe</code> with the real Windows build before any public announcement.</li>
-							<li>Keep the final release filename exactly as <code>site/downloads/open-collections-desktop-v0.1.0.exe</code> so existing site and docs download links stay correct.</li>
-							<li>Verify the download links from the desktop release page, getting started page, and release notes all download the real executable rather than the placeholder artifact.</li>
+							<li>Upload the real Windows build to <a href="https://github.com/productbuilder/open-collections/releases" target="_blank" rel="noopener">GitHub Releases</a> before any public announcement.</li>
+							<li>Attach the Windows installer to the tagged GitHub release so the public site can link to a stable external release page instead of bundling binaries.</li>
+							<li>Verify the download links from the desktop release page, getting started page, and release notes all open the correct GitHub release page and expose the intended installer asset.</li>
 							<li>Confirm the uploaded file is the intended v0.1.0 preview release artifact and not an older test build, unsigned debug build, or packaging stub.</li>
 						</ul>
 					</section>
@@ -84,7 +84,7 @@
 						<h2>Go / no-go criteria</h2>
 						<p>Open Collections Desktop v0.1.0 preview is ready to publish only when all of the following are true:</p>
 						<ul>
-							<li>the download artifact is the real Windows preview executable, stored at the final public path</li>
+							<li>the download artifact is the real Windows preview executable, attached to the public GitHub release</li>
 							<li>the app launches correctly and the shell is usable</li>
 							<li>Browser example loading works</li>
 							<li>Manager core host flows work for supported preview hosts</li>

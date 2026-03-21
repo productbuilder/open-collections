@@ -20,10 +20,11 @@ This generates localized output in `site-dist/`:
 
 - `site-dist/en/...`
 - `site-dist/nl/...`
-- shared app/runtime assets under `site-dist/src/...`
-- repository markdown docs under `site-dist/docs/...`
+- shared site runtime assets under `site-dist/src/...`
+- referenced markdown docs under `site-dist/docs/...`
+- lightweight example data under `site-dist/site/examples/...`
 
-The root `site-dist/index.html` redirects to `./en/`.
+The root `site-dist/index.html` redirects to `./en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases.
 
 ## What is localized now
 

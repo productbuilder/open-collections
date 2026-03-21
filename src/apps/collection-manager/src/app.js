@@ -693,9 +693,16 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return hasCollections || hasAssets;
   }
 
+  isExampleSource(source) {
+    return Boolean(source && source.providerId === 'example');
+  }
+
   sourceRepairGuidance(source) {
     if (!source) {
       return '';
+    }
+    if (this.isExampleSource(source)) {
+      return 'Viewing example content. Connect a host to refresh from your own storage or publish changes.';
     }
     const hasAccessibleContent = this.sourceHasAccessibleContent(source);
     if (source.providerId === 'local' && source.needsReconnect) {
@@ -824,6 +831,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
   activeHostStateLabel(source) {
     if (!source) {
       return 'No active host';
+    }
+    if (this.isExampleSource(source)) {
+      return 'Example collection';
     }
     if (source.needsCredentials) {
       return 'Credentials missing';

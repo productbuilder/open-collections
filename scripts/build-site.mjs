@@ -2,19 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const REPO_ROOT = process.cwd();
-const OUTPUT_ROOT = path.join(REPO_ROOT, 'site-dist');
+const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs');
 const LOCALES = ['en', 'nl'];
 const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
 const ROOT_ASSET_FILES = [
   'src/shared/components/open-collections-registry-widget.js',
   'src/apps/browser/README.md',
   'src/apps/manager/README.md',
-  'docs/collection-manifest-spec.md',
-  'docs/provider-and-storage-implementation.md',
-  'docs/collection-registry-and-indexer.md',
-  'docs/linked-collections-architecture.md',
-  'docs/wordpress-integration.md',
-  'docs/wordpress-plugin-scaffold.md',
+  'notes/collection-manifest-spec.md',
+  'notes/provider-and-storage-implementation.md',
+  'notes/collection-registry-and-indexer.md',
+  'notes/linked-collections-architecture.md',
+  'notes/wordpress-integration.md',
+  'notes/wordpress-plugin-scaffold.md',
 ];
 const ROOT_ASSET_DIRECTORIES = [
   ['src/apps/browser', 'src/apps/browser'],

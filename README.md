@@ -7,10 +7,12 @@ Open Collections now contains two focused applications in one repository:
 
 ## Quick links
 
-- Landing page: `./index.html`
+- Landing page source: `./index.html`
+- GitHub Pages publish output after `pnpm site:build`: `./docs/`
 - Site demo: `./site/demo/`
 - Site docs: `./site/docs/`
 - Site examples: `./site/examples/`
+- Internal notes/source markdown: `./notes/`
 - Collector app: `./src/apps/manager/`
 - Browser app: `./src/apps/browser/`
 - WordPress plugin scaffold: `./wordpress/open-collections/`
@@ -80,6 +82,8 @@ site/
   docs/
   examples/
 
+notes/
+docs/  # generated GitHub Pages output
 projects/
 index.html
 ```
@@ -88,6 +92,8 @@ index.html
 
 - Implementation code now lives under `src/`.
 - Site-facing content now lives under `site/`.
+- Internal source notes now live under `notes/`.
+- `pnpm site:build` writes the publishable localized site to `docs/` for GitHub Pages.
 - Registration and richer collection discovery are scaffolded, not fully implemented yet.
 - Collector uses OPFS for local draft/workspace persistence when browser support is available.
 - Collector supports image ingestion via drag-and-drop and file picker for local drafts.

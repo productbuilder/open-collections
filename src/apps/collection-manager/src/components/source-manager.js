@@ -446,6 +446,9 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   hostStateFor(source) {
+    if (source.providerId === 'example') {
+      return { label: 'Example content', tone: 'neutral' };
+    }
     if (source.needsCredentials) {
       return { label: 'Credentials missing', tone: 'warn' };
     }

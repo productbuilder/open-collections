@@ -28,6 +28,10 @@ function sourceHasAccessibleContent(state, source) {
   return hasCollections || hasAssets;
 }
 
+function isExampleSource(source) {
+  return Boolean(source && source.providerId === 'example');
+}
+
 function hasPendingPublishAssets(state) {
   if (!state || state.activeSourceFilter === 'all' || !state.selectedCollectionId || state.selectedCollectionId === 'all') {
     return false;
@@ -73,6 +77,15 @@ export function computeWorkingStatus(state) {
       label: 'Credentials missing',
       detail: 'The active host is missing credentials. Use Update credentials, then publish again.',
       tone: 'warn',
+    };
+  }
+
+  if (isExampleSource(source)) {
+    return {
+      id: 'example-content',
+      label: 'Viewing example content',
+      detail: 'Example/demo collections are available for browsing. Connect a host to refresh from your own storage or publish changes.',
+      tone: 'neutral',
     };
   }
 

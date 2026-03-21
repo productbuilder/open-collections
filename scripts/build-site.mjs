@@ -4,6 +4,23 @@ import path from 'node:path';
 const REPO_ROOT = process.cwd();
 const OUTPUT_ROOT = path.join(REPO_ROOT, 'site-dist');
 const LOCALES = ['en', 'nl'];
+const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
+const ROOT_ASSET_FILES = [
+  'src/shared/components/open-collections-registry-widget.js',
+  'src/apps/browser/README.md',
+  'src/apps/manager/README.md',
+  'docs/collection-manifest-spec.md',
+  'docs/provider-and-storage-implementation.md',
+  'docs/collection-registry-and-indexer.md',
+  'docs/linked-collections-architecture.md',
+  'docs/wordpress-integration.md',
+  'docs/wordpress-plugin-scaffold.md',
+];
+const ROOT_ASSET_DIRECTORIES = [
+  ['src/apps/browser', 'src/apps/browser'],
+  ['src/apps/manager', 'src/apps/manager'],
+  ['site/examples', 'site/examples'],
+];
 
 const posix = path.posix;
 
@@ -529,18 +546,29 @@ function copySharedAssets() {
     copyFile('site/shared/site-shell-components.js', `${locale}/shared/site-shell-components.js`);
     copyFile('site/docs/docs-nav.js', `${locale}/docs/docs-nav.js`);
   }
-  copyDirectory('src', 'src');
-  copyDirectory('docs', 'docs');
-  copyDirectory('i18n', 'i18n');
+
+  for (const assetFile of ROOT_ASSET_FILES) {
+    copyFile(assetFile, assetFile);
+  }
+
+  for (const [sourcePath, destinationPath] of ROOT_ASSET_DIRECTORIES) {
+    copyDirectory(sourcePath, destinationPath);
+  }
 }
 
 function copyNonHtmlSiteAssets() {
   const siteFiles = listFiles(path.join(REPO_ROOT, 'site'));
   for (const fullPath of siteFiles) {
     const relative = toPosix(path.relative(REPO_ROOT, fullPath));
-    if (relative.endsWith('.html')) {
+    if (relative.endsWith('.html') || relative.startsWith('site/i18n/')) {
       continue;
     }
+
+    const extension = posix.extname(relative).toLowerCase();
+    if (relative.startsWith('site/downloads/') || BINARY_ASSET_EXTENSIONS.has(extension)) {
+      continue;
+    }
+
     const stripped = relative.slice('site/'.length);
     for (const locale of LOCALES) {
       copyFile(relative, `${locale}/${stripped}`);

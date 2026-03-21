@@ -8,19 +8,19 @@ importers:
 
   .: {}
 
-  src/apps/browser:
+  src/apps/bucket-browser:
     dependencies:
       '@open-collections/library-core':
         specifier: workspace:*
-        version: link:../../library/core
+        version: link:../../shared/library-core
 
-  src/apps/configurator:
+  src/apps/collection-browser:
     dependencies:
-      '@open-collections/shared-platform':
+      '@open-collections/library-core':
         specifier: workspace:*
-        version: link:../../shared/platform
+        version: link:../../shared/library-core
 
-  src/apps/manager:
+  src/apps/collection-manager:
     dependencies:
       '@open-collections/collector-schema':
         specifier: workspace:*
@@ -38,20 +38,24 @@ importers:
         specifier: workspace:*
         version: link:../../shared/platform
 
+  src/apps/configurator:
+    dependencies:
+      '@open-collections/shared-platform':
+        specifier: workspace:*
+        version: link:../../shared/platform
+
   src/desktop/workbench:
     dependencies:
       '@open-collections/browser-app':
         specifier: workspace:*
-        version: link:../../apps/browser
+        version: link:../../apps/collection-browser
       '@open-collections/manager-app':
         specifier: workspace:*
-        version: link:../../apps/manager
+        version: link:../../apps/collection-manager
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^2.0.0
         version: 2.10.1
-
-  src/library/core: {}
 
   src/packages/collector-schema: {}
 
@@ -98,6 +102,8 @@ importers:
       '@open-collections/provider-core':
         specifier: workspace:*
         version: link:../provider-core
+
+  src/shared/library-core: {}
 
   src/shared/platform: {}
 

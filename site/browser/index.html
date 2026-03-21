@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Collection Browser | Open Collections</title>
+		<link rel="stylesheet" href="../../index.css" />
+		<script type="module" src="../shared/site-shell-components.js"></script>
+		<style>
+			body {
+				margin: 0;
+			}
+
+			main {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			main > timemap-browser {
+				flex: 1;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<timemap-browser></timemap-browser>
+		</main>
+		<script type="module" src="./src/index.js"></script>
+	</body>
+</html>

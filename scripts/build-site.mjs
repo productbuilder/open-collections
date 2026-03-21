@@ -21,6 +21,10 @@ const ROOT_ASSET_DIRECTORIES = [
   ['src/apps/manager', 'src/apps/manager'],
   ['site/examples', 'site/examples'],
 ];
+const LOCALE_APP_ASSET_DIRECTORIES = [
+  ['src/apps/manager/src', 'manager/src'],
+  ['src/apps/browser/src', 'browser/src'],
+];
 
 const posix = path.posix;
 
@@ -115,6 +119,33 @@ function extractMain(html) {
 function titleFromHtml(html) {
   const match = html.match(/<title>([\s\S]*?)<\/title>/i);
   return match?.[1].trim() ?? 'Open Collections';
+}
+
+function extractHeadSupplement(html) {
+  const match = html.match(/<head>([\s\S]*?)<\/head>/i);
+  if (!match) {
+    return '';
+  }
+
+  return match[1]
+    .replace(/<meta[^>]*charset=[^>]*>\s*/gi, '')
+    .replace(/<meta[^>]*name="viewport"[^>]*>\s*/gi, '')
+    .replace(/<title>[\s\S]*?<\/title>\s*/gi, '')
+    .replace(/<script[^>]*site-shell-components\.js[^>]*><\/script>\s*/gi, '')
+    .replace(/<link[^>]*href="(?:\.\.\/)+(?:index\.css)"[^>]*>\s*/gi, '')
+    .trim();
+}
+
+function extractPostMainSupplement(html) {
+  const match = html.match(/<\/main>([\s\S]*?)<\/body>/i);
+  if (!match) {
+    return '';
+  }
+
+  return match[1]
+    .replace(/<script[^>]*docs-nav\.js[^>]*><\/script>\s*/gi, '')
+    .replace(/<open-collections-site-footer[\s\S]*?<\/open-collections-site-footer>\s*/gi, '')
+    .trim();
 }
 
 function fileNeedsDocsNav(html, route) {
@@ -443,7 +474,7 @@ function buildContext(locale, i18n, pageId, route) {
   };
 }
 
-function renderHtmlDocument({ locale, route, title, bodyClass, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated }) {
+function renderHtmlDocument({ locale, route, title, bodyClass, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated, extraHeadContent = '', extraBodyContent = '' }) {
   const currentFile = `${locale}/${routeToFilePath(route)}`;
   const cssHref = toRelativeHref(currentFile, `${locale}/index.css`);
   const shellScriptHref = toRelativeHref(currentFile, `${locale}/shared/site-shell-components.js`);
@@ -464,6 +495,7 @@ function renderHtmlDocument({ locale, route, title, bodyClass, context, mainCont
     <script>window.OPEN_COLLECTIONS_SITE = ${JSON.stringify(context)};</script>
     <script type="module" src="${shellScriptHref}"></script>
     ${includeRegistryWidget ? `<script type="module" src="${registryWidgetHref}"></script>` : ''}
+    ${extraHeadContent}
   </head>
   <body${classAttribute}>
     <open-collections-site-header base-path="${normalizedBasePath}"></open-collections-site-header>
@@ -471,6 +503,7 @@ function renderHtmlDocument({ locale, route, title, bodyClass, context, mainCont
       ${notice}
       ${mainContent}
     </main>
+    ${extraBodyContent}
     ${includeDocsNav ? `<script src="${docsNavHref}"></script>` : ''}
     <open-collections-site-footer base-path="${normalizedBasePath}"></open-collections-site-footer>
   </body>
@@ -484,6 +517,8 @@ function renderFallbackPage({ sourcePath, html, locale, i18n }) {
   const currentFile = `${locale}/${routeToFilePath(route)}`;
   const rewrittenMain = rewriteHtmlUrls(extractMain(html), sourcePath, locale, currentFile);
   const rewrittenTitle = titleFromHtml(html);
+  const extraHeadContent = rewriteHtmlUrls(extractHeadSupplement(html), sourcePath, locale, currentFile);
+  const extraBodyContent = rewriteHtmlUrls(extractPostMainSupplement(html), sourcePath, locale, currentFile);
   return renderHtmlDocument({
     locale,
     route,
@@ -494,6 +529,8 @@ function renderFallbackPage({ sourcePath, html, locale, i18n }) {
     includeDocsNav: fileNeedsDocsNav(html, route),
     includeRegistryWidget: fileNeedsRegistryWidget(html),
     untranslated: locale !== 'en' && !hasLocaleSpecificTranslation(pageId),
+    extraHeadContent,
+    extraBodyContent,
   });
 }
 
@@ -545,6 +582,10 @@ function copySharedAssets() {
     copyFile('index.css', `${locale}/index.css`);
     copyFile('site/shared/site-shell-components.js', `${locale}/shared/site-shell-components.js`);
     copyFile('site/docs/docs-nav.js', `${locale}/docs/docs-nav.js`);
+
+    for (const [sourcePath, destinationPath] of LOCALE_APP_ASSET_DIRECTORIES) {
+      copyDirectory(sourcePath, `${locale}/${destinationPath}`);
+    }
   }
 
   for (const assetFile of ROOT_ASSET_FILES) {

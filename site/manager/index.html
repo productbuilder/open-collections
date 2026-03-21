@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Collection Manager | Open Collections</title>
+		<link rel="stylesheet" href="../../index.css" />
+		<script type="module" src="../shared/site-shell-components.js"></script>
+		<style>
+			body {
+				margin: 0;
+			}
+
+			main {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			main > open-collections-manager {
+				flex: 1;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<open-collections-manager></open-collections-manager>
+		</main>
+		<script async defer src="https://accounts.google.com/gsi/client"></script>
+		<script type="module" src="./src/index.js"></script>
+	</body>
+</html>

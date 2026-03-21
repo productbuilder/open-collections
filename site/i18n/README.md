@@ -20,6 +20,8 @@ This generates localized output in `site-dist/`:
 
 - `site-dist/en/...`
 - `site-dist/nl/...`
+- shared app/runtime assets under `site-dist/src/...`
+- repository markdown docs under `site-dist/docs/...`
 
 The root `site-dist/index.html` redirects to `./en/`.
 
@@ -60,3 +62,11 @@ At build time each page receives a small `window.OPEN_COLLECTIONS_SITE` context 
 - locale i18n data for the shared shell and docs nav
 
 `site/shared/site-shell-components.js` and `site/docs/docs-nav.js` read from that injected context, so runtime logic stays lightweight and the localized output remains plain static HTML. The build also validates that every translated page id exists in every locale file and that docs navigation keeps the same href structure across locales.
+
+## Build validation
+
+The site build now performs a lightweight internal-link validation pass across generated HTML in `site-dist/`.
+
+- It checks relative `href`, `src`, and `action` targets emitted into the built site.
+- It ignores external URLs, in-page hashes, and `/api/...` endpoints.
+- The build fails if a generated page points at a missing internal target.

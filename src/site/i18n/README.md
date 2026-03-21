@@ -2,8 +2,8 @@
 
 Locale content is authored in:
 
-- `src/i18n/en.json`
-- `src/i18n/nl.json`
+- `src/site/i18n/en.json`
+- `src/site/i18n/nl.json`
 
 English (`en`) is the source/default locale.
 

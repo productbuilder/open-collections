@@ -5,7 +5,7 @@ Open Collections combines the public website, browser apps, desktop workbench, a
 ## Repository layout
 
 - Website source: `src/site/`
-- Website locale data: `src/i18n/`
+- Website locale data: `src/site/i18n/`
 - Browser apps: `src/apps/`
 - Shared packages/runtime: `src/packages/`, `src/shared/`
 - Collection content: `src/collections/`
@@ -41,7 +41,7 @@ Other useful commands:
 
 ## Website workflow
 
-1. Edit source in `src/site/` and `src/i18n/`.
+1. Edit source in `src/site/` and `src/site/i18n/`.
 2. Run `pnpm site:build`.
 3. Verify generated output in `site/en/...` and `site/nl/...` plus root `index.html`.
 4. Commit source and generated publish files for deployment.

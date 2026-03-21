@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const REPO_ROOT = process.cwd();
 const SITE_SOURCE_RELATIVE_ROOT = 'src/site';
-const I18N_SOURCE_RELATIVE_ROOT = 'src/i18n';
+const I18N_SOURCE_RELATIVE_ROOT = 'src/site/i18n';
 const SITE_SOURCE_ROOT = path.join(REPO_ROOT, SITE_SOURCE_RELATIVE_ROOT);
 const I18N_SOURCE_ROOT = path.join(REPO_ROOT, I18N_SOURCE_RELATIVE_ROOT);
 const SITE_SOURCE_PATH_PREFIX = `${SITE_SOURCE_RELATIVE_ROOT}/`;

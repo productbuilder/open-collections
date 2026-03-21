@@ -10,21 +10,24 @@ This site now uses a simple build-time i18n flow for locale-prefixed static outp
 
 ## Build output
 
+The repository now uses `notes/` for internal/source markdown notes and `docs/` for the generated GitHub Pages publish directory.
+
+
 Run:
 
 ```bash
 pnpm site:build
 ```
 
-This generates localized output in `site-dist/`:
+This generates localized output in `docs/`:
 
-- `site-dist/en/...`
-- `site-dist/nl/...`
-- shared site runtime assets under `site-dist/src/...`
-- referenced markdown docs under `site-dist/docs/...`
-- lightweight example data under `site-dist/site/examples/...`
+- `docs/en/...`
+- `docs/nl/...`
+- shared site runtime assets under `docs/src/...`
+- referenced markdown notes/resources under `docs/notes/...`
+- lightweight example data under `docs/site/examples/...`
 
-The root `site-dist/index.html` redirects to `./en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases.
+The root `docs/index.html` redirects to `./en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases. GitHub Pages should publish from the repository `docs/` folder on the main branch.
 
 ## What is localized now
 
@@ -44,7 +47,7 @@ Other pages are still emitted for both locales. Until they are translated, the D
 2. Add page-specific content under `pages` in `i18n/en.json` and `i18n/nl.json`.
 3. Add a page entry under a route-based page id such as `home`, `get-started`, `docs`, or `docs/open-collections-protocol`.
 4. Add a renderer definition to `TRANSLATED_PAGE_DEFINITIONS` in `scripts/build-site.mjs` and return localized HTML for the `<main>` content.
-5. Run `pnpm site:build` and confirm the page exists in both `site-dist/en/...` and `site-dist/nl/...`.
+5. Run `pnpm site:build` and confirm the page exists in both `docs/en/...` and `docs/nl/...`, with referenced repository notes copied into `docs/notes/...`.
 
 ## How untranslated pages are handled
 
@@ -66,7 +69,7 @@ At build time each page receives a small `window.OPEN_COLLECTIONS_SITE` context 
 
 ## Build validation
 
-The site build now performs a lightweight internal-link validation pass across generated HTML in `site-dist/`.
+The site build now performs a lightweight internal-link validation pass across generated HTML in `docs/`.
 
 - It checks relative `href`, `src`, and `action` targets emitted into the built site.
 - It ignores external URLs, in-page hashes, and `/api/...` endpoints.

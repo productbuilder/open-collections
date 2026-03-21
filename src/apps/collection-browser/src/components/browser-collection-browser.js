@@ -1,6 +1,6 @@
-import { browserStyles } from '../css/browser.css.js';
-import '../../../manager/src/components/panel-shell.js';
-import '../../../manager/src/components/pane-layout.js';
+﻿import { browserStyles } from '../css/browser.css.js';
+import '../../../collection-manager/src/components/panel-shell.js';
+import '../../../collection-manager/src/components/pane-layout.js';
 import './browser-item-card-grid.js';
 
 class OpenBrowserCollectionBrowserElement extends HTMLElement {
@@ -87,3 +87,4 @@ if (!customElements.get('open-browser-collection-browser')) {
 }
 
 export { OpenBrowserCollectionBrowserElement };
+

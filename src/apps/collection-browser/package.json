@@ -1,13 +1,14 @@
-{
+﻿{
   "name": "@open-collections/browser-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "description": "Open Collections Browser application (read-only collection browsing).",
   "scripts": {
-    "start": "echo \"Serve repo root and open /src/apps/browser/\""
+    "start": "echo \"Serve repo root and open /src/apps/collection-browser/\""
   },
   "dependencies": {
     "@open-collections/library-core": "workspace:*"
   }
 }
+

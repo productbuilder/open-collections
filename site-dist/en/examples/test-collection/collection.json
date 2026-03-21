@@ -1,0 +1,115 @@
+{
+  "id": "col-timemap-mvp-test",
+  "title": "TimeMap Collector MVP Test Collection",
+  "description": "Example dataset for validating Collector MVP vertical slice.",
+  "items": [
+    {
+      "id": "itm-map-1701-harbor-chart",
+      "title": "Harbor Chart 1701",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1015/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1015/300/200"
+      },
+      "license": "CC-BY-4.0",
+      "description": "Historic harbor chart with annotations.",
+      "creator": "Anonymous Cartographer",
+      "date": "1701",
+      "location": "Amsterdam",
+      "attribution": "Municipal Archive",
+      "source": "https://example.org/archive/harbor-chart-1701",
+      "tags": ["map", "harbor", "nautical"],
+      "include": true
+    },
+    {
+      "id": "itm-photo-1912-market-square",
+      "title": "Market Square Photo",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1025/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1025/300/200"
+      },
+      "license": "Public Domain",
+      "description": "Street scene before the tram expansion.",
+      "creator": "City Press Office",
+      "date": "1912",
+      "location": "Rotterdam",
+      "attribution": "City Photo Collection",
+      "source": "https://example.org/archive/market-square-1912",
+      "tags": ["photo", "urban", "market"],
+      "include": true
+    },
+    {
+      "id": "itm-letter-1848-dockworks",
+      "title": "Dockworks Letter Fragment",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1040/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1040/300/200"
+      },
+      "license": "CC0-1.0",
+      "description": "Excerpt from planning correspondence.",
+      "creator": "Harbor Office",
+      "date": "1848",
+      "location": "Dordrecht",
+      "attribution": "Regional Archive",
+      "source": "https://example.org/archive/dockworks-letter-1848",
+      "tags": ["letter", "infrastructure"],
+      "include": true
+    },
+    {
+      "id": "itm-poster-1928-port-fair",
+      "title": "Port Fair Poster",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1060/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1060/300/200"
+      },
+      "license": "CC-BY-SA-4.0",
+      "description": "Promotional poster for annual port fair.",
+      "creator": "Port Authority",
+      "date": "1928",
+      "location": "The Hague",
+      "attribution": "Port Museum",
+      "source": "https://example.org/archive/port-fair-1928",
+      "tags": ["poster", "event"],
+      "include": false
+    },
+    {
+      "id": "itm-survey-1965-delta-draft",
+      "title": "Delta Works Survey Draft",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1074/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1074/300/200"
+      },
+      "license": "",
+      "description": "Engineering survey image with partial metadata.",
+      "creator": "",
+      "date": "1965",
+      "location": "Zeeland",
+      "attribution": "",
+      "source": "",
+      "tags": ["survey", "engineering"],
+      "include": true
+    },
+    {
+      "id": "itm-aerial-1972-river-mouth",
+      "title": "",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1084/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1084/300/200"
+      },
+      "license": "CC-BY-4.0",
+      "description": "Aerial capture of river mouth development.",
+      "creator": "National Mapping Service",
+      "date": "1972",
+      "location": "Maasvlakte",
+      "attribution": "National Archive",
+      "source": "https://example.org/archive/aerial-1972",
+      "tags": ["aerial", "delta"],
+      "include": true
+    }
+  ]
+}

@@ -7,6 +7,10 @@
     {
       "id": "city-photos",
       "manifest": "city-photos/collection.json"
+    },
+    {
+      "id": "collection",
+      "manifest": "single-collection/collection.json"
     }
   ]
 }

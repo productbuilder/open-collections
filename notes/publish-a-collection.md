@@ -1,6 +1,6 @@
 # Publish a collection to GitHub
 
-This companion note supports the end-user guide at `site/docs/publish-a-collection.html`.
+This companion note supports the end-user guide at `src/site/docs/publish-a-collection.html`.
 
 It covers the practical publishing chain for Open Collections Desktop or Collection Manager:
 - GitHub account ownership

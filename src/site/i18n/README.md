@@ -4,7 +4,7 @@ This site now uses a simple build-time i18n flow for locale-prefixed static outp
 
 ## Source of truth
 
-- Shared strings and initial translated page content live in `i18n/en.json` and `i18n/nl.json`.
+- Shared strings and initial translated page content live in `src/i18n/en.json` and `src/i18n/nl.json`.
 - English (`en`) is the source/default locale.
 - Dutch (`nl`) is the second supported locale.
 
@@ -25,7 +25,7 @@ This generates localized output in `docs/`:
 - `docs/nl/...`
 - shared site runtime assets under `docs/src/...`
 - referenced markdown notes/resources under `docs/notes/...`
-- lightweight example data under `docs/site/examples/...`
+- lightweight host/example data under `docs/hosts/...` (mirrored to `docs/site/examples/...` for legacy app defaults)
 
 The root `docs/index.html` redirects to `./en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases. GitHub Pages should publish from the repository `docs/` folder on the main branch.
 
@@ -44,7 +44,7 @@ Other pages are still emitted for both locales. Until they are translated, the D
 ## How to add a new translated page
 
 1. Add or update the shared strings in both locale dictionaries if needed.
-2. Add page-specific content under `pages` in `i18n/en.json` and `i18n/nl.json`.
+2. Add page-specific content under `pages` in `src/i18n/en.json` and `src/i18n/nl.json`.
 3. Add a page entry under a route-based page id such as `home`, `get-started`, `docs`, or `docs/open-collections-protocol`.
 4. Add a renderer definition to `TRANSLATED_PAGE_DEFINITIONS` in `scripts/build-site.mjs` and return localized HTML for the `<main>` content.
 5. Run `pnpm site:build` and confirm the page exists in both `docs/en/...` and `docs/nl/...`, with referenced repository notes copied into `docs/notes/...`.
@@ -65,7 +65,7 @@ At build time each page receives a small `window.OPEN_COLLECTIONS_SITE` context 
 - same-page alternate locale URLs
 - locale i18n data for the shared shell and docs nav
 
-`site/shared/site-shell-components.js` and `site/docs/docs-nav.js` read from that injected context, so runtime logic stays lightweight and the localized output remains plain static HTML. The build also validates that every translated page id exists in every locale file and that docs navigation keeps the same href structure across locales.
+`src/site/shared/site-shell-components.js` and `src/site/docs/docs-nav.js` read from that injected context, so runtime logic stays lightweight and the localized output remains plain static HTML. The build also validates that every translated page id exists in every locale file and that docs navigation keeps the same href structure across locales.
 
 ## Build validation
 

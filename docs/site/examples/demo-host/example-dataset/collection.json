@@ -1,0 +1,44 @@
+﻿{
+  "id": "example-dataset",
+  "title": "Example Dataset",
+  "description": "Demo collection with mapped archival items.",
+  "rootPath": "example-dataset/",
+  "items": [
+    {
+      "id": "itm-map-1701-harbor-chart",
+      "title": "Harbor Chart 1701",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1015/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1015/300/200"
+      },
+      "license": "CC-BY-4.0",
+      "description": "Historic harbor chart with annotations.",
+      "creator": "Anonymous Cartographer",
+      "date": "1701",
+      "location": "Amsterdam",
+      "attribution": "Municipal Archive",
+      "source": "https://example.org/archive/harbor-chart-1701",
+      "tags": ["map", "harbor", "nautical"],
+      "include": true
+    },
+    {
+      "id": "itm-letter-1848-dockworks",
+      "title": "Dockworks Letter Fragment",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1040/900/600",
+        "thumbnailUrl": "https://picsum.photos/id/1040/300/200"
+      },
+      "license": "CC0-1.0",
+      "description": "Excerpt from planning correspondence.",
+      "creator": "Harbor Office",
+      "date": "1848",
+      "location": "Dordrecht",
+      "attribution": "Regional Archive",
+      "source": "https://example.org/archive/dockworks-letter-1848",
+      "tags": ["letter", "infrastructure"],
+      "include": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+﻿{
+  "collections": [
+    {
+      "id": "example-dataset",
+      "manifest": "example-dataset/collection.json"
+    },
+    {
+      "id": "city-photos",
+      "manifest": "city-photos/collection.json"
+    }
+  ]
+}

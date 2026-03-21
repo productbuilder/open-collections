@@ -4,7 +4,7 @@ Open Collections combines the public website with the main application work for 
 
 ## Repository overview
 
-- Public website source: `site/`, `i18n/`, and `scripts/build-site.mjs`
+- Public website source: `src/site/`, `src/i18n/`, and `scripts/build-site.mjs`
 - GitHub Pages publish output: `docs/`
 - Browser-based apps: `src/apps/`
 - Desktop/Tauri shell: `src/desktop/workbench/`
@@ -14,7 +14,7 @@ Open Collections combines the public website with the main application work for 
 
 The website now uses a build-based publishing flow.
 
-- Source site content lives in the source tree, mainly under `site/` and `i18n/`.
+- Source site content lives in the source tree, mainly under `src/site/` and `src/i18n/`.
 - `scripts/build-site.mjs` builds the publishable static site into `docs/`.
 - GitHub Pages is configured to publish from the `main` branch and the `/docs` folder.
 - `docs/index.html` is the GitHub Pages entrypoint and redirects into the localized site.
@@ -38,7 +38,7 @@ Main site commands:
 
 Practical workflow for website changes:
 
-1. Edit the website source files in `site/`, `i18n/`, or related scripts.
+1. Edit the website source files in `src/site/`, `src/i18n/`, or related scripts.
 2. Run `pnpm site:build`.
 3. Review the generated output in `docs/`.
 4. Commit both the source changes and the updated built files in `docs/`.
@@ -77,6 +77,6 @@ If you want to run those browser-based apps directly, serve the repository root 
 
 ## Practical edit/build/publish summary
 
-- Website work: edit source in `site/` and `i18n/`, build with `pnpm site:build`, review with `pnpm site:preview`, then commit source plus `docs/`.
+- Website work: edit source in `src/site/` and `src/i18n/`, build with `pnpm site:build`, review with `pnpm site:preview`, then commit source plus `docs/`.
 - Desktop work: use the `desktop:*` commands to stage, run, inspect, or build the Tauri workbench.
 - App work: use the `manager:start`, `browser:start`, `configurator:start`, and `bucket-browser:start` helpers as quick entry points when serving the repo locally.

@@ -1,6 +1,6 @@
-# Example Test Collection
+# Example Collections (plural)
 
-This folder contains an MVP dataset for Open Collections Manager.
+This folder contains an example collection for the Open Collections Manager.
 
 ## Contents
 

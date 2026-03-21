@@ -21,4 +21,4 @@ Providers can vary internally, but published outputs should remain portable and 
 ## Related docs
 - `notes/collection-manifest-spec.md`
 - `notes/linked-collections-architecture.md`
-- `site/storage/index.html`
+- `src/site/storage/index.html`

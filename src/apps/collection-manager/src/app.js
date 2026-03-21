@@ -684,18 +684,32 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return source;
   }
 
+  sourceHasAccessibleContent(source) {
+    if (!source) {
+      return false;
+    }
+    const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
+    const hasAssets = this.state.assets.some((item) => item.sourceId === source.id);
+    return hasCollections || hasAssets;
+  }
+
   sourceRepairGuidance(source) {
     if (!source) {
       return '';
     }
+    const hasAccessibleContent = this.sourceHasAccessibleContent(source);
     if (source.providerId === 'local' && source.needsReconnect) {
-      return 'Folder access must be re-selected. Publish remains blocked until reconnect succeeds.';
+      return hasAccessibleContent
+        ? 'Folder access must be re-selected to refresh or publish. Previously loaded content remains available locally.'
+        : 'Folder access must be re-selected. Publish remains blocked until reconnect succeeds.';
     }
     if (source.needsCredentials) {
       return 'Missing credentials. Update credentials to reconnect and unblock publish.';
     }
     if (source.needsReconnect) {
-      return 'Host needs reconnect before publish is available.';
+      return hasAccessibleContent
+        ? 'Host is disconnected, but previously loaded content is still available locally. Reconnect to refresh or publish.'
+        : 'Host needs reconnect before publish is available.';
     }
     if (!source.capabilities?.canPublish) {
       return 'Connected read-only host. Publish is currently unavailable.';
@@ -815,7 +829,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return 'Credentials missing';
     }
     if (source.needsReconnect) {
-      return 'Needs reconnect';
+      return this.sourceHasAccessibleContent(source) ? 'Disconnected (cached content)' : 'Needs reconnect';
     }
     if (!source.capabilities?.canPublish) {
       return 'Read-only';

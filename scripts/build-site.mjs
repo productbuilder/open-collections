@@ -6,6 +6,7 @@ const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs');
 const LOCALES = ['en', 'nl'];
 const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
 const ROOT_ASSET_FILES = [
+  'CNAME',
   'src/shared/components/open-collections-registry-widget.js',
   'src/apps/browser/README.md',
   'src/apps/manager/README.md',
@@ -21,10 +22,10 @@ const ROOT_ASSET_DIRECTORIES = [
   ['src/apps/manager', 'src/apps/manager'],
   ['site/examples', 'site/examples'],
 ];
-const LOCALE_APP_ASSET_DIRECTORIES = [
-  ['src/apps/manager/src', 'manager/src'],
-  ['src/apps/browser/src', 'browser/src'],
-];
+const EXCLUDED_SITE_SOURCE_PATHS = new Set([
+  'site/browser/index.html',
+  'site/manager/index.html',
+]);
 
 const posix = path.posix;
 
@@ -582,10 +583,6 @@ function copySharedAssets() {
     copyFile('index.css', `${locale}/index.css`);
     copyFile('site/shared/site-shell-components.js', `${locale}/shared/site-shell-components.js`);
     copyFile('site/docs/docs-nav.js', `${locale}/docs/docs-nav.js`);
-
-    for (const [sourcePath, destinationPath] of LOCALE_APP_ASSET_DIRECTORIES) {
-      copyDirectory(sourcePath, `${locale}/${destinationPath}`);
-    }
   }
 
   for (const assetFile of ROOT_ASSET_FILES) {
@@ -681,7 +678,10 @@ function build() {
     validateLocaleData(locale, translationsByLocale[locale], sourceLocaleData);
   }
 
-  const sourceHtmlFiles = ['index.html', ...listFiles(path.join(REPO_ROOT, 'site')).map((filePath) => toPosix(path.relative(REPO_ROOT, filePath))).filter((relative) => relative.endsWith('.html'))];
+  const sourceHtmlFiles = ['index.html', ...listFiles(path.join(REPO_ROOT, 'site'))
+    .map((filePath) => toPosix(path.relative(REPO_ROOT, filePath)))
+    .filter((relative) => relative.endsWith('.html'))
+    .filter((relative) => !EXCLUDED_SITE_SOURCE_PATHS.has(relative))];
 
   copySharedAssets();
   copyNonHtmlSiteAssets();

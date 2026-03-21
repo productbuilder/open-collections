@@ -1,112 +1,82 @@
 # open-collections
 
-Open Collections now contains two focused applications in one repository:
+Open Collections combines the public website with the main application work for the project, including the browser-based apps, the desktop/Tauri workbench, and supporting packages. The repository contains both source files and the built GitHub Pages publish output.
 
-- Collector: writable collection management (edit, publish, register placeholder)
-- Browser: read-only collection browsing
+## Repository overview
 
-## Quick links
+- Public website source: `site/`, `i18n/`, and `scripts/build-site.mjs`
+- GitHub Pages publish output: `docs/`
+- Browser-based apps: `src/apps/`
+- Desktop/Tauri shell: `src/desktop/workbench/`
+- Shared libraries and packages: `src/library/`, `src/packages/`, `src/shared/`
 
-- Landing page source: `./index.html`
-- GitHub Pages publish output after `pnpm site:build`: `./docs/`
-- Site demo: `./site/demo/`
-- Site docs: `./site/docs/`
-- Site examples: `./site/examples/`
-- Internal notes/source markdown: `./notes/`
-- Collector app: `./src/apps/manager/`
-- Browser app: `./src/apps/browser/`
-- WordPress plugin scaffold: `./wordpress/open-collections/`
+## Website structure
 
-## App roles
+The website now uses a build-based publishing flow.
 
-### Collector
+- Source site content lives in the source tree, mainly under `site/` and `i18n/`.
+- `scripts/build-site.mjs` builds the publishable static site into `docs/`.
+- GitHub Pages is configured to publish from the `main` branch and the `/docs` folder.
+- `docs/index.html` is the GitHub Pages entrypoint and redirects into the localized site.
+- Public localized pages are published under locale-prefixed paths such as `docs/en/...` and `docs/nl/...`.
+- The repository root `index.html` still exists in source, but it is **not** the GitHub Pages entrypoint anymore.
 
-- Connect storage sources
-- Manage collections per source (collection discovery scaffold where provider support is limited)
-- Edit metadata for collection items
-- Publish/export `collection.json`
-- Open a registration placeholder flow from the header
+## Site commands
 
-### Browser
-
-- Load collection manifests
-- Browse cards/media/metadata in read-only mode
-- No publishing or write controls
-
-## Run locally
-
-Install workspace dependencies once from the repository root:
+Install dependencies once from the repository root:
 
 ```bash
 pnpm install
 ```
 
-Serve repository root as static files for the browser-first apps:
+Main site commands:
 
-```bash
-python -m http.server 8080
-```
+- `pnpm site:build` — builds the localized static site into `docs/` for GitHub Pages publishing.
+- `pnpm site:preview` — serves the built `docs/` output locally so you can review what GitHub Pages will publish.
 
-Then open:
+## GitHub Pages publishing workflow
 
-- <http://localhost:8080/>
-- <http://localhost:8080/src/apps/manager/>
-- <http://localhost:8080/src/apps/browser/>
-- <http://localhost:8080/site/demo/>
+Practical workflow for website changes:
 
-## Structure
+1. Edit the website source files in `site/`, `i18n/`, or related scripts.
+2. Run `pnpm site:build`.
+3. Review the generated output in `docs/`.
+4. Commit both the source changes and the updated built files in `docs/`.
+5. Push to `main`.
+6. GitHub Pages publishes from `main` → `/docs`.
 
-```text
-src/
-  apps/
-    manager/
-    browser/
-    configurator/
-  desktop/
-    workbench/
-  shared/
-    platform/
-  library/
-    core/
-  packages/
-    collector-schema/
-    provider-core/
-    provider-github/
-    provider-gdrive/
-    provider-local/
-    provider-public-url/
-    provider-s3/
+In other words: if you want a website change to go live, rebuild `docs/` before you commit and publish.
 
-site/
-  demo/
-  docs/
-  examples/
+## Desktop / Tauri workflow
 
-notes/
-docs/  # generated GitHub Pages output
-projects/
-index.html
-```
+The repository also contains the Open Collections desktop workbench in `src/desktop/workbench/`. It stages frontend files into a desktop `dist/` directory and then runs the Tauri shell around that staged frontend.
 
-## Notes
+Main desktop commands:
 
-- Implementation code now lives under `src/`.
-- Site-facing content now lives under `site/`.
-- Internal source notes now live under `notes/`.
-- `pnpm site:build` writes the publishable localized site to `docs/` for GitHub Pages.
-- Registration and richer collection discovery are scaffolded, not fully implemented yet.
-- Collector uses OPFS for local draft/workspace persistence when browser support is available.
-- Collector supports image ingestion via drag-and-drop and file picker for local drafts.
-- Collector supports creating new collections from scratch as local drafts (`New collection`).
-- Collection publishing now targets explicit collection roots (for example `<collection-slug>/collection.json`, `<collection-slug>/media/*`, `<collection-slug>/thumbs/*`).
-- Collector generates image thumbnails for draft assets when possible.
-- GitHub publish uploads originals (`media/`), thumbnails (`thumbs/`), and updates `collection.json`.
-- Publishing remains provider-backed (GitHub/other storage), separate from OPFS local drafts.
-- Secrets are not stored in OPFS.
+- `pnpm desktop:stage` — copies the current frontend source into the workbench desktop staging directory.
+- `pnpm desktop:dev` — stages the frontend and launches the Tauri desktop app in development mode.
+- `pnpm desktop:build` — builds the desktop app distributables through Tauri.
+- `pnpm desktop:info` — prints Tauri environment and toolchain information.
 
-- Desktop workbench shell (Tauri) is available under `src/desktop/workbench` and can launch Collector or Configurator from one native window.
-- Shared browser/desktop file APIs are centralized in `src/shared/platform` to avoid direct Tauri API calls in app components.
+## Other useful app commands
 
-## Workspace
+These commands are helpful when you want a quick pointer for which browser app to open while serving the repository locally:
 
-This repository now uses a single `pnpm` workspace rooted at the repo root. Workspace packages stay in their existing directories under `src/apps`, `src/packages`, `src/library`, `src/shared`, and `src/desktop` so the current product layout and relative-import runtime behavior remain unchanged.
+- `pnpm manager:start` — points you to the manager app at `src/apps/manager/`.
+- `pnpm browser:start` — points you to the browser app at `src/apps/browser/`.
+- `pnpm configurator:start` — points you to the configurator app at `src/apps/configurator/`.
+- `pnpm bucket-browser:start` — points you to the bucket browser app at `src/apps/bucket-browser/`.
+
+If you want to run those browser-based apps directly, serve the repository root as static files and open the relevant path in your browser.
+
+## Built output notes
+
+- `docs/` is generated publish output for the public website.
+- Changes intended for the live site should usually include a fresh `pnpm site:build` so `docs/` stays in sync with the source.
+- Avoid treating `docs/` as hand-edited source unless there is a very specific reason.
+
+## Practical edit/build/publish summary
+
+- Website work: edit source in `site/` and `i18n/`, build with `pnpm site:build`, review with `pnpm site:preview`, then commit source plus `docs/`.
+- Desktop work: use the `desktop:*` commands to stage, run, inspect, or build the Tauri workbench.
+- App work: use the `manager:start`, `browser:start`, `configurator:start`, and `bucket-browser:start` helpers as quick entry points when serving the repo locally.

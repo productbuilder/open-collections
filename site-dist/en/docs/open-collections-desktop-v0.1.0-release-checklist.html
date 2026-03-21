@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Docs: Open Collections Desktop v0.1.0 release checklist | Open Collections</title>
+    <link rel="stylesheet" href="../index.css" />
+    <script>window.OPEN_COLLECTIONS_SITE = {"locale":"en","alternates":{"en":"./open-collections-desktop-v0.1.0-release-checklist.html","nl":"../../nl/docs/open-collections-desktop-v0.1.0-release-checklist.html"},"page":{"id":"docs/open-collections-desktop-v0.1.0-release-checklist","route":"docs/open-collections-desktop-v0.1.0-release-checklist.html","activeSection":"docs","isTranslated":false},"i18n":{"locale":"en","siteName":"Open Collections","languageName":"English","languages":{"en":"English","nl":"Nederlands"},"shell":{"brand":"Open Collections","navAriaLabel":"Primary navigation","languageSwitcherLabel":"Language","languageSwitcherAriaLabel":"Select language","nav":{"home":"Home","get-started":"Get started","tools":"Tools","hosting":"Hosting","docs":"Docs"},"footer":{"description":"An open, web-based approach to publishing and sharing cultural collections.","groups":{"project":"Project","docs-and-developer":"Docs and developer","collections":"Collections"},"links":{"home":"Home","get-started":"Get started","tools":"Tools","docs":"Docs","hosting":"Hosting","registry":"Registry","organizations":"Organizations"}},"breadcrumbs":{"home":"Home"},"untranslatedNotice":{"title":"Translation in progress","body":"This page is not translated into this language yet, so you are seeing the English content with the shared localized site shell."}},"docsNav":{"ariaLabel":"Docs navigation","items":[{"href":"./","label":"Overview"},{"href":"./open-collections-desktop-getting-started.html","label":"Desktop getting started"},{"href":"./open-collections-desktop-v0.1.0-release-notes.html","label":"Desktop v0.1.0 release notes"},{"href":"./open-collections-desktop-v0.1.0-release-checklist.html","label":"Desktop v0.1.0 release checklist"},{"href":"./get-started.html","label":"Get started"},{"href":"./publish-a-collection.html","label":"Publish to GitHub"},{"href":"./open-collections-protocol.html","label":"Protocol"},{"href":"./optional-collection-access-capabilities.html","label":"Optional capabilities"},{"href":"./hosting-and-storage.html","label":"Hosting and storage"},{"href":"./tools-overview.html","label":"Tools overview"},{"href":"./components-and-embedding.html","label":"Components and embedding"},{"href":"./wordpress-integration.html","label":"WordPress integration"},{"href":"./collection-registry-and-indexer.html","label":"Registry and indexer"},{"href":"./developer-reference.html","label":"Developer reference"}]}}};</script>
+    <script type="module" src="../shared/site-shell-components.js"></script>
+    
+  </head>
+  <body class="docs-page">
+    <open-collections-site-header base-path="../"></open-collections-site-header>
+    <main>
+      
+      <p class="breadcrumbs"><a href="../">Home</a> / <a href="./">Docs</a> / Open Collections Desktop v0.1.0 release checklist</p>
+			<div class="docs-shell">
+				<aside class="docs-sidebar" aria-label="Docs navigation" data-docs-nav></aside>
+				<div class="docs-content">
+					<header>
+						<p class="eyebrow">Release checklist</p>
+						<h1>Open Collections Desktop v0.1.0 release checklist</h1>
+						<p>Use this checklist before publishing the Windows preview release of Open Collections Desktop v0.1.0.</p>
+						<div class="chip-row">
+							<span class="chip stub">Maintainers</span>
+							<span class="chip ok">Windows preview</span>
+						</div>
+					</header>
+
+					<section>
+						<h2>Artifact checklist</h2>
+						<ul>
+							<li>Upload the real Windows build to <a href="https://github.com/productbuilder/open-collections/releases" target="_blank" rel="noopener">GitHub Releases</a> before any public announcement.</li>
+							<li>Attach the Windows installer to the tagged GitHub release so the public site can link to a stable external release page instead of bundling binaries.</li>
+							<li>Verify the download links from the desktop release page, getting started page, and release notes all open the correct GitHub release page and expose the intended installer asset.</li>
+							<li>Confirm the uploaded file is the intended v0.1.0 preview release artifact and not an older test build, unsigned debug build, or packaging stub.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Desktop runtime checklist</h2>
+						<ol>
+							<li>Install and launch the Windows build on a clean test machine or VM.</li>
+							<li>Verify the app launches cleanly without an immediate crash, broken shell chrome, or missing primary panels.</li>
+							<li>Confirm Manager opens by default for the first-run path expected for v0.1.0.</li>
+							<li>Open Browser and verify the built-in example content loads successfully.</li>
+							<li>Switch between Manager and Browser multiple times and verify the transitions work without losing the current session unexpectedly.</li>
+							<li>Check for any major shell or layout regressions, including clipped controls, unreadable labels, or obviously broken resize behavior.</li>
+						</ol>
+					</section>
+
+					<section>
+						<h2>Host flow checklist</h2>
+						<p>Run the applicable manual checks for each supported host type in the preview:</p>
+						<ul>
+							<li><strong>Example host:</strong> add or open the example host, verify it loads, switch away and back, and confirm no duplicate remembered host entries are created.</li>
+							<li><strong>Local folder host:</strong> add a local folder host, reconnect it after restart, run repair if available, publish a test change where applicable, and verify remembered host restoration does not create duplicates.</li>
+							<li><strong>GitHub host:</strong> add a GitHub host, reconnect it, run repair if needed, publish a test update, and verify the remembered host restores correctly without duplicate entries.</li>
+							<li><strong>S3-compatible host:</strong> add an S3-compatible host, reconnect it, run repair if needed, publish a test update, and verify remembered host restoration and duplicate prevention.</li>
+						</ul>
+						<p>For local, GitHub, and S3-compatible hosts, explicitly check add host, reconnect, repair, publish, duplicate prevention, and remembered host restore behavior.</p>
+					</section>
+
+					<section>
+						<h2>Persistence and restart checklist</h2>
+						<ul>
+							<li>Restart the app after initial setup and after at least one publish flow.</li>
+							<li>Verify remembered hosts are still present after restart.</li>
+							<li>Verify the active host continues correctly or can be restored without confusing state loss.</li>
+							<li>Verify Browser remembers the last useful manifest URL or expected browsing target where applicable.</li>
+							<li>Verify desktop secure credential restore works where credentials are expected to persist for GitHub or S3-compatible hosts.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Publish-state checklist</h2>
+						<ul>
+							<li>Verify publish messaging is understandable before, during, and after a publish attempt.</li>
+							<li>Verify success and failure messages are clear enough for a preview user to understand what happened next.</li>
+							<li>Verify host-state and publish-state UI still make sense after reconnect and repair flows.</li>
+							<li>Confirm there is no misleading success state after a failed publish or partially repaired host.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Go / no-go criteria</h2>
+						<p>Open Collections Desktop v0.1.0 preview is ready to publish only when all of the following are true:</p>
+						<ul>
+							<li>the download artifact is the real Windows preview executable, attached to the public GitHub release</li>
+							<li>the app launches correctly and the shell is usable</li>
+							<li>Browser example loading works</li>
+							<li>Manager core host flows work for supported preview hosts</li>
+							<li>reconnect and repair flows work for local folder, GitHub, and S3-compatible hosts</li>
+							<li>no blocker layout, runtime, or publish-state issues remain</li>
+							<li>known limitations remain acceptable for a preview release and are accurately documented</li>
+						</ul>
+						<p>If any of these conditions fail, treat the release as no-go until the blocker is resolved or the release scope is explicitly adjusted.</p>
+					</section>
+
+					<section>
+						<h2>Known limitations reminder</h2>
+						<p>The following gaps remain intentionally out of scope for v0.1.0 preview and are not by themselves a release blocker unless they regress beyond the documented expectation:</p>
+						<ul>
+							<li>registry browsing is not included yet</li>
+							<li>custom domain hosting is not included yet</li>
+							<li>full sync and conflict-resolution workflows are not included yet</li>
+						</ul>
+					</section>
+				</div>
+			</div>
+    </main>
+    <script src="./docs-nav.js"></script>
+    <open-collections-site-footer base-path="../"></open-collections-site-footer>
+  </body>
+</html>

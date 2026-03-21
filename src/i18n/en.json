@@ -220,7 +220,7 @@
           ],
           "cta": {
             "label": "Open Collection Manager",
-            "href": "../../../apps/manager/src/index.html"
+            "href": "../../../src/apps/collection-manager/"
           }
         },
         {
@@ -308,4 +308,5 @@
     }
   }
 }
+
 

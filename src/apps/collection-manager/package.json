@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Open Collections Manager application (edit, publish, register placeholder).",
   "scripts": {
-    "start": "echo \"Serve repo root and open /src/apps/manager/\""
+    "start": "echo \"Serve repo root and open /src/apps/collection-manager/\""
   },
   "dependencies": {
     "@open-collections/collector-schema": "workspace:*",
@@ -15,3 +15,4 @@
     "@open-collections/shared-platform": "workspace:*"
   }
 }
+

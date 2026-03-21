@@ -4,40 +4,28 @@ import path from 'node:path';
 const REPO_ROOT = process.cwd();
 const SITE_SOURCE_RELATIVE_ROOT = 'src/site';
 const I18N_SOURCE_RELATIVE_ROOT = 'src/i18n';
-const APPS_SOURCE_RELATIVE_ROOT = 'src/apps';
-const COLLECTIONS_SOURCE_RELATIVE_ROOT = 'src/collections';
-const PACKAGES_SOURCE_RELATIVE_ROOT = 'src/packages';
-const SHARED_SOURCE_RELATIVE_ROOT = 'src/shared';
 const SITE_SOURCE_ROOT = path.join(REPO_ROOT, SITE_SOURCE_RELATIVE_ROOT);
 const I18N_SOURCE_ROOT = path.join(REPO_ROOT, I18N_SOURCE_RELATIVE_ROOT);
 const SITE_SOURCE_PATH_PREFIX = `${SITE_SOURCE_RELATIVE_ROOT}/`;
 const LEGACY_SITE_SOURCE_PATH_PREFIX = 'site/';
-const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs');
+const OUTPUT_ROOT = REPO_ROOT;
+const SITE_OUTPUT_ROOT = path.join(REPO_ROOT, 'site');
 const SITE_PUBLISH_RELATIVE_ROOT = 'site';
-const APPS_PUBLISH_RELATIVE_ROOT = 'apps';
-const COLLECTIONS_PUBLISH_RELATIVE_ROOT = 'collections';
-const PACKAGES_PUBLISH_RELATIVE_ROOT = 'packages';
-const SHARED_PUBLISH_RELATIVE_ROOT = 'shared';
+const ROOT_PASSTHROUGH_PREFIXES = [
+	'src/apps/',
+	'src/packages/',
+	'src/shared/',
+	'src/collections/',
+	'src/integrations/',
+	'notes/',
+];
 const LOCALES = ['en', 'nl'];
 const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
-const ROOT_ASSET_FILES = [
-	'CNAME',
-	'notes/collection-manifest-spec.md',
-	'notes/provider-and-storage-implementation.md',
-	'notes/collection-registry-and-indexer.md',
-	'notes/linked-collections-architecture.md',
-	'notes/wordpress-integration.md',
-	'notes/wordpress-plugin-scaffold.md',
-];
-const ROOT_ASSET_DIRECTORIES = [
-	[APPS_SOURCE_RELATIVE_ROOT, APPS_PUBLISH_RELATIVE_ROOT],
-	[PACKAGES_SOURCE_RELATIVE_ROOT, PACKAGES_PUBLISH_RELATIVE_ROOT],
-	[SHARED_SOURCE_RELATIVE_ROOT, SHARED_PUBLISH_RELATIVE_ROOT],
-	[COLLECTIONS_SOURCE_RELATIVE_ROOT, COLLECTIONS_PUBLISH_RELATIVE_ROOT],
-];
 const EXCLUDED_SITE_SOURCE_PATHS = new Set([
 	`${SITE_SOURCE_RELATIVE_ROOT}/browser/index.html`,
 	`${SITE_SOURCE_RELATIVE_ROOT}/manager/index.html`,
+	`${SITE_SOURCE_RELATIVE_ROOT}/collection-browser/index.html`,
+	`${SITE_SOURCE_RELATIVE_ROOT}/collection-manager/index.html`,
 ]);
 
 const posix = path.posix;
@@ -78,13 +66,13 @@ function toPosix(filePath) {
 
 function sourcePathToRoute(sourcePath) {
 	const normalized = toPosix(sourcePath);
-	if (normalized === 'index.html') {
-		return '';
-	}
 	if (!normalized.startsWith(SITE_SOURCE_PATH_PREFIX)) {
 		throw new Error(`Unsupported source path: ${sourcePath}`);
 	}
 	const stripped = normalized.slice(SITE_SOURCE_PATH_PREFIX.length);
+	if (stripped === 'index.html') {
+		return '';
+	}
 	return stripped.endsWith('/index.html') ? stripped.slice(0, -'index.html'.length) : stripped;
 }
 
@@ -182,6 +170,10 @@ function sourceTargetExists(targetPath) {
 	return fs.existsSync(path.join(REPO_ROOT, targetPath));
 }
 
+function isRootPassthroughPath(normalizedPath) {
+	return ROOT_PASSTHROUGH_PREFIXES.some((prefix) => normalizedPath === prefix.slice(0, -1) || normalizedPath.startsWith(prefix));
+}
+
 function mapSourceTargetToOutput(targetPath, locale, originalUrlPath = '') {
 	const normalized = toPosix(targetPath);
 	if (normalized === 'index.html' || normalized === '.' || normalized === '') {
@@ -198,35 +190,7 @@ function mapSourceTargetToOutput(targetPath, locale, originalUrlPath = '') {
 		const remainder = normalized.slice(LEGACY_SITE_SOURCE_PATH_PREFIX.length);
 		return `${localePublishRoot(locale)}/${remainder}`;
 	}
-	if (normalized.startsWith(`${APPS_SOURCE_RELATIVE_ROOT}/`)) {
-		const remainder = normalized.slice(`${APPS_SOURCE_RELATIVE_ROOT}/`.length);
-		return `${APPS_PUBLISH_RELATIVE_ROOT}/${remainder}`;
-	}
-	if (normalized.startsWith(`${PACKAGES_SOURCE_RELATIVE_ROOT}/`)) {
-		const remainder = normalized.slice(`${PACKAGES_SOURCE_RELATIVE_ROOT}/`.length);
-		return `${PACKAGES_PUBLISH_RELATIVE_ROOT}/${remainder}`;
-	}
-	if (normalized.startsWith(`${SHARED_SOURCE_RELATIVE_ROOT}/`)) {
-		const remainder = normalized.slice(`${SHARED_SOURCE_RELATIVE_ROOT}/`.length);
-		return `${SHARED_PUBLISH_RELATIVE_ROOT}/${remainder}`;
-	}
-	if (normalized.startsWith(`${COLLECTIONS_SOURCE_RELATIVE_ROOT}/`)) {
-		const remainder = normalized.slice(`${COLLECTIONS_SOURCE_RELATIVE_ROOT}/`.length);
-		return `${COLLECTIONS_PUBLISH_RELATIVE_ROOT}/${remainder}`;
-	}
-	if (normalized === COLLECTIONS_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${COLLECTIONS_PUBLISH_RELATIVE_ROOT}/`)) {
-		return normalized;
-	}
-	if (normalized === APPS_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${APPS_PUBLISH_RELATIVE_ROOT}/`)) {
-		return normalized;
-	}
-	if (normalized === PACKAGES_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${PACKAGES_PUBLISH_RELATIVE_ROOT}/`)) {
-		return normalized;
-	}
-	if (normalized === SHARED_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${SHARED_PUBLISH_RELATIVE_ROOT}/`)) {
-		return normalized;
-	}
-	if (normalized.startsWith('notes/')) {
+	if (isRootPassthroughPath(normalized)) {
 		return normalized;
 	}
 	if (sourceTargetExists(normalized) && fs.statSync(path.join(REPO_ROOT, normalized)).isDirectory()) {
@@ -535,7 +499,7 @@ function renderHtmlDocument({ locale, route, title, bodyClass, context, mainCont
 	const cssHref = toRelativeHref(currentFile, `${localeRoot}/index.css`);
 	const shellScriptHref = toRelativeHref(currentFile, `${localeRoot}/shared/site-shell-components.js`);
 	const docsNavHref = includeDocsNav ? toRelativeHref(currentFile, `${localeRoot}/docs/docs-nav.js`) : '';
-	const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, `${SHARED_PUBLISH_RELATIVE_ROOT}/components/open-collections-registry-widget.js`) : '';
+	const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, 'src/shared/components/open-collections-registry-widget.js') : '';
 	const basePath = route ? toRelativeHref(currentFile, `${localeRoot}/index.html`) : './';
 	const normalizedBasePath = basePath.endsWith('index.html') ? basePath.slice(0, -'index.html'.length) : basePath;
 	const notice = untranslated ? renderUntranslatedNotice(context.i18n) : '';
@@ -626,41 +590,12 @@ function copyFile(sourceRelativePath, destinationRelativePath) {
 	fs.copyFileSync(sourcePath, destinationPath);
 }
 
-function copyDirectory(sourceRelativePath, destinationRelativePath) {
-	const sourcePath = path.join(REPO_ROOT, sourceRelativePath);
-	const destinationPath = path.join(OUTPUT_ROOT, destinationRelativePath);
-	ensureDir(path.dirname(destinationPath));
-	fs.cpSync(sourcePath, destinationPath, {
-		recursive: true,
-		force: true,
-		filter: (sourcePathname) => {
-			const relative = path.relative(sourcePath, sourcePathname);
-			if (!relative) {
-				return true;
-			}
-			const segments = relative.split(path.sep);
-			return !segments.includes('node_modules');
-		},
-	});
-}
-
 function copySharedAssets() {
 	for (const locale of LOCALES) {
 		const localeRoot = localePublishRoot(locale);
 		copyFile('index.css', `${localeRoot}/index.css`);
 		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/shared/site-shell-components.js`, `${localeRoot}/shared/site-shell-components.js`);
 		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/docs/docs-nav.js`, `${localeRoot}/docs/docs-nav.js`);
-	}
-
-	for (const assetFile of ROOT_ASSET_FILES) {
-		copyFile(assetFile, assetFile);
-	}
-
-	for (const [sourcePath, destinationPath] of ROOT_ASSET_DIRECTORIES) {
-		if (!sourceTargetExists(sourcePath)) {
-			continue;
-		}
-		copyDirectory(sourcePath, destinationPath);
 	}
 }
 
@@ -701,7 +636,10 @@ function renderRootIndex() {
 }
 
 function validateBuiltInternalLinks() {
-	const htmlFiles = listFiles(OUTPUT_ROOT).filter((filePath) => filePath.endsWith('.html'));
+	const htmlFiles = [
+		path.join(REPO_ROOT, 'index.html'),
+		...listFiles(SITE_OUTPUT_ROOT).filter((filePath) => filePath.endsWith('.html')),
+	];
 	const brokenLinks = [];
 	const htmlUrlPattern = /\b(?:href|src|action)="([^"]+)"/g;
 
@@ -739,8 +677,8 @@ function validateBuiltInternalLinks() {
 }
 
 function build() {
-	fs.rmSync(OUTPUT_ROOT, { recursive: true, force: true });
-	ensureDir(OUTPUT_ROOT);
+	fs.rmSync(SITE_OUTPUT_ROOT, { recursive: true, force: true });
+	ensureDir(SITE_OUTPUT_ROOT);
 
 	const translationsByLocale = Object.fromEntries(LOCALES.map((locale) => [locale, readJson(path.join(I18N_SOURCE_ROOT, `${locale}.json`))]));
 	const sourceLocaleData = translationsByLocale.en;
@@ -748,19 +686,26 @@ function build() {
 		validateLocaleData(locale, translationsByLocale[locale], sourceLocaleData);
 	}
 
-	const sourceHtmlFiles = ['index.html', ...listFiles(SITE_SOURCE_ROOT)
+	const sourceHtmlFiles = listFiles(SITE_SOURCE_ROOT)
 		.map((filePath) => toPosix(path.relative(REPO_ROOT, filePath)))
 		.filter((relative) => relative.endsWith('.html'))
-		.filter((relative) => !EXCLUDED_SITE_SOURCE_PATHS.has(relative))];
+		.filter((relative) => !EXCLUDED_SITE_SOURCE_PATHS.has(relative));
 
 	copySharedAssets();
 	copyNonHtmlSiteAssets();
 
 	for (const locale of LOCALES) {
 		const i18n = translationsByLocale[locale];
+		const homeSourcePath = `${SITE_SOURCE_RELATIVE_ROOT}/index.html`;
+		writeFile(localeRouteToFile(locale, ''), renderTranslatedPage({ sourcePath: homeSourcePath, locale, i18n }));
+
 		for (const sourcePath of sourceHtmlFiles) {
-			const html = fs.readFileSync(path.join(REPO_ROOT, sourcePath), 'utf8');
 			const route = sourcePathToRoute(sourcePath);
+			if (!route) {
+				continue;
+			}
+
+			const html = fs.readFileSync(path.join(REPO_ROOT, sourcePath), 'utf8');
 			const pageId = routeToPageId(route);
 			const outputPath = localeRouteToFile(locale, route);
 			let rendered;
@@ -777,7 +722,7 @@ function build() {
 
 	writeFile('index.html', renderRootIndex());
 	validateBuiltInternalLinks();
-	process.stdout.write(`Built localized site output at ${OUTPUT_ROOT}\n`);
+	process.stdout.write(`Built localized site output at ${SITE_OUTPUT_ROOT}\n`);
 }
 
 build();

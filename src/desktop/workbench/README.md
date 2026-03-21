@@ -2,8 +2,8 @@
 
 This is a lightweight shared desktop shell that hosts both existing Web Component apps:
 
-- `src/apps/manager`
-- `src/apps/browser`
+- `src/apps/collection-manager`
+- `src/apps/collection-browser`
 
 ## Run in desktop mode
 
@@ -55,3 +55,5 @@ The raw binary `target/release/open-collections-workbench.exe` is mainly a direc
 - `loadWorkspaceState()`
 
 Browser builds use browser APIs; desktop builds route these calls through Tauri commands.
+
+

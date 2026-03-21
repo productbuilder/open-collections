@@ -1,5 +1,5 @@
-import '../../../apps/manager/src/index.js';
-import '../../../apps/browser/src/index.js';
+import '../../../apps/collection-manager/src/index.js';
+import '../../../apps/collection-browser/src/index.js';
 
 const STORAGE_KEYS = {
   activeApp: 'open-collections-workbench:active-app:v1',
@@ -138,3 +138,5 @@ for (const button of switcherButtons) {
 
 initializeMountedApps();
 setActiveApp(resolveStartupAppId());
+
+

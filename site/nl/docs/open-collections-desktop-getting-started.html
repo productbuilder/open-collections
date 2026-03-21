@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Docs: Open Collections Desktop getting started | Open Collections</title>
+    <link rel="stylesheet" href="../index.css" />
+    <script>window.OPEN_COLLECTIONS_SITE = {"locale":"nl","alternates":{"en":"../../en/docs/open-collections-desktop-getting-started.html","nl":"./open-collections-desktop-getting-started.html"},"page":{"id":"docs/open-collections-desktop-getting-started","route":"docs/open-collections-desktop-getting-started.html","activeSection":"docs","isTranslated":false},"i18n":{"locale":"nl","siteName":"Open Collections","languageName":"Nederlands","languages":{"en":"English","nl":"Nederlands"},"shell":{"brand":"Open Collections","navAriaLabel":"Hoofdnavigatie","languageSwitcherLabel":"Taal","languageSwitcherAriaLabel":"Selecteer taal","nav":{"home":"Home","get-started":"Aan de slag","tools":"Tools","hosting":"Hosting","docs":"Docs"},"footer":{"description":"Een open, webgerichte aanpak voor het publiceren en delen van culturele collecties.","groups":{"project":"Project","docs-and-developer":"Docs en ontwikkeling","collections":"Collecties"},"links":{"home":"Home","get-started":"Aan de slag","tools":"Tools","docs":"Docs","hosting":"Hosting","registry":"Register","organizations":"Organisaties"}},"breadcrumbs":{"home":"Home"},"untranslatedNotice":{"title":"Vertaling volgt","body":"Deze pagina is nog niet volledig vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde gelokaliseerde site-structuur."}},"docsNav":{"ariaLabel":"Docs-navigatie","items":[{"href":"./","label":"Overzicht"},{"href":"./open-collections-desktop-getting-started.html","label":"Desktop snel aan de slag"},{"href":"./open-collections-desktop-v0.1.0-release-notes.html","label":"Desktop v0.1.0 release-opmerkingen"},{"href":"./open-collections-desktop-v0.1.0-release-checklist.html","label":"Desktop v0.1.0 release-checklist"},{"href":"./get-started.html","label":"Aan de slag"},{"href":"./publish-a-collection.html","label":"Publiceren naar GitHub"},{"href":"./open-collections-protocol.html","label":"Protocol"},{"href":"./optional-collection-access-capabilities.html","label":"Optionele mogelijkheden"},{"href":"./hosting-and-storage.html","label":"Hosting en opslag"},{"href":"./tools-overview.html","label":"Overzicht tools"},{"href":"./components-and-embedding.html","label":"Componenten en embedding"},{"href":"./wordpress-integration.html","label":"WordPress-integratie"},{"href":"./collection-registry-and-indexer.html","label":"Register en indexer"},{"href":"./developer-reference.html","label":"Ontwikkelaarsreferentie"}]}}};</script>
+    <script type="module" src="../shared/site-shell-components.js"></script>
+    
+    
+  </head>
+  <body class="docs-page">
+    <open-collections-site-header base-path="../"></open-collections-site-header>
+    <main>
+      
+    <section class="section-soft" data-i18n-fallback-notice>
+      <h2>Vertaling volgt</h2>
+      <p>Deze pagina is nog niet volledig vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde gelokaliseerde site-structuur.</p>
+    </section>
+  
+      <p class="breadcrumbs"><a href="../">Home</a> / <a href="./">Docs</a> / Open Collections Desktop getting started</p>
+			<div class="docs-shell">
+				<aside class="docs-sidebar" aria-label="Docs navigation" data-docs-nav></aside>
+				<div class="docs-content">
+					<header>
+						<p class="eyebrow">Desktop preview</p>
+						<h1>Open Collections Desktop getting started</h1>
+						<p>Open Collections Desktop is a preview Windows app that combines Open Collections Manager and Open Collections Browser in one local installation.</p>
+						<div class="chip-row">
+							<span class="chip stub">Preview</span>
+							<span class="chip ok">Windows v0.1.0</span>
+						</div>
+						<p><a class="button-link" href="https://github.com/productbuilder/open-collections/releases/latest" target="_blank" rel="noopener">Download the latest desktop release from GitHub Releases</a></p>
+					</header>
+
+					<section>
+						<h2>Install from GitHub Releases</h2>
+						<ol>
+							<li>Open the latest desktop release on GitHub Releases.</li>
+							<li>Download the current Windows installer asset for the release you want to test.</li>
+							<li>Run the installer on Windows and allow it to complete.</li>
+							<li>Launch Open Collections Desktop from the installed app shortcut.</li>
+							<li>On first launch, choose whether to open Manager or Browser first. You can switch between them inside the app.</li>
+						</ol>
+						<p>This preview is intended for evaluation and early workflow testing rather than broad production rollout.</p>
+						<p>Maintainers should complete the <a href="./open-collections-desktop-v0.1.0-release-checklist.html">Open Collections Desktop v0.1.0 release checklist</a> and publish the Windows installer on GitHub Releases before public announcement.</p>
+					</section>
+
+					<section>
+						<h2>What Manager and Browser do</h2>
+						<ul>
+							<li><strong>Open Collections Manager</strong> helps you connect a host, prepare collection metadata, and publish updates.</li>
+							<li><strong>Open Collections Browser</strong> lets you inspect example and hosted collections in a read-focused browsing experience.</li>
+						</ul>
+						<p>The desktop app brings both tools together so you can move between editing and browsing without switching to separate web pages.</p>
+					</section>
+
+					<section>
+						<h2>Start with example, local, GitHub, or S3-compatible hosts</h2>
+						<ul>
+							<li><strong>Example browsing:</strong> start with the built-in example content to learn the layout and the Browser experience.</li>
+							<li><strong>Local folder host:</strong> use this to test with folders on your own machine and understand the collection structure locally.</li>
+							<li><strong>GitHub host:</strong> connect a repository-backed host when you want a simple remote publishing target for preview work.</li>
+							<li><strong>S3-compatible host:</strong> connect object storage when your team already uses S3-style buckets for hosted files.</li>
+						</ul>
+						<p>The preview includes remembered hosts so you can reconnect without re-entering each setup step every time.</p>
+					</section>
+
+					<section>
+						<h2>Understand the draft, host, and published model</h2>
+						<p>Open Collections Desktop separates work into three practical states:</p>
+						<ul>
+							<li><strong>Draft:</strong> the local working state where you prepare metadata, review files, and make changes before publishing.</li>
+							<li><strong>Host:</strong> the connected destination such as a local folder, GitHub repository, or S3-compatible bucket.</li>
+							<li><strong>Published:</strong> the version that has been written to the host and can be opened again in the Browser or shared with others.</li>
+						</ul>
+						<p>This model is helpful in the preview because it makes it clear what is still local work, what is connected, and what has actually been published.</p>
+					</section>
+
+					<section>
+						<h2>Reconnect basics</h2>
+						<p>If you reopen the app later, remembered hosts and reconnect flows help you return to your previous work more quickly.</p>
+						<ul>
+							<li>Use the host list to reopen a previously connected local, GitHub, or S3-compatible destination.</li>
+							<li>If a connection needs attention, confirm the host details and credentials, then retry the reconnect flow.</li>
+							<li>The desktop credential storage path is part of this preview so credentials can be reused more consistently between sessions.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Known limitations</h2>
+						<ul>
+							<li>registry browsing is not included yet</li>
+							<li>custom domain hosting is not included yet</li>
+							<li>full sync/conflict-resolution workflows are not included yet</li>
+							<li>some host repair and reconnect flows still need broader real-world validation</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Feedback</h2>
+						<p>For this preview, please send questions, bug reports, and workflow feedback through <a href="https://github.com/productbuilder/open-collections/issues" target="_blank" rel="noopener">GitHub Issues</a>.</p>
+					</section>
+				</div>
+			</div>
+    </main>
+    
+    <script src="./docs-nav.js"></script>
+    <open-collections-site-footer base-path="../"></open-collections-site-footer>
+  </body>
+</html>

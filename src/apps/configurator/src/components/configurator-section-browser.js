@@ -1,6 +1,6 @@
 import { configuratorSectionBrowserStyles } from '../css/section-browser.css.js';
-import '../../../manager/src/components/panel-shell.js';
-import '../../../manager/src/components/view-toggle.js';
+import '../../../collection-manager/src/components/panel-shell.js';
+import '../../../collection-manager/src/components/view-toggle.js';
 
 function valueType(value) {
   if (Array.isArray(value)) return 'array';
@@ -492,4 +492,5 @@ if (!customElements.get('open-configurator-section-browser')) {
 }
 
 export { OpenConfiguratorSectionBrowserElement };
+
 

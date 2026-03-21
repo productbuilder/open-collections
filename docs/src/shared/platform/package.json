@@ -1,0 +1,18 @@
+{
+  "name": "@open-collections/shared-platform",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared browser and desktop platform bridge for Open Collections apps.",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./index.js": "./index.js",
+    "./browser-platform": "./browser-platform.js",
+    "./browser-platform.js": "./browser-platform.js",
+    "./platform-api": "./platform-api.js",
+    "./platform-api.js": "./platform-api.js",
+    "./tauri-platform": "./tauri-platform.js",
+    "./tauri-platform.js": "./tauri-platform.js"
+  }
+}

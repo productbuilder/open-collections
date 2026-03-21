@@ -1,0 +1,16 @@
+{
+  "name": "@open-collections/provider-local",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local filesystem and demo-host provider for Open Collections Manager.",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  },
+  "dependencies": {
+    "@open-collections/collector-schema": "workspace:*",
+    "@open-collections/provider-core": "workspace:*"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@open-collections/provider-gdrive",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Google Drive-backed collection provider utilities.",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  },
+  "dependencies": {
+    "@open-collections/collector-schema": "workspace:*",
+    "@open-collections/provider-core": "workspace:*"
+  }
+}

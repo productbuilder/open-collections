@@ -1,4 +1,4 @@
-const DEFAULT_TRANSLATIONS = {
+const DEFAULT_SITE_I18N = {
 	locale: 'en',
 	languages: {
 		en: 'English',
@@ -106,7 +106,7 @@ function getSiteContext() {
 	const context = window.OPEN_COLLECTIONS_SITE ?? {};
 	return {
 		...context,
-		translations: mergeDeep(DEFAULT_TRANSLATIONS, context.translations ?? {}),
+		i18n: mergeDeep(DEFAULT_SITE_I18N, context.i18n ?? {}),
 	};
 }
 
@@ -121,17 +121,17 @@ function resolveHref(basePath, href) {
 }
 
 function renderLanguageSwitcher(basePath, context) {
-	const languages = context.translations.languages ?? DEFAULT_TRANSLATIONS.languages;
-	const currentLocale = context.locale ?? context.translations.locale ?? 'en';
+	const languages = context.i18n.languages ?? DEFAULT_SITE_I18N.languages;
+	const currentLocale = context.locale ?? context.i18n.locale ?? 'en';
 	const alternates = context.alternates ?? {};
 	const options = Object.entries(languages)
 		.map(([locale, label]) => {
 			const selected = locale === currentLocale ? ' selected' : '';
 			const target = alternates[locale] ?? '';
-			return `<option value="${target}"${selected}>${label}</option>`;
+			return `<option value="${target}" lang="${locale}"${selected}>${label}</option>`;
 		})
 		.join('');
-	const t = context.translations.shell;
+	const t = context.i18n.shell;
 	return `
 		<label class="site-language-switcher" aria-label="${t.languageSwitcherAriaLabel}">
 			<span>${t.languageSwitcherLabel}</span>
@@ -145,9 +145,9 @@ function renderLanguageSwitcher(basePath, context) {
 class OpenCollectionsSiteHeader extends HTMLElement {
 	connectedCallback() {
 		const basePath = toBasePath(this.getAttribute('base-path'));
-		const activePage = this.getAttribute('active-page');
 		const context = getSiteContext();
-		const t = context.translations.shell;
+		const activePage = this.getAttribute('active-page') ?? context.page?.activeSection ?? '';
+		const t = context.i18n.shell;
 
 		const navLinks = NAV_ITEMS.map((item) => {
 			const isActive = item.key === activePage;
@@ -183,7 +183,7 @@ class OpenCollectionsSiteFooter extends HTMLElement {
 	connectedCallback() {
 		const basePath = toBasePath(this.getAttribute('base-path'));
 		const context = getSiteContext();
-		const t = context.translations.shell;
+		const t = context.i18n.shell;
 		const footerGroups = FOOTER_GROUPS.map((group) => {
 			const title = t.footer.groups[group.key] ?? group.key;
 			const links = group.links

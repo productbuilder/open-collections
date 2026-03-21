@@ -4,7 +4,6 @@ import path from 'node:path';
 const REPO_ROOT = process.cwd();
 const OUTPUT_ROOT = path.join(REPO_ROOT, 'site-dist');
 const LOCALES = ['en', 'nl'];
-const TRANSLATED_PAGE_KEYS = new Set(['home', 'get-started', 'docs-index']);
 
 const posix = path.posix;
 
@@ -61,36 +60,26 @@ function routeToFilePath(route) {
   return route.endsWith('/') ? `${route}index.html` : route;
 }
 
-function routeToPageKey(route) {
+function routeToPageId(route) {
   if (!route) {
     return 'home';
   }
-  if (route === 'get-started/') {
-    return 'get-started';
-  }
-  if (route === 'docs/') {
-    return 'docs-index';
-  }
-  return route.replace(/\/$/, '').replaceAll('/', '-').replace(/\.html$/, '');
+
+  const normalized = route
+    .replace(/index\.html$/, '')
+    .replace(/\.html$/, '')
+    .replace(/\/$/, '');
+
+  return normalized || 'home';
 }
 
-function activePageForRoute(route) {
+function activeSectionForRoute(route) {
   if (!route) {
     return 'home';
   }
-  if (route.startsWith('get-started')) {
-    return 'get-started';
-  }
-  if (route.startsWith('tools')) {
-    return 'tools';
-  }
-  if (route.startsWith('hosting')) {
-    return 'hosting';
-  }
-  if (route.startsWith('docs')) {
-    return 'docs';
-  }
-  return '';
+
+  const [section] = route.replace(/\/$/, '').split('/');
+  return section || 'home';
 }
 
 function bodyClassFromHtml(html) {
@@ -117,10 +106,6 @@ function fileNeedsDocsNav(html, route) {
 
 function fileNeedsRegistryWidget(html) {
   return html.includes('open-collections-registry-widget.js') || html.includes('<open-collections-registry-widget');
-}
-
-function hasLocaleSpecificTranslation(pageKey) {
-  return TRANSLATED_PAGE_KEYS.has(pageKey);
 }
 
 function sourceTargetExists(targetPath) {
@@ -215,8 +200,8 @@ function renderBreadcrumbs(items, homeLabel) {
   return `<p class="breadcrumbs">${content}</p>`;
 }
 
-function renderUntranslatedNotice(translations) {
-  const notice = translations.shell.untranslatedNotice;
+function renderUntranslatedNotice(i18n) {
+  const notice = i18n.shell.untranslatedNotice;
   return `
     <section class="section-soft" data-i18n-fallback-notice>
       <h2>${escapeHtml(notice.title)}</h2>
@@ -339,7 +324,7 @@ function renderGetStartedPage(localeData) {
 }
 
 function renderDocsIndexPage(localeData) {
-  const page = localeData.pages['docs-index'];
+  const page = localeData.pages.docs;
   return `
     ${renderBreadcrumbs(page.breadcrumbs, localeData.shell.breadcrumbs.home)}
     <div class="docs-shell">
@@ -360,20 +345,60 @@ function renderDocsIndexPage(localeData) {
   `;
 }
 
-function renderTranslatedMain(pageKey, localeData) {
-  switch (pageKey) {
-    case 'home':
-      return renderHomePage(localeData);
-    case 'get-started':
-      return renderGetStartedPage(localeData);
-    case 'docs-index':
-      return renderDocsIndexPage(localeData);
-    default:
-      throw new Error(`Missing translated renderer for ${pageKey}`);
+const TRANSLATED_PAGE_DEFINITIONS = {
+  home: {
+    bodyClass: '',
+    includeDocsNav: false,
+    includeRegistryWidget: true,
+    render: renderHomePage,
+  },
+  'get-started': {
+    bodyClass: 'docs-page',
+    includeDocsNav: false,
+    includeRegistryWidget: false,
+    render: renderGetStartedPage,
+  },
+  docs: {
+    bodyClass: 'docs-page',
+    includeDocsNav: true,
+    includeRegistryWidget: false,
+    render: renderDocsIndexPage,
+  },
+};
+
+function hasLocaleSpecificTranslation(pageId) {
+  return Object.hasOwn(TRANSLATED_PAGE_DEFINITIONS, pageId);
+}
+
+function getTranslatedPageDefinition(pageId) {
+  return TRANSLATED_PAGE_DEFINITIONS[pageId] ?? null;
+}
+
+function validateLocaleData(locale, localeData, sourceLocaleData) {
+  if (localeData.locale !== locale) {
+    throw new Error(`Locale file mismatch: expected ${locale}, got ${localeData.locale}`);
+  }
+
+  const languageKeys = Object.keys(localeData.languages ?? {}).sort();
+  const expectedLanguageKeys = [...LOCALES].sort();
+  if (JSON.stringify(languageKeys) !== JSON.stringify(expectedLanguageKeys)) {
+    throw new Error(`Locale ${locale} must define language labels for ${expectedLanguageKeys.join(', ')}`);
+  }
+
+  for (const pageId of Object.keys(TRANSLATED_PAGE_DEFINITIONS)) {
+    if (!localeData.pages?.[pageId]) {
+      throw new Error(`Locale ${locale} is missing pages.${pageId}`);
+    }
+  }
+
+  const sourceDocsHrefList = JSON.stringify((sourceLocaleData.docsNav?.items ?? []).map((item) => item.href));
+  const localeDocsHrefList = JSON.stringify((localeData.docsNav?.items ?? []).map((item) => item.href));
+  if (sourceDocsHrefList !== localeDocsHrefList) {
+    throw new Error(`Locale ${locale} docsNav items must keep the same href structure as the source locale`);
   }
 }
 
-function buildContext(locale, translations, pageKey, route) {
+function buildContext(locale, i18n, pageId, route) {
   const routeFile = routeToFilePath(route);
   const currentFile = `${locale}/${routeFile}`;
   const alternates = Object.fromEntries(LOCALES.map((targetLocale) => {
@@ -383,21 +408,25 @@ function buildContext(locale, translations, pageKey, route) {
 
   return {
     locale,
-    pageKey,
-    route,
     alternates,
-    translations: {
-      locale: translations.locale,
-      siteName: translations.siteName,
-      languageName: translations.languageName,
-      languages: translations.languages,
-      shell: translations.shell,
-      docsNav: translations.docsNav,
+    page: {
+      id: pageId,
+      route,
+      activeSection: activeSectionForRoute(route),
+      isTranslated: hasLocaleSpecificTranslation(pageId),
+    },
+    i18n: {
+      locale: i18n.locale,
+      siteName: i18n.siteName,
+      languageName: i18n.languageName,
+      languages: i18n.languages,
+      shell: i18n.shell,
+      docsNav: i18n.docsNav,
     },
   };
 }
 
-function renderHtmlDocument({ locale, route, title, bodyClass, activePage, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated }) {
+function renderHtmlDocument({ locale, route, title, bodyClass, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated }) {
   const currentFile = `${locale}/${routeToFilePath(route)}`;
   const cssHref = toRelativeHref(currentFile, `${locale}/index.css`);
   const shellScriptHref = toRelativeHref(currentFile, `${locale}/shared/site-shell-components.js`);
@@ -405,9 +434,8 @@ function renderHtmlDocument({ locale, route, title, bodyClass, activePage, conte
   const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, 'src/shared/components/open-collections-registry-widget.js') : '';
   const basePath = route ? toRelativeHref(currentFile, `${locale}/index.html`) : './';
   const normalizedBasePath = basePath.endsWith('index.html') ? basePath.slice(0, -'index.html'.length) : basePath;
-  const notice = untranslated ? renderUntranslatedNotice(context.translations) : '';
+  const notice = untranslated ? renderUntranslatedNotice(context.i18n) : '';
   const classAttribute = bodyClass ? ` class="${bodyClass}"` : '';
-  const activePageAttribute = activePage ? ` active-page="${activePage}"` : '';
 
   return `<!doctype html>
 <html lang="${locale}">
@@ -421,7 +449,7 @@ function renderHtmlDocument({ locale, route, title, bodyClass, activePage, conte
     ${includeRegistryWidget ? `<script type="module" src="${registryWidgetHref}"></script>` : ''}
   </head>
   <body${classAttribute}>
-    <open-collections-site-header base-path="${normalizedBasePath}"${activePageAttribute}></open-collections-site-header>
+    <open-collections-site-header base-path="${normalizedBasePath}"></open-collections-site-header>
     <main>
       ${notice}
       ${mainContent}
@@ -432,10 +460,10 @@ function renderHtmlDocument({ locale, route, title, bodyClass, activePage, conte
 </html>`;
 }
 
-function renderFallbackPage({ sourcePath, html, locale, translations }) {
+function renderFallbackPage({ sourcePath, html, locale, i18n }) {
   const route = sourcePathToRoute(sourcePath);
-  const pageKey = routeToPageKey(route);
-  const context = buildContext(locale, translations, pageKey, route);
+  const pageId = routeToPageId(route);
+  const context = buildContext(locale, i18n, pageId, route);
   const currentFile = `${locale}/${routeToFilePath(route)}`;
   const rewrittenMain = rewriteHtmlUrls(extractMain(html), sourcePath, locale, currentFile);
   const rewrittenTitle = titleFromHtml(html);
@@ -444,39 +472,33 @@ function renderFallbackPage({ sourcePath, html, locale, translations }) {
     route,
     title: rewrittenTitle,
     bodyClass: bodyClassFromHtml(html),
-    activePage: activePageForRoute(route),
     context,
     mainContent: rewrittenMain,
     includeDocsNav: fileNeedsDocsNav(html, route),
     includeRegistryWidget: fileNeedsRegistryWidget(html),
-    untranslated: locale !== 'en' && !hasLocaleSpecificTranslation(pageKey),
+    untranslated: locale !== 'en' && !hasLocaleSpecificTranslation(pageId),
   });
 }
 
-function renderTranslatedPage({ sourcePath, locale, translations }) {
+function renderTranslatedPage({ sourcePath, locale, i18n }) {
   const route = sourcePathToRoute(sourcePath);
-  const pageKey = routeToPageKey(route);
-  const context = buildContext(locale, translations, pageKey, route);
-  const titles = {
-    home: translations.pages.home.title,
-    'get-started': translations.pages['get-started'].title,
-    'docs-index': translations.pages['docs-index'].title,
-  };
-  const bodyClasses = {
-    home: '',
-    'get-started': 'docs-page',
-    'docs-index': 'docs-page',
-  };
+  const pageId = routeToPageId(route);
+  const pageDefinition = getTranslatedPageDefinition(pageId);
+
+  if (!pageDefinition) {
+    throw new Error(`Missing translated page definition for ${pageId}`);
+  }
+
+  const context = buildContext(locale, i18n, pageId, route);
   return renderHtmlDocument({
     locale,
     route,
-    title: titles[pageKey],
-    bodyClass: bodyClasses[pageKey],
-    activePage: activePageForRoute(route),
+    title: i18n.pages[pageId].title,
+    bodyClass: pageDefinition.bodyClass,
     context,
-    mainContent: renderTranslatedMain(pageKey, translations),
-    includeDocsNav: pageKey === 'docs-index',
-    includeRegistryWidget: pageKey === 'home',
+    mainContent: pageDefinition.render(i18n),
+    includeDocsNav: pageDefinition.includeDocsNav,
+    includeRegistryWidget: pageDefinition.includeRegistryWidget,
     untranslated: false,
   });
 }
@@ -546,21 +568,26 @@ function build() {
   ensureDir(OUTPUT_ROOT);
 
   const translationsByLocale = Object.fromEntries(LOCALES.map((locale) => [locale, readJson(path.join(REPO_ROOT, 'i18n', `${locale}.json`))]));
+  const sourceLocaleData = translationsByLocale.en;
+  for (const locale of LOCALES) {
+    validateLocaleData(locale, translationsByLocale[locale], sourceLocaleData);
+  }
+
   const sourceHtmlFiles = ['index.html', ...listFiles(path.join(REPO_ROOT, 'site')).map((filePath) => toPosix(path.relative(REPO_ROOT, filePath))).filter((relative) => relative.endsWith('.html'))];
 
   copySharedAssets();
   copyNonHtmlSiteAssets();
 
   for (const locale of LOCALES) {
-    const translations = translationsByLocale[locale];
+    const i18n = translationsByLocale[locale];
     for (const sourcePath of sourceHtmlFiles) {
       const html = fs.readFileSync(path.join(REPO_ROOT, sourcePath), 'utf8');
       const route = sourcePathToRoute(sourcePath);
-      const pageKey = routeToPageKey(route);
+      const pageId = routeToPageId(route);
       const outputPath = `${locale}/${routeToFilePath(route)}`;
-      const rendered = hasLocaleSpecificTranslation(pageKey)
-        ? renderTranslatedPage({ sourcePath, locale, translations })
-        : renderFallbackPage({ sourcePath, html, locale, translations });
+      const rendered = hasLocaleSpecificTranslation(pageId)
+        ? renderTranslatedPage({ sourcePath, locale, i18n })
+        : renderFallbackPage({ sourcePath, html, locale, i18n });
       writeFile(outputPath, rendered);
     }
   }

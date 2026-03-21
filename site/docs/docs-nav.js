@@ -18,7 +18,7 @@ const DEFAULT_DOCS_NAV_ITEMS = [
 const normalizePath = (path) => (path.endsWith('/index.html') ? path.slice(0, -'index.html'.length) : path);
 const currentPath = normalizePath(window.location.pathname);
 const siteContext = window.OPEN_COLLECTIONS_SITE ?? {};
-const docsNav = siteContext.translations?.docsNav ?? {};
+const docsNav = siteContext.i18n?.docsNav ?? {};
 const items = docsNav.items ?? DEFAULT_DOCS_NAV_ITEMS;
 const ariaLabel = docsNav.ariaLabel ?? 'Docs navigation';
 

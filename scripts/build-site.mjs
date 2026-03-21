@@ -530,6 +530,7 @@ function copySharedAssets() {
     copyFile('site/docs/docs-nav.js', `${locale}/docs/docs-nav.js`);
   }
   copyDirectory('src', 'src');
+  copyDirectory('docs', 'docs');
   copyDirectory('i18n', 'i18n');
 }
 
@@ -563,6 +564,44 @@ function renderRootIndex() {
 </html>`;
 }
 
+function validateBuiltInternalLinks() {
+  const htmlFiles = listFiles(OUTPUT_ROOT).filter((filePath) => filePath.endsWith('.html'));
+  const brokenLinks = [];
+  const htmlUrlPattern = /\b(?:href|src|action)="([^"]+)"/g;
+
+  for (const htmlFile of htmlFiles) {
+    const html = fs.readFileSync(htmlFile, 'utf8');
+    for (const match of html.matchAll(htmlUrlPattern)) {
+      const value = match[1];
+      if (!value || /^(?:[a-z]+:|mailto:|tel:|javascript:|#)/i.test(value) || value.startsWith('/api/')) {
+        continue;
+      }
+
+      const resolvedPath = value.split('#')[0].split('?')[0];
+      if (!resolvedPath) {
+        continue;
+      }
+
+      const absoluteTarget = path.resolve(path.dirname(htmlFile), resolvedPath);
+      const candidatePaths = [absoluteTarget, path.join(absoluteTarget, 'index.html')];
+      const exists = candidatePaths.some((candidatePath) => fs.existsSync(candidatePath));
+      if (!exists) {
+        brokenLinks.push({
+          htmlFile: toPosix(path.relative(REPO_ROOT, htmlFile)),
+          target: value,
+        });
+      }
+    }
+  }
+
+  if (brokenLinks.length > 0) {
+    const details = brokenLinks
+      .map(({ htmlFile, target }) => `- ${htmlFile} -> ${target}`)
+      .join('\n');
+    throw new Error(`Built site contains broken internal links:\n${details}`);
+  }
+}
+
 function build() {
   fs.rmSync(OUTPUT_ROOT, { recursive: true, force: true });
   ensureDir(OUTPUT_ROOT);
@@ -593,6 +632,7 @@ function build() {
   }
 
   writeFile('index.html', renderRootIndex());
+  validateBuiltInternalLinks();
   process.stdout.write(`Built localized site output at ${OUTPUT_ROOT}\n`);
 }
 

@@ -75,7 +75,7 @@ const FOOTER_GROUPS = [
 		key: 'collections',
 		links: [
 			{ key: 'registry', href: 'registry/' },
-			{ key: 'organizations', href: '#organizations-using-open-collections' },
+			{ key: 'organizations', href: 'index.html#organizations-using-open-collections' },
 		],
 	},
 ];

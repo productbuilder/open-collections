@@ -40,26 +40,68 @@
     },
     "untranslatedNotice": {
       "title": "Translation in progress",
-      "body": "This page is not translated into Dutch yet, so you are seeing the English content with the shared Dutch site shell."
+      "body": "This page is not translated into this language yet, so you are seeing the English content with the shared localized site shell."
     }
   },
   "docsNav": {
     "ariaLabel": "Docs navigation",
     "items": [
-      { "href": "./", "label": "Overview" },
-      { "href": "./open-collections-desktop-getting-started.html", "label": "Desktop getting started" },
-      { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Desktop v0.1.0 release notes" },
-      { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Desktop v0.1.0 release checklist" },
-      { "href": "./get-started.html", "label": "Get started" },
-      { "href": "./publish-a-collection.html", "label": "Publish to GitHub" },
-      { "href": "./open-collections-protocol.html", "label": "Protocol" },
-      { "href": "./optional-collection-access-capabilities.html", "label": "Optional capabilities" },
-      { "href": "./hosting-and-storage.html", "label": "Hosting and storage" },
-      { "href": "./tools-overview.html", "label": "Tools overview" },
-      { "href": "./components-and-embedding.html", "label": "Components and embedding" },
-      { "href": "./wordpress-integration.html", "label": "WordPress integration" },
-      { "href": "./collection-registry-and-indexer.html", "label": "Registry and indexer" },
-      { "href": "./developer-reference.html", "label": "Developer reference" }
+      {
+        "href": "./",
+        "label": "Overview"
+      },
+      {
+        "href": "./open-collections-desktop-getting-started.html",
+        "label": "Desktop getting started"
+      },
+      {
+        "href": "./open-collections-desktop-v0.1.0-release-notes.html",
+        "label": "Desktop v0.1.0 release notes"
+      },
+      {
+        "href": "./open-collections-desktop-v0.1.0-release-checklist.html",
+        "label": "Desktop v0.1.0 release checklist"
+      },
+      {
+        "href": "./get-started.html",
+        "label": "Get started"
+      },
+      {
+        "href": "./publish-a-collection.html",
+        "label": "Publish to GitHub"
+      },
+      {
+        "href": "./open-collections-protocol.html",
+        "label": "Protocol"
+      },
+      {
+        "href": "./optional-collection-access-capabilities.html",
+        "label": "Optional capabilities"
+      },
+      {
+        "href": "./hosting-and-storage.html",
+        "label": "Hosting and storage"
+      },
+      {
+        "href": "./tools-overview.html",
+        "label": "Tools overview"
+      },
+      {
+        "href": "./components-and-embedding.html",
+        "label": "Components and embedding"
+      },
+      {
+        "href": "./wordpress-integration.html",
+        "label": "WordPress integration"
+      },
+      {
+        "href": "./collection-registry-and-indexer.html",
+        "label": "Registry and indexer"
+      },
+      {
+        "href": "./developer-reference.html",
+        "label": "Developer reference"
+      }
     ]
   },
   "pages": {
@@ -155,7 +197,9 @@
     },
     "get-started": {
       "title": "Get started | Open Collections",
-      "breadcrumbs": ["Get started"],
+      "breadcrumbs": [
+        "Get started"
+      ],
       "hero": {
         "title": "Get started with the materials you already have",
         "body": "Use this page for a calm, practical first run. You can begin with local files, existing media links, or exported records and move toward a shareable collection in a few steps."
@@ -215,9 +259,11 @@
         }
       ]
     },
-    "docs-index": {
+    "docs": {
       "title": "Docs | Open Collections",
-      "breadcrumbs": ["Docs"],
+      "breadcrumbs": [
+        "Docs"
+      ],
       "hero": {
         "title": "Docs",
         "body": "Guidance for both end users and implementation teams. Use these pages for practical setup help, architecture, integration, and reference details."
@@ -225,14 +271,38 @@
       "suggestedReading": {
         "title": "Suggested reading order",
         "items": [
-          { "href": "./open-collections-desktop-getting-started.html", "label": "Open Collections Desktop getting started" },
-          { "href": "./publish-a-collection.html", "label": "Publish a collection to GitHub" },
-          { "href": "./get-started.html", "label": "Get started (technical companion)" },
-          { "href": "./hosting-and-storage.html", "label": "Hosting and storage" },
-          { "href": "./tools-overview.html", "label": "Tools overview" },
-          { "href": "./open-collections-protocol.html", "label": "Protocol" },
-          { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Open Collections Desktop v0.1.0 release notes" },
-          { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Open Collections Desktop v0.1.0 release checklist" }
+          {
+            "href": "./open-collections-desktop-getting-started.html",
+            "label": "Open Collections Desktop getting started"
+          },
+          {
+            "href": "./publish-a-collection.html",
+            "label": "Publish a collection to GitHub"
+          },
+          {
+            "href": "./get-started.html",
+            "label": "Get started (technical companion)"
+          },
+          {
+            "href": "./hosting-and-storage.html",
+            "label": "Hosting and storage"
+          },
+          {
+            "href": "./tools-overview.html",
+            "label": "Tools overview"
+          },
+          {
+            "href": "./open-collections-protocol.html",
+            "label": "Protocol"
+          },
+          {
+            "href": "./open-collections-desktop-v0.1.0-release-notes.html",
+            "label": "Open Collections Desktop v0.1.0 release notes"
+          },
+          {
+            "href": "./open-collections-desktop-v0.1.0-release-checklist.html",
+            "label": "Open Collections Desktop v0.1.0 release checklist"
+          }
         ]
       }
     }

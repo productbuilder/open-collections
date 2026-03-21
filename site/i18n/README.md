@@ -39,8 +39,8 @@ Other pages are still emitted for both locales. Until they are translated, the D
 
 1. Add or update the shared strings in both locale dictionaries if needed.
 2. Add page-specific content under `pages` in `i18n/en.json` and `i18n/nl.json`.
-3. Add the page key to `TRANSLATED_PAGE_KEYS` in `scripts/build-site.mjs`.
-4. Add a renderer for that page in `scripts/build-site.mjs` and return localized HTML for the `<main>` content.
+3. Add a page entry under a route-based page id such as `home`, `get-started`, `docs`, or `docs/open-collections-protocol`.
+4. Add a renderer definition to `TRANSLATED_PAGE_DEFINITIONS` in `scripts/build-site.mjs` and return localized HTML for the `<main>` content.
 5. Run `pnpm site:build` and confirm the page exists in both `site-dist/en/...` and `site-dist/nl/...`.
 
 ## How untranslated pages are handled
@@ -55,8 +55,8 @@ Other pages are still emitted for both locales. Until they are translated, the D
 At build time each page receives a small `window.OPEN_COLLECTIONS_SITE` context that includes:
 
 - current locale
-- route/page key
+- normalized page metadata (`page.id`, `page.route`, `page.activeSection`)
 - same-page alternate locale URLs
-- locale translations for shared shell and docs nav
+- locale i18n data for the shared shell and docs nav
 
-`site/shared/site-shell-components.js` and `site/docs/docs-nav.js` read from that injected context, so runtime logic stays lightweight and the localized output remains plain static HTML.
+`site/shared/site-shell-components.js` and `site/docs/docs-nav.js` read from that injected context, so runtime logic stays lightweight and the localized output remains plain static HTML. The build also validates that every translated page id exists in every locale file and that docs navigation keeps the same href structure across locales.

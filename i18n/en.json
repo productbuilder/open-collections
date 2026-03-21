@@ -1,0 +1,240 @@
+{
+  "locale": "en",
+  "siteName": "Open Collections",
+  "languageName": "English",
+  "languages": {
+    "en": "English",
+    "nl": "Nederlands"
+  },
+  "shell": {
+    "brand": "Open Collections",
+    "navAriaLabel": "Primary navigation",
+    "languageSwitcherLabel": "Language",
+    "languageSwitcherAriaLabel": "Select language",
+    "nav": {
+      "home": "Home",
+      "get-started": "Get started",
+      "tools": "Tools",
+      "hosting": "Hosting",
+      "docs": "Docs"
+    },
+    "footer": {
+      "description": "An open, web-based approach to publishing and sharing cultural collections.",
+      "groups": {
+        "project": "Project",
+        "docs-and-developer": "Docs and developer",
+        "collections": "Collections"
+      },
+      "links": {
+        "home": "Home",
+        "get-started": "Get started",
+        "tools": "Tools",
+        "docs": "Docs",
+        "hosting": "Hosting",
+        "registry": "Registry",
+        "organizations": "Organizations"
+      }
+    },
+    "breadcrumbs": {
+      "home": "Home"
+    },
+    "untranslatedNotice": {
+      "title": "Translation in progress",
+      "body": "This page is not translated into Dutch yet, so you are seeing the English content with the shared Dutch site shell."
+    }
+  },
+  "docsNav": {
+    "ariaLabel": "Docs navigation",
+    "items": [
+      { "href": "./", "label": "Overview" },
+      { "href": "./open-collections-desktop-getting-started.html", "label": "Desktop getting started" },
+      { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Desktop v0.1.0 release notes" },
+      { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Desktop v0.1.0 release checklist" },
+      { "href": "./get-started.html", "label": "Get started" },
+      { "href": "./publish-a-collection.html", "label": "Publish to GitHub" },
+      { "href": "./open-collections-protocol.html", "label": "Protocol" },
+      { "href": "./optional-collection-access-capabilities.html", "label": "Optional capabilities" },
+      { "href": "./hosting-and-storage.html", "label": "Hosting and storage" },
+      { "href": "./tools-overview.html", "label": "Tools overview" },
+      { "href": "./components-and-embedding.html", "label": "Components and embedding" },
+      { "href": "./wordpress-integration.html", "label": "WordPress integration" },
+      { "href": "./collection-registry-and-indexer.html", "label": "Registry and indexer" },
+      { "href": "./developer-reference.html", "label": "Developer reference" }
+    ]
+  },
+  "pages": {
+    "home": {
+      "title": "Open Collections",
+      "hero": {
+        "eyebrow": "Open Collections",
+        "headlineHtml": "<span class=\"hero-keyword\">Webcollections</span> <span class=\"hero-headline-break\">are like websites for cultural collections.</span>",
+        "leadHtml": "The Open Collections Protocol makes it simple to publish and share cultural collections on the web in an open format built on plain web standards. No database required.<br /><br />Host them anywhere, link them across the web, and keep them reusable over time.",
+        "primaryCta": "Get started",
+        "secondaryCta": "Explore the tools",
+        "ctaAriaLabel": "Primary calls to action"
+      },
+      "intro": {
+        "title": "Collections that behave like websites",
+        "body": "Open Collections treats collections as web resources. You can host them on your own infrastructure, publish them with your existing workflows, and keep them readable over time.",
+        "features": [
+          "Host collections anywhere on the web",
+          "Link collections across sites and systems",
+          "Reuse collections in tools and platforms",
+          "Keep a portable format based on plain web standards"
+        ]
+      },
+      "pathways": {
+        "title": "Start from the files, records, or datasets you already have",
+        "paragraphs": [
+          "Many collections already begin as local folders, public media URLs, exported records from spreadsheets, or broader datasets harvested or imported from existing systems. Open Collections helps you work with those starting points without forcing everything into one complicated workflow from the start.",
+          "Not every source body is itself a collection. You can begin with files on disk, records from current systems, or a larger dataset, then select the records, files, and links that belong in a more focused public-facing collection."
+        ]
+      },
+      "curation": {
+        "title": "From datasets to curated collections",
+        "paragraphs": [
+          "Open Collections helps you work with datasets and turn selected records, files, and links into curated collections. Datasets are broad source bodies; collections are curated selections.",
+          "Collections are intentional. Open Collections helps curators and collection teams shape focused collections for browsing, sharing, teaching, research, or storytelling while continuing to add value on top of existing systems and datasets.",
+          "Collections can also build on existing records and media over time. The same item may appear in more than one collection, with each collection adding its own context, links, and interpretation. Open Collections supports this broader idea of open and linked collections while keeping each collection clear and purposeful."
+        ]
+      },
+      "audience": {
+        "title": "Designed for archives, museums, and design libraries",
+        "body": "Whether you are working with archival material, object photography, exhibition assets, material libraries, or product collections, Open Collections helps bring files and metadata together in a way that stays understandable for teams and visitors."
+      },
+      "workflow": {
+        "title": "Curate collections for real use",
+        "body": "Use the Collection Manager to select, shape, and structure a collection. Use the Collection Browser to explore it in a clear visual interface. This helps teams carry out curation work internally and makes it easier to share focused collections online.",
+        "steps": [
+          {
+            "title": "Gather",
+            "body": "Bring together local files, existing media links, or exported records from your current collection work."
+          },
+          {
+            "title": "Curate",
+            "body": "Use Collection Manager to select and structure items, media references, and details so teams can shape collections with confidence."
+          },
+          {
+            "title": "Browse and share",
+            "body": "Open the result in Collection Browser so colleagues and audiences can explore and use the collection."
+          }
+        ]
+      },
+      "registry": {
+        "title": "Explore registered collections",
+        "viewAll": "View full registry",
+        "body": "Browse recently registered collections to see how organizations are publishing collections on the web.",
+        "widgetTitle": "Recently registered collections",
+        "widgetIntro": "A quick view of recent registrations from the Open Collections registry."
+      },
+      "nextSteps": {
+        "title": "Choose your next step",
+        "cards": [
+          {
+            "title": "Get started",
+            "body": "Create your first collection from files, links, or exported records.",
+            "href": "./get-started/"
+          },
+          {
+            "title": "Explore the tools",
+            "body": "See the Collection Manager and Collection Browser.",
+            "href": "./tools/"
+          },
+          {
+            "title": "Host your collection",
+            "body": "Learn where and how to host your collection on the web.",
+            "href": "./hosting/"
+          },
+          {
+            "title": "Read the docs",
+            "body": "Learn about hosting, protocol details, and implementation.",
+            "href": "./docs/"
+          }
+        ]
+      }
+    },
+    "get-started": {
+      "title": "Get started | Open Collections",
+      "breadcrumbs": ["Get started"],
+      "hero": {
+        "title": "Get started with the materials you already have",
+        "body": "Use this page for a calm, practical first run. You can begin with local files, existing media links, or exported records and move toward a shareable collection in a few steps."
+      },
+      "sections": [
+        {
+          "title": "1. Choose a starting point",
+          "list": [
+            "Gather the files, folders, links, or exported records that belong in one collection.",
+            "Use clear titles or file names and remove anything you do not want to share.",
+            "Keep enough context together that browsing will feel understandable later."
+          ]
+        },
+        {
+          "title": "2. Open Collection Manager",
+          "paragraphs": [
+            "Open Collection Manager in your browser and start a new collection for the material you want to organize."
+          ],
+          "cta": {
+            "label": "Open Collection Manager",
+            "href": "../../src/apps/manager/"
+          }
+        },
+        {
+          "title": "3. Add items from files, links, or records",
+          "paragraphs": [
+            "Some collections start from a folder on disk. Others begin with metadata from a spreadsheet or with items that point to media already hosted on another site. Use the path that matches what you already have."
+          ]
+        },
+        {
+          "title": "4. Add titles and details",
+          "paragraphs": [
+            "Add a collection title, short description, and item details that help people understand what they are viewing, whether the media is uploaded locally or referenced from an existing URL."
+          ]
+        },
+        {
+          "title": "5. Simple example: publish metadata with referenced media",
+          "paragraphs": [
+            "Create a collection, add two items, and use existing public image URLs for the media. Then add titles and short descriptions so the collection can be published and shared while the media stays on its current host."
+          ]
+        },
+        {
+          "title": "6. Save and share",
+          "paragraphs": [
+            "Save your collection, then share the URL with your team or audience. You can keep improving the records, media links, and presentation over time."
+          ],
+          "links": [
+            {
+              "label": "Choose hosting",
+              "href": "../hosting/"
+            },
+            {
+              "label": "Technical setup in Docs",
+              "href": "../docs/get-started.html"
+            }
+          ]
+        }
+      ]
+    },
+    "docs-index": {
+      "title": "Docs | Open Collections",
+      "breadcrumbs": ["Docs"],
+      "hero": {
+        "title": "Docs",
+        "body": "Guidance for both end users and implementation teams. Use these pages for practical setup help, architecture, integration, and reference details."
+      },
+      "suggestedReading": {
+        "title": "Suggested reading order",
+        "items": [
+          { "href": "./open-collections-desktop-getting-started.html", "label": "Open Collections Desktop getting started" },
+          { "href": "./publish-a-collection.html", "label": "Publish a collection to GitHub" },
+          { "href": "./get-started.html", "label": "Get started (technical companion)" },
+          { "href": "./hosting-and-storage.html", "label": "Hosting and storage" },
+          { "href": "./tools-overview.html", "label": "Tools overview" },
+          { "href": "./open-collections-protocol.html", "label": "Protocol" },
+          { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Open Collections Desktop v0.1.0 release notes" },
+          { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Open Collections Desktop v0.1.0 release checklist" }
+        ]
+      }
+    }
+  }
+}

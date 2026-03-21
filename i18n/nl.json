@@ -1,0 +1,240 @@
+{
+  "locale": "nl",
+  "siteName": "Open Collections",
+  "languageName": "Nederlands",
+  "languages": {
+    "en": "English",
+    "nl": "Nederlands"
+  },
+  "shell": {
+    "brand": "Open Collections",
+    "navAriaLabel": "Hoofdnavigatie",
+    "languageSwitcherLabel": "Taal",
+    "languageSwitcherAriaLabel": "Selecteer taal",
+    "nav": {
+      "home": "Home",
+      "get-started": "Aan de slag",
+      "tools": "Tools",
+      "hosting": "Hosting",
+      "docs": "Docs"
+    },
+    "footer": {
+      "description": "Een open, webgerichte aanpak voor het publiceren en delen van culturele collecties.",
+      "groups": {
+        "project": "Project",
+        "docs-and-developer": "Docs en ontwikkeling",
+        "collections": "Collecties"
+      },
+      "links": {
+        "home": "Home",
+        "get-started": "Aan de slag",
+        "tools": "Tools",
+        "docs": "Docs",
+        "hosting": "Hosting",
+        "registry": "Register",
+        "organizations": "Organisaties"
+      }
+    },
+    "breadcrumbs": {
+      "home": "Home"
+    },
+    "untranslatedNotice": {
+      "title": "Vertaling volgt",
+      "body": "Deze pagina is nog niet volledig naar het Nederlands vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde Nederlandse site-structuur."
+    }
+  },
+  "docsNav": {
+    "ariaLabel": "Docs-navigatie",
+    "items": [
+      { "href": "./", "label": "Overzicht" },
+      { "href": "./open-collections-desktop-getting-started.html", "label": "Desktop snel aan de slag" },
+      { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Desktop v0.1.0 release-opmerkingen" },
+      { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Desktop v0.1.0 release-checklist" },
+      { "href": "./get-started.html", "label": "Aan de slag" },
+      { "href": "./publish-a-collection.html", "label": "Publiceren naar GitHub" },
+      { "href": "./open-collections-protocol.html", "label": "Protocol" },
+      { "href": "./optional-collection-access-capabilities.html", "label": "Optionele mogelijkheden" },
+      { "href": "./hosting-and-storage.html", "label": "Hosting en opslag" },
+      { "href": "./tools-overview.html", "label": "Overzicht tools" },
+      { "href": "./components-and-embedding.html", "label": "Componenten en embedding" },
+      { "href": "./wordpress-integration.html", "label": "WordPress-integratie" },
+      { "href": "./collection-registry-and-indexer.html", "label": "Register en indexer" },
+      { "href": "./developer-reference.html", "label": "Ontwikkelaarsreferentie" }
+    ]
+  },
+  "pages": {
+    "home": {
+      "title": "Open Collections",
+      "hero": {
+        "eyebrow": "Open Collections",
+        "headlineHtml": "<span class=\"hero-keyword\">Webcollecties</span> <span class=\"hero-headline-break\">zijn als websites voor culturele collecties.</span>",
+        "leadHtml": "Met het Open Collections Protocol kun je culturele collecties eenvoudig publiceren en delen op het web in een open formaat op basis van gewone webstandaarden. Geen database nodig.<br /><br />Host ze waar je wilt, koppel ze over het web heen, en houd ze langdurig herbruikbaar.",
+        "primaryCta": "Aan de slag",
+        "secondaryCta": "Bekijk de tools",
+        "ctaAriaLabel": "Primaire acties"
+      },
+      "intro": {
+        "title": "Collecties die zich gedragen als websites",
+        "body": "Open Collections behandelt collecties als webbronnen. Je kunt ze op je eigen infrastructuur hosten, publiceren met bestaande workflows en op lange termijn leesbaar houden.",
+        "features": [
+          "Host collecties overal op het web",
+          "Koppel collecties tussen sites en systemen",
+          "Hergebruik collecties in tools en platforms",
+          "Behoud een draagbaar formaat op basis van gewone webstandaarden"
+        ]
+      },
+      "pathways": {
+        "title": "Begin met de bestanden, records of datasets die je al hebt",
+        "paragraphs": [
+          "Veel collecties beginnen al als lokale mappen, publieke media-URL's, geëxporteerde records uit spreadsheets of bredere datasets uit bestaande systemen. Open Collections helpt je vanuit die startsituaties te werken zonder meteen alles in één ingewikkelde workflow te dwingen.",
+          "Niet elke bronverzameling is zelf al een collectie. Je kunt beginnen met bestanden op schijf, records uit bestaande systemen of een grotere dataset, en daarna de records, bestanden en links selecteren die thuishoren in een gerichtere publieke collectie."
+        ]
+      },
+      "curation": {
+        "title": "Van datasets naar samengestelde collecties",
+        "paragraphs": [
+          "Open Collections helpt je met datasets te werken en geselecteerde records, bestanden en links om te zetten in samengestelde collecties. Datasets zijn brede bronverzamelingen; collecties zijn bewuste selecties.",
+          "Collecties zijn intentioneel. Open Collections helpt curatoren en collectieteams om gerichte collecties te vormen voor browsen, delen, onderwijs, onderzoek of storytelling, terwijl ze voortbouwen op bestaande systemen en datasets.",
+          "Collecties kunnen ook voortbouwen op bestaande records en media. Hetzelfde item kan in meer dan één collectie voorkomen, waarbij elke collectie eigen context, links en interpretatie toevoegt. Open Collections ondersteunt dit bredere idee van open en gekoppelde collecties, terwijl elke collectie helder en doelgericht blijft."
+        ]
+      },
+      "audience": {
+        "title": "Ontworpen voor archieven, musea en designbibliotheken",
+        "body": "Of je nu werkt met archiefmateriaal, objectfotografie, tentoonstellingsassets, materiaallibraries of productcollecties: Open Collections helpt bestanden en metadata samen te brengen op een manier die begrijpelijk blijft voor teams en bezoekers."
+      },
+      "workflow": {
+        "title": "Stel collecties samen voor echt gebruik",
+        "body": "Gebruik Collection Manager om een collectie te selecteren, vorm te geven en te structureren. Gebruik Collection Browser om die collectie in een heldere visuele interface te verkennen. Zo kunnen teams intern cureren en gerichte collecties eenvoudiger online delen.",
+        "steps": [
+          {
+            "title": "Verzamel",
+            "body": "Breng lokale bestanden, bestaande medialinks of geëxporteerde records uit je huidige collectiepraktijk samen."
+          },
+          {
+            "title": "Cureer",
+            "body": "Gebruik Collection Manager om items, mediaverwijzingen en details te selecteren en te structureren, zodat teams met vertrouwen collecties kunnen vormgeven."
+          },
+          {
+            "title": "Bekijk en deel",
+            "body": "Open het resultaat in Collection Browser zodat collega's en publiek de collectie kunnen verkennen en gebruiken."
+          }
+        ]
+      },
+      "registry": {
+        "title": "Verken geregistreerde collecties",
+        "viewAll": "Bekijk volledig register",
+        "body": "Bekijk recent geregistreerde collecties om te zien hoe organisaties collecties op het web publiceren.",
+        "widgetTitle": "Recent geregistreerde collecties",
+        "widgetIntro": "Een snel overzicht van recente registraties in het Open Collections-register."
+      },
+      "nextSteps": {
+        "title": "Kies je volgende stap",
+        "cards": [
+          {
+            "title": "Aan de slag",
+            "body": "Maak je eerste collectie van bestanden, links of geëxporteerde records.",
+            "href": "./get-started/"
+          },
+          {
+            "title": "Bekijk de tools",
+            "body": "Ontdek Collection Manager en Collection Browser.",
+            "href": "./tools/"
+          },
+          {
+            "title": "Host je collectie",
+            "body": "Lees waar en hoe je je collectie op het web kunt hosten.",
+            "href": "./hosting/"
+          },
+          {
+            "title": "Lees de docs",
+            "body": "Lees meer over hosting, protocol-details en implementatie.",
+            "href": "./docs/"
+          }
+        ]
+      }
+    },
+    "get-started": {
+      "title": "Aan de slag | Open Collections",
+      "breadcrumbs": ["Aan de slag"],
+      "hero": {
+        "title": "Ga aan de slag met het materiaal dat je al hebt",
+        "body": "Gebruik deze pagina als een rustige, praktische eerste stap. Je kunt beginnen met lokale bestanden, bestaande medialinks of geëxporteerde records en in een paar stappen toewerken naar een deelbare collectie."
+      },
+      "sections": [
+        {
+          "title": "1. Kies een startpunt",
+          "list": [
+            "Verzamel de bestanden, mappen, links of geëxporteerde records die in één collectie thuishoren.",
+            "Gebruik duidelijke titels of bestandsnamen en verwijder alles wat je niet wilt delen.",
+            "Houd genoeg context bijeen zodat browsen later begrijpelijk aanvoelt."
+          ]
+        },
+        {
+          "title": "2. Open Collection Manager",
+          "paragraphs": [
+            "Open Collection Manager in je browser en start een nieuwe collectie voor het materiaal dat je wilt ordenen."
+          ],
+          "cta": {
+            "label": "Open Collection Manager",
+            "href": "../../src/apps/manager/"
+          }
+        },
+        {
+          "title": "3. Voeg items toe vanuit bestanden, links of records",
+          "paragraphs": [
+            "Sommige collecties beginnen met een map op schijf. Andere starten met metadata uit een spreadsheet of met items die verwijzen naar media die al op een andere site staan. Kies het pad dat past bij wat je al hebt."
+          ]
+        },
+        {
+          "title": "4. Voeg titels en details toe",
+          "paragraphs": [
+            "Voeg een collectietitel, korte beschrijving en itemdetails toe die mensen helpen begrijpen waar ze naar kijken, of de media nu lokaal is geüpload of verwijst naar een bestaande URL."
+          ]
+        },
+        {
+          "title": "5. Eenvoudig voorbeeld: publiceer metadata met verwezen media",
+          "paragraphs": [
+            "Maak een collectie, voeg twee items toe en gebruik bestaande publieke afbeeldings-URL's voor de media. Voeg daarna titels en korte beschrijvingen toe zodat de collectie gepubliceerd en gedeeld kan worden terwijl de media op de huidige host blijft staan."
+          ]
+        },
+        {
+          "title": "6. Opslaan en delen",
+          "paragraphs": [
+            "Sla je collectie op en deel daarna de URL met je team of publiek. Je kunt de records, medialinks en presentatie later blijven verbeteren."
+          ],
+          "links": [
+            {
+              "label": "Kies hosting",
+              "href": "../hosting/"
+            },
+            {
+              "label": "Technische setup in Docs",
+              "href": "../docs/get-started.html"
+            }
+          ]
+        }
+      ]
+    },
+    "docs-index": {
+      "title": "Docs | Open Collections",
+      "breadcrumbs": ["Docs"],
+      "hero": {
+        "title": "Docs",
+        "body": "Richtlijnen voor zowel eindgebruikers als implementatieteams. Gebruik deze pagina's voor praktische setup-hulp, architectuur, integratie en referentiedetails."
+      },
+      "suggestedReading": {
+        "title": "Aanbevolen leesvolgorde",
+        "items": [
+          { "href": "./open-collections-desktop-getting-started.html", "label": "Open Collections Desktop snel aan de slag" },
+          { "href": "./publish-a-collection.html", "label": "Publiceer een collectie naar GitHub" },
+          { "href": "./get-started.html", "label": "Aan de slag (technische aanvulling)" },
+          { "href": "./hosting-and-storage.html", "label": "Hosting en opslag" },
+          { "href": "./tools-overview.html", "label": "Overzicht tools" },
+          { "href": "./open-collections-protocol.html", "label": "Protocol" },
+          { "href": "./open-collections-desktop-v0.1.0-release-notes.html", "label": "Open Collections Desktop v0.1.0 release-opmerkingen" },
+          { "href": "./open-collections-desktop-v0.1.0-release-checklist.html", "label": "Open Collections Desktop v0.1.0 release-checklist" }
+        ]
+      }
+    }
+  }
+}

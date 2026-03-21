@@ -8,7 +8,9 @@ Open Collections combines the public website with the main application work for 
 - GitHub Pages publish output: `docs/`
 - Browser-based apps: `src/apps/`
 - Desktop/Tauri shell: `src/desktop/workbench/`
-- Shared libraries and packages: `src/library/`, `src/packages/`, `src/shared/`
+- Shared packages and runtime: `src/packages/`, `src/shared/`
+- Collection content source: `src/collections/`
+- Integration sources (for example WordPress): `src/integrations/`
 
 ## Website structure
 
@@ -18,7 +20,10 @@ The website now uses a build-based publishing flow.
 - `scripts/build-site.mjs` builds the publishable static site into `docs/`.
 - GitHub Pages is configured to publish from the `main` branch and the `/docs` folder.
 - `docs/index.html` is the GitHub Pages entrypoint and redirects into the localized site.
-- Public localized pages are published under locale-prefixed paths such as `docs/en/...` and `docs/nl/...`.
+- Public localized pages are published under `docs/site/en/...` and `docs/site/nl/...`.
+- Standalone web apps are published under `docs/apps/...`.
+- Collection content is published under `docs/collections/...`.
+- Shared runtime assets are published under `docs/shared/...` and package modules under `docs/packages/...`.
 - The repository root `index.html` still exists in source, but it is **not** the GitHub Pages entrypoint anymore.
 
 ## Site commands

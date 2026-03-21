@@ -5,7 +5,7 @@
 ## Quick embed
 
 ```html
-<script type="module" src="/src/shared/components/open-collections-registry-widget.js"></script>
+<script type="module" src="/shared/components/open-collections-registry-widget.js"></script>
 
 <open-collections-registry-widget
   submit-url="/api/registry/register"
@@ -114,3 +114,4 @@ GET `recent-url` response:
 - Shows feedback for success, warning, validation error, and network/backend error.
 - Refreshes recent list after successful registration.
 - Keeps entered URL in the field after submit.
+

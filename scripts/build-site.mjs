@@ -4,18 +4,24 @@ import path from 'node:path';
 const REPO_ROOT = process.cwd();
 const SITE_SOURCE_RELATIVE_ROOT = 'src/site';
 const I18N_SOURCE_RELATIVE_ROOT = 'src/i18n';
+const APPS_SOURCE_RELATIVE_ROOT = 'src/apps';
+const COLLECTIONS_SOURCE_RELATIVE_ROOT = 'src/collections';
+const PACKAGES_SOURCE_RELATIVE_ROOT = 'src/packages';
+const SHARED_SOURCE_RELATIVE_ROOT = 'src/shared';
 const SITE_SOURCE_ROOT = path.join(REPO_ROOT, SITE_SOURCE_RELATIVE_ROOT);
 const I18N_SOURCE_ROOT = path.join(REPO_ROOT, I18N_SOURCE_RELATIVE_ROOT);
 const SITE_SOURCE_PATH_PREFIX = `${SITE_SOURCE_RELATIVE_ROOT}/`;
 const LEGACY_SITE_SOURCE_PATH_PREFIX = 'site/';
 const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs');
+const SITE_PUBLISH_RELATIVE_ROOT = 'site';
+const APPS_PUBLISH_RELATIVE_ROOT = 'apps';
+const COLLECTIONS_PUBLISH_RELATIVE_ROOT = 'collections';
+const PACKAGES_PUBLISH_RELATIVE_ROOT = 'packages';
+const SHARED_PUBLISH_RELATIVE_ROOT = 'shared';
 const LOCALES = ['en', 'nl'];
 const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
 const ROOT_ASSET_FILES = [
 	'CNAME',
-	'src/shared/components/open-collections-registry-widget.js',
-	'src/apps/browser/README.md',
-	'src/apps/manager/README.md',
 	'notes/collection-manifest-spec.md',
 	'notes/provider-and-storage-implementation.md',
 	'notes/collection-registry-and-indexer.md',
@@ -24,11 +30,10 @@ const ROOT_ASSET_FILES = [
 	'notes/wordpress-plugin-scaffold.md',
 ];
 const ROOT_ASSET_DIRECTORIES = [
-	['src/apps/browser', 'src/apps/browser'],
-	['src/apps/manager', 'src/apps/manager'],
-	['src/library', 'src/library'],
-	['src/packages', 'src/packages'],
-	['src/shared/platform', 'src/shared/platform'],
+	[APPS_SOURCE_RELATIVE_ROOT, APPS_PUBLISH_RELATIVE_ROOT],
+	[PACKAGES_SOURCE_RELATIVE_ROOT, PACKAGES_PUBLISH_RELATIVE_ROOT],
+	[SHARED_SOURCE_RELATIVE_ROOT, SHARED_PUBLISH_RELATIVE_ROOT],
+	[COLLECTIONS_SOURCE_RELATIVE_ROOT, COLLECTIONS_PUBLISH_RELATIVE_ROOT],
 ];
 const EXCLUDED_SITE_SOURCE_PATHS = new Set([
 	`${SITE_SOURCE_RELATIVE_ROOT}/browser/index.html`,
@@ -88,6 +93,14 @@ function routeToFilePath(route) {
 		return 'index.html';
 	}
 	return route.endsWith('/') ? `${route}index.html` : route;
+}
+
+function localePublishRoot(locale) {
+	return `${SITE_PUBLISH_RELATIVE_ROOT}/${locale}`;
+}
+
+function localeRouteToFile(locale, route) {
+	return `${localePublishRoot(locale)}/${routeToFilePath(route)}`;
 }
 
 function routeToPageId(route) {
@@ -170,33 +183,59 @@ function sourceTargetExists(targetPath) {
 }
 
 function mapSourceTargetToOutput(targetPath, locale, originalUrlPath = '') {
-	if (targetPath === 'index.html') {
-		return `${locale}/index.html`;
+	const normalized = toPosix(targetPath);
+	if (normalized === 'index.html' || normalized === '.' || normalized === '') {
+		return `${localePublishRoot(locale)}/index.html`;
 	}
-	if (targetPath === 'index.css') {
-		return `${locale}/index.css`;
+	if (normalized === 'index.css') {
+		return `${localePublishRoot(locale)}/index.css`;
 	}
-	if (targetPath.startsWith(SITE_SOURCE_PATH_PREFIX)) {
-		const remainder = targetPath.slice(SITE_SOURCE_PATH_PREFIX.length);
-		return `${locale}/${remainder}`;
+	if (normalized.startsWith(SITE_SOURCE_PATH_PREFIX)) {
+		const remainder = normalized.slice(SITE_SOURCE_PATH_PREFIX.length);
+		return `${localePublishRoot(locale)}/${remainder}`;
 	}
-	if (targetPath.startsWith(LEGACY_SITE_SOURCE_PATH_PREFIX)) {
-		const remainder = targetPath.slice(LEGACY_SITE_SOURCE_PATH_PREFIX.length);
-		return `${locale}/${remainder}`;
+	if (normalized.startsWith(LEGACY_SITE_SOURCE_PATH_PREFIX)) {
+		const remainder = normalized.slice(LEGACY_SITE_SOURCE_PATH_PREFIX.length);
+		return `${localePublishRoot(locale)}/${remainder}`;
 	}
-	if (targetPath.startsWith('src/')) {
-		return targetPath;
+	if (normalized.startsWith(`${APPS_SOURCE_RELATIVE_ROOT}/`)) {
+		const remainder = normalized.slice(`${APPS_SOURCE_RELATIVE_ROOT}/`.length);
+		return `${APPS_PUBLISH_RELATIVE_ROOT}/${remainder}`;
 	}
-	if (targetPath === '.' || targetPath === '') {
-		return `${locale}/index.html`;
+	if (normalized.startsWith(`${PACKAGES_SOURCE_RELATIVE_ROOT}/`)) {
+		const remainder = normalized.slice(`${PACKAGES_SOURCE_RELATIVE_ROOT}/`.length);
+		return `${PACKAGES_PUBLISH_RELATIVE_ROOT}/${remainder}`;
 	}
-	if (sourceTargetExists(targetPath) && fs.statSync(path.join(REPO_ROOT, targetPath)).isDirectory()) {
-		return `${locale}/${targetPath}/index.html`;
+	if (normalized.startsWith(`${SHARED_SOURCE_RELATIVE_ROOT}/`)) {
+		const remainder = normalized.slice(`${SHARED_SOURCE_RELATIVE_ROOT}/`.length);
+		return `${SHARED_PUBLISH_RELATIVE_ROOT}/${remainder}`;
 	}
-	if (!posix.extname(targetPath) && originalUrlPath.endsWith('/')) {
-		return `${locale}/${targetPath}/index.html`;
+	if (normalized.startsWith(`${COLLECTIONS_SOURCE_RELATIVE_ROOT}/`)) {
+		const remainder = normalized.slice(`${COLLECTIONS_SOURCE_RELATIVE_ROOT}/`.length);
+		return `${COLLECTIONS_PUBLISH_RELATIVE_ROOT}/${remainder}`;
 	}
-	return targetPath;
+	if (normalized === COLLECTIONS_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${COLLECTIONS_PUBLISH_RELATIVE_ROOT}/`)) {
+		return normalized;
+	}
+	if (normalized === APPS_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${APPS_PUBLISH_RELATIVE_ROOT}/`)) {
+		return normalized;
+	}
+	if (normalized === PACKAGES_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${PACKAGES_PUBLISH_RELATIVE_ROOT}/`)) {
+		return normalized;
+	}
+	if (normalized === SHARED_PUBLISH_RELATIVE_ROOT || normalized.startsWith(`${SHARED_PUBLISH_RELATIVE_ROOT}/`)) {
+		return normalized;
+	}
+	if (normalized.startsWith('notes/')) {
+		return normalized;
+	}
+	if (sourceTargetExists(normalized) && fs.statSync(path.join(REPO_ROOT, normalized)).isDirectory()) {
+		return `${localePublishRoot(locale)}/${normalized}/index.html`;
+	}
+	if (!posix.extname(normalized) && originalUrlPath.endsWith('/')) {
+		return `${localePublishRoot(locale)}/${normalized}/index.html`;
+	}
+	return normalized;
 }
 
 function toRelativeHref(fromFilePath, toFilePath) {
@@ -221,7 +260,7 @@ function rewriteUrl(value, sourcePath, locale, currentOutputFile) {
 	const search = match?.[2] ?? '';
 	const hash = match?.[3] ?? '';
 
-	if (rawPath.startsWith('/api/') || rawPath.startsWith('/src/')) {
+	if (rawPath.startsWith('/api/')) {
 		return value;
 	}
 
@@ -464,10 +503,9 @@ function validateLocaleData(locale, localeData, sourceLocaleData) {
 }
 
 function buildContext(locale, i18n, pageId, route) {
-	const routeFile = routeToFilePath(route);
-	const currentFile = `${locale}/${routeFile}`;
+	const currentFile = localeRouteToFile(locale, route);
 	const alternates = Object.fromEntries(LOCALES.map((targetLocale) => {
-		const targetFile = `${targetLocale}/${routeFile}`;
+		const targetFile = localeRouteToFile(targetLocale, route);
 		return [targetLocale, toRelativeHref(currentFile, targetFile)];
 	}));
 
@@ -492,12 +530,13 @@ function buildContext(locale, i18n, pageId, route) {
 }
 
 function renderHtmlDocument({ locale, route, title, bodyClass, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated, extraHeadContent = '', extraBodyContent = '' }) {
-	const currentFile = `${locale}/${routeToFilePath(route)}`;
-	const cssHref = toRelativeHref(currentFile, `${locale}/index.css`);
-	const shellScriptHref = toRelativeHref(currentFile, `${locale}/shared/site-shell-components.js`);
-	const docsNavHref = includeDocsNav ? toRelativeHref(currentFile, `${locale}/docs/docs-nav.js`) : '';
-	const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, 'src/shared/components/open-collections-registry-widget.js') : '';
-	const basePath = route ? toRelativeHref(currentFile, `${locale}/index.html`) : './';
+	const currentFile = localeRouteToFile(locale, route);
+	const localeRoot = localePublishRoot(locale);
+	const cssHref = toRelativeHref(currentFile, `${localeRoot}/index.css`);
+	const shellScriptHref = toRelativeHref(currentFile, `${localeRoot}/shared/site-shell-components.js`);
+	const docsNavHref = includeDocsNav ? toRelativeHref(currentFile, `${localeRoot}/docs/docs-nav.js`) : '';
+	const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, `${SHARED_PUBLISH_RELATIVE_ROOT}/components/open-collections-registry-widget.js`) : '';
+	const basePath = route ? toRelativeHref(currentFile, `${localeRoot}/index.html`) : './';
 	const normalizedBasePath = basePath.endsWith('index.html') ? basePath.slice(0, -'index.html'.length) : basePath;
 	const notice = untranslated ? renderUntranslatedNotice(context.i18n) : '';
 	const classAttribute = bodyClass ? ` class="${bodyClass}"` : '';
@@ -531,7 +570,7 @@ function renderFallbackPage({ sourcePath, html, locale, i18n }) {
 	const route = sourcePathToRoute(sourcePath);
 	const pageId = routeToPageId(route);
 	const context = buildContext(locale, i18n, pageId, route);
-	const currentFile = `${locale}/${routeToFilePath(route)}`;
+	const currentFile = localeRouteToFile(locale, route);
 	const rewrittenMain = rewriteHtmlUrls(extractMain(html), sourcePath, locale, currentFile);
 	const rewrittenTitle = titleFromHtml(html);
 	const extraHeadContent = rewriteHtmlUrls(extractHeadSupplement(html), sourcePath, locale, currentFile);
@@ -607,9 +646,10 @@ function copyDirectory(sourceRelativePath, destinationRelativePath) {
 
 function copySharedAssets() {
 	for (const locale of LOCALES) {
-		copyFile('index.css', `${locale}/index.css`);
-		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/shared/site-shell-components.js`, `${locale}/shared/site-shell-components.js`);
-		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/docs/docs-nav.js`, `${locale}/docs/docs-nav.js`);
+		const localeRoot = localePublishRoot(locale);
+		copyFile('index.css', `${localeRoot}/index.css`);
+		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/shared/site-shell-components.js`, `${localeRoot}/shared/site-shell-components.js`);
+		copyFile(`${SITE_SOURCE_RELATIVE_ROOT}/docs/docs-nav.js`, `${localeRoot}/docs/docs-nav.js`);
 	}
 
 	for (const assetFile of ROOT_ASSET_FILES) {
@@ -621,24 +661,6 @@ function copySharedAssets() {
 			continue;
 		}
 		copyDirectory(sourcePath, destinationPath);
-	}
-
-	const sourceSiteDataPath = sourceTargetExists(`${SITE_SOURCE_RELATIVE_ROOT}/examples`)
-		? `${SITE_SOURCE_RELATIVE_ROOT}/examples`
-		: `${SITE_SOURCE_RELATIVE_ROOT}/hosts`;
-	if (sourceTargetExists(sourceSiteDataPath)) {
-		copyDirectory(sourceSiteDataPath, 'site/examples');
-		if (sourceSiteDataPath.endsWith('/hosts')) {
-			copyDirectory(sourceSiteDataPath, 'hosts');
-			const legacyDemoHostSource = `${sourceSiteDataPath}/collections`;
-			if (sourceTargetExists(legacyDemoHostSource)) {
-				copyDirectory(legacyDemoHostSource, 'site/examples/demo-host');
-			}
-			const legacySingleCollectionSource = `${sourceSiteDataPath}/collection`;
-			if (sourceTargetExists(legacySingleCollectionSource)) {
-				copyDirectory(legacySingleCollectionSource, 'site/examples/test-collection');
-			}
-		}
 	}
 }
 
@@ -657,7 +679,7 @@ function copyNonHtmlSiteAssets() {
 
 		const stripped = relative.slice(SITE_SOURCE_PATH_PREFIX.length);
 		for (const locale of LOCALES) {
-			copyFile(relative, `${locale}/${stripped}`);
+			copyFile(relative, `${localePublishRoot(locale)}/${stripped}`);
 		}
 	}
 }
@@ -667,13 +689,13 @@ function renderRootIndex() {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./en/" />
+    <meta http-equiv="refresh" content="0; url=./site/en/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Open Collections locales</title>
   </head>
   <body>
-    <p>Redirecting to <a href="./en/">English</a>.</p>
-    <p><a href="./nl/">Ga naar Nederlands</a></p>
+    <p>Redirecting to <a href="./site/en/">English</a>.</p>
+    <p><a href="./site/nl/">Ga naar Nederlands</a></p>
   </body>
 </html>`;
 }
@@ -740,10 +762,15 @@ function build() {
 			const html = fs.readFileSync(path.join(REPO_ROOT, sourcePath), 'utf8');
 			const route = sourcePathToRoute(sourcePath);
 			const pageId = routeToPageId(route);
-			const outputPath = `${locale}/${routeToFilePath(route)}`;
-			const rendered = hasLocaleSpecificTranslation(pageId)
-				? renderTranslatedPage({ sourcePath, locale, i18n })
-				: renderFallbackPage({ sourcePath, html, locale, i18n });
+			const outputPath = localeRouteToFile(locale, route);
+			let rendered;
+			try {
+				rendered = hasLocaleSpecificTranslation(pageId)
+					? renderTranslatedPage({ sourcePath, locale, i18n })
+					: renderFallbackPage({ sourcePath, html, locale, i18n });
+			} catch (error) {
+				throw new Error(`Failed to render ${sourcePath} for locale ${locale}: ${error.message}`);
+			}
 			writeFile(outputPath, rendered);
 		}
 	}

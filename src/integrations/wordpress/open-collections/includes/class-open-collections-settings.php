@@ -33,6 +33,7 @@ class Open_Collections_Settings {
 	public function register() {
 		add_action('admin_menu', array($this, 'register_settings_page'));
 		add_action('admin_init', array($this, 'register_settings'));
+		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 	}
 
 	public function register_defaults() {
@@ -254,5 +255,18 @@ class Open_Collections_Settings {
 			</form>
 		</div>
 		<?php
+	}
+
+	public function enqueue_admin_assets($hook_suffix) {
+		if (false === strpos((string) $hook_suffix, 'open-collections')) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'open-collections-admin',
+			OPEN_COLLECTIONS_PLUGIN_URL . 'assets/css/admin.css',
+			array(),
+			OPEN_COLLECTIONS_VERSION
+		);
 	}
 }

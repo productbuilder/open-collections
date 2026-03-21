@@ -127,7 +127,7 @@ Avoid overbuilding in the first version:
 
 Implemented scaffold code now lives in:
 
-- `wordpress/open-collections/`
+- `src/integrations/wordpress/open-collections/`
 
 Current scaffold includes:
 
@@ -143,16 +143,22 @@ Current scaffold includes:
 
 ## 11) Repository status (current MVP pass)
 
-A first plugin scaffold now exists at:
+The canonical plugin source path is:
 
-- `integrations/wordpress/open-collections/`
+- `src/integrations/wordpress/open-collections/`
 
-This implementation now includes a first usable path:
+This implementation includes a first usable path:
 
 - persisted plugin settings for output/provider/embed values
 - shortcode + admin mount points for Collection Manager
 - localized config envelope from WordPress to manager runtime
 - lightweight protocol output stubs (`collection.json`, item/media URL shapes)
 - optional `/.well-known/collections.json` placeholder output
+
+Compatibility that was retained during consolidation:
+
+- legacy REST stub routes under `/wp-json/open-collections/v1/...`
+- legacy localized config envelope (`OpenCollectionsConfig`)
+- admin/embed styling support (`assets/css/admin.css`)
 
 It still intentionally avoids full registry/indexer/provider production workflows in this phase.

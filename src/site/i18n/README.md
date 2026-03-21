@@ -21,13 +21,14 @@ pnpm site:build
 
 This generates localized output in `docs/`:
 
-- `docs/en/...`
-- `docs/nl/...`
-- shared site runtime assets under `docs/src/...`
+- `docs/site/en/...`
+- `docs/site/nl/...`
+- standalone app assets under `docs/apps/...`
+- shared package/runtime modules under `docs/packages/...` and `docs/shared/...`
+- collection content under `docs/collections/...`
 - referenced markdown notes/resources under `docs/notes/...`
-- lightweight host/example data under `docs/hosts/...` (mirrored to `docs/site/examples/...` for legacy app defaults)
 
-The root `docs/index.html` redirects to `./en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases. GitHub Pages should publish from the repository `docs/` folder on the main branch.
+The root `docs/index.html` redirects to `./site/en/`. Binary installer files are excluded from the build output and should be published through an external release channel such as GitHub Releases. GitHub Pages should publish from the repository `docs/` folder on the main branch.
 
 ## What is localized now
 
@@ -47,7 +48,7 @@ Other pages are still emitted for both locales. Until they are translated, the D
 2. Add page-specific content under `pages` in `src/i18n/en.json` and `src/i18n/nl.json`.
 3. Add a page entry under a route-based page id such as `home`, `get-started`, `docs`, or `docs/open-collections-protocol`.
 4. Add a renderer definition to `TRANSLATED_PAGE_DEFINITIONS` in `scripts/build-site.mjs` and return localized HTML for the `<main>` content.
-5. Run `pnpm site:build` and confirm the page exists in both `docs/en/...` and `docs/nl/...`, with referenced repository notes copied into `docs/notes/...`.
+5. Run `pnpm site:build` and confirm the page exists in both `docs/site/en/...` and `docs/site/nl/...`, with referenced repository notes copied into `docs/notes/...`.
 
 ## How untranslated pages are handled
 

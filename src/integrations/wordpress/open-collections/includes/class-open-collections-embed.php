@@ -29,6 +29,13 @@ class Open_Collections_Embed {
 	}
 
 	public function register_assets() {
+		wp_register_style(
+			'open-collections-admin',
+			OPEN_COLLECTIONS_PLUGIN_URL . 'assets/css/admin.css',
+			array(),
+			OPEN_COLLECTIONS_VERSION
+		);
+
 		wp_register_script(
 			'open-collections-embed',
 			OPEN_COLLECTIONS_PLUGIN_URL . 'assets/js/open-collections-embed.js',
@@ -58,6 +65,8 @@ class Open_Collections_Embed {
 			return;
 		}
 
+		wp_enqueue_style('open-collections-admin');
+
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__('Open Collections Manager', 'open-collections') . '</h1>';
 		echo '<p>' . esc_html__('This screen hosts the existing Collection Manager component. WordPress provides settings and context only.', 'open-collections') . '</p>';
@@ -70,6 +79,8 @@ class Open_Collections_Embed {
 		if (!in_array($settings['component_mount_mode'], array('shortcode', 'both'), true)) {
 			return '<p>' . esc_html__('Open Collections shortcode embedding is disabled by plugin settings.', 'open-collections') . '</p>';
 		}
+
+		wp_enqueue_style('open-collections-admin');
 
 		$atts = shortcode_atts(
 			array(
@@ -152,6 +163,7 @@ class Open_Collections_Embed {
 		}
 
 		$settings = $this->settings->get_settings();
+		$site_domain = wp_parse_url(home_url(), PHP_URL_HOST);
 		$script_url = !empty($settings['component_script_url'])
 			? $settings['component_script_url']
 			: OPEN_COLLECTIONS_PLUGIN_URL . 'assets/js/collection-manager-placeholder.js';
@@ -174,6 +186,39 @@ class Open_Collections_Embed {
 					'providerMode' => $settings['provider_mode'],
 					'defaultCollectionTitle' => $settings['default_collection_title'],
 					'defaultCollectionSlug' => $settings['default_collection_slug'],
+				),
+			)
+		);
+
+		// Legacy integration compatibility: older plugin variants passed a differently
+		// shaped config envelope under OpenCollectionsConfig.
+		wp_localize_script(
+			'open-collections-embed',
+			'OpenCollectionsConfig',
+			array(
+				'pluginVersion' => OPEN_COLLECTIONS_VERSION,
+				'apiBase' => rest_url(),
+				'output' => array(
+					'collectionRoot' => $settings['collection_root'],
+					'outputBaseUrl' => home_url($settings['collection_root']),
+					'enableDcd' => (bool) $settings['dcd_enabled'],
+				),
+				'manager' => array(
+					'bundleUrl' => esc_url_raw($script_url),
+					'mountMode' => $settings['component_mount_mode'],
+				),
+				'provider' => array(
+					'name' => $settings['provider_mode'],
+					'storageAdapter' => $settings['provider_mode'],
+				),
+				'protocol' => array(
+					'siteDomain' => $site_domain ? $site_domain : '',
+					'routes' => array(
+						'collection' => rest_url('open-collections/v1/collection.json'),
+						'item' => rest_url('open-collections/v1/items/{itemId}'),
+						'media' => rest_url('open-collections/v1/media/{path}'),
+						'dcd' => home_url('/.well-known/collections.json'),
+					),
 				),
 			)
 		);

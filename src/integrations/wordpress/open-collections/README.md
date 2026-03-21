@@ -2,6 +2,10 @@
 
 This folder contains the current implementation scaffold for a distributable WordPress plugin.
 
+## Canonical source location
+
+- `src/integrations/wordpress/open-collections/`
+
 ## Purpose
 
 - WordPress is the integration layer.
@@ -19,6 +23,7 @@ This scaffold does not reimplement Collection Manager inside WordPress.
 - `includes/class-open-collections-output.php` protocol output routes and structured stubs
 - `assets/js/open-collections-embed.js` mount script and config handoff
 - `assets/js/collection-manager-placeholder.js` fallback component script
+- `assets/css/admin.css` shared admin/embed styling
 
 ## Implemented now
 
@@ -27,6 +32,7 @@ This scaffold does not reimplement Collection Manager inside WordPress.
 - Optional admin mount page under `Tools -> Open Collections Manager`
 - Config handoff pattern:
   - plugin defaults via localized script config (`OpenCollectionsPluginConfig`)
+  - legacy compatibility config envelope (`OpenCollectionsConfig`)
   - per-mount overrides via mount `data-*` attributes / `data-ocp-config` JSON
 - Protocol-facing output model with configurable route shape:
   - collection base path (default `/collections`)
@@ -37,6 +43,10 @@ This scaffold does not reimplement Collection Manager inside WordPress.
   - `/{collection-root}/{slug}/{manifest-filename}`
   - `/{collection-root}/{slug}/{item-segment}/{item-id}.json`
   - `/{collection-root}/{slug}/{media-segment}/{asset-path}`
+- Legacy REST compatibility stubs:
+  - `/wp-json/open-collections/v1/collection.json`
+  - `/wp-json/open-collections/v1/items/{itemId}`
+  - `/wp-json/open-collections/v1/media/{path}`
 - Optional DCD output:
   - `/.well-known/collections.json`, or
   - custom DCD path when configured

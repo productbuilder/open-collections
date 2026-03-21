@@ -6,7 +6,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const WORKBENCH_ROOT = path.resolve(SCRIPT_DIR, '..');
 const REPO_ROOT = path.resolve(WORKBENCH_ROOT, '..', '..', '..');
 const DIST_ROOT = path.join(WORKBENCH_ROOT, 'dist');
-const SOURCE_SEGMENTS = ['apps', 'library', 'packages', 'shared'];
+const SOURCE_SEGMENTS = ['apps', 'collections', 'packages', 'shared'];
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -47,11 +47,6 @@ function stageFrontend() {
   const workbenchDestination = path.join(distSrcRoot, 'desktop', 'workbench', 'src');
   ensureDir(path.dirname(workbenchDestination));
   copyPath(workbenchSource, workbenchDestination);
-
-  const examplesSource = path.join(REPO_ROOT, 'site', 'examples');
-  const examplesDest = path.join(DIST_ROOT, 'site', 'examples');
-  ensureDir(path.dirname(examplesDest));
-  copyPath(examplesSource, examplesDest);
 
   stageIndexHtml();
   process.stdout.write(`Staged desktop frontend at ${DIST_ROOT}\n`);

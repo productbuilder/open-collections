@@ -4,7 +4,7 @@
 
 Plugin scaffold lives at:
 
-- `wordpress/open-collections/`
+- `src/integrations/wordpress/open-collections/`
 
 ## What is implemented now
 
@@ -15,6 +15,7 @@ Plugin scaffold lives at:
 - Optional admin mount page (`Tools -> Open Collections Manager`) controlled by settings
 - Script enqueue and config handoff pattern:
   - defaults via localized config object (`OpenCollectionsPluginConfig`)
+  - legacy compatibility envelope (`OpenCollectionsConfig`)
   - per-mount overrides via data attributes and `data-ocp-config` JSON
 - Protocol output route scaffolding with configurable URL model:
   - collection base path (default `/collections`)
@@ -28,6 +29,10 @@ Plugin scaffold lives at:
 - Optional DCD output:
   - `/.well-known/collections.json` (default)
   - custom configured path (optional)
+- Legacy REST compatibility output stubs:
+  - `/wp-json/open-collections/v1/collection.json`
+  - `/wp-json/open-collections/v1/items/{itemId}`
+  - `/wp-json/open-collections/v1/media/{path}`
 
 ## Architecture boundary
 

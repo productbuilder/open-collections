@@ -18,6 +18,16 @@ function activeSource(state) {
   return state.sources.find((entry) => entry.id === state.activeSourceFilter) || null;
 }
 
+function sourceHasAccessibleContent(state, source) {
+  if (!state || !source) {
+    return false;
+  }
+
+  const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
+  const hasAssets = Array.isArray(state.assets) && state.assets.some((item) => item.sourceId === source.id);
+  return hasCollections || hasAssets;
+}
+
 function hasPendingPublishAssets(state) {
   if (!state || state.activeSourceFilter === 'all' || !state.selectedCollectionId || state.selectedCollectionId === 'all') {
     return false;
@@ -67,10 +77,13 @@ export function computeWorkingStatus(state) {
   }
 
   if (source?.needsReconnect) {
+    const hasAccessibleContent = sourceHasAccessibleContent(state, source);
     return {
       id: 'host-needs-reconnect',
-      label: 'Host needs reconnect',
-      detail: 'The active host is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
+      label: hasAccessibleContent ? 'Disconnected host (cached content available)' : 'Host needs reconnect',
+      detail: hasAccessibleContent
+        ? 'The active host is disconnected, but previously loaded collections remain available locally. Reconnect to refresh from the host or publish.'
+        : 'The active host is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
       tone: 'warn',
     };
   }

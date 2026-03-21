@@ -450,7 +450,9 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       return { label: 'Credentials missing', tone: 'warn' };
     }
     if (source.needsReconnect) {
-      return { label: 'Needs reconnect', tone: 'warn' };
+      const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
+      const hasCachedItems = Number(source.itemCount) > 0;
+      return { label: hasCollections || hasCachedItems ? 'Disconnected (cached)' : 'Needs reconnect', tone: 'warn' };
     }
     if (source.capabilities?.canPublish) {
       return { label: 'Publishable', tone: 'ok' };

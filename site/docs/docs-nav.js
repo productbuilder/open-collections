@@ -1,4 +1,4 @@
-const DOCS_NAV_ITEMS = [
+const DEFAULT_DOCS_NAV_ITEMS = [
 	{ href: './', label: 'Overview' },
 	{ href: './open-collections-desktop-getting-started.html', label: 'Desktop getting started' },
 	{ href: './open-collections-desktop-v0.1.0-release-notes.html', label: 'Desktop v0.1.0 release notes' },
@@ -12,15 +12,19 @@ const DOCS_NAV_ITEMS = [
 	{ href: './components-and-embedding.html', label: 'Components and embedding' },
 	{ href: './wordpress-integration.html', label: 'WordPress integration' },
 	{ href: './collection-registry-and-indexer.html', label: 'Registry and indexer' },
-	{ href: './developer-reference.html', label: 'Developer reference' }
+	{ href: './developer-reference.html', label: 'Developer reference' },
 ];
 
 const normalizePath = (path) => (path.endsWith('/index.html') ? path.slice(0, -'index.html'.length) : path);
-
 const currentPath = normalizePath(window.location.pathname);
+const siteContext = window.OPEN_COLLECTIONS_SITE ?? {};
+const docsNav = siteContext.translations?.docsNav ?? {};
+const items = docsNav.items ?? DEFAULT_DOCS_NAV_ITEMS;
+const ariaLabel = docsNav.ariaLabel ?? 'Docs navigation';
 
 for (const mount of document.querySelectorAll('[data-docs-nav]')) {
-	for (const item of DOCS_NAV_ITEMS) {
+	mount.setAttribute('aria-label', ariaLabel);
+	for (const item of items) {
 		const link = document.createElement('a');
 		link.href = item.href;
 		link.textContent = item.label;

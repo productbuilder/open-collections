@@ -1,77 +1,201 @@
+const DEFAULT_TRANSLATIONS = {
+	locale: 'en',
+	languages: {
+		en: 'English',
+		nl: 'Nederlands',
+	},
+	shell: {
+		brand: 'Open Collections',
+		navAriaLabel: 'Primary navigation',
+		languageSwitcherLabel: 'Language',
+		languageSwitcherAriaLabel: 'Select language',
+		nav: {
+			home: 'Home',
+			'get-started': 'Get started',
+			tools: 'Tools',
+			hosting: 'Hosting',
+			docs: 'Docs',
+		},
+		footer: {
+			description: 'An open, web-based approach to publishing and sharing cultural collections.',
+			groups: {
+				project: 'Project',
+				'docs-and-developer': 'Docs and developer',
+				collections: 'Collections',
+			},
+			links: {
+				home: 'Home',
+				'get-started': 'Get started',
+				tools: 'Tools',
+				docs: 'Docs',
+				hosting: 'Hosting',
+				registry: 'Registry',
+				organizations: 'Organizations',
+			},
+		},
+		breadcrumbs: {
+			home: 'Home',
+		},
+		untranslatedNotice: {
+			title: 'Translation in progress',
+			body: 'This page is not translated into this language yet.',
+		},
+	},
+	docsNav: {
+		ariaLabel: 'Docs navigation',
+		items: [],
+	},
+};
+
 const NAV_ITEMS = [
-	{ key: 'home', label: 'Home', href: '' },
-	{ key: 'get-started', label: 'Get started', href: 'site/get-started/' },
-	{ key: 'tools', label: 'Tools', href: 'site/tools/' },
-	{ key: 'hosting', label: 'Hosting', href: 'site/hosting/' },
-	{ key: 'docs', label: 'Docs', href: 'site/docs/' },
+	{ key: 'home', href: '' },
+	{ key: 'get-started', href: 'get-started/' },
+	{ key: 'tools', href: 'tools/' },
+	{ key: 'hosting', href: 'hosting/' },
+	{ key: 'docs', href: 'docs/' },
 ];
 
 const FOOTER_GROUPS = [
 	{
-		title: 'Project',
+		key: 'project',
 		links: [
-			{ label: 'Home', href: '' },
-			{ label: 'Get started', href: 'site/get-started/' },
-			{ label: 'Tools', href: 'site/tools/' },
+			{ key: 'home', href: '' },
+			{ key: 'get-started', href: 'get-started/' },
+			{ key: 'tools', href: 'tools/' },
 		],
 	},
 	{
-		title: 'Docs and developer',
+		key: 'docs-and-developer',
 		links: [
-			{ label: 'Docs', href: 'site/docs/' },
-			{ label: 'Hosting', href: 'site/hosting/' },
+			{ key: 'docs', href: 'docs/' },
+			{ key: 'hosting', href: 'hosting/' },
 		],
 	},
 	{
-		title: 'Collections',
+		key: 'collections',
 		links: [
-			{ label: 'Registry', href: 'site/registry/' },
-			{ label: 'Organizations', href: '#organizations-using-open-collections' },
+			{ key: 'registry', href: 'registry/' },
+			{ key: 'organizations', href: '#organizations-using-open-collections' },
 		],
 	},
 ];
 
-const toBasePath = (value) => {
+function mergeDeep(base, override) {
+	if (!override || typeof override !== 'object') {
+		return structuredClone(base);
+	}
+	const output = Array.isArray(base) ? [...base] : { ...base };
+	for (const [key, value] of Object.entries(override)) {
+		if (value && typeof value === 'object' && !Array.isArray(value) && base && typeof base[key] === 'object' && base[key] !== null && !Array.isArray(base[key])) {
+			output[key] = mergeDeep(base[key], value);
+			continue;
+		}
+		output[key] = value;
+	}
+	return output;
+}
+
+function toBasePath(value) {
 	if (!value) {
 		return './';
 	}
 	return value.endsWith('/') ? value : `${value}/`;
-};
+}
+
+function getSiteContext() {
+	const context = window.OPEN_COLLECTIONS_SITE ?? {};
+	return {
+		...context,
+		translations: mergeDeep(DEFAULT_TRANSLATIONS, context.translations ?? {}),
+	};
+}
+
+function resolveHref(basePath, href) {
+	if (!href) {
+		return basePath;
+	}
+	if (/^(?:[a-z]+:|#|\/)/i.test(href)) {
+		return href;
+	}
+	return `${basePath}${href}`;
+}
+
+function renderLanguageSwitcher(basePath, context) {
+	const languages = context.translations.languages ?? DEFAULT_TRANSLATIONS.languages;
+	const currentLocale = context.locale ?? context.translations.locale ?? 'en';
+	const alternates = context.alternates ?? {};
+	const options = Object.entries(languages)
+		.map(([locale, label]) => {
+			const selected = locale === currentLocale ? ' selected' : '';
+			const target = alternates[locale] ?? '';
+			return `<option value="${target}"${selected}>${label}</option>`;
+		})
+		.join('');
+	const t = context.translations.shell;
+	return `
+		<label class="site-language-switcher" aria-label="${t.languageSwitcherAriaLabel}">
+			<span>${t.languageSwitcherLabel}</span>
+			<select data-language-switcher>
+				${options}
+			</select>
+		</label>
+	`;
+}
 
 class OpenCollectionsSiteHeader extends HTMLElement {
 	connectedCallback() {
 		const basePath = toBasePath(this.getAttribute('base-path'));
 		const activePage = this.getAttribute('active-page');
+		const context = getSiteContext();
+		const t = context.translations.shell;
 
 		const navLinks = NAV_ITEMS.map((item) => {
 			const isActive = item.key === activePage;
 			const classes = isActive ? ' class="is-active"' : '';
 			const currentPage = isActive ? ' aria-current="page"' : '';
-			return `<a href="${basePath}${item.href}"${classes}${currentPage}>${item.label}</a>`;
+			const label = t.nav[item.key] ?? item.key;
+			return `<a href="${resolveHref(basePath, item.href)}"${classes}${currentPage}>${label}</a>`;
 		}).join('');
 
 		this.innerHTML = `
 			<div class="site-header">
 				<div class="site-header-inner">
-					<div class="site-brand">Open Collections</div>
-					<nav class="site-nav" aria-label="Primary navigation">${navLinks}</nav>
+					<div class="site-brand">${t.brand}</div>
+					<nav class="site-nav" aria-label="${t.navAriaLabel}">${navLinks}</nav>
+					${renderLanguageSwitcher(basePath, context)}
 				</div>
 			</div>
 		`;
+
+		const switcher = this.querySelector('[data-language-switcher]');
+		if (switcher) {
+			switcher.addEventListener('change', (event) => {
+				const target = event.currentTarget.value;
+				if (target) {
+					window.location.assign(target);
+				}
+			});
+		}
 	}
 }
 
 class OpenCollectionsSiteFooter extends HTMLElement {
 	connectedCallback() {
 		const basePath = toBasePath(this.getAttribute('base-path'));
+		const context = getSiteContext();
+		const t = context.translations.shell;
 		const footerGroups = FOOTER_GROUPS.map((group) => {
+			const title = t.footer.groups[group.key] ?? group.key;
 			const links = group.links
-				.map((item) => `<a href="${basePath}${item.href}">${item.label}</a>`)
+				.map((item) => {
+					const label = t.footer.links[item.key] ?? item.key;
+					return `<a href="${resolveHref(basePath, item.href)}">${label}</a>`;
+				})
 				.join('');
 			return `
 				<div class="site-footer-group">
-					<h2>${group.title}</h2>
-					<nav class="site-footer-nav" aria-label="${group.title}">${links}</nav>
+					<h2>${title}</h2>
+					<nav class="site-footer-nav" aria-label="${title}">${links}</nav>
 				</div>
 			`;
 		}).join('');
@@ -80,8 +204,8 @@ class OpenCollectionsSiteFooter extends HTMLElement {
 			<footer class="site-footer">
 				<div class="site-footer-inner">
 					<div class="site-footer-brand-block">
-						<p class="site-footer-text">Open Collections</p>
-						<p class="site-footer-description">An open, web-based approach to publishing and sharing cultural collections.</p>
+						<p class="site-footer-text">${t.brand}</p>
+						<p class="site-footer-description">${t.footer.description}</p>
 					</div>
 					<div class="site-footer-links-grid">${footerGroups}</div>
 				</div>

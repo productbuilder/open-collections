@@ -6,6 +6,8 @@
   "scripts": {
     "build": "pnpm desktop:stage",
     "dev": "pnpm desktop:dev",
+    "site:build": "node ./scripts/build-site.mjs",
+    "site:preview": "node ./src/desktop/workbench/scripts/dev-static-server.mjs --root ./site-dist --port 4321",
     "desktop:dev": "pnpm --filter @open-collections/workbench-desktop tauri:dev",
     "desktop:build": "pnpm --filter @open-collections/workbench-desktop tauri:build",
     "desktop:info": "pnpm --filter @open-collections/workbench-desktop tauri:info",

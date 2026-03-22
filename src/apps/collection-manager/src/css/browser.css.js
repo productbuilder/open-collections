@@ -170,12 +170,18 @@ export const browserStyles = `
     }
 
     .viewport-toolbar-main {
-      width: 100%;
+      width: auto;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
-    .viewport-toolbar-actions,
     .viewport-title-actions {
       justify-content: flex-start;
+    }
+
+    .viewport-toolbar-actions {
+      justify-content: flex-end;
+      margin-left: auto;
     }
 
     .btn {

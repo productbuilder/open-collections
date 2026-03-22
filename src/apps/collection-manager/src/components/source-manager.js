@@ -44,10 +44,20 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
   bindEvents() {
     this.shadowRoot.getElementById('addExampleHostBtn')?.addEventListener('click', () => {
+      this.model.flowMode = 'add';
+      this.model.repairProviderId = '';
+      this.model.addHostLevel = 'root';
+      this.model.remoteSubtype = '';
+      this.model.selectedProviderId = 'example';
       this.dispatch('add-example-host');
     });
 
     this.shadowRoot.getElementById('addLocalFolderHostBtn')?.addEventListener('click', () => {
+      this.model.flowMode = 'add';
+      this.model.repairProviderId = '';
+      this.model.addHostLevel = 'root';
+      this.model.remoteSubtype = '';
+      this.model.selectedProviderId = 'local';
       this.dispatch('add-local-folder-host');
     });
 
@@ -593,8 +603,11 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       <style>${sourceManagerStyles}</style>
       <div class="source-manager">
         <div class="provider-layout single-column">
-          <div id="rootActions">
-            <p class="config-section-title">Choose a connection type</p>
+          <div id="rootActions" class="root-actions">
+            <div class="root-actions-heading">
+              <h3 class="root-actions-title">Add connection</h3>
+              <p class="config-section-title">Choose a connection type</p>
+            </div>
             <div class="provider-list">
               <button class="provider-card" id="addExampleHostBtn" type="button">
                 <div class="provider-card-label-row"><strong>Example</strong></div>

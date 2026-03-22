@@ -91,6 +91,23 @@ export const sourceManagerStyles = `
     align-content: start;
   }
 
+  .root-actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .root-actions-heading {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .root-actions-title {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+
+
   .provider-card {
     border: 1px solid #dbe3ec;
     border-radius: 8px;

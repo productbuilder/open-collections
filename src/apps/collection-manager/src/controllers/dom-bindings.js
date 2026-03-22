@@ -15,7 +15,7 @@ export function cacheDomElements(root) {
     registerDialog: root.getElementById('registerDialog'),
     headerMenuDialog: root.getElementById('headerMenuDialog'),
     connectionsDialogTitle: root.getElementById('connectionsDialogTitle'),
-    connectionsBackBtn: root.getElementById('connectionsBackBtn'),
+    addConnectionBackBtn: root.getElementById('addConnectionBackBtn'),
     addConnectionView: root.getElementById('addConnectionView'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
@@ -155,7 +155,7 @@ export function bindDomEvents(app) {
   app.dom.sourceManager.addEventListener('pick-local-folder', async () => {
     await app.pickLocalFolder();
   });
-  app.dom.connectionsBackBtn?.addEventListener('click', () => {
+  app.dom.addConnectionBackBtn?.addEventListener('click', () => {
     app.showConnectionsListView();
   });
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {

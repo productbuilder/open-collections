@@ -1,4 +1,5 @@
 import { shellStyles } from '../css/shell.css.js';
+import { renderCloseIcon } from '../components/icons.js';
 
 export function renderShell(shadowRoot) {
   shadowRoot.innerHTML = `
@@ -17,13 +18,15 @@ export function renderShell(shadowRoot) {
       <div class="dialog-shell">
         <div class="dialog-header connections-dialog-header">
           <div class="connections-dialog-heading">
-            <button class="btn dialog-nav-btn is-hidden" id="connectionsBackBtn" type="button" aria-label="Back to connections">Back</button>
             <h2 class="dialog-title" id="connectionsDialogTitle">Connections</h2>
           </div>
-          <button class="btn" data-close="connectionsDialog" type="button">Close</button>
+          <button class="icon-btn" data-close="connectionsDialog" type="button" aria-label="Close connections dialog">${renderCloseIcon()}</button>
         </div>
         <div id="sourcePickerList" class="dialog-body source-list"></div>
         <div id="addConnectionView" class="dialog-body is-hidden">
+          <div class="connections-subnav">
+            <button class="btn dialog-nav-btn" id="addConnectionBackBtn" type="button" aria-label="Back to connections">Back</button>
+          </div>
           <open-collections-source-manager id="sourceManager"></open-collections-source-manager>
         </div>
       </div>

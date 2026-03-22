@@ -254,14 +254,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
         <open-panel-shell id="panelShell" title="Collections" subtitle="No assets loaded." show-back="false">
-          <div class="viewport-actions" slot="toolbar">
+          <div class="viewport-actions viewport-toolbar" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
+            <button class="btn" id="addImagesBtn" type="button">Add item</button>
             <span id="selectionStatus" class="selection-status" hidden>0 selected</span>
             <button class="btn btn-danger" id="deleteSelectedBtn" type="button" hidden>Delete selected</button>
             <button class="btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
           </div>
-          <div class="viewport-actions" slot="header-actions">
-            <button class="btn" id="addImagesBtn" type="button">Add item</button>
+          <div class="viewport-actions viewport-title-actions" slot="header-actions">
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>

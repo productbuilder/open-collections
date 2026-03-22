@@ -35,6 +35,9 @@ class OpenPanelShellElement extends HTMLElement {
     const statusMarkup = statusLabel
       ? `<span class="panel-status-chip" data-tone="${statusTone}">${statusLabel}</span>`
       : '';
+    const subtitleMarkup = subtitle
+      ? `<p class="panel-subtext">${subtitle}</p>`
+      : '';
 
     this.shadowRoot.innerHTML = `
       <style>${panelShellStyles}</style>
@@ -42,11 +45,13 @@ class OpenPanelShellElement extends HTMLElement {
         <header class="panel-header">
           <div class="panel-heading-left">
             <button class="btn ${showBack ? '' : 'is-hidden'}" id="backBtn" type="button">Back</button>
-            <div class="panel-title-wrap">
-              <h2 class="panel-title">${title}</h2>
-              ${statusMarkup}
+            <div class="panel-heading-copy">
+              <div class="panel-title-row">
+                <h2 class="panel-title">${title}</h2>
+                ${statusMarkup}
+              </div>
+              ${subtitleMarkup}
             </div>
-            <p class="panel-subtext">${subtitle}</p>
           </div>
           <div class="header-actions"><slot name="header-actions"></slot></div>
         </header>

@@ -20,23 +20,32 @@ export const panelShellStyles = `
   .panel-header {
     padding: 0.1rem 0 0.35rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.7rem;
   }
 
   .panel-heading-left {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     gap: 0.55rem;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
-  .panel-title-wrap {
-    display: inline-flex;
+  .panel-heading-copy {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .panel-title-row {
+    display: flex;
     align-items: center;
     gap: 0.45rem;
     min-width: 0;
+    flex-wrap: wrap;
   }
 
   .panel-title {
@@ -75,8 +84,8 @@ export const panelShellStyles = `
     margin: 0;
     font-size: 0.83rem;
     color: #64748b;
+    min-width: 0;
   }
-
 
   .btn {
     border: 1px solid #cbd5e1;
@@ -96,6 +105,12 @@ export const panelShellStyles = `
     align-items: center;
     gap: 0.45rem;
     flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+    flex: 0 0 auto;
   }
 
   .toolbar {
@@ -103,13 +118,20 @@ export const panelShellStyles = `
   }
 
   .body {
-    display: block;
+    display: flex;
     min-height: 0;
     overflow: hidden;
   }
 
   .body > slot {
     display: block;
+    width: 100%;
+    min-height: 0;
+  }
+
+  ::slotted(*) {
+    display: block;
+    width: 100%;
     height: 100%;
     min-height: 0;
   }
@@ -121,23 +143,23 @@ export const panelShellStyles = `
   @media (max-width: 760px) {
     .panel-header {
       padding: 0.1rem 0 0.25rem;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: transparent;
+      gap: 0.55rem;
     }
 
     .toolbar {
       padding-bottom: 0.5rem;
     }
 
-    .panel-subtext {
-      display: none;
+    .panel-heading-left {
+      gap: 0.45rem;
     }
 
-    .panel-heading-left {
-      flex-wrap: wrap;
-      row-gap: 0.35rem;
+    .panel-title-row {
+      row-gap: 0.3rem;
+    }
+
+    .panel-subtext {
+      font-size: 0.78rem;
     }
   }
 `;

@@ -1,6 +1,8 @@
 export const browserRendererStyles = `
   :host {
     display: block;
+    width: 100%;
+    min-height: 0;
   }
 
   * {
@@ -164,7 +166,7 @@ export const browserRendererStyles = `
   .row-table-wrap {
     border: 1px solid #dbe3ec;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: auto;
     background: #ffffff;
   }
 

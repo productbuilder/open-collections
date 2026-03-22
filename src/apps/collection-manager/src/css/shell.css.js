@@ -187,9 +187,20 @@ export const shellStyles = `
     color: #0f172a;
   }
 
-  .connections-subnav {
-    display: flex;
-    justify-content: flex-start;
+  .add-connection-view {
+    gap: 0.9rem;
+  }
+
+  .add-connection-view-header {
+    display: grid;
+    gap: 0.55rem;
+    align-content: start;
+  }
+
+  .add-connection-view-title {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
   }
 
   .dialog-body {

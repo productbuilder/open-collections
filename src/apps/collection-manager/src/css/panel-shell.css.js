@@ -1,3 +1,5 @@
+import { backButtonStyles } from '../components/back-button.js';
+
 export const panelShellStyles = `
   :host {
     display: block;
@@ -95,18 +97,6 @@ export const panelShellStyles = `
     min-width: 0;
   }
 
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
   .panel-titlebar-actions,
   .panel-toolbar-main,
   .panel-toolbar-actions {
@@ -156,6 +146,8 @@ export const panelShellStyles = `
   .is-hidden {
     display: none;
   }
+
+  ${backButtonStyles}
 
   @media (max-width: 760px) {
     .panel-titlebar,

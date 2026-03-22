@@ -408,6 +408,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   refreshWorkingStatus() {
     const workingStatus = computeWorkingStatus(this.state);
     this.dom.collectionBrowser?.setPublishActionState?.(this.getPublishActionState());
+    this.dom.collectionBrowser?.setWorkingStatus?.(workingStatus);
     this.dom.managerHeader?.setWorkingStatus(workingStatus);
   }
 

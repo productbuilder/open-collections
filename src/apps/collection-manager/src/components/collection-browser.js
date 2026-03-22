@@ -13,6 +13,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     this.model = {
       currentLevel: 'collections',
       viewportTitle: 'Collections',
+      workingStatus: {
+        label: 'Draft',
+        tone: 'neutral',
+      },
       assetCountText: 'No assets loaded.',
       collections: [],
       items: [],
@@ -131,6 +135,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     this.renderFrame();
   }
 
+  setWorkingStatus(status = {}) {
+    this.model.workingStatus = {
+      ...this.model.workingStatus,
+      ...status,
+    };
+    this.renderFrame();
+  }
+
   getCurrentViewMode() {
     const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
     return this.model.viewModes?.[level] || 'cards';
@@ -178,6 +190,13 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     panelShell.setAttribute('title', this.model.viewportTitle || 'Collections');
     panelShell.setAttribute('subtitle', this.model.assetCountText || 'No assets loaded.');
     panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
+    if (this.model.currentLevel === 'collections' && this.model.workingStatus?.label) {
+      panelShell.setAttribute('status-label', this.model.workingStatus.label);
+      panelShell.setAttribute('status-tone', this.model.workingStatus.tone || 'neutral');
+    } else {
+      panelShell.removeAttribute('status-label');
+      panelShell.removeAttribute('status-tone');
+    }
     addBtn.textContent = this.model.currentLevel === 'collections' ? 'Add collection' : 'Add item';
     viewToggle.setAttribute('mode', this.getCurrentViewMode());
     const publishAction = this.model.publishAction || {};

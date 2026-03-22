@@ -32,10 +32,43 @@ export const panelShellStyles = `
     min-width: 0;
   }
 
+  .panel-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
   .panel-title {
     margin: 0;
     font-size: 0.95rem;
     color: #111827;
+  }
+
+  .panel-status-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    white-space: nowrap;
+  }
+
+  .panel-status-chip[data-tone="ok"] {
+    color: #166534;
+    border-color: #86efac;
+    background: #f0fdf4;
+  }
+
+  .panel-status-chip[data-tone="warn"] {
+    color: #9a3412;
+    border-color: #fdba74;
+    background: #fff7ed;
   }
 
   .panel-subtext {
@@ -100,6 +133,11 @@ export const panelShellStyles = `
 
     .panel-subtext {
       display: none;
+    }
+
+    .panel-heading-left {
+      flex-wrap: wrap;
+      row-gap: 0.35rem;
     }
   }
 `;

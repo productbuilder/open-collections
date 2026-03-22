@@ -12,6 +12,8 @@ export function renderShell(shadowRoot) {
         <open-collections-browser id="collectionBrowser" slot="main"></open-collections-browser>
         <open-collections-metadata id="metadataEditor" slot="inspector"></open-collections-metadata>
       </open-pane-layout>
+
+      <open-collections-mobile-flow id="mobileFlow"></open-collections-mobile-flow>
     </div>
 
     <dialog id="connectionsDialog" class="host-dialog" aria-label="Connections">

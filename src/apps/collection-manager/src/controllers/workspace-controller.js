@@ -404,7 +404,7 @@ export async function restoreRememberedSources(app) {
   app.state.currentLevel = 'collections';
   app.state.openedCollectionId = null;
   app.syncMetadataModeFromState();
-  app.closeMobileEditor();
+  app.closeMobileDetail();
 
   app.setStatus(`Restored ${app.state.sources.length} remembered storage source definitions.`, 'neutral');
   app.refreshWorkingStatus();

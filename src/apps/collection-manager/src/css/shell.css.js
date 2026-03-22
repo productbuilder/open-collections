@@ -38,6 +38,12 @@ export const shellStyles = `
     min-height: 0;
   }
 
+  #mobileFlow {
+    display: none;
+    flex: 1;
+    min-height: 0;
+  }
+
   .btn {
     border: 1px solid #cbd5e1;
     background: #ffffff;
@@ -511,6 +517,22 @@ export const shellStyles = `
 
     .dialog-body {
       overflow-y: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .app-shell {
+      min-height: 0;
+      border: 0;
+      border-radius: 0;
+    }
+
+    #paneLayout {
+      display: none;
+    }
+
+    #mobileFlow {
+      display: block;
     }
   }
 `;

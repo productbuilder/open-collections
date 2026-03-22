@@ -57,6 +57,9 @@ export const panelShellStyles = `
     margin: 0;
     font-size: 0.95rem;
     color: #111827;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
   }
 
   .panel-status-chip {
@@ -162,18 +165,24 @@ export const panelShellStyles = `
 
     .panel-titlebar {
       padding: 0.1rem 0 0.25rem;
+      flex-wrap: wrap;
+      align-items: stretch;
     }
 
     .panel-toolbar-row {
       padding-bottom: 0.5rem;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: stretch;
     }
 
     .panel-titlebar-main {
       gap: 0.45rem;
+      width: 100%;
+      flex: 1 1 100%;
     }
 
     .panel-title-row {
+      align-items: flex-start;
       row-gap: 0.3rem;
     }
 
@@ -185,6 +194,18 @@ export const panelShellStyles = `
     .panel-toolbar-actions,
     .panel-titlebar-actions {
       width: 100%;
+    }
+
+    .panel-toolbar-main,
+    .panel-toolbar-actions,
+    .panel-titlebar-actions,
+    .panel-titlebar-main {
+      flex: 1 1 100%;
+    }
+
+    .panel-toolbar-main,
+    .panel-titlebar-actions {
+      align-items: flex-start;
     }
 
     .panel-toolbar-actions,

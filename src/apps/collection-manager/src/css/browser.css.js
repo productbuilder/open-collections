@@ -111,7 +111,7 @@ export const browserStyles = `
     min-height: 0;
     width: 100%;
     padding: 0 0 0.35rem;
-    overflow: auto;
+    overflow: hidden;
     position: relative;
     overscroll-behavior: contain;
   }
@@ -119,15 +119,18 @@ export const browserStyles = `
   .browser-host {
     display: flex;
     flex: 1 1 auto;
-    min-height: 100%;
+    min-height: 0;
+    height: 100%;
     width: 100%;
     padding-bottom: 0.2rem;
+    overflow: auto;
+    overscroll-behavior: contain;
   }
 
   .browser-host > * {
     flex: 1 1 auto;
     min-width: 0;
-    min-height: 100%;
+    min-height: 0;
   }
 
   .drop-overlay {
@@ -154,6 +157,15 @@ export const browserStyles = `
       padding: 0;
     }
 
+    .viewport-actions {
+      width: 100%;
+    }
+
+    .viewport-title-actions,
+    .viewport-toolbar-actions {
+      align-items: stretch;
+    }
+
     .viewport-toolbar-main,
     .viewport-toolbar-actions {
       gap: 0.4rem;
@@ -170,8 +182,17 @@ export const browserStyles = `
       border-radius: 7px;
     }
 
+    .viewport-title-actions > .btn,
+    .viewport-toolbar-actions > .btn {
+      width: 100%;
+    }
+
     .asset-wrap {
       padding: 0 0 0.25rem;
+    }
+
+    .browser-host {
+      padding-bottom: 0;
     }
   }
 `;

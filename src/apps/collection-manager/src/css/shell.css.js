@@ -165,8 +165,32 @@ export const shellStyles = `
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    align-self: flex-start;
   }
 
+  .icon-btn {
+    border: 0;
+    background: transparent;
+    color: #475569;
+    border-radius: 999px;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .icon-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .connections-subnav {
+    display: flex;
+    justify-content: flex-start;
+  }
 
   .dialog-body {
     padding: 0.95rem;
@@ -304,6 +328,10 @@ export const shellStyles = `
     stroke-linejoin: round;
   }
 
+  .icon-close {
+    fill: currentColor;
+  }
+
   .storage-dialog {
     width: min(1080px, 96vw);
   }
@@ -405,6 +433,14 @@ export const shellStyles = `
   }
 
   @media (max-width: 760px) {
+    .dialog-header {
+      padding: 0.75rem 0.8rem;
+    }
+
+    .dialog-body {
+      padding: 0.8rem;
+    }
+
     .app-shell {
       border: none;
       border-radius: 0;

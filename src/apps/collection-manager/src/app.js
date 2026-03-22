@@ -273,17 +273,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
     dialog.removeAttribute('open');
   }
 
-  setConnectionsDialogHeader(title = 'Connections', options = {}) {
+  setConnectionsDialogHeader(title = 'Connections') {
     const normalizedTitle = String(title || '').trim() || 'Connections';
-    const showBack = Boolean(options.showBack);
     if (this.dom?.connectionsDialog) {
       this.dom.connectionsDialog.setAttribute('aria-label', normalizedTitle);
     }
     if (this.dom?.connectionsDialogTitle) {
       this.dom.connectionsDialogTitle.textContent = normalizedTitle;
-    }
-    if (this.dom?.connectionsBackBtn) {
-      this.dom.connectionsBackBtn.classList.toggle('is-hidden', !showBack);
     }
   }
 
@@ -293,13 +289,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.dom?.sourcePickerList?.classList.remove('is-hidden');
     this.dom?.addConnectionView?.classList.add('is-hidden');
     this.setConnectionsDialogHeader('Connections');
+    this.dom?.addConnectionBackBtn?.classList.add('is-hidden');
   }
 
-  showAddConnectionView(title = 'Add connection', options = {}) {
+  showAddConnectionView(title = 'Connections') {
     this.state.connectionsDialogView = 'add';
     this.dom?.sourcePickerList?.classList.add('is-hidden');
     this.dom?.addConnectionView?.classList.remove('is-hidden');
-    this.setConnectionsDialogHeader(title, { showBack: options.showBack !== false });
+    this.setConnectionsDialogHeader(title);
+    this.dom?.addConnectionBackBtn?.classList.remove('is-hidden');
   }
 
   openConnectionsDialog() {
@@ -310,7 +308,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   openAddHostDialog() {
     this.clearPendingSourceRepair();
     this.dom.sourceManager?.resetFlow?.();
-    this.showAddConnectionView('Add connection');
+    this.showAddConnectionView('Connections');
     this.openDialog(this.dom.connectionsDialog);
   }
 
@@ -1134,12 +1132,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
       <div class="source-card-header">
         <div class="source-card-heading">
           <p class="source-card-title">Add connection</p>
-          <span class="pill">New</span>
         </div>
-        <span class="pill source-card-active-pill">Open</span>
       </div>
-      <p class="source-card-location">Create a new example, local folder, or remote connection in this dialog.</p>
-      <p class="source-card-status">Choose the connection type, then continue without opening a second modal.</p>
     `;
     const openAddView = () => {
       this.openAddHostDialog();

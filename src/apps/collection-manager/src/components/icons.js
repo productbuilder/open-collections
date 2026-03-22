@@ -6,6 +6,16 @@ export function renderChevronDownIcon(className = 'icon icon-chevron') {
   `;
 }
 
+export function renderMoreVertIcon(className = 'icon icon-more-vert') {
+  return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="5" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="12" cy="19" r="1.8" />
+    </svg>
+  `;
+}
+
 export function renderTrashIcon(className = 'icon icon-trash') {
   return `
     <svg class="${className}" viewBox="0 0 16 16" aria-hidden="true" focusable="false">

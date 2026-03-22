@@ -1,5 +1,5 @@
 import { headerStyles } from '../css/header.css.js';
-import { renderChevronDownIcon } from './icons.js';
+import { renderChevronDownIcon, renderMoreVertIcon } from './icons.js';
 
 class OpenCollectionsHeaderElement extends HTMLElement {
   constructor() {
@@ -55,17 +55,6 @@ class OpenCollectionsHeaderElement extends HTMLElement {
       ...this._workingStatus,
       ...status,
     };
-
-    const chip = this.shadowRoot?.getElementById('workingStatusChip');
-    const detail = this.shadowRoot?.getElementById('workingStatusDetail');
-    if (!chip || !detail) {
-      return;
-    }
-
-    const tone = this._workingStatus.tone || 'neutral';
-    chip.dataset.tone = tone;
-    chip.textContent = this._workingStatus.label || 'Draft';
-    detail.textContent = this._workingStatus.detail || '';
   }
 
   setWorkspaceContext(text) {
@@ -90,18 +79,16 @@ class OpenCollectionsHeaderElement extends HTMLElement {
 
       <header class="topbar">
         <div class="brand">
-          <h1 class="title">Open Collections Manager</h1>
-          <div class="working-status-wrap">
-            <span id="workingStatusChip" class="working-status-chip" data-tone="neutral">Draft</span>
-            <p id="workingStatusDetail" class="working-status-detail">Connect a source or create a collection draft to get started.</p>
-          </div>
+          <h1 class="title">Collection Manager</h1>
         </div>
         <div class="top-actions">
           <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="Connections">
             <span id="activeHostLabel">Select connection</span>
             ${renderChevronDownIcon()}
           </button>
-          <button class="btn" id="openHeaderMenuBtn" type="button">More</button>
+          <button class="icon-btn" id="openHeaderMenuBtn" type="button" aria-label="More actions">
+            ${renderMoreVertIcon()}
+          </button>
         </div>
       </header>
     `;

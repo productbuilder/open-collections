@@ -126,7 +126,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         id: 'example',
         category: 'example',
         label: 'Built-in example collections',
-        description: 'Connect instantly to the demo connection from this repository.',
+        description: 'Connect instantly to the built-in example collections from this repository.',
       },
       {
         ...this.providerFactories.local.getDescriptor(),

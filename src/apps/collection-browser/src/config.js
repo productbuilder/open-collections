@@ -1,4 +1,4 @@
 export const BROWSER_CONFIG = {
-  defaultManifestUrl: '../../../collections/demo-host/city-photos/collection.json',
+  defaultManifestUrl: '../../../collections/city-photos/collection.json',
 };
 

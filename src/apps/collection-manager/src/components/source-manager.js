@@ -610,7 +610,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
             <div class="provider-list">
               <button class="provider-card" id="addExampleHostBtn" type="button">
                 <div class="provider-card-label-row"><strong>Example</strong></div>
-                <span class="panel-subtext">Connect instantly to the built-in demo connection.</span>
+                <span class="panel-subtext">Connect instantly to the built-in example collections.</span>
               </button>
               <button class="provider-card" id="addLocalFolderHostBtn" type="button">
                 <div class="provider-card-label-row"><strong>Local folder</strong></div>

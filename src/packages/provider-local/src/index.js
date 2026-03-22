@@ -9,7 +9,7 @@ import {
   providerNotConnectedError,
 } from '../../provider-core/src/provider.js';
 
-const DEFAULT_SOURCE_PATH = '/src/collections/demo-host/collections.json';
+const DEFAULT_SOURCE_PATH = '/src/collections/collections.json';
 
 export function createLocalProvider() {
   // Host model: selected directory handle = host root containing collections.json.

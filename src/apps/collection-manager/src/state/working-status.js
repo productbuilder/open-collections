@@ -84,7 +84,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'example-content',
       label: 'Viewing example content',
-      detail: 'Example/demo collections are available for browsing. Connect a source to refresh from your own storage or publish changes.',
+      detail: 'Example collections are available for browsing. Connect a source to refresh from your own storage or publish changes.',
       tone: 'neutral',
     };
   }

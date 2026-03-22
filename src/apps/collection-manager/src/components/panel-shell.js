@@ -1,4 +1,4 @@
-import { panelShellStyles } from '../css/panel-shell.css.js';
+import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-mobile-header';
 
 class OpenPanelShellElement extends HTMLElement {
   static get observedAttributes() {

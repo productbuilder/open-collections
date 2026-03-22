@@ -65,10 +65,10 @@ import {
   toggleItemSelection,
 } from './controllers/selection-controller.js';
 import './components/manager-header.js';
-import './components/collection-browser.js';
+import './components/collection-browser.js?v=20260322-mobile-header';
 import './components/metadata-editor.js';
 import './components/pane-layout.js';
-import './components/mobile-flow.js';
+import './components/mobile-flow.js?v=20260322-mobile-header';
 import './components/connections-list-panel.js';
 import './components/add-connection-panel.js';
 import './components/asset-viewer.js';

@@ -1,4 +1,5 @@
 import { resolveItemPreviewUrl, resolveItemViewerMediaUrl } from '../utils/preview-utils.js';
+import { backButtonStyles, renderBackButton } from './back-button.js';
 import './metadata-editor.js';
 
 const mobileDetailStyles = `
@@ -162,6 +163,8 @@ const mobileDetailStyles = `
   .metadata-panel {
     min-height: 0;
   }
+
+  ${backButtonStyles}
 `;
 
 class OpenCollectionsMobileDetailElement extends HTMLElement {
@@ -283,7 +286,7 @@ class OpenCollectionsMobileDetailElement extends HTMLElement {
             <p id="detailContext" class="detail-context">Select an item to inspect it.</p>
           </div>
           <div class="detail-header-actions">
-            <button id="backBtn" class="btn" type="button">Back</button>
+            ${renderBackButton()}
             <button id="deleteBtn" class="btn btn-danger" type="button" hidden>Delete</button>
             <button id="saveBtn" class="btn btn-primary" type="button" hidden>Save</button>
           </div>

@@ -1,4 +1,5 @@
-import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-mobile-publish-padding';
+import { renderBackButton } from './back-button.js';
+import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-back-button';
 
 class OpenPanelShellElement extends HTMLElement {
   static get observedAttributes() {
@@ -44,7 +45,7 @@ class OpenPanelShellElement extends HTMLElement {
       <section class="panel-shell">
         <header class="panel-titlebar">
           <div class="panel-titlebar-main">
-            <button class="btn ${showBack ? '' : 'is-hidden'}" id="backBtn" type="button">Back</button>
+            ${renderBackButton({ hidden: !showBack })}
             <div class="panel-heading-copy">
               <div class="panel-title-row">
                 <h2 class="panel-title">${title}</h2>

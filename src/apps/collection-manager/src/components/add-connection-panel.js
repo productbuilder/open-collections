@@ -1,4 +1,5 @@
 import { sourceManagerStyles } from '../css/source-manager.css.js';
+import { renderBackButton } from './back-button.js';
 
 class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
   constructor() {
@@ -454,7 +455,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
       <style>${sourceManagerStyles}</style>
       <div class="source-manager">
         <div class="dialog-actions">
-          <button class="btn" id="backToConnectionsBtn" type="button" aria-label="Back to connections">Back</button>
+          ${renderBackButton({ id: 'backToConnectionsBtn' })}
         </div>
         <div class="root-actions-heading">
           <h3 class="root-actions-title">Add connection</h3>
@@ -482,7 +483,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
           <div id="remoteFlow" class="is-hidden">
             <div class="dialog-actions">
-              <button class="btn" id="remoteBackBtn" type="button">Back</button>
+              ${renderBackButton({ id: 'remoteBackBtn' })}
               <button class="btn" id="openStorageOptionsBtn" type="button">Storage options</button>
             </div>
             <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>

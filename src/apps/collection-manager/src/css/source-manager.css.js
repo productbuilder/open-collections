@@ -1,3 +1,5 @@
+import { backButtonStyles } from '../components/back-button.js';
+
 export const sourceManagerStyles = `
   :host {
     display: grid;
@@ -249,6 +251,8 @@ export const sourceManagerStyles = `
     background: #ffffff;
     color: #0f172a;
   }
+
+  ${backButtonStyles}
 
   .empty {
     border: 1px dashed #cbd5e1;

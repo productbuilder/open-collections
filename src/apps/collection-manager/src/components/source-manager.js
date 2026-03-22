@@ -1,5 +1,6 @@
 import { getSourceStatus } from '../state/source-status.js';
 import { sourceManagerStyles } from '../css/source-manager.css.js';
+import { renderBackButton } from './back-button.js';
 
 class OpenCollectionsSourceManagerElement extends HTMLElement {
   constructor() {
@@ -613,7 +614,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
           <div id="remoteFlow" class="is-hidden">
             <div class="dialog-actions">
-              <button class="btn" id="remoteBackBtn" type="button">Back</button>
+              ${renderBackButton({ id: 'remoteBackBtn' })}
             </div>
             <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>
             <div id="remoteSubtypeCatalog" class="provider-list is-hidden">

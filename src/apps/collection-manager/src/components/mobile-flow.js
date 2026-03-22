@@ -1,4 +1,4 @@
-import './collection-browser.js';
+import './collection-browser.js?v=20260322-mobile-header';
 import './mobile-detail.js';
 
 const mobileFlowStyles = `

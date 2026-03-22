@@ -1,5 +1,5 @@
-import { browserStyles } from '../css/browser.css.js';
-import './panel-shell.js';
+import { browserStyles } from '../css/browser.css.js?v=20260322-mobile-header';
+import './panel-shell.js?v=20260322-mobile-header';
 import './view-toggle.js';
 import './collection-card-grid.js';
 import './collection-row-list.js';

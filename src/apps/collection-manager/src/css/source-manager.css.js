@@ -95,10 +95,12 @@ export const sourceManagerStyles = `
     border: 1px solid #dbe3ec;
     border-radius: 8px;
     background: #ffffff;
-    padding: 0.6rem;
+    padding: 0.72rem;
+    min-height: 72px;
     text-align: left;
     display: grid;
     gap: 0.2rem;
+    align-content: center;
     cursor: pointer;
   }
 

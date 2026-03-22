@@ -13,30 +13,19 @@ export function renderShell(shadowRoot) {
       </open-pane-layout>
     </div>
 
-    <dialog id="providerDialog" class="host-dialog" aria-label="Add connection">
+    <dialog id="connectionsDialog" class="host-dialog" aria-label="Connections">
       <div class="dialog-shell">
-        <div class="dialog-header">
-          <h2 class="dialog-title">Add connection</h2>
-          <button class="btn" data-close="providerDialog" type="button">Close</button>
-        </div>
-        <div class="dialog-body">
-          <open-collections-source-manager id="sourceManager"></open-collections-source-manager>
-        </div>
-      </div>
-    </dialog>
-
-
-
-    <dialog id="sourcePickerDialog" class="host-dialog" aria-label="Manage connections">
-      <div class="dialog-shell">
-        <div class="dialog-header">
-          <h2 class="dialog-title">Manage connections</h2>
-          <div class="dialog-actions">
-            <button class="btn btn-primary" id="openAddHostFromHostBtn" type="button">Add connection</button>
-            <button class="btn" data-close="sourcePickerDialog" type="button">Close</button>
+        <div class="dialog-header connections-dialog-header">
+          <div class="connections-dialog-heading">
+            <button class="btn dialog-nav-btn is-hidden" id="connectionsBackBtn" type="button" aria-label="Back to connections">Back</button>
+            <h2 class="dialog-title" id="connectionsDialogTitle">Connections</h2>
           </div>
+          <button class="btn" data-close="connectionsDialog" type="button">Close</button>
         </div>
         <div id="sourcePickerList" class="dialog-body source-list"></div>
+        <div id="addConnectionView" class="dialog-body is-hidden">
+          <open-collections-source-manager id="sourceManager"></open-collections-source-manager>
+        </div>
       </div>
     </dialog>
 

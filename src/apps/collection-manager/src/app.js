@@ -259,6 +259,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return;
     }
 
+    if (dialog === this.dom?.connectionsDialog) {
+      this.showConnectionsListView();
+      this.clearPendingSourceRepair();
+      this.dom.sourceManager?.resetFlow?.();
+    }
+
     if (typeof dialog.close === 'function') {
       dialog.close();
       return;
@@ -267,22 +273,45 @@ class OpenCollectionsManagerElement extends HTMLElement {
     dialog.removeAttribute('open');
   }
 
-  setProviderDialogHeader(title = 'Add connection') {
-    const normalizedTitle = String(title || '').trim() || 'Add connection';
-    if (this.dom?.providerDialog) {
-      this.dom.providerDialog.setAttribute('aria-label', normalizedTitle);
-      const heading = this.dom.providerDialog.querySelector('.dialog-title');
-      if (heading) {
-        heading.textContent = normalizedTitle;
-      }
+  setConnectionsDialogHeader(title = 'Connections', options = {}) {
+    const normalizedTitle = String(title || '').trim() || 'Connections';
+    const showBack = Boolean(options.showBack);
+    if (this.dom?.connectionsDialog) {
+      this.dom.connectionsDialog.setAttribute('aria-label', normalizedTitle);
     }
+    if (this.dom?.connectionsDialogTitle) {
+      this.dom.connectionsDialogTitle.textContent = normalizedTitle;
+    }
+    if (this.dom?.connectionsBackBtn) {
+      this.dom.connectionsBackBtn.classList.toggle('is-hidden', !showBack);
+    }
+  }
+
+  showConnectionsListView() {
+    this.state.connectionsDialogView = 'list';
+    this.renderSourcePicker();
+    this.dom?.sourcePickerList?.classList.remove('is-hidden');
+    this.dom?.addConnectionView?.classList.add('is-hidden');
+    this.setConnectionsDialogHeader('Connections');
+  }
+
+  showAddConnectionView(title = 'Add connection', options = {}) {
+    this.state.connectionsDialogView = 'add';
+    this.dom?.sourcePickerList?.classList.add('is-hidden');
+    this.dom?.addConnectionView?.classList.remove('is-hidden');
+    this.setConnectionsDialogHeader(title, { showBack: options.showBack !== false });
+  }
+
+  openConnectionsDialog() {
+    this.showConnectionsListView();
+    this.openDialog(this.dom.connectionsDialog);
   }
 
   openAddHostDialog() {
     this.clearPendingSourceRepair();
     this.dom.sourceManager?.resetFlow?.();
-    this.setProviderDialogHeader('Add connection');
-    this.openDialog(this.dom.providerDialog);
+    this.showAddConnectionView('Add connection');
+    this.openDialog(this.dom.connectionsDialog);
   }
 
   openCredentialRepairDialog(sourceId) {
@@ -293,8 +322,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const providerLabel = source.providerLabel || (source.providerId === 'github' ? 'GitHub' : 'S3-compatible');
     this.inspectSource(source.id);
     this.dom.sourceManager?.openRepairCredentials?.(source.providerId);
-    this.setProviderDialogHeader(`Update ${providerLabel} credentials`);
-    this.openDialog(this.dom.providerDialog);
+    this.showAddConnectionView(`Update ${providerLabel} credentials`);
+    this.openDialog(this.dom.connectionsDialog);
   }
 
   isMobileViewport() {
@@ -1095,11 +1124,42 @@ class OpenCollectionsManagerElement extends HTMLElement {
   renderSourcePicker() {
     const wrap = this.dom.sourcePickerList;
     wrap.innerHTML = '';
+
+    const addCard = document.createElement('article');
+    addCard.className = 'source-card source-card-add';
+    addCard.tabIndex = 0;
+    addCard.setAttribute('role', 'button');
+    addCard.setAttribute('aria-label', 'Add connection');
+    addCard.innerHTML = `
+      <div class="source-card-header">
+        <div class="source-card-heading">
+          <p class="source-card-title">Add connection</p>
+          <span class="pill">New</span>
+        </div>
+        <span class="pill source-card-active-pill">Open</span>
+      </div>
+      <p class="source-card-location">Create a new example, local folder, or remote connection in this dialog.</p>
+      <p class="source-card-status">Choose the connection type, then continue without opening a second modal.</p>
+    `;
+    const openAddView = () => {
+      this.openAddHostDialog();
+    };
+    addCard.addEventListener('click', () => {
+      openAddView();
+    });
+    addCard.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openAddView();
+      }
+    });
+    wrap.appendChild(addCard);
+
     const uniqueSources = this.uniqueSourcesForManageHosts(this.state.sources);
     if (uniqueSources.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'No connections added yet. Use Add connection to connect one.';
+      empty.textContent = 'No connections added yet.';
       wrap.appendChild(empty);
       return;
     }
@@ -1251,6 +1311,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       wrap.appendChild(card);
     }
   }
+
 
   findSelectedCollectionMeta() {
     return findSelectedCollectionMeta(this);

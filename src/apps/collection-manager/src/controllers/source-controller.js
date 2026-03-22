@@ -399,12 +399,10 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
     app.renderEditor();
     app.saveSourcesToStorage();
     app.clearPendingSourceRepair();
-    if (options.closeProviderDialog !== false) {
-      app.closeDialog(app.dom.providerDialog);
-    }
     app.renderSourcePicker();
-    if (options.openSourcePicker !== false) {
-      app.openDialog(app.dom.sourcePickerDialog);
+    app.showConnectionsListView();
+    if (options.openConnectionsDialog !== false && options.openSourcePicker !== false) {
+      app.openDialog(app.dom.connectionsDialog);
     }
   } catch (error) {
     app.clearPendingSourceRepair();

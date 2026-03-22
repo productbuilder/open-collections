@@ -150,6 +150,24 @@ export const shellStyles = `
     font-size: 0.95rem;
   }
 
+  .connections-dialog-header {
+    gap: 0.9rem;
+  }
+
+  .connections-dialog-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .dialog-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+
   .dialog-body {
     padding: 0.95rem;
     overflow: auto;
@@ -204,6 +222,17 @@ export const shellStyles = `
     box-shadow: 0 0 0 1px #66a6e8 inset;
     background: #f5faff;
   }
+
+  .source-card-add {
+    border-style: dashed;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  }
+
+  .source-card-add:hover {
+    border-color: #60a5fa;
+    background: #f8fbff;
+  }
+
 
   .source-card-header {
     display: flex;
@@ -394,6 +423,11 @@ export const shellStyles = `
 
     .source-card {
       padding: 0.65rem;
+    }
+
+    .connections-dialog-heading {
+      width: 100%;
+      align-items: center;
     }
 
     .source-card-header {

@@ -97,7 +97,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
           </div>
         </div>
         <div class="top-actions">
-          <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="Manage connections">
+          <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="Connections">
             <span id="activeHostLabel">Select connection</span>
             ${renderChevronDownIcon()}
           </button>

@@ -30,5 +30,6 @@
       items: 'cards',
     },
     inspectorPlacement: 'right',
+    connectionsDialogView: 'list',
   };
 }

@@ -8,14 +8,15 @@ export function cacheDomElements(root) {
     metadataEditor: root.getElementById('metadataEditor'),
     sourceManager: root.getElementById('sourceManager'),
     assetViewer: root.getElementById('assetViewer'),
-    providerDialog: root.getElementById('providerDialog'),
-    sourcePickerDialog: root.getElementById('sourcePickerDialog'),
+    connectionsDialog: root.getElementById('connectionsDialog'),
     sourcePickerList: root.getElementById('sourcePickerList'),
     publishDialog: root.getElementById('publishDialog'),
     newCollectionDialog: root.getElementById('newCollectionDialog'),
     registerDialog: root.getElementById('registerDialog'),
     headerMenuDialog: root.getElementById('headerMenuDialog'),
-    openAddHostFromHostBtn: root.getElementById('openAddHostFromHostBtn'),
+    connectionsDialogTitle: root.getElementById('connectionsDialogTitle'),
+    connectionsBackBtn: root.getElementById('connectionsBackBtn'),
+    addConnectionView: root.getElementById('addConnectionView'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
     collectionId: root.getElementById('collectionId'),
@@ -66,8 +67,7 @@ export function bindDomEvents(app) {
   app._eventsBound = true;
 
   app.dom.managerHeader.addEventListener('open-host-menu', () => {
-    app.renderSourcePicker();
-    app.openDialog(app.dom.sourcePickerDialog);
+    app.openConnectionsDialog();
   });
   app.dom.managerHeader.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
   app.dom.sourceManager.addEventListener('open-storage-options', () => app.openDialog(app.dom.storageOptionsDialog));
@@ -155,8 +155,8 @@ export function bindDomEvents(app) {
   app.dom.sourceManager.addEventListener('pick-local-folder', async () => {
     await app.pickLocalFolder();
   });
-  app.dom.openAddHostFromHostBtn.addEventListener('click', () => {
-    app.openAddHostDialog();
+  app.dom.connectionsBackBtn?.addEventListener('click', () => {
+    app.showConnectionsListView();
   });
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {
     app.closeDialog(app.dom.headerMenuDialog);

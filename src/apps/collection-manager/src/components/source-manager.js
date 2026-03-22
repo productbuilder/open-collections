@@ -51,6 +51,15 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.dispatch('add-local-folder-host');
     });
 
+    this.shadowRoot.getElementById('addRemoteHostBtn')?.addEventListener('click', () => {
+      this.model.flowMode = 'add';
+      this.model.repairProviderId = '';
+      this.model.addHostLevel = 'remote-subtypes';
+      this.model.remoteSubtype = '';
+      this.renderRemoteFlow();
+      this.renderProviderVisibility();
+    });
+
     this.shadowRoot.getElementById('remoteSubtypeCatalog')?.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-remote-subtype]');
       const remoteSubtype = button?.dataset.remoteSubtype || '';
@@ -77,8 +86,11 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         this.resetFlow();
         return;
       }
-      if (this.model.addHostLevel === 'remote-config' && ['git', 's3', 'domain'].includes(this.model.remoteSubtype)) {
+      if (this.model.addHostLevel === 'remote-config' && ['git', 's3'].includes(this.model.remoteSubtype)) {
         this.model.addHostLevel = 'remote-providers';
+      } else if (this.model.addHostLevel === 'remote-providers') {
+        this.model.addHostLevel = 'remote-subtypes';
+        this.model.remoteSubtype = '';
       } else {
         this.model.addHostLevel = 'root';
         this.model.remoteSubtype = '';
@@ -374,9 +386,10 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     const remoteFlow = this.shadowRoot?.getElementById('remoteFlow');
     const backBtn = this.shadowRoot?.getElementById('remoteBackBtn');
     const breadcrumb = this.shadowRoot?.getElementById('remoteFlowBreadcrumb');
+    const subtypePanel = this.shadowRoot?.getElementById('remoteSubtypeCatalog');
     const providerPanel = this.shadowRoot?.getElementById('remoteProviderPanel');
     const configPanel = this.shadowRoot?.getElementById('providerConfig');
-    if (!rootActions || !remoteFlow || !backBtn || !breadcrumb || !providerPanel || !configPanel) {
+    if (!rootActions || !remoteFlow || !backBtn || !breadcrumb || !subtypePanel || !providerPanel || !configPanel) {
       return;
     }
 
@@ -391,20 +404,24 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
 
     const subtitleByType = {
-      git: 'Remote connection / Git repository / Provider',
-      s3: 'Remote connection / Object storage',
-      domain: 'Remote connection / Custom domain',
+      git: 'Remote / Git repository / Provider',
+      s3: 'Remote / Object storage / Provider',
+      domain: 'Remote / Custom domain',
     };
-    if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
-      breadcrumb.textContent = 'Remote connection / Git repository / GitHub configuration';
+    if (this.model.addHostLevel === 'remote-subtypes') {
+      breadcrumb.textContent = 'Remote';
+    } else if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
+      breadcrumb.textContent = 'Remote / Git repository / GitHub configuration';
     } else if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 's3') {
-      breadcrumb.textContent = 'Remote connection / Object storage / S3-compatible configuration';
+      breadcrumb.textContent = 'Remote / Object storage / S3-compatible configuration';
     } else {
-      breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote connection';
+      breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote';
     }
 
+    const showingSubtypes = this.model.addHostLevel === 'remote-subtypes';
     const showingProviders = this.model.addHostLevel === 'remote-providers';
     const showingConfig = this.model.addHostLevel === 'remote-config';
+    subtypePanel.classList.toggle('is-hidden', !showingSubtypes);
     providerPanel.classList.toggle('is-hidden', !showingProviders);
     configPanel.classList.toggle('is-hidden', !showingConfig);
 
@@ -412,6 +429,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       this.renderRemoteProviderCatalog();
     }
   }
+
 
   renderRemoteProviderCatalog() {
     const wrap = this.shadowRoot?.getElementById('remoteProviderPanel');
@@ -576,25 +594,20 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       <div class="source-manager">
         <div class="provider-layout single-column">
           <div id="rootActions">
-            <p class="config-section-title">Add a connection</p>
+            <p class="config-section-title">Choose a connection type</p>
             <div class="provider-list">
               <button class="provider-card" id="addExampleHostBtn" type="button">
-                <div class="provider-card-label-row"><strong>Add example connection</strong></div>
+                <div class="provider-card-label-row"><strong>Example</strong></div>
                 <span class="panel-subtext">Connect instantly to the built-in demo connection.</span>
               </button>
               <button class="provider-card" id="addLocalFolderHostBtn" type="button">
-                <div class="provider-card-label-row"><strong>Add local connection</strong></div>
-                <span class="panel-subtext">Pick a folder and add it as a writable local connection.</span>
+                <div class="provider-card-label-row"><strong>Local folder</strong></div>
+                <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
               </button>
-              <div class="provider-config remote-card">
-                <p class="config-section-title">Remote connection</p>
-                <p class="panel-subtext">Connect a remote publish target for your local-first workflow.</p>
-                <div id="remoteSubtypeCatalog" class="dialog-actions">
-                  <button class="btn" type="button" data-remote-subtype="git">Git repository</button>
-                  <button class="btn" type="button" data-remote-subtype="s3">Object storage (S3 compatible)</button>
-                  <button class="btn" type="button" data-remote-subtype="domain">Custom domain</button>
-                </div>
-              </div>
+              <button class="provider-card" id="addRemoteHostBtn" type="button">
+                <div class="provider-card-label-row"><strong>Remote</strong></div>
+                <span class="panel-subtext">Connect a remote publish target and choose a remote connection type next.</span>
+              </button>
             </div>
           </div>
 
@@ -603,7 +616,21 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
               <button class="btn" id="remoteBackBtn" type="button">Back</button>
             </div>
             <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>
-            <div id="remoteProviderPanel" class="provider-list"></div>
+            <div id="remoteSubtypeCatalog" class="provider-list is-hidden">
+              <button class="provider-card" type="button" data-remote-subtype="git">
+                <div class="provider-card-label-row"><strong>Git repository</strong></div>
+                <span class="panel-subtext">Choose a Git-based remote provider such as GitHub.</span>
+              </button>
+              <button class="provider-card" type="button" data-remote-subtype="s3">
+                <div class="provider-card-label-row"><strong>Object storage</strong></div>
+                <span class="panel-subtext">Configure an S3-compatible publish target.</span>
+              </button>
+              <button class="provider-card" type="button" data-remote-subtype="domain">
+                <div class="provider-card-label-row"><strong>Custom domain</strong></div>
+                <span class="panel-subtext">Connect a custom-hosted manifest endpoint when available.</span>
+              </button>
+            </div>
+            <div id="remoteProviderPanel" class="provider-list is-hidden"></div>
 
             <div id="providerConfig" class="provider-config is-hidden">
               <p id="providerConfigTitle" class="config-section-title">Connection configuration</p>

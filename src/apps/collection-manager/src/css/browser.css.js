@@ -157,18 +157,20 @@ export const browserStyles = `
       padding: 0;
     }
 
-    .viewport-actions {
-      width: 100%;
+    .viewport-toolbar-main,
+    .viewport-toolbar-actions {
+      gap: 0.4rem;
     }
 
     .viewport-title-actions,
     .viewport-toolbar-actions {
-      align-items: stretch;
+      align-items: flex-start;
+      width: auto;
+      flex: 0 0 auto;
     }
 
-    .viewport-toolbar-main,
-    .viewport-toolbar-actions {
-      gap: 0.4rem;
+    .viewport-toolbar-main {
+      width: 100%;
     }
 
     .viewport-toolbar-actions,
@@ -184,7 +186,9 @@ export const browserStyles = `
 
     .viewport-title-actions > .btn,
     .viewport-toolbar-actions > .btn {
-      width: 100%;
+      width: auto;
+      max-width: 100%;
+      flex: 0 0 auto;
     }
 
     .asset-wrap {

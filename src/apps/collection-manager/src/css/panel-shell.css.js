@@ -165,8 +165,7 @@ export const panelShellStyles = `
 
     .panel-titlebar {
       padding: 0.1rem 0 0.25rem;
-      flex-wrap: wrap;
-      align-items: stretch;
+      align-items: flex-start;
     }
 
     .panel-toolbar-row {
@@ -177,8 +176,8 @@ export const panelShellStyles = `
 
     .panel-titlebar-main {
       gap: 0.45rem;
-      width: 100%;
-      flex: 1 1 100%;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .panel-title-row {
@@ -186,20 +185,16 @@ export const panelShellStyles = `
       row-gap: 0.3rem;
     }
 
+    .panel-title {
+      flex: 0 1 auto;
+    }
+
     .panel-subtext {
       font-size: 0.78rem;
     }
 
-    .panel-toolbar-main,
-    .panel-toolbar-actions,
-    .panel-titlebar-actions {
+    .panel-toolbar-main {
       width: 100%;
-    }
-
-    .panel-toolbar-main,
-    .panel-toolbar-actions,
-    .panel-titlebar-actions,
-    .panel-titlebar-main {
       flex: 1 1 100%;
     }
 
@@ -210,7 +205,18 @@ export const panelShellStyles = `
 
     .panel-toolbar-actions,
     .panel-titlebar-actions {
+      width: auto;
+      max-width: 100%;
+      flex: 0 0 auto;
       justify-content: flex-start;
+    }
+
+    .panel-titlebar-actions {
+      align-self: flex-start;
+    }
+
+    .panel-toolbar-actions {
+      align-self: flex-start;
     }
   }
 `;

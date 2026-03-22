@@ -65,10 +65,10 @@ import {
   toggleItemSelection,
 } from './controllers/selection-controller.js';
 import './components/manager-header.js';
-import './components/collection-browser.js?v=20260322-mobile-header';
+import './components/collection-browser.js?v=20260322-mobile-publish-padding';
 import './components/metadata-editor.js';
 import './components/pane-layout.js';
-import './components/mobile-flow.js?v=20260322-mobile-header';
+import './components/mobile-flow.js?v=20260322-mobile-publish-padding';
 import './components/connections-list-panel.js';
 import './components/add-connection-panel.js';
 import './components/asset-viewer.js';
@@ -408,8 +408,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   refreshWorkingStatus() {
     const workingStatus = computeWorkingStatus(this.state);
-    this.dom.collectionBrowser?.setPublishActionState?.(this.getPublishActionState());
+    const publishAction = this.getPublishActionState();
+    this.dom.collectionBrowser?.setPublishActionState?.(publishAction);
+    this.dom.mobileFlow?.setPublishActionState?.(publishAction);
     this.dom.collectionBrowser?.setWorkingStatus?.(workingStatus);
+    this.dom.mobileFlow?.setWorkingStatus?.(workingStatus);
     this.dom.managerHeader?.setWorkingStatus(workingStatus);
   }
 

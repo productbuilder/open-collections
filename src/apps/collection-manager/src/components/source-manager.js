@@ -1,3 +1,4 @@
+import { getSourceStatus } from '../state/source-status.js';
 import { sourceManagerStyles } from '../css/source-manager.css.js';
 
 class OpenCollectionsSourceManagerElement extends HTMLElement {
@@ -474,21 +475,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
   }
 
   hostStateFor(source) {
-    if (source.providerId === 'example') {
-      return { label: 'Example content', tone: 'neutral' };
-    }
-    if (source.needsCredentials) {
-      return { label: 'Credentials missing', tone: 'warn' };
-    }
-    if (source.needsReconnect) {
-      const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
-      const hasCachedItems = Number(source.itemCount) > 0;
-      return { label: hasCollections || hasCachedItems ? 'Disconnected (cached)' : 'Needs reconnect', tone: 'warn' };
-    }
-    if (source.capabilities?.canPublish) {
-      return { label: 'Publishable', tone: 'ok' };
-    }
-    return { label: 'Read-only', tone: 'neutral' };
+    return getSourceStatus(source);
   }
 
   renderSourcesList() {
@@ -553,9 +540,10 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
       const status = document.createElement('p');
       status.className = 'panel-subtext';
-      status.textContent = source.status || 'Connected';
 
       const hostState = this.hostStateFor(source);
+      status.textContent = hostState.detail || source.status || 'Connected';
+
       const meta = document.createElement('div');
       meta.className = 'source-card-meta';
       const statusPill = document.createElement('span');
@@ -566,7 +554,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       activePill.textContent = isActive ? 'Active connection' : 'Inactive';
       const publishPill = document.createElement('span');
       publishPill.className = `pill ${source.capabilities?.canPublish ? 'is-ok' : 'is-muted'}`.trim();
-      publishPill.textContent = source.capabilities?.canPublish ? 'Can publish' : 'Cannot publish';
+      publishPill.textContent = source.capabilities?.canPublish ? 'Connected' : 'Read-only';
       const countPill = document.createElement('span');
       countPill.className = 'pill';
       countPill.textContent = `${source.itemCount || 0} items`;

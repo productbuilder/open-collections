@@ -1,3 +1,4 @@
+import { getSourceStatus } from '../state/source-status.js';
 import { renderTrashIcon } from './icons.js';
 
 const styles = `
@@ -147,6 +148,12 @@ const styles = `
     background: #f0fdf4;
   }
 
+  .pill.is-warn {
+    color: #9a3412;
+    border-color: #fdba74;
+    background: #fff7ed;
+  }
+
   .source-card-active-pill {
     align-self: flex-start;
   }
@@ -231,22 +238,8 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
     this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
   }
 
-  hostStateLabel(source) {
-    if (source.providerId === 'example') {
-      return 'Example content';
-    }
-    if (source.needsCredentials) {
-      return 'Credentials missing';
-    }
-    if (source.needsReconnect) {
-      const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
-      const hasCachedItems = Number(source.itemCount) > 0;
-      return hasCollections || hasCachedItems ? 'Disconnected (cached)' : 'Needs reconnect';
-    }
-    if (source.capabilities?.canPublish) {
-      return 'Publishable';
-    }
-    return 'Read-only';
+  hostState(source) {
+    return getSourceStatus(source);
   }
 
   connectionTypeLabel(source) {
@@ -285,7 +278,7 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
     const isActive = this.model.activeSourceId === source.id;
     const label = source.displayLabel || source.label || source.providerLabel || 'Connection';
     const collectionCount = source.collections?.length || 0;
-    const statusText = this.hostStateLabel(source);
+    const status = this.hostState(source);
     const primaryAction = source.providerId === 'local' && source.needsReconnect
       ? `<button class="btn btn-primary" type="button" data-action="repair-folder" data-source-id="${source.id}">Re-select folder</button>`
       : (source.providerId === 'github' || source.providerId === 's3') && source.needsCredentials
@@ -309,12 +302,13 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
           <div class="source-card-heading">
             <p class="source-card-title">${escapeHtml(label)}</p>
             <span class="pill">${escapeHtml(this.connectionTypeLabel(source))}</span>
+            <span class="pill${status.tone === 'ok' ? ' is-ok' : status.tone === 'warn' ? ' is-warn' : ''}">${escapeHtml(status.label)}</span>
             <span class="pill">${escapeHtml(`${collectionCount} coll.`)}</span>
           </div>
           <span class="pill source-card-active-pill${isActive ? ' is-ok' : ''}">${escapeHtml(isActive ? 'Active' : 'Available')}</span>
         </div>
         <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
-        <p class="source-card-status">${escapeHtml(statusText)}</p>
+        <p class="source-card-status">${escapeHtml(status.detail)}</p>
         <div class="source-card-actions">
           ${primaryAction}
           <button class="btn source-card-remove" type="button" data-action="remove" data-source-id="${source.id}">${renderTrashIcon()}<span>Remove</span></button>

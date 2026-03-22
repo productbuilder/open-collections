@@ -1,3 +1,5 @@
+import { getSourceStatus, isExampleSource, sourceHasAccessibleContent } from './source-status.js';
+
 function hasPublishableSelection(state) {
   if (!state || state.activeSourceFilter === 'all' || !state.selectedCollectionId || state.selectedCollectionId === 'all') {
     return false;
@@ -18,19 +20,15 @@ function activeSource(state) {
   return state.sources.find((entry) => entry.id === state.activeSourceFilter) || null;
 }
 
-function sourceHasAccessibleContent(state, source) {
+function sourceHasWorkspaceContent(state, source) {
   if (!state || !source) {
     return false;
   }
 
-  const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
   const hasAssets = Array.isArray(state.assets) && state.assets.some((item) => item.sourceId === source.id);
-  return hasCollections || hasAssets;
+  return sourceHasAccessibleContent(source) || hasAssets;
 }
 
-function isExampleSource(source) {
-  return Boolean(source && source.providerId === 'example');
-}
 
 function hasPendingPublishAssets(state) {
   if (!state || state.activeSourceFilter === 'all' || !state.selectedCollectionId || state.selectedCollectionId === 'all') {
@@ -72,41 +70,45 @@ export function computeWorkingStatus(state) {
   }
 
   if (source?.needsCredentials) {
+    const sourceStatus = getSourceStatus(source);
     return {
       id: 'credentials-missing',
-      label: 'Credentials missing',
-      detail: 'The active connection is missing credentials. Use Update credentials, then publish again.',
-      tone: 'warn',
+      label: sourceStatus.label,
+      detail: 'The active connection needs updated credentials before you can refresh or publish.',
+      tone: sourceStatus.tone,
     };
   }
 
   if (isExampleSource(source)) {
+    const sourceStatus = getSourceStatus(source);
     return {
       id: 'example-content',
-      label: 'Viewing example content',
-      detail: 'Example collections are available for browsing. Connect a source to refresh from your own storage or publish changes.',
-      tone: 'neutral',
+      label: sourceStatus.label,
+      detail: 'Example collections are available for browsing. Connect your own source to refresh or publish.',
+      tone: sourceStatus.tone,
     };
   }
 
   if (source?.needsReconnect) {
-    const hasAccessibleContent = sourceHasAccessibleContent(state, source);
+    const hasAccessibleContent = sourceHasWorkspaceContent(state, source);
+    const sourceStatus = getSourceStatus(source);
     return {
       id: 'host-needs-reconnect',
-      label: hasAccessibleContent ? 'Disconnected connection (cached content available)' : 'Connection needs reconnect',
+      label: sourceStatus.label,
       detail: hasAccessibleContent
-        ? 'The active connection is disconnected, but previously loaded collections remain available locally. Reconnect to refresh from the connection or publish.'
-        : 'The active connection is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
-      tone: 'warn',
+        ? 'Previously loaded collections remain available locally. Reconnect to refresh from the connection or publish.'
+        : 'The active connection is remembered but disconnected. Reconnect to load content or publish.',
+      tone: sourceStatus.tone,
     };
   }
 
   if (source && !canPublish) {
+    const sourceStatus = getSourceStatus(source);
     return {
       id: 'read-only-host',
-      label: 'Read-only connection',
-      detail: 'Active connection is connected but read-only for publish uploads.',
-      tone: 'neutral',
+      label: sourceStatus.label,
+      detail: 'This connection stays available for browsing, but publishing is disabled.',
+      tone: sourceStatus.tone,
     };
   }
 
@@ -149,7 +151,7 @@ export function computeWorkingStatus(state) {
   if (state.hasLocalDraft || state.lastSaveTarget === 'draft') {
     return {
       id: 'draft',
-      label: 'Draft only',
+      label: 'Draft',
       detail: 'Working in local draft mode. Connect a publishable connection when ready.',
       tone: 'neutral',
     };

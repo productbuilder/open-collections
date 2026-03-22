@@ -143,9 +143,6 @@ export async function createNewCollectionDraft(manager) {
       manager.renderCollectionFilter();
       manager.renderAssets();
       manager.renderEditor();
-      if (manager.isMobileViewport()) {
-        manager.openMobileEditor();
-      }
 
       if (manager.state.opfsAvailable) {
         await manager.saveLocalDraft();
@@ -205,9 +202,6 @@ export async function createNewCollectionDraft(manager) {
   manager.renderCollectionFilter();
   manager.renderAssets();
   manager.renderEditor();
-  if (manager.isMobileViewport()) {
-    manager.openMobileEditor();
-  }
 
   if (manager.state.opfsAvailable) {
     await manager.saveLocalDraft();
@@ -224,7 +218,7 @@ export function openCollectionView(manager, collectionId) {
   manager.state.selectedItemId = null;
   manager.state.selectedItemIds = [];
   manager.syncMetadataModeFromState();
-  manager.closeMobileEditor();
+  manager.closeMobileDetail();
   manager.renderAssets();
   manager.renderEditor();
 }
@@ -235,7 +229,7 @@ export function leaveCollectionView(manager) {
   manager.state.selectedItemId = null;
   manager.state.selectedItemIds = [];
   manager.syncMetadataModeFromState();
-  manager.closeMobileEditor();
+  manager.closeMobileDetail();
   manager.renderAssets();
   manager.renderEditor();
 }

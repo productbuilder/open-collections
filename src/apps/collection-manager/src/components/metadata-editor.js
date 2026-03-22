@@ -43,6 +43,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
       canSaveItem: false,
       mobileOpen: false,
       canDeleteItem: false,
+      presentation: 'inspector',
     };
   }
 
@@ -51,6 +52,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
     this.bindEvents();
     this.applyView();
     this.setMobileOpen(this.model.mobileOpen);
+    this.setPresentation(this.model.presentation);
   }
 
   bindEvents() {
@@ -95,6 +97,18 @@ class OpenCollectionsMetadataElement extends HTMLElement {
     const panel = this.shadowRoot?.querySelector('.editor-panel');
     if (panel) {
       panel.classList.toggle('is-mobile-editor-open', this.model.mobileOpen);
+    }
+  }
+
+  setPresentation(presentation = 'inspector') {
+    this.model.presentation = presentation === 'embedded' ? 'embedded' : 'inspector';
+    const panel = this.shadowRoot?.querySelector('.editor-panel');
+    if (panel) {
+      panel.dataset.presentation = this.model.presentation;
+    }
+    const header = this.shadowRoot?.querySelector('.panel-header');
+    if (header) {
+      header.hidden = this.model.presentation === 'embedded';
     }
   }
 
@@ -339,7 +353,7 @@ class OpenCollectionsMetadataElement extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${metadataStyles}</style>
 
-      <aside class="panel editor-panel" aria-label="Metadata editor">
+      <aside class="panel editor-panel" data-presentation="${this.model.presentation || 'inspector'}" aria-label="Metadata editor">
         <div class="panel-header">
           <div class="editor-header-meta">
             <h2 id="editorTitle" class="panel-title">Metadata editor</h2>

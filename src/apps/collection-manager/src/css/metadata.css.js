@@ -25,6 +25,20 @@ export const metadataStyles = `
     box-shadow: none;
   }
 
+  .editor-panel[data-presentation="embedded"] {
+    border: 1px solid #dbe3ec;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .editor-panel[data-presentation="embedded"] .editor-content {
+    overflow: visible;
+  }
+
+  .editor-panel[data-presentation="embedded"] .editor-wrap {
+    padding: 0.85rem;
+  }
+
   .panel-header {
     padding: 0.8rem 0.95rem;
     border-bottom: 1px solid #e2e8f0;
@@ -244,7 +258,7 @@ export const metadataStyles = `
       height: auto;
     }
 
-    .editor-panel {
+    .editor-panel:not([data-presentation="embedded"]) {
       position: fixed;
       inset: 0;
       z-index: 12;
@@ -255,8 +269,14 @@ export const metadataStyles = `
       display: none;
     }
 
-    .editor-panel.is-mobile-editor-open {
+    .editor-panel.is-mobile-editor-open:not([data-presentation="embedded"]) {
       display: grid;
+    }
+
+    .editor-panel[data-presentation="embedded"] {
+      border: none;
+      border-radius: 0;
+      background: transparent;
     }
 
     .panel-header {

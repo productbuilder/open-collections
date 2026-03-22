@@ -76,7 +76,7 @@ export function openViewer(app, itemId) {
     app.renderAssets();
     app.renderEditor();
     if (app.isMobileViewport()) {
-      app.openMobileEditor();
+      app.openMobileDetail();
     }
   }
 
@@ -116,7 +116,7 @@ export function renderAssets(app) {
       collections = app.state.localDraftCollections;
     }
 
-    app.dom.collectionBrowser.update({
+    const browserState = {
       currentLevel: 'collections',
       viewportTitle: 'Collections',
       assetCountText: `${collections.length} collections`,
@@ -126,7 +126,9 @@ export function renderAssets(app) {
       focusedItemId: null,
       selectedItemIds: [],
       viewModes: app.state.browserViewModes,
-    });
+    };
+    app.dom.collectionBrowser.update(browserState);
+    app.dom.mobileFlow?.setBrowserState(browserState);
     return;
   }
 
@@ -134,7 +136,7 @@ export function renderAssets(app) {
     .filter((item) => item.collectionId === app.state.openedCollectionId)
     .map((item) => app.resolveItemForDisplay(item));
   const collection = app.findSelectedCollectionMeta();
-  app.dom.collectionBrowser.update({
+  const browserState = {
     currentLevel: 'items',
     viewportTitle: collection?.title || app.state.openedCollectionId || 'Collection',
     assetCountText: `${visibleAssets.length} items`,
@@ -144,13 +146,15 @@ export function renderAssets(app) {
     focusedItemId: app.state.selectedItemId,
     selectedItemIds: app.state.selectedItemIds,
     viewModes: app.state.browserViewModes,
-  });
+  };
+  app.dom.collectionBrowser.update(browserState);
+  app.dom.mobileFlow?.setBrowserState(browserState);
 }
 
 export function selectItem(app, itemId) {
   if (app.state.selectedItemId === itemId) {
     if (app.isMobileViewport()) {
-      app.openMobileEditor();
+      app.openMobileDetail();
     }
     return;
   }
@@ -160,7 +164,7 @@ export function selectItem(app, itemId) {
   app.renderAssets();
   app.renderEditor();
   if (app.isMobileViewport()) {
-    app.openMobileEditor();
+    app.openMobileDetail();
   }
   if (app.state.opfsAvailable) {
     app.persistWorkspaceToOpfs().catch(() => {});
@@ -223,11 +227,13 @@ export function setBrowserViewMode(app, level, mode) {
 export function renderEditor(app) {
   const metadataMode = app.syncMetadataModeFromState();
   if (metadataMode === 'collection') {
+    const collection = app.findSelectedCollectionMeta();
     app.dom.metadataEditor.setView({
       mode: 'collection',
-      collection: app.findSelectedCollectionMeta(),
+      collection,
     });
-    app.syncEditorVisibility();
+    app.dom.mobileFlow?.setDetailState({ mode: 'none', item: null, canSaveItem: false, canDeleteItem: false });
+    app.syncResponsivePanels();
     return;
   }
 
@@ -235,16 +241,24 @@ export function renderEditor(app) {
     const selected = app.findSelectedItem();
     const selectedSource = selected ? app.getSourceById(selected.sourceId) : null;
     const canSave = Boolean(selectedSource?.capabilities?.canSaveMetadata);
+    const detailItem = selected ? app.deriveItemEditorState(selected) : null;
     app.dom.metadataEditor.setView({
       mode: 'item',
-      item: selected ? app.deriveItemEditorState(selected) : null,
+      item: detailItem,
       canSaveItem: canSave,
       canDeleteItem: Boolean(selected),
     });
-    app.syncEditorVisibility();
+    app.dom.mobileFlow?.setDetailState({
+      mode: 'item',
+      item: detailItem,
+      canSaveItem: canSave,
+      canDeleteItem: Boolean(selected),
+    });
+    app.syncResponsivePanels();
     return;
   }
 
   app.dom.metadataEditor.setView({ mode: 'none' });
-  app.syncEditorVisibility();
+  app.dom.mobileFlow?.setDetailState({ mode: 'none', item: null, canSaveItem: false, canDeleteItem: false });
+  app.syncResponsivePanels();
 }

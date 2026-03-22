@@ -10,7 +10,7 @@
     selectedCollectionId: 'all',
     currentLevel: 'collections',
     metadataMode: 'collection',
-    mobileEditorOpen: false,
+    mobileView: 'browse',
     openedCollectionId: null,
     publishDestination: null,
     manifest: null,

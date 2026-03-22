@@ -381,7 +381,7 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
       app.state.selectedItemId = null;
       app.state.selectedItemIds = [];
       app.syncMetadataModeFromState();
-      app.closeMobileEditor();
+      app.closeMobileDetail();
     }
     app.state.manifest = null;
     app.dom.manifestPreview.textContent = '{}';
@@ -630,7 +630,7 @@ export function removeSource(app, sourceId) {
   app.state.sources = app.sortSourcesForDisplay(app.state.sources.filter((entry) => entry.id !== sourceId));
   app.state.assets = app.state.assets.filter((entry) => entry.sourceId !== sourceId);
   if (app.state.sources.length === 0) {
-    app.closeMobileEditor();
+    app.closeMobileDetail();
   }
 
   if (app.state.selectedItemId && !app.state.assets.some((item) => item.workspaceId === app.state.selectedItemId)) {

@@ -68,6 +68,7 @@ import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
 import './components/pane-layout.js';
+import './components/mobile-flow.js';
 import './components/connections-list-panel.js';
 import './components/add-connection-panel.js';
 import './components/asset-viewer.js';
@@ -202,8 +203,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
     this.setLocalDraftControlsEnabled(false);
     this.initializeLocalDraftState();
-    this.syncEditorVisibility();
-    this._handleWindowResize = () => this.syncEditorVisibility();
+    this.syncResponsivePanels();
+    this._handleWindowResize = () => this.syncResponsivePanels();
     window.addEventListener('resize', this._handleWindowResize);
     this.initializePlatformFileDrops();
   }
@@ -325,28 +326,28 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
   }
 
-  openMobileEditor() {
-    this.state.mobileEditorOpen = true;
-    this.syncEditorVisibility();
+  openMobileDetail() {
+    this.state.mobileView = 'detail';
+    this.syncResponsivePanels();
   }
 
-  closeMobileEditor() {
-    this.state.mobileEditorOpen = false;
-    this.syncEditorVisibility();
+  closeMobileDetail() {
+    this.state.mobileView = 'browse';
+    this.syncResponsivePanels();
   }
 
-  syncEditorVisibility() {
+  syncResponsivePanels() {
     if (!this.dom?.metadataEditor || !this.dom?.paneLayout) {
       return;
     }
 
-    // Shell controls inspector placement; browser view mode should not hard-code layout.
+    // Desktop keeps the split-pane inspector. Mobile uses a separate browse/detail flow.
     const inspectorPlacement = this.normalizeInspectorPlacement(this.state.inspectorPlacement);
     this.state.inspectorPlacement = inspectorPlacement;
     this.dom.paneLayout.inspectorPlacement = inspectorPlacement;
-
-    const shouldShowOverlay = this.isMobileViewport() && this.state.mobileEditorOpen;
-    this.dom.metadataEditor.setMobileOpen(shouldShowOverlay);
+    this.dom.metadataEditor.setMobileOpen(false);
+    this.dom.metadataEditor.setPresentation?.('inspector');
+    this.dom.mobileFlow?.setMobileView(this.state.mobileView);
   }
 
   normalizeInspectorPlacement(placement) {
@@ -355,7 +356,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   setInspectorPlacement(placement = 'right') {
     this.state.inspectorPlacement = this.normalizeInspectorPlacement(placement);
-    this.syncEditorVisibility();
+    this.syncResponsivePanels();
   }
 
   applyInspectorModeForViewMode(mode) {
@@ -1114,7 +1115,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state.selectedItemId = null;
     this.state.selectedItemIds = [];
     this.syncMetadataModeFromState();
-    this.closeMobileEditor();
+    this.closeMobileDetail();
     this.renderSourceFilter();
     this.renderSourceContext();
     this.renderAssets();
@@ -1764,7 +1765,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       this.state.selectedItemId = null;
       this.state.selectedItemIds = [];
       this.syncMetadataModeFromState();
-      this.closeMobileEditor();
+      this.closeMobileDetail();
       this.renderSourceContext();
       this.renderAssets();
       this.renderEditor();

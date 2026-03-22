@@ -30,14 +30,18 @@ export const panelShellStyles = `
 
   .panel-titlebar {
     padding: 0.1rem 0 0.35rem;
+    flex-direction: column;
+    align-items: center;
   }
 
   .panel-titlebar-main {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     gap: 0.55rem;
     min-width: 0;
     flex: 1 1 auto;
+    width: 100%;
   }
 
   .panel-heading-copy {
@@ -45,11 +49,14 @@ export const panelShellStyles = `
     gap: 0.2rem;
     min-width: 0;
     flex: 1 1 auto;
+    justify-items: center;
+    text-align: center;
   }
 
   .panel-title-row {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.45rem;
     min-width: 0;
     flex-wrap: wrap;
@@ -60,8 +67,9 @@ export const panelShellStyles = `
     font-size: 0.95rem;
     color: #111827;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     overflow-wrap: anywhere;
+    text-align: center;
   }
 
   .panel-status-chip {
@@ -95,6 +103,7 @@ export const panelShellStyles = `
     font-size: 0.83rem;
     color: #64748b;
     min-width: 0;
+    text-align: center;
   }
 
   .panel-titlebar-actions,
@@ -111,6 +120,11 @@ export const panelShellStyles = `
   .panel-toolbar-actions {
     justify-content: flex-end;
     flex: 0 0 auto;
+  }
+
+  .panel-titlebar-actions {
+    justify-content: center;
+    width: 100%;
   }
 
   .panel-toolbar-row {
@@ -157,7 +171,7 @@ export const panelShellStyles = `
 
     .panel-titlebar {
       padding: 0.1rem 0 0.25rem;
-      align-items: flex-start;
+      align-items: center;
     }
 
     .panel-toolbar-row {
@@ -170,10 +184,12 @@ export const panelShellStyles = `
       gap: 0.45rem;
       flex: 1 1 auto;
       min-width: 0;
+      justify-content: center;
     }
 
     .panel-title-row {
-      align-items: flex-start;
+      align-items: center;
+      justify-content: center;
       row-gap: 0.3rem;
     }
 
@@ -187,7 +203,7 @@ export const panelShellStyles = `
 
     .panel-toolbar-main,
     .panel-titlebar-actions {
-      align-items: flex-start;
+      align-items: center;
     }
 
     .panel-toolbar-main {
@@ -203,8 +219,9 @@ export const panelShellStyles = `
     }
 
     .panel-titlebar-actions {
-      align-self: flex-start;
-      justify-content: flex-start;
+      align-self: center;
+      justify-content: center;
+      width: 100%;
     }
 
     .panel-toolbar-actions {

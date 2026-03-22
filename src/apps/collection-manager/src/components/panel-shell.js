@@ -1,5 +1,5 @@
 import { renderBackButton } from './back-button.js';
-import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-back-button';
+import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-titlebar-center';
 
 class OpenPanelShellElement extends HTMLElement {
   static get observedAttributes() {
@@ -33,6 +33,7 @@ class OpenPanelShellElement extends HTMLElement {
     const showBack = this.getAttribute('show-back') === 'true';
     const statusLabel = this.getAttribute('status-label') || '';
     const statusTone = this.getAttribute('status-tone') || 'neutral';
+    const backButtonMarkup = showBack ? renderBackButton() : '';
     const statusMarkup = statusLabel
       ? `<span class="panel-status-chip" data-tone="${statusTone}">${statusLabel}</span>`
       : '';
@@ -45,7 +46,7 @@ class OpenPanelShellElement extends HTMLElement {
       <section class="panel-shell">
         <header class="panel-titlebar">
           <div class="panel-titlebar-main">
-            ${renderBackButton({ hidden: !showBack })}
+            ${backButtonMarkup}
             <div class="panel-heading-copy">
               <div class="panel-title-row">
                 <h2 class="panel-title">${title}</h2>

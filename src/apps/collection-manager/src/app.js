@@ -84,6 +84,7 @@ import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
 import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
+import { renderTrashIcon } from './components/icons.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -125,13 +126,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
         id: 'example',
         category: 'example',
         label: 'Built-in example collections',
-        description: 'Connect instantly to the demo host from this repository.',
+        description: 'Connect instantly to the demo connection from this repository.',
       },
       {
         ...this.providerFactories.local.getDescriptor(),
         category: 'local',
         label: 'Folder on this device',
-        description: 'Use a folder on this device as a writable local host (browser support required).',
+        description: 'Use a folder on this device as a writable local connection (browser support required).',
       },
       {
         ...this.providerFactories.github.getDescriptor(),
@@ -139,7 +140,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         category: 'remote',
         remoteSubtype: 'git',
         label: 'GitHub',
-        description: 'Connect a GitHub repository host for managed collections.',
+        description: 'Connect a GitHub repository for managed collections.',
       },
       {
         id: 'gitlab',
@@ -148,7 +149,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         label: 'GitLab',
         enabled: false,
         statusLabel: 'Coming soon',
-        description: 'GitLab repository hosts are planned but not yet available in this MVP.',
+        description: 'GitLab repository connections are planned but not yet available in this MVP.',
       },
       {
         id: 'gitea',
@@ -157,7 +158,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         label: 'Gitea',
         enabled: false,
         statusLabel: 'Coming soon',
-        description: 'Gitea repository hosts are planned but not yet available in this MVP.',
+        description: 'Gitea repository connections are planned but not yet available in this MVP.',
       },
       {
         ...this.providerFactories.s3.getDescriptor(),
@@ -166,7 +167,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         remoteSubtype: 's3',
         label: 'S3-compatible storage',
         statusLabel: 'Foundation',
-        description: 'Configure an S3-compatible object storage host as a publish target in a local-first workflow.',
+        description: 'Configure an S3-compatible object storage connection as a publish target in a local-first workflow.',
       },
       {
         id: 'custom-domain',
@@ -186,9 +187,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   connectedCallback() {
     this.bindEvents();
-    this.setStatus('No hosts connected yet.', 'neutral');
+    this.setStatus('No connections yet.', 'neutral');
     this.refreshWorkingStatus();
-    this.setConnectionStatus('No hosts connected.', 'neutral');
+    this.setConnectionStatus('No connections yet.', 'neutral');
     this.renderCapabilities(this.providerFactories.example.getCapabilities());
     this.renderProviderCatalog();
     this.setSelectedProvider('example');
@@ -266,8 +267,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     dialog.removeAttribute('open');
   }
 
-  setProviderDialogHeader(title = 'Add host') {
-    const normalizedTitle = String(title || '').trim() || 'Add host';
+  setProviderDialogHeader(title = 'Add connection') {
+    const normalizedTitle = String(title || '').trim() || 'Add connection';
     if (this.dom?.providerDialog) {
       this.dom.providerDialog.setAttribute('aria-label', normalizedTitle);
       const heading = this.dom.providerDialog.querySelector('.dialog-title');
@@ -280,7 +281,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   openAddHostDialog() {
     this.clearPendingSourceRepair();
     this.dom.sourceManager?.resetFlow?.();
-    this.setProviderDialogHeader('Add host');
+    this.setProviderDialogHeader('Add connection');
     this.openDialog(this.dom.providerDialog);
   }
 
@@ -587,7 +588,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
 
     if (source.providerId !== 'github' && source.providerId !== 'local') {
-      this.setStatus('Image upload is currently available for GitHub and local folder hosts.', 'warn');
+      this.setStatus('Image upload is currently available for GitHub and local folder connections.', 'warn');
       return null;
     }
 
@@ -598,11 +599,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     if (source.providerId === 'local') {
       if (source.needsReconnect || !source.provider) {
-        this.setStatus('Reconnect the selected local host before adding images.', 'warn');
+        this.setStatus('Reconnect the selected local connection before adding images.', 'warn');
         return null;
       }
       if (!source.capabilities?.canSaveMetadata) {
-        this.setStatus('Selected local host is read-only. Reconnect with a writable folder.', 'warn');
+        this.setStatus('Selected local connection is read-only. Reconnect with a writable folder.', 'warn');
         return null;
       }
     }
@@ -742,7 +743,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return '';
     }
     if (this.isExampleSource(source)) {
-      return 'Viewing example content. Connect a host to refresh from your own storage or publish changes.';
+      return 'Viewing example content. Connect a source to refresh from your own storage or publish changes.';
     }
     const hasAccessibleContent = this.sourceHasAccessibleContent(source);
     if (source.providerId === 'local' && source.needsReconnect) {
@@ -755,11 +756,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
     if (source.needsReconnect) {
       return hasAccessibleContent
-        ? 'Host is disconnected, but previously loaded content is still available locally. Reconnect to refresh or publish.'
-        : 'Host needs reconnect before publish is available.';
+        ? 'Connection is disconnected, but previously loaded content is still available locally. Reconnect to refresh or publish.'
+        : 'Connection needs reconnect before publish is available.';
     }
     if (!source.capabilities?.canPublish) {
-      return 'Connected read-only host. Publish is currently unavailable.';
+      return 'Connected read-only connection. Publish is currently unavailable.';
     }
     return '';
   }
@@ -770,7 +771,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   renderSourceFilter() {
     const previous = this.state.activeSourceFilter || 'all';
-    const options = [{ value: 'all', label: 'All hosts' }];
+    const options = [{ value: 'all', label: 'All connections' }];
     for (const source of this.state.sources) {
       options.push({
         value: source.id,
@@ -862,18 +863,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     if (source.providerId === 'local' || source.providerId === 'example') {
       const root = (collectionRootPath || '').replace(/^\/+/, '');
-      return root ? `Local host path ${root}` : 'Local host';
+      return root ? `Local path ${root}` : 'Local connection';
     }
 
-    return source.detailLabel || source.displayLabel || source.providerLabel || 'Active host';
+    return source.detailLabel || source.displayLabel || source.providerLabel || 'Active connection';
   }
 
   activeHostStateLabel(source) {
     if (!source) {
-      return 'No active host';
+      return 'No active connection';
     }
     if (this.isExampleSource(source)) {
-      return 'Example collection';
+      return 'Example';
     }
     if (source.needsCredentials) {
       return 'Credentials missing';
@@ -884,7 +885,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (!source.capabilities?.canPublish) {
       return 'Read-only';
     }
-    return 'Connected (publishable)';
+    return 'Ready';
   }
 
   sanitizeSourceConfig(providerId, config = {}) {
@@ -1043,11 +1044,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
   renderSourceContext() {
     const source = this.getSourceById(this.state.activeSourceFilter);
     const sourceName = source
-      ? (source.displayLabel || source.label || source.providerLabel || 'Host')
-      : 'Select host';
-    const sourceState = this.activeHostStateLabel(source);
-    const label = source ? `${sourceName} (${sourceState})` : sourceName;
-    this.dom.managerHeader?.setHostLabel(label);
+      ? (source.displayLabel || source.label || source.providerLabel || 'Connection')
+      : 'Select connection';
+    this.dom.managerHeader?.setHostLabel(sourceName);
     this.refreshWorkingStatus();
   }
 
@@ -1100,7 +1099,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (uniqueSources.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'No hosts connected yet. Use Add host to connect one.';
+      empty.textContent = 'No connections added yet. Use Add connection to connect one.';
       wrap.appendChild(empty);
       return;
     }
@@ -1109,35 +1108,83 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const isActive = this.state.activeSourceFilter === source.id;
       const card = document.createElement('article');
       card.className = `source-card${isActive ? ' is-active-source' : ''}`;
-      const label = source.displayLabel || source.label || source.providerLabel || 'Host';
-      const type = document.createElement('p');
-      type.className = 'source-card-label';
-      type.textContent = label;
-      const meta = document.createElement('p');
-      meta.className = 'panel-subtext';
-      meta.textContent = `${source.collections?.length || 0} collections`;
+      const label = source.displayLabel || source.label || source.providerLabel || 'Connection';
+      const typeLabel = this.isExampleSource(source)
+        ? 'Example'
+        : source.providerId === 'local'
+          ? 'Local'
+          : 'Remote';
+      const collectionCount = source.collections?.length || 0;
+      const locationText = source.detailLabel
+        || ((source.providerId === 'local' || source.providerId === 'example')
+          ? source.config?.path
+          : null)
+        || (source.providerId === 'github'
+          ? `${source.config?.owner || 'owner'}/${source.config?.repo || 'repo'}`
+          : source.providerId === 's3'
+            ? source.config?.endpoint || source.config?.bucket || 'Remote connection'
+            : source.config?.path || 'Local connection');
+      const statusText = this.activeHostStateLabel(source);
+
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-pressed', String(isActive));
+      card.setAttribute('aria-label', `${isActive ? 'Active' : 'Select'} connection ${label}`);
+
+      const selectCard = () => {
+        if (!isActive) {
+          this.activateSource(source);
+          this.renderSourcePicker();
+        }
+      };
+      card.addEventListener('click', (event) => {
+        if (event.target.closest('button')) {
+          return;
+        }
+        selectCard();
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectCard();
+        }
+      });
+
+      const header = document.createElement('div');
+      header.className = 'source-card-header';
+
+      const heading = document.createElement('div');
+      heading.className = 'source-card-heading';
+
+      const title = document.createElement('p');
+      title.className = 'source-card-title';
+      title.textContent = label;
+
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'pill';
+      typeBadge.textContent = typeLabel;
+
+      const countBadge = document.createElement('span');
+      countBadge.className = 'pill';
+      countBadge.textContent = `${collectionCount} coll.`;
+
+      const activePill = document.createElement('span');
+      activePill.className = `pill source-card-active-pill${isActive ? ' is-ok' : ''}`;
+      activePill.textContent = isActive ? 'Active' : 'Available';
+
+      heading.append(title, typeBadge, countBadge);
+      header.append(heading, activePill);
+
+      const location = document.createElement('p');
+      location.className = 'source-card-location';
+      location.textContent = locationText;
 
       const status = document.createElement('p');
-      status.className = 'panel-subtext';
-      status.textContent = source.status || 'Connected';
-
-      const guidance = this.sourceRepairGuidance(source);
-      const guidanceNode = document.createElement('p');
-      guidanceNode.className = 'panel-subtext';
-      guidanceNode.textContent = guidance || (source.capabilities?.canPublish ? 'Ready to publish from this host.' : 'Connected host (read-only).');
+      status.className = 'source-card-status';
+      status.textContent = statusText;
 
       const actions = document.createElement('div');
-      actions.className = 'dialog-actions';
-
-      const useBtn = document.createElement('button');
-      useBtn.className = `btn${isActive ? '' : ' btn-primary'}`;
-      useBtn.type = 'button';
-      useBtn.textContent = isActive ? 'Using host' : 'Set host';
-      useBtn.disabled = isActive;
-      useBtn.addEventListener('click', () => {
-        this.activateSource(source);
-        this.renderSourcePicker();
-      });
+      actions.className = 'source-card-actions';
 
       if (source.providerId === 'local' && source.needsReconnect) {
         const reselectBtn = document.createElement('button');
@@ -1166,36 +1213,41 @@ class OpenCollectionsManagerElement extends HTMLElement {
         const reconnectBtn = document.createElement('button');
         reconnectBtn.className = 'btn btn-primary';
         reconnectBtn.type = 'button';
-        reconnectBtn.textContent = 'Reconnect now';
+        reconnectBtn.textContent = 'Reconnect';
         reconnectBtn.addEventListener('click', async () => {
           this.prepareSourceRepair(source.id, 'reconnect');
           await this.refreshSource(source.id);
           this.renderSourcePicker();
         });
         actions.append(reconnectBtn);
+      } else if (!this.isExampleSource(source) || source.capabilities?.canPublish || source.capabilities?.canSaveMetadata) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn';
+        refreshBtn.type = 'button';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.addEventListener('click', async () => {
+          this.prepareSourceRepair(source.id, 'refresh');
+          await this.refreshSource(source.id);
+          this.renderSourcePicker();
+        });
+        actions.append(refreshBtn);
       }
 
-      const refreshBtn = document.createElement('button');
-      refreshBtn.className = 'btn';
-      refreshBtn.type = 'button';
-      refreshBtn.textContent = source.needsReconnect ? 'Retry reconnect' : 'Refresh host';
-      refreshBtn.addEventListener('click', async () => {
-        this.prepareSourceRepair(source.id, 'refresh');
-        await this.refreshSource(source.id);
-        this.renderSourcePicker();
-      });
-
       const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn';
+      removeBtn.className = 'btn source-card-remove';
       removeBtn.type = 'button';
-      removeBtn.textContent = 'Remove host';
+      removeBtn.innerHTML = `${renderTrashIcon()}<span>Remove</span>`;
       removeBtn.addEventListener('click', () => {
         this.removeSource(source.id);
         this.renderSourcePicker();
       });
 
-      actions.append(useBtn, refreshBtn, removeBtn);
-      card.append(type, meta, status, guidanceNode, actions);
+      actions.append(removeBtn);
+      card.append(header, location);
+      if (statusText) {
+        card.append(status);
+      }
+      card.append(actions);
       wrap.appendChild(card);
     }
   }
@@ -1650,16 +1702,16 @@ class OpenCollectionsManagerElement extends HTMLElement {
         label: 'Publish collection',
         visible: true,
         disabled: true,
-        reason: 'Select a single active host to publish this collection.',
+        reason: 'Select a single active connection to publish this collection.',
       };
     }
 
     if (!source.capabilities?.canPublish) {
-      let reason = 'The active host does not currently support publishing.';
+      let reason = 'The active connection does not currently support publishing.';
       if (source.needsCredentials) {
-        reason = 'Reconnect this host and provide credentials before publishing.';
+        reason = 'Reconnect this connection and provide credentials before publishing.';
       } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
-        reason = 'Reconnect or validate this host before publishing.';
+        reason = 'Reconnect or validate this connection before publishing.';
       }
       return {
         label: 'Publish collection',
@@ -1674,7 +1726,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
         label: 'Publish collection',
         visible: true,
         disabled: true,
-        reason: 'This host is connected, but upload publishing is not available yet.',
+        reason: 'This connection is connected, but upload publishing is not available yet.',
       };
     }
 
@@ -1695,11 +1747,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
     if (!source.capabilities?.canPublish) {
       if (source.needsCredentials) {
-        this.setStatus('Publish blocked: this host is missing credentials. Reconnect and re-enter credentials.', 'warn');
+        this.setStatus('Publish blocked: this connection is missing credentials. Reconnect and re-enter credentials.', 'warn');
       } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
-        this.setStatus('Publish blocked: this host needs reconnect/validation before publishing.', 'warn');
+        this.setStatus('Publish blocked: this connection needs reconnect/validation before publishing.', 'warn');
       } else {
-        this.setStatus('Publish blocked: this host does not currently support publish uploads.', 'warn');
+        this.setStatus('Publish blocked: this connection does not currently support publish uploads.', 'warn');
       }
       return;
     }
@@ -1736,7 +1788,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (pending.length === 0) {
       this.setStatus('No pending local assets. Publishing manifest only...', 'neutral');
     } else {
-      this.setStatus(`Publishing ${pending.length} asset(s) to the active host...`, 'neutral');
+      this.setStatus(`Publishing ${pending.length} asset(s) to the active connection...`, 'neutral');
     }
     this.setWorkingStateFlags({ publishInProgress: true, publishError: '', lastPublishResult: null });
 

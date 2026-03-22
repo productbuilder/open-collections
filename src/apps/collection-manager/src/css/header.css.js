@@ -92,6 +92,28 @@ export const headerStyles = `
     background: #f8fafc;
   }
 
+  .btn-connection {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .icon-chevron {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   @media (max-width: 760px) {
     .topbar {
       padding: 0.55rem 0.7rem;

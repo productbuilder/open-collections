@@ -170,11 +170,22 @@ export const shellStyles = `
 
   .source-card {
     border: 1px solid #dbe3ec;
-    border-radius: 8px;
+    border-radius: 12px;
     background: #ffffff;
-    padding: 0.6rem;
+    padding: 0.75rem;
     display: grid;
-    gap: 0.45rem;
+    gap: 0.55rem;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  }
+
+  .source-card:hover {
+    border-color: #bfdbfe;
+  }
+
+  .source-card:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
   }
 
   .source-card-label {
@@ -192,6 +203,76 @@ export const shellStyles = `
     border-color: #0f6cc6;
     box-shadow: 0 0 0 1px #66a6e8 inset;
     background: #f5faff;
+  }
+
+  .source-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .source-card-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .source-card-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+  }
+
+  .source-card-location,
+  .source-card-status {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    overflow-wrap: anywhere;
+  }
+
+  .source-card-status {
+    color: #475569;
+  }
+
+  .source-card-actions {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .source-card-actions .btn {
+    min-width: 0;
+  }
+
+  .source-card-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .source-card-active-pill {
+    align-self: flex-start;
+  }
+
+  .icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .icon-trash {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .storage-dialog {
@@ -309,6 +390,19 @@ export const shellStyles = `
 
     .dialog-actions .btn {
       flex: 1 1 calc(50% - 0.5rem);
+    }
+
+    .source-card {
+      padding: 0.65rem;
+    }
+
+    .source-card-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .source-card-active-pill {
+      align-self: flex-start;
     }
 
     dialog,

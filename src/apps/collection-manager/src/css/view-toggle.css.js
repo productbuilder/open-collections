@@ -22,7 +22,9 @@ export const viewToggleStyles = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 2.5rem;
     min-width: 2.5rem;
+    height: 2.25rem;
     min-height: 2.25rem;
     padding: 0.35rem 0.55rem;
     border: none;
@@ -30,7 +32,7 @@ export const viewToggleStyles = `
     background: transparent;
     color: #475569;
     cursor: pointer;
-    transition: background-color 140ms ease, box-shadow 140ms ease, color 140ms ease, opacity 140ms ease;
+    transition: background-color 140ms ease, box-shadow 140ms ease, color 140ms ease, opacity 140ms ease, border-color 140ms ease;
   }
 
   .option:last-child {
@@ -79,12 +81,31 @@ export const viewToggleStyles = `
   }
 
   .is-mobile .toggle {
-    border-radius: 999px;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
   }
 
   .is-mobile .option {
+    width: 2.3rem;
     min-width: 2.3rem;
-    padding-inline: 0.5rem;
-    border-right: none;
+    height: 2.3rem;
+    min-height: 2.3rem;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .is-mobile .option:hover,
+  .is-mobile .option.is-active {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .is-mobile .option .icon {
+    opacity: 0.92;
   }
 `;

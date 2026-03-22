@@ -62,13 +62,14 @@ export const browserStyles = `
   .viewport-actions {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.45rem;
     flex-wrap: wrap;
     min-width: 0;
   }
 
   .viewport-title-actions {
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .viewport-toolbar-main {
@@ -164,7 +165,7 @@ export const browserStyles = `
 
     .viewport-title-actions,
     .viewport-toolbar-actions {
-      align-items: flex-start;
+      align-items: center;
       width: auto;
       flex: 0 0 auto;
     }
@@ -176,7 +177,8 @@ export const browserStyles = `
     }
 
     .viewport-title-actions {
-      justify-content: flex-start;
+      justify-content: center;
+      width: 100%;
     }
 
     .viewport-toolbar-actions {

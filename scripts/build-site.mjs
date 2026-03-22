@@ -20,6 +20,7 @@ const ROOT_PASSTHROUGH_PREFIXES = [
 	'notes/',
 ];
 const LOCALES = ['en', 'nl'];
+const BUILD_VERSION = process.env.OPEN_COLLECTIONS_SITE_BUILD_VERSION ?? `${Date.now()}`;
 const BINARY_ASSET_EXTENSIONS = new Set(['.exe', '.msi', '.dmg', '.pkg', '.appimage', '.zip']);
 const EXCLUDED_SITE_SOURCE_PATHS = new Set([
 	`${SITE_SOURCE_RELATIVE_ROOT}/browser/index.html`,
@@ -251,6 +252,44 @@ function rewriteHtmlUrls(html, sourcePath, locale, currentOutputFile) {
 	return html.replace(/\b(href|src|action)="([^"]+)"/g, (_match, attr, value) => {
 		const rewritten = rewriteUrl(value, sourcePath, locale, currentOutputFile);
 		return `${attr}="${rewritten}"`;
+	});
+}
+
+function appendBuildVersion(url) {
+	if (!url || /^(?:[a-z]+:|mailto:|tel:|#|javascript:|data:)/i.test(url) || url.startsWith('/api/')) {
+		return url;
+	}
+
+	const match = url.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/);
+	const pathname = match?.[1] ?? url;
+	const search = match?.[2] ?? '';
+	const hash = match?.[3] ?? '';
+	const searchParams = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+	searchParams.set('v', BUILD_VERSION);
+	const nextSearch = searchParams.toString();
+	return `${pathname}${nextSearch ? `?${nextSearch}` : ''}${hash}`;
+}
+
+function cacheBustHtmlAssetUrls(html) {
+	return html.replace(/<(script|link)\b([^>]*?)\b(src|href)="([^"]+)"([^>]*)>/gi, (match, tagName, beforeAttr, urlAttr, urlValue, afterAttr) => {
+		const attributes = `${beforeAttr} ${urlAttr}="${urlValue}" ${afterAttr}`;
+		const normalizedTagName = tagName.toLowerCase();
+
+		const isScriptAsset = normalizedTagName === 'script' && urlAttr.toLowerCase() === 'src';
+		const isStylesheetAsset = normalizedTagName === 'link'
+			&& urlAttr.toLowerCase() === 'href'
+			&& (
+				/\brel\s*=\s*"stylesheet"/i.test(attributes)
+				|| /\brel\s*=\s*"modulepreload"/i.test(attributes)
+				|| (/\brel\s*=\s*"preload"/i.test(attributes) && /\bas\s*=\s*"(?:script|style)"/i.test(attributes))
+			);
+
+		if (!isScriptAsset && !isStylesheetAsset) {
+			return match;
+		}
+
+		const bustedUrl = appendBuildVersion(urlValue);
+		return `<${tagName}${beforeAttr}${urlAttr}="${bustedUrl}"${afterAttr}>`;
 	});
 }
 
@@ -496,10 +535,10 @@ function buildContext(locale, i18n, pageId, route) {
 function renderHtmlDocument({ locale, route, title, bodyClass, context, mainContent, includeDocsNav, includeRegistryWidget, untranslated, extraHeadContent = '', extraBodyContent = '' }) {
 	const currentFile = localeRouteToFile(locale, route);
 	const localeRoot = localePublishRoot(locale);
-	const cssHref = toRelativeHref(currentFile, `${localeRoot}/index.css`);
-	const shellScriptHref = toRelativeHref(currentFile, `${localeRoot}/shared/site-shell-components.js`);
-	const docsNavHref = includeDocsNav ? toRelativeHref(currentFile, `${localeRoot}/docs/docs-nav.js`) : '';
-	const registryWidgetHref = includeRegistryWidget ? toRelativeHref(currentFile, 'src/shared/components/open-collections-registry-widget.js') : '';
+	const cssHref = appendBuildVersion(toRelativeHref(currentFile, `${localeRoot}/index.css`));
+	const shellScriptHref = appendBuildVersion(toRelativeHref(currentFile, `${localeRoot}/shared/site-shell-components.js`));
+	const docsNavHref = includeDocsNav ? appendBuildVersion(toRelativeHref(currentFile, `${localeRoot}/docs/docs-nav.js`)) : '';
+	const registryWidgetHref = includeRegistryWidget ? appendBuildVersion(toRelativeHref(currentFile, 'src/shared/components/open-collections-registry-widget.js')) : '';
 	const basePath = route ? toRelativeHref(currentFile, `${localeRoot}/index.html`) : './';
 	const normalizedBasePath = basePath.endsWith('index.html') ? basePath.slice(0, -'index.html'.length) : basePath;
 	const notice = untranslated ? renderUntranslatedNotice(context.i18n) : '';
@@ -537,8 +576,8 @@ function renderFallbackPage({ sourcePath, html, locale, i18n }) {
 	const currentFile = localeRouteToFile(locale, route);
 	const rewrittenMain = rewriteHtmlUrls(extractMain(html), sourcePath, locale, currentFile);
 	const rewrittenTitle = titleFromHtml(html);
-	const extraHeadContent = rewriteHtmlUrls(extractHeadSupplement(html), sourcePath, locale, currentFile);
-	const extraBodyContent = rewriteHtmlUrls(extractPostMainSupplement(html), sourcePath, locale, currentFile);
+	const extraHeadContent = cacheBustHtmlAssetUrls(rewriteHtmlUrls(extractHeadSupplement(html), sourcePath, locale, currentFile));
+	const extraBodyContent = cacheBustHtmlAssetUrls(rewriteHtmlUrls(extractPostMainSupplement(html), sourcePath, locale, currentFile));
 	return renderHtmlDocument({
 		locale,
 		route,

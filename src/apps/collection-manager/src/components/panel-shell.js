@@ -1,4 +1,4 @@
-import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-mobile-toolbar';
+import { panelShellStyles } from '../css/panel-shell.css.js?v=20260322-mobile-publish-padding';
 
 class OpenPanelShellElement extends HTMLElement {
   static get observedAttributes() {

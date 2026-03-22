@@ -154,7 +154,7 @@ export const browserStyles = `
 
   @media (max-width: 760px) {
     :host {
-      padding: 0;
+      padding: 0.7rem 0.7rem 0.8rem;
     }
 
     .viewport-toolbar-main,

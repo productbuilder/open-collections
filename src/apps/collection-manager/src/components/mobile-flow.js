@@ -1,4 +1,4 @@
-import './collection-browser.js?v=20260322-mobile-header';
+import './collection-browser.js?v=20260322-mobile-publish-padding';
 import './mobile-detail.js';
 
 const mobileFlowStyles = `
@@ -82,6 +82,14 @@ class OpenCollectionsMobileFlowElement extends HTMLElement {
 
   setBrowserState(state = {}) {
     this.shadowRoot.getElementById('mobileBrowser')?.update(state);
+  }
+
+  setPublishActionState(action = {}) {
+    this.shadowRoot.getElementById('mobileBrowser')?.setPublishActionState?.(action);
+  }
+
+  setWorkingStatus(status = {}) {
+    this.shadowRoot.getElementById('mobileBrowser')?.setWorkingStatus?.(status);
   }
 
   setDetailState(state = {}) {

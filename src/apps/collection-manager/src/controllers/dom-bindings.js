@@ -6,18 +6,15 @@ export function cacheDomElements(root) {
     paneLayout: root.getElementById('paneLayout'),
     collectionBrowser: root.getElementById('collectionBrowser'),
     metadataEditor: root.getElementById('metadataEditor'),
-    sourceManager: root.getElementById('sourceManager'),
+    connectionsListPanel: root.getElementById('connectionsListPanel'),
+    addConnectionPanel: root.getElementById('addConnectionPanel'),
     assetViewer: root.getElementById('assetViewer'),
     connectionsDialog: root.getElementById('connectionsDialog'),
-    sourcePickerList: root.getElementById('sourcePickerList'),
     publishDialog: root.getElementById('publishDialog'),
     newCollectionDialog: root.getElementById('newCollectionDialog'),
     registerDialog: root.getElementById('registerDialog'),
     headerMenuDialog: root.getElementById('headerMenuDialog'),
     connectionsDialogTitle: root.getElementById('connectionsDialogTitle'),
-    addConnectionBackBtn: root.getElementById('addConnectionBackBtn'),
-    addConnectionView: root.getElementById('addConnectionView'),
-    addConnectionViewTitle: root.getElementById('addConnectionViewTitle'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
     collectionId: root.getElementById('collectionId'),
@@ -46,7 +43,7 @@ export function cacheDomElements(root) {
 }
 
 export function initializeDomDefaults(app) {
-  app.dom.sourceManager?.setConfigValues({
+  app.dom.addConnectionPanel?.setConfigValues({
     localPathInput: MANAGER_CONFIG.defaultLocalManifestPath,
     localFolderName: '',
     githubBranch: 'main',
@@ -71,22 +68,77 @@ export function bindDomEvents(app) {
     app.openConnectionsDialog();
   });
   app.dom.managerHeader.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
-  app.dom.sourceManager.addEventListener('open-storage-options', () => app.openDialog(app.dom.storageOptionsDialog));
-  app.dom.sourceManager.addEventListener('select-provider', (event) => {
+
+  app.dom.connectionsListPanel.addEventListener('open-add-connection', () => {
+    app.openAddHostDialog();
+  });
+  app.dom.connectionsListPanel.addEventListener('select-connection', (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (!sourceId) {
+      return;
+    }
+    const source = app.getSourceById(sourceId);
+    if (!source) {
+      return;
+    }
+    app.activateSource(source);
+    app.renderConnectionsListPanel();
+  });
+  app.dom.connectionsListPanel.addEventListener('refresh-connection', async (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (sourceId) {
+      await app.refreshSource(sourceId);
+    }
+  });
+  app.dom.connectionsListPanel.addEventListener('repair-connection', async (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    const mode = event.detail?.mode || '';
+    if (!sourceId || !mode) {
+      return;
+    }
+    if (mode === 'credentials') {
+      app.openCredentialRepairDialog(sourceId);
+      return;
+    }
+    if (mode === 'folder') {
+      app.prepareSourceRepair(sourceId, 'folder');
+      const didPick = await app.pickLocalFolder();
+      if (didPick) {
+        await app.refreshSource(sourceId, { configOverrides: { localDirectoryHandle: app.selectedLocalDirectoryHandle } });
+      }
+      return;
+    }
+    app.prepareSourceRepair(sourceId, 'reconnect');
+    await app.refreshSource(sourceId);
+  });
+  app.dom.connectionsListPanel.addEventListener('remove-connection', (event) => {
+    const sourceId = event.detail?.sourceId || '';
+    if (sourceId) {
+      app.removeSource(sourceId);
+    }
+  });
+
+  app.dom.addConnectionPanel.addEventListener('back-to-connections', () => {
+    app.clearPendingSourceRepair();
+    app.dom.addConnectionPanel?.resetFlow?.();
+    app.showConnectionsListView();
+  });
+  app.dom.addConnectionPanel.addEventListener('open-storage-options', () => app.openDialog(app.dom.storageOptionsDialog));
+  app.dom.addConnectionPanel.addEventListener('select-provider', (event) => {
     const providerId = event.detail?.providerId || '';
     if (providerId) {
       app.setSelectedProvider(providerId);
     }
   });
-  app.dom.sourceManager.addEventListener('connect-provider', async () => {
+  app.dom.addConnectionPanel.addEventListener('connect-provider', async () => {
     await app.connectCurrentProvider();
   });
-  app.dom.sourceManager.addEventListener('add-example-host', async () => {
+  app.dom.addConnectionPanel.addEventListener('add-example-connection', async () => {
     app.clearPendingSourceRepair();
     app.setSelectedProvider('example');
     await app.connectCurrentProvider();
   });
-  app.dom.sourceManager.addEventListener('add-local-folder-host', async () => {
+  app.dom.addConnectionPanel.addEventListener('add-local-folder-connection', async () => {
     app.clearPendingSourceRepair();
     app.setSelectedProvider('local');
     const didPick = await app.pickLocalFolder();
@@ -94,71 +146,7 @@ export function bindDomEvents(app) {
       await app.connectCurrentProvider();
     }
   });
-  app.dom.sourceManager.addEventListener('refresh-source', async (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (sourceId) {
-      await app.refreshSource(sourceId);
-    }
-  });
-  app.dom.sourceManager.addEventListener('inspect-source', (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (sourceId) {
-      app.inspectSource(sourceId);
-    }
-  });
-  app.dom.sourceManager.addEventListener('repair-source-credentials', (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (!sourceId) {
-      return;
-    }
-    app.openCredentialRepairDialog(sourceId);
-  });
-  app.dom.sourceManager.addEventListener('repair-source-folder', async (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (!sourceId) {
-      return;
-    }
-    app.prepareSourceRepair(sourceId, 'folder');
-    const didPick = await app.pickLocalFolder();
-    if (didPick) {
-      await app.refreshSource(sourceId, { configOverrides: { localDirectoryHandle: app.selectedLocalDirectoryHandle } });
-    }
-  });
-  app.dom.sourceManager.addEventListener('repair-source-reconnect', async (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (!sourceId) {
-      return;
-    }
-    app.prepareSourceRepair(sourceId, 'reconnect');
-    await app.refreshSource(sourceId);
-  });
-  app.dom.sourceManager.addEventListener('remove-source', (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (sourceId) {
-      app.removeSource(sourceId);
-    }
-  });
-  app.dom.sourceManager.addEventListener('show-only-source', (event) => {
-    const sourceId = event.detail?.sourceId || '';
-    if (!sourceId) {
-      return;
-    }
-    app.state.activeSourceFilter = sourceId;
-    app.renderSourceFilter();
-    const visible = app.getVisibleAssets();
-    app.state.selectedItemId = visible[0]?.workspaceId || null;
-    app.state.selectedItemIds = [];
-    app.renderAssets();
-    app.renderEditor();
-    app.renderSourceContext();
-    app.refreshWorkingStatus();
-  });
-  app.dom.sourceManager.addEventListener('pick-local-folder', async () => {
-    await app.pickLocalFolder();
-  });
-  app.dom.addConnectionBackBtn?.addEventListener('click', () => {
-    app.showConnectionsListView();
-  });
+
   app.dom.openRegisterFromMenuBtn.addEventListener('click', () => {
     app.closeDialog(app.dom.headerMenuDialog);
     app.openDialog(app.dom.registerDialog);

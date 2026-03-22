@@ -217,6 +217,15 @@ export const shellStyles = `
     flex-wrap: wrap;
   }
 
+  .dialog-panels {
+    padding: 0;
+    display: block;
+  }
+
+  .dialog-panel {
+    padding: 0.95rem;
+  }
+
   .dialog-actions .btn {
     min-width: 0;
   }
@@ -449,6 +458,10 @@ export const shellStyles = `
     }
 
     .dialog-body {
+      padding: 0.8rem;
+    }
+
+    .dialog-panel {
       padding: 0.8rem;
     }
 

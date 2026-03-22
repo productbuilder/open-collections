@@ -63,12 +63,12 @@ export function setSelectedProvider(app, providerId) {
   }
 
   app.state.selectedProviderId = providerId;
-  app.dom.sourceManager?.setSelectedProvider(providerId);
+  app.dom.addConnectionPanel?.setSelectedProvider(providerId);
   app.renderCapabilities(app.providerFactories[providerId]?.getCapabilities?.() || selected.capabilities || {});
 }
 
 export function collectCurrentProviderConfig(app, providerId) {
-  const config = app.dom.sourceManager?.getProviderConfig(providerId) || {};
+  const config = app.dom.addConnectionPanel?.getProviderConfig(providerId) || {};
   if (providerId === 'local') {
     config.localDirectoryName = (config.localDirectoryName || '').trim();
     const selectedHandle =
@@ -399,7 +399,7 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
     app.renderEditor();
     app.saveSourcesToStorage();
     app.clearPendingSourceRepair();
-    app.renderSourcePicker();
+    app.renderConnectionsListPanel();
     app.showConnectionsListView();
     if (options.openConnectionsDialog !== false && options.openSourcePicker !== false) {
       app.openDialog(app.dom.connectionsDialog);
@@ -447,7 +447,7 @@ export function inspectSource(app, sourceId) {
         ? source.config.localDirectoryHandle
         : null;
   }
-  app.dom.sourceManager?.setConfigValues(nextConfigValues);
+  app.dom.addConnectionPanel?.setConfigValues(nextConfigValues);
 
   app.setConnectionStatus(`Inspecting storage source: ${source.label}`, true);
 }

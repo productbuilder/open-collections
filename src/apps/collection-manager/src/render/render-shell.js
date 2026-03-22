@@ -22,13 +22,9 @@ export function renderShell(shadowRoot) {
           </div>
           <button class="icon-btn" data-close="connectionsDialog" type="button" aria-label="Close connections dialog">${renderCloseIcon()}</button>
         </div>
-        <div id="sourcePickerList" class="dialog-body source-list"></div>
-        <div id="addConnectionView" class="dialog-body add-connection-view is-hidden">
-          <div class="add-connection-view-header">
-            <button class="btn dialog-nav-btn" id="addConnectionBackBtn" type="button" aria-label="Back to connections">Back</button>
-            <h3 class="add-connection-view-title" id="addConnectionViewTitle">Add connection</h3>
-          </div>
-          <open-collections-source-manager id="sourceManager"></open-collections-source-manager>
+        <div class="dialog-body dialog-panels">
+          <open-collections-connections-list id="connectionsListPanel" class="dialog-panel"></open-collections-connections-list>
+          <open-collections-add-connection-panel id="addConnectionPanel" class="dialog-panel is-hidden"></open-collections-add-connection-panel>
         </div>
       </div>
     </dialog>

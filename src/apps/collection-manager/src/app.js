@@ -68,7 +68,8 @@ import './components/manager-header.js';
 import './components/collection-browser.js';
 import './components/metadata-editor.js';
 import './components/pane-layout.js';
-import './components/source-manager.js';
+import './components/connections-list-panel.js';
+import './components/add-connection-panel.js';
 import './components/asset-viewer.js';
 import {
   slugifySegment as slugifySegmentUtil,
@@ -84,7 +85,6 @@ import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
 import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
-import { renderTrashIcon } from './components/icons.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -262,7 +262,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (dialog === this.dom?.connectionsDialog) {
       this.showConnectionsListView();
       this.clearPendingSourceRepair();
-      this.dom.sourceManager?.resetFlow?.();
+      this.dom.addConnectionPanel?.resetFlow?.();
     }
 
     if (typeof dialog.close === 'function') {
@@ -283,28 +283,19 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
   }
 
-  setAddConnectionViewTitle(title = 'Add connection') {
-    const normalizedTitle = String(title || '').trim() || 'Add connection';
-    if (this.dom?.addConnectionViewTitle) {
-      this.dom.addConnectionViewTitle.textContent = normalizedTitle;
-    }
-  }
-
   showConnectionsListView() {
     this.state.connectionsDialogView = 'list';
-    this.renderSourcePicker();
-    this.dom?.sourcePickerList?.classList.remove('is-hidden');
-    this.dom?.addConnectionView?.classList.add('is-hidden');
+    this.renderConnectionsListPanel();
+    this.dom?.connectionsListPanel?.classList.remove('is-hidden');
+    this.dom?.addConnectionPanel?.classList.add('is-hidden');
     this.setConnectionsDialogHeader('Connections');
-    this.setAddConnectionViewTitle('Add connection');
   }
 
-  showAddConnectionView(title = 'Add connection') {
+  showAddConnectionView() {
     this.state.connectionsDialogView = 'add';
-    this.dom?.sourcePickerList?.classList.add('is-hidden');
-    this.dom?.addConnectionView?.classList.remove('is-hidden');
+    this.dom?.connectionsListPanel?.classList.add('is-hidden');
+    this.dom?.addConnectionPanel?.classList.remove('is-hidden');
     this.setConnectionsDialogHeader('Connections');
-    this.setAddConnectionViewTitle(title);
   }
 
   openConnectionsDialog() {
@@ -314,8 +305,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   openAddHostDialog() {
     this.clearPendingSourceRepair();
-    this.dom.sourceManager?.resetFlow?.();
-    this.showAddConnectionView('Add connection');
+    this.dom.addConnectionPanel?.resetFlow?.();
+    this.showAddConnectionView();
     this.openDialog(this.dom.connectionsDialog);
   }
 
@@ -324,10 +315,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (!source || !['github', 's3'].includes(source.providerId)) {
       return;
     }
-    const providerLabel = source.providerLabel || (source.providerId === 'github' ? 'GitHub' : 'S3-compatible');
     this.inspectSource(source.id);
-    this.dom.sourceManager?.openRepairCredentials?.(source.providerId);
-    this.showAddConnectionView(`Update ${providerLabel} credentials`);
+    this.dom.addConnectionPanel?.openRepairCredentials?.(source.providerId);
+    this.showAddConnectionView();
     this.openDialog(this.dom.connectionsDialog);
   }
 
@@ -374,7 +364,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderProviderCatalog() {
-    this.dom.sourceManager?.setProviderCatalog(this.providerCatalog);
+    this.dom.addConnectionPanel?.setProviderCatalog(this.providerCatalog);
   }
 
   setSelectedProvider(providerId) {
@@ -423,7 +413,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   setConnectionStatus(text, tone = false) {
     const resolvedTone = typeof tone === 'boolean' ? (tone ? 'ok' : 'warn') : tone;
-    this.dom.sourceManager?.setConnectionStatus(text, resolvedTone);
+    this.dom.addConnectionPanel?.setConnectionStatus(text, resolvedTone);
   }
 
   setLocalDraftStatus(text, tone = 'neutral') {
@@ -700,7 +690,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       typeof capabilitiesOrProvider?.getCapabilities === 'function'
         ? capabilitiesOrProvider.getCapabilities()
         : capabilitiesOrProvider || {};
-    this.dom.sourceManager?.setCapabilities(capabilities);
+    this.dom.addConnectionPanel?.setCapabilities(capabilities);
   }
 
   getSourceById(sourceId) {
@@ -832,8 +822,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderSourcesList() {
-    this.dom.sourceManager?.setSources(this.state.sources);
-    this.dom.sourceManager?.setActiveSourceId(this.state.activeSourceFilter || 'all');
+    this.renderConnectionsListPanel();
+  }
+
+  renderConnectionsListPanel() {
+    const uniqueSources = this.uniqueSourcesForManageHosts(this.state.sources);
+    this.dom.connectionsListPanel?.setSources(uniqueSources);
+    this.dom.connectionsListPanel?.setActiveSourceId(this.state.activeSourceFilter || 'all');
   }
 
   collectCurrentProviderConfig(providerId) {
@@ -846,19 +841,19 @@ class OpenCollectionsManagerElement extends HTMLElement {
       const folderName = (handle?.name || '').trim() || 'Selected folder';
       const folderPath = String(handle?.path || '').trim();
       this.selectedLocalDirectoryHandle = handle || null;
-      this.dom.sourceManager?.setConfigValues({
+      this.dom.addConnectionPanel?.setConfigValues({
         localFolderName: folderName,
         localPathInput: folderPath || folderName,
       });
-      this.dom.sourceManager?.setLocalFolderStatus(`Selected folder: ${folderPath || folderName}`, 'ok');
+      this.dom.addConnectionPanel?.setLocalFolderStatus(`Selected folder: ${folderPath || folderName}`, 'ok');
       this.setStatus(`Selected local folder: ${folderPath || folderName}`, 'ok');
       return true;
     } catch (error) {
       if (error?.name === 'AbortError') {
-        this.dom.sourceManager?.setLocalFolderStatus('Folder selection cancelled.', 'neutral');
+        this.dom.addConnectionPanel?.setLocalFolderStatus('Folder selection cancelled.', 'neutral');
         return false;
       }
-      this.dom.sourceManager?.setLocalFolderStatus(`Folder selection failed: ${error.message}`, 'warn');
+      this.dom.addConnectionPanel?.setLocalFolderStatus(`Folder selection failed: ${error.message}`, 'warn');
       this.setStatus(`Folder selection failed: ${error.message}`, 'warn');
       return false;
     }
@@ -1125,194 +1120,6 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.renderEditor();
     this.refreshWorkingStatus();
   }
-
-  renderSourcePicker() {
-    const wrap = this.dom.sourcePickerList;
-    wrap.innerHTML = '';
-
-    const addCard = document.createElement('article');
-    addCard.className = 'source-card source-card-add';
-    addCard.tabIndex = 0;
-    addCard.setAttribute('role', 'button');
-    addCard.setAttribute('aria-label', 'Add connection');
-    addCard.innerHTML = `
-      <div class="source-card-header">
-        <div class="source-card-heading">
-          <p class="source-card-title">Add connection</p>
-        </div>
-      </div>
-    `;
-    const openAddView = () => {
-      this.openAddHostDialog();
-    };
-    addCard.addEventListener('click', () => {
-      openAddView();
-    });
-    addCard.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openAddView();
-      }
-    });
-    wrap.appendChild(addCard);
-
-    const uniqueSources = this.uniqueSourcesForManageHosts(this.state.sources);
-    if (uniqueSources.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = 'No connections added yet.';
-      wrap.appendChild(empty);
-      return;
-    }
-
-    for (const source of uniqueSources) {
-      const isActive = this.state.activeSourceFilter === source.id;
-      const card = document.createElement('article');
-      card.className = `source-card${isActive ? ' is-active-source' : ''}`;
-      const label = source.displayLabel || source.label || source.providerLabel || 'Connection';
-      const typeLabel = this.isExampleSource(source)
-        ? 'Example'
-        : source.providerId === 'local'
-          ? 'Local'
-          : 'Remote';
-      const collectionCount = source.collections?.length || 0;
-      const locationText = source.detailLabel
-        || ((source.providerId === 'local' || source.providerId === 'example')
-          ? source.config?.path
-          : null)
-        || (source.providerId === 'github'
-          ? `${source.config?.owner || 'owner'}/${source.config?.repo || 'repo'}`
-          : source.providerId === 's3'
-            ? source.config?.endpoint || source.config?.bucket || 'Remote connection'
-            : source.config?.path || 'Local connection');
-      const statusText = this.activeHostStateLabel(source);
-
-      card.tabIndex = 0;
-      card.setAttribute('role', 'button');
-      card.setAttribute('aria-pressed', String(isActive));
-      card.setAttribute('aria-label', `${isActive ? 'Active' : 'Select'} connection ${label}`);
-
-      const selectCard = () => {
-        if (!isActive) {
-          this.activateSource(source);
-          this.renderSourcePicker();
-        }
-      };
-      card.addEventListener('click', (event) => {
-        if (event.target.closest('button')) {
-          return;
-        }
-        selectCard();
-      });
-      card.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          selectCard();
-        }
-      });
-
-      const header = document.createElement('div');
-      header.className = 'source-card-header';
-
-      const heading = document.createElement('div');
-      heading.className = 'source-card-heading';
-
-      const title = document.createElement('p');
-      title.className = 'source-card-title';
-      title.textContent = label;
-
-      const typeBadge = document.createElement('span');
-      typeBadge.className = 'pill';
-      typeBadge.textContent = typeLabel;
-
-      const countBadge = document.createElement('span');
-      countBadge.className = 'pill';
-      countBadge.textContent = `${collectionCount} coll.`;
-
-      const activePill = document.createElement('span');
-      activePill.className = `pill source-card-active-pill${isActive ? ' is-ok' : ''}`;
-      activePill.textContent = isActive ? 'Active' : 'Available';
-
-      heading.append(title, typeBadge, countBadge);
-      header.append(heading, activePill);
-
-      const location = document.createElement('p');
-      location.className = 'source-card-location';
-      location.textContent = locationText;
-
-      const status = document.createElement('p');
-      status.className = 'source-card-status';
-      status.textContent = statusText;
-
-      const actions = document.createElement('div');
-      actions.className = 'source-card-actions';
-
-      if (source.providerId === 'local' && source.needsReconnect) {
-        const reselectBtn = document.createElement('button');
-        reselectBtn.className = 'btn btn-primary';
-        reselectBtn.type = 'button';
-        reselectBtn.textContent = 'Re-select folder';
-        reselectBtn.addEventListener('click', async () => {
-          this.prepareSourceRepair(source.id, 'folder');
-          const didPick = await this.pickLocalFolder();
-          if (didPick) {
-            await this.refreshSource(source.id, { configOverrides: { localDirectoryHandle: this.selectedLocalDirectoryHandle } });
-          }
-          this.renderSourcePicker();
-        });
-        actions.append(reselectBtn);
-      } else if ((source.providerId === 'github' || source.providerId === 's3') && source.needsCredentials) {
-        const credsBtn = document.createElement('button');
-        credsBtn.className = 'btn btn-primary';
-        credsBtn.type = 'button';
-        credsBtn.textContent = 'Update credentials';
-        credsBtn.addEventListener('click', () => {
-          this.openCredentialRepairDialog(source.id);
-        });
-        actions.append(credsBtn);
-      } else if (source.needsReconnect) {
-        const reconnectBtn = document.createElement('button');
-        reconnectBtn.className = 'btn btn-primary';
-        reconnectBtn.type = 'button';
-        reconnectBtn.textContent = 'Reconnect';
-        reconnectBtn.addEventListener('click', async () => {
-          this.prepareSourceRepair(source.id, 'reconnect');
-          await this.refreshSource(source.id);
-          this.renderSourcePicker();
-        });
-        actions.append(reconnectBtn);
-      } else if (!this.isExampleSource(source) || source.capabilities?.canPublish || source.capabilities?.canSaveMetadata) {
-        const refreshBtn = document.createElement('button');
-        refreshBtn.className = 'btn';
-        refreshBtn.type = 'button';
-        refreshBtn.textContent = 'Refresh';
-        refreshBtn.addEventListener('click', async () => {
-          this.prepareSourceRepair(source.id, 'refresh');
-          await this.refreshSource(source.id);
-          this.renderSourcePicker();
-        });
-        actions.append(refreshBtn);
-      }
-
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn source-card-remove';
-      removeBtn.type = 'button';
-      removeBtn.innerHTML = `${renderTrashIcon()}<span>Remove</span>`;
-      removeBtn.addEventListener('click', () => {
-        this.removeSource(source.id);
-        this.renderSourcePicker();
-      });
-
-      actions.append(removeBtn);
-      card.append(header, location);
-      if (statusText) {
-        card.append(status);
-      }
-      card.append(actions);
-      wrap.appendChild(card);
-    }
-  }
-
 
   findSelectedCollectionMeta() {
     return findSelectedCollectionMeta(this);

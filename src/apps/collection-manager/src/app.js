@@ -7,6 +7,7 @@ import { createOpfsStorage } from './services/opfs_storage.js';
 import { pickLocalHostDirectory, subscribeToManagerFileDrops } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
 import { computeWorkingStatus } from './state/working-status.js';
+import { getSourceStatus, isExampleSource as isExampleProviderSource, sourceHasAccessibleContent as sourceHasAccessibleItems } from './state/source-status.js';
 import { toWorkspaceItemId } from './utils/id-utils.js';
 import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
 import {
@@ -719,13 +720,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (!source) {
       return false;
     }
-    const hasCollections = Array.isArray(source.collections) && source.collections.length > 0;
     const hasAssets = this.state.assets.some((item) => item.sourceId === source.id);
-    return hasCollections || hasAssets;
+    return sourceHasAccessibleItems(source) || hasAssets;
   }
 
   isExampleSource(source) {
-    return Boolean(source && source.providerId === 'example');
+    return isExampleProviderSource(source);
   }
 
   isBrowserRuntime() {
@@ -772,7 +772,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       return '';
     }
     if (this.isExampleSource(source)) {
-      return 'Viewing example content. Connect a source to refresh from your own storage or publish changes.';
+      return 'Browse example collections. Connect your own source to refresh or publish.';
     }
     const hasAccessibleContent = this.sourceHasAccessibleContent(source);
     if (source.providerId === 'local' && source.needsReconnect) {
@@ -785,11 +785,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
     if (source.needsReconnect) {
       return hasAccessibleContent
-        ? 'Connection is disconnected, but previously loaded content is still available locally. Reconnect to refresh or publish.'
-        : 'Connection needs reconnect before publish is available.';
+        ? 'Previously loaded content remains available locally. Reconnect to refresh or publish.'
+        : 'Reconnect this connection before publish is available.';
     }
     if (!source.capabilities?.canPublish) {
-      return 'Connected read-only connection. Publish is currently unavailable.';
+      return 'This connection stays available for browsing, but publishing is unavailable.';
     }
     return '';
   }
@@ -905,21 +905,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   activeHostStateLabel(source) {
     if (!source) {
-      return 'No active connection';
+      return 'Disconnected';
     }
-    if (this.isExampleSource(source)) {
-      return 'Example';
-    }
-    if (source.needsCredentials) {
-      return 'Credentials missing';
-    }
-    if (source.needsReconnect) {
-      return this.sourceHasAccessibleContent(source) ? 'Disconnected (cached content)' : 'Needs reconnect';
-    }
-    if (!source.capabilities?.canPublish) {
-      return 'Read-only';
-    }
-    return 'Ready';
+    return getSourceStatus(source).label;
   }
 
   sanitizeSourceConfig(providerId, config = {}) {

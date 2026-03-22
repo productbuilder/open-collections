@@ -188,7 +188,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     }
 
     panelShell.setAttribute('title', this.model.viewportTitle || 'Collections');
-    panelShell.setAttribute('subtitle', this.model.assetCountText || 'No assets loaded.');
+    const baseSubtitle = this.model.assetCountText || 'No assets loaded.';
+    const statusDetail = this.model.currentLevel === 'collections' ? this.model.workingStatus?.detail || '' : '';
+    const subtitle = statusDetail ? `${baseSubtitle} ${statusDetail}` : baseSubtitle;
+    panelShell.setAttribute('subtitle', subtitle);
     panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
     if (this.model.currentLevel === 'collections' && this.model.workingStatus?.label) {
       panelShell.setAttribute('status-label', this.model.workingStatus.label);

@@ -170,8 +170,8 @@ export const panelShellStyles = `
 
     .panel-toolbar-row {
       padding-bottom: 0.5rem;
-      flex-direction: column;
-      align-items: stretch;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .panel-titlebar-main {
@@ -193,14 +193,14 @@ export const panelShellStyles = `
       font-size: 0.78rem;
     }
 
-    .panel-toolbar-main {
-      width: 100%;
-      flex: 1 1 100%;
-    }
-
     .panel-toolbar-main,
     .panel-titlebar-actions {
       align-items: flex-start;
+    }
+
+    .panel-toolbar-main {
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .panel-toolbar-actions,
@@ -208,15 +208,17 @@ export const panelShellStyles = `
       width: auto;
       max-width: 100%;
       flex: 0 0 auto;
-      justify-content: flex-start;
     }
 
     .panel-titlebar-actions {
       align-self: flex-start;
+      justify-content: flex-start;
     }
 
     .panel-toolbar-actions {
-      align-self: flex-start;
+      margin-left: auto;
+      justify-content: flex-end;
+      align-self: center;
     }
   }
 `;

@@ -83,6 +83,7 @@ import * as CollectionService from './services/collection-service.js';
 import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
+import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -695,6 +696,45 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   isExampleSource(source) {
     return Boolean(source && source.providerId === 'example');
+  }
+
+  isBrowserRuntime() {
+    return getPlatformType() === PLATFORM_TYPES.BROWSER;
+  }
+
+  sortSourcesForDisplay(sources = []) {
+    if (!Array.isArray(sources) || sources.length <= 1) {
+      return Array.isArray(sources) ? [...sources] : [];
+    }
+
+    const exampleSources = [];
+    const otherSources = [];
+    for (const source of sources) {
+      if (this.isExampleSource(source)) {
+        exampleSources.push(source);
+      } else {
+        otherSources.push(source);
+      }
+    }
+    return [...exampleSources, ...otherSources];
+  }
+
+  getExampleSource() {
+    return this.state.sources.find((source) => this.isExampleSource(source)) || null;
+  }
+
+  activatePreferredBrowserStartupSource() {
+    if (!this.isBrowserRuntime()) {
+      return false;
+    }
+
+    const exampleSource = this.getExampleSource();
+    if (!exampleSource) {
+      return false;
+    }
+
+    this.activateSource(exampleSource);
+    return true;
   }
 
   sourceRepairGuidance(source) {
@@ -1469,8 +1509,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.refreshWorkingStatus();
   }
 
-  async connectCurrentProvider() {
-    return connectCurrentProvider(this);
+  async connectCurrentProvider(options = {}) {
+    return connectCurrentProvider(this, options);
   }
 
   inspectSource(sourceId) {

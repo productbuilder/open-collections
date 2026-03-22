@@ -51,9 +51,13 @@ function logCredentialRestore(stage, payload = {}) {
   }
 }
 
-function shouldAutoReconnectRememberedSource(source) {
+function shouldAutoReconnectRememberedSource(source, platformType = PLATFORM_TYPES.BROWSER) {
   if (!source || typeof source !== 'object') {
     return false;
+  }
+
+  if (platformType === PLATFORM_TYPES.BROWSER) {
+    return source.providerId === 'example';
   }
 
   if (source.providerId === 'local') {
@@ -242,7 +246,8 @@ export function saveSourcesToStorage(app) {
 }
 
 export async function restoreRememberedSources(app) {
-  const isTauriDesktop = getPlatformType() === PLATFORM_TYPES.TAURI;
+  const platformType = getPlatformType();
+  const isTauriDesktop = platformType === PLATFORM_TYPES.TAURI;
   const isFilesystemLikePath = (value) => /^[a-z]:[\\/]/i.test(value) || value.startsWith('\\\\') || value.includes('\\');
   let remembered = [];
 
@@ -262,13 +267,9 @@ export async function restoreRememberedSources(app) {
     }
   }
 
-  if (!Array.isArray(remembered) || remembered.length === 0) {
-    return;
-  }
-
   const restored = [];
   const seen = new Set();
-  for (const entry of remembered) {
+  for (const entry of Array.isArray(remembered) ? remembered : []) {
     if (!entry || typeof entry !== 'object') {
       continue;
     }
@@ -376,6 +377,11 @@ export async function restoreRememberedSources(app) {
     restored.push(source);
   }
 
+  const needsBrowserExample = platformType === PLATFORM_TYPES.BROWSER && !restored.some((source) => source.providerId === 'example');
+  if (restored.length === 0 && !needsBrowserExample) {
+    return;
+  }
+
   let desiredActiveSourceId = 'all';
   try {
     const stored = JSON.parse(window.localStorage.getItem(WORKSPACE_SELECTION_STORAGE_KEY) || '{}');
@@ -384,21 +390,23 @@ export async function restoreRememberedSources(app) {
     desiredActiveSourceId = 'all';
   }
 
-  app.state.sources = restored;
-  const firstLocalHandle = restored.find((source) => source.providerId === 'local' && source.config?.localDirectoryHandle)?.config?.localDirectoryHandle || null;
+  app.state.sources = app.sortSourcesForDisplay(restored);
+  const firstLocalHandle = app.state.sources.find((source) => source.providerId === 'local' && source.config?.localDirectoryHandle)?.config?.localDirectoryHandle || null;
   app.selectedLocalDirectoryHandle = firstLocalHandle;
   app.state.assets = [];
   app.state.selectedItemId = null;
   app.state.selectedItemIds = [];
-  app.state.activeSourceFilter = restored.some((source) => source.id === desiredActiveSourceId)
-    ? desiredActiveSourceId
-    : 'all';
+  app.state.activeSourceFilter = platformType === PLATFORM_TYPES.BROWSER
+    ? 'all'
+    : app.state.sources.some((source) => source.id === desiredActiveSourceId)
+      ? desiredActiveSourceId
+      : 'all';
   app.state.currentLevel = 'collections';
   app.state.openedCollectionId = null;
   app.syncMetadataModeFromState();
   app.closeMobileEditor();
 
-  app.setStatus(`Restored ${restored.length} remembered storage source definitions.`, 'neutral');
+  app.setStatus(`Restored ${app.state.sources.length} remembered storage source definitions.`, 'neutral');
   app.refreshWorkingStatus();
   app.setConnectionStatus('Remembered storage sources loaded. Refresh to reconnect.', 'neutral');
   app.renderSourcesList();
@@ -406,8 +414,18 @@ export async function restoreRememberedSources(app) {
   app.renderAssets();
   app.renderEditor();
 
-  for (const source of restored) {
-    const shouldAutoRefresh = shouldAutoReconnectRememberedSource(source);
+  if (needsBrowserExample) {
+    await app.connectCurrentProvider({
+      providerId: 'example',
+      closeProviderDialog: false,
+      openSourcePicker: false,
+    });
+  } else {
+    app.activatePreferredBrowserStartupSource();
+  }
+
+  for (const source of app.state.sources) {
+    const shouldAutoRefresh = shouldAutoReconnectRememberedSource(source, platformType);
     if (!shouldAutoRefresh) {
       continue;
     }

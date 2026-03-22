@@ -187,13 +187,22 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       return;
     }
 
+    const isCollectionsView = this.model.currentLevel === 'collections';
+
     panelShell.setAttribute('title', this.model.viewportTitle || 'Collections');
-    const baseSubtitle = this.model.assetCountText || 'No assets loaded.';
-    const statusDetail = this.model.currentLevel === 'collections' ? this.model.workingStatus?.detail || '' : '';
-    const subtitle = statusDetail ? `${baseSubtitle} ${statusDetail}` : baseSubtitle;
-    panelShell.setAttribute('subtitle', subtitle);
-    panelShell.setAttribute('show-back', this.model.currentLevel === 'collections' ? 'false' : 'true');
-    if (this.model.currentLevel === 'collections' && this.model.workingStatus?.label) {
+    if (isCollectionsView) {
+      panelShell.removeAttribute('subtitle');
+      panelShell.setAttribute('show-back', 'false');
+    } else {
+      const subtitle = this.model.assetCountText || 'No assets loaded.';
+      if (subtitle) {
+        panelShell.setAttribute('subtitle', subtitle);
+      } else {
+        panelShell.removeAttribute('subtitle');
+      }
+      panelShell.setAttribute('show-back', 'true');
+    }
+    if (isCollectionsView && this.model.workingStatus?.label) {
       panelShell.setAttribute('status-label', this.model.workingStatus.label);
       panelShell.setAttribute('status-tone', this.model.workingStatus.tone || 'neutral');
     } else {
@@ -256,7 +265,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
-        <open-panel-shell id="panelShell" title="Collections" subtitle="No assets loaded." show-back="false">
+        <open-panel-shell id="panelShell" title="Collections" show-back="false">
           <div class="viewport-actions viewport-title-actions" slot="header-actions">
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />

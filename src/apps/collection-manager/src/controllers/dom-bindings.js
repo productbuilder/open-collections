@@ -17,6 +17,7 @@ export function cacheDomElements(root) {
     connectionsDialogTitle: root.getElementById('connectionsDialogTitle'),
     addConnectionBackBtn: root.getElementById('addConnectionBackBtn'),
     addConnectionView: root.getElementById('addConnectionView'),
+    addConnectionViewTitle: root.getElementById('addConnectionViewTitle'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
     collectionId: root.getElementById('collectionId'),

@@ -283,21 +283,28 @@ class OpenCollectionsManagerElement extends HTMLElement {
     }
   }
 
+  setAddConnectionViewTitle(title = 'Add connection') {
+    const normalizedTitle = String(title || '').trim() || 'Add connection';
+    if (this.dom?.addConnectionViewTitle) {
+      this.dom.addConnectionViewTitle.textContent = normalizedTitle;
+    }
+  }
+
   showConnectionsListView() {
     this.state.connectionsDialogView = 'list';
     this.renderSourcePicker();
     this.dom?.sourcePickerList?.classList.remove('is-hidden');
     this.dom?.addConnectionView?.classList.add('is-hidden');
     this.setConnectionsDialogHeader('Connections');
-    this.dom?.addConnectionBackBtn?.classList.add('is-hidden');
+    this.setAddConnectionViewTitle('Add connection');
   }
 
-  showAddConnectionView(title = 'Connections') {
+  showAddConnectionView(title = 'Add connection') {
     this.state.connectionsDialogView = 'add';
     this.dom?.sourcePickerList?.classList.add('is-hidden');
     this.dom?.addConnectionView?.classList.remove('is-hidden');
-    this.setConnectionsDialogHeader(title);
-    this.dom?.addConnectionBackBtn?.classList.remove('is-hidden');
+    this.setConnectionsDialogHeader('Connections');
+    this.setAddConnectionViewTitle(title);
   }
 
   openConnectionsDialog() {
@@ -308,7 +315,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   openAddHostDialog() {
     this.clearPendingSourceRepair();
     this.dom.sourceManager?.resetFlow?.();
-    this.showAddConnectionView('Connections');
+    this.showAddConnectionView('Add connection');
     this.openDialog(this.dom.connectionsDialog);
   }
 

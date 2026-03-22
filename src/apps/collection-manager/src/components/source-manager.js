@@ -605,7 +605,6 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
         <div class="provider-layout single-column">
           <div id="rootActions" class="root-actions">
             <div class="root-actions-heading">
-              <h3 class="root-actions-title">Add connection</h3>
               <p class="config-section-title">Choose a connection type</p>
             </div>
             <div class="provider-list">

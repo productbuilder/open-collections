@@ -59,6 +59,7 @@ export async function initializeLocalDraftState(manager) {
     manager.setLocalDraftStatus('Local draft storage not available in this browser.', 'warn');
     manager.setLocalDraftControlsEnabled(false);
     await manager.restoreRememberedSources();
+    manager.activatePreferredBrowserStartupSource();
     return;
   }
 
@@ -75,6 +76,8 @@ export async function initializeLocalDraftState(manager) {
       manager.setLocalDraftStatus(`Local draft ready (last saved ${manager.state.lastLocalSaveAt}).`, 'ok');
     }
   }
+
+  manager.activatePreferredBrowserStartupSource();
 
   manager.renderAssets();
   manager.renderEditor();

@@ -228,8 +228,8 @@ export function toPersistedSource(app, source) {
   };
 }
 
-export async function connectCurrentProvider(app) { /* delegated from app.js */
-  const providerId = app.state.selectedProviderId;
+export async function connectCurrentProvider(app, options = {}) { /* delegated from app.js */
+  const providerId = options.providerId || app.state.selectedProviderId;
   const providerFactory = app.providers[providerId];
   const selectedProvider = app.providerCatalog.find((entry) => entry.id === providerId);
 
@@ -362,23 +362,27 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
       app.selectedLocalDirectoryHandle = config.localDirectoryHandle;
     }
     if (targetSource) {
-      app.state.sources = app.state.sources.map((entry) => (entry.id === targetSource.id ? source : entry));
+      app.state.sources = app.sortSourcesForDisplay(
+        app.state.sources.map((entry) => (entry.id === targetSource.id ? source : entry)),
+      );
       app.mergeSourceAssets(targetSource.id, normalizedWithCollections);
     } else {
-      app.state.sources = [...app.state.sources, source];
+      app.state.sources = app.sortSourcesForDisplay([...app.state.sources, source]);
       app.state.assets = [...app.state.assets, ...normalizedWithCollections];
     }
     if (providerId === 'local') {
       await app.hydrateLocalSourceAssetPreviews(source.id);
     }
-    app.state.activeSourceFilter = source.id;
-    app.state.selectedCollectionId = source.selectedCollectionId || 'all';
-    app.state.currentLevel = 'collections';
-    app.state.openedCollectionId = null;
-    app.state.selectedItemId = null;
-    app.state.selectedItemIds = [];
-    app.syncMetadataModeFromState();
-    app.closeMobileEditor();
+    if (options.activateSource !== false) {
+      app.state.activeSourceFilter = source.id;
+      app.state.selectedCollectionId = source.selectedCollectionId || 'all';
+      app.state.currentLevel = 'collections';
+      app.state.openedCollectionId = null;
+      app.state.selectedItemId = null;
+      app.state.selectedItemIds = [];
+      app.syncMetadataModeFromState();
+      app.closeMobileEditor();
+    }
     app.state.manifest = null;
     app.dom.manifestPreview.textContent = '{}';
 
@@ -395,9 +399,13 @@ export async function connectCurrentProvider(app) { /* delegated from app.js */
     app.renderEditor();
     app.saveSourcesToStorage();
     app.clearPendingSourceRepair();
-    app.closeDialog(app.dom.providerDialog);
+    if (options.closeProviderDialog !== false) {
+      app.closeDialog(app.dom.providerDialog);
+    }
     app.renderSourcePicker();
-    app.openDialog(app.dom.sourcePickerDialog);
+    if (options.openSourcePicker !== false) {
+      app.openDialog(app.dom.sourcePickerDialog);
+    }
   } catch (error) {
     app.clearPendingSourceRepair();
     app.setConnectionStatus(`Connection error: ${error.message}`, false);
@@ -509,7 +517,9 @@ export async function refreshSource(app, sourceId, options = {}) {
         needsReconnect: true,
         needsCredentials: Boolean(result.capabilities?.requiresCredentials) && !Boolean(result.capabilities?.hasCredentials),
       };
-      app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
+      app.state.sources = app.sortSourcesForDisplay(
+        app.state.sources.map((entry) => (entry.id === sourceId ? next : entry)),
+      );
       app.renderSourcesList();
       app.saveSourcesToStorage();
       app.setConnectionStatus(result.message, false);
@@ -561,7 +571,9 @@ export async function refreshSource(app, sourceId, options = {}) {
         ? updatedSource.selectedCollectionId
         : defaultCollectionId;
 
-    app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? updatedSource : entry));
+    app.state.sources = app.sortSourcesForDisplay(
+      app.state.sources.map((entry) => (entry.id === sourceId ? updatedSource : entry)),
+    );
     if (source.providerId === 'local' && refreshedConfig.localDirectoryHandle?.kind === 'directory') {
       app.selectedLocalDirectoryHandle = refreshedConfig.localDirectoryHandle;
     }
@@ -595,7 +607,9 @@ export async function refreshSource(app, sourceId, options = {}) {
       needsReconnect: true,
       needsCredentials: Boolean(source.capabilities?.requiresCredentials) && !Boolean(source.capabilities?.hasCredentials),
     };
-    app.state.sources = app.state.sources.map((entry) => (entry.id === sourceId ? next : entry));
+    app.state.sources = app.sortSourcesForDisplay(
+      app.state.sources.map((entry) => (entry.id === sourceId ? next : entry)),
+    );
     app.renderSourcesList();
     app.saveSourcesToStorage();
     app.setConnectionStatus(`Refresh error: ${error.message}`, false);
@@ -615,7 +629,7 @@ export function removeSource(app, sourceId) {
     app.clearPendingSourceRepair();
   }
   app.credentialStore.deleteSourceSecret(source).catch(() => {});
-  app.state.sources = app.state.sources.filter((entry) => entry.id !== sourceId);
+  app.state.sources = app.sortSourcesForDisplay(app.state.sources.filter((entry) => entry.id !== sourceId));
   app.state.assets = app.state.assets.filter((entry) => entry.sourceId !== sourceId);
   if (app.state.sources.length === 0) {
     app.closeMobileEditor();

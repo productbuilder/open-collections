@@ -85,16 +85,11 @@ const styles = `
     overflow-wrap: anywhere;
   }
 
-  .source-card-location,
-  .source-card-status {
+  .source-card-location {
     margin: 0;
     font-size: 0.8rem;
     color: #64748b;
     overflow-wrap: anywhere;
-  }
-
-  .source-card-status {
-    color: #475569;
   }
 
   .source-card-actions {
@@ -308,7 +303,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
           <span class="pill source-card-active-pill${isActive ? ' is-ok' : ''}">${escapeHtml(isActive ? 'Active' : 'Available')}</span>
         </div>
         <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
-        <p class="source-card-status">${escapeHtml(status.detail)}</p>
         <div class="source-card-actions">
           ${primaryAction}
           <button class="btn source-card-remove" type="button" data-action="remove" data-source-id="${source.id}">${renderTrashIcon()}<span>Remove</span></button>

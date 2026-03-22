@@ -307,16 +307,11 @@ export const shellStyles = `
     overflow-wrap: anywhere;
   }
 
-  .source-card-location,
-  .source-card-status {
+  .source-card-location {
     margin: 0;
     font-size: 0.8rem;
     color: #64748b;
     overflow-wrap: anywhere;
-  }
-
-  .source-card-status {
-    color: #475569;
   }
 
   .source-card-actions {

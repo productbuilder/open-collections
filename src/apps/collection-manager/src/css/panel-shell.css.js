@@ -17,15 +17,20 @@ export const panelShellStyles = `
     overflow: hidden;
   }
 
-  .panel-header {
-    padding: 0.1rem 0 0.35rem;
+  .panel-titlebar,
+  .panel-toolbar-row {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.7rem;
+    min-width: 0;
   }
 
-  .panel-heading-left {
+  .panel-titlebar {
+    padding: 0.1rem 0 0.35rem;
+  }
+
+  .panel-titlebar-main {
     display: flex;
     align-items: flex-start;
     gap: 0.55rem;
@@ -99,8 +104,9 @@ export const panelShellStyles = `
     font-weight: 600;
   }
 
-  .header-actions,
-  .toolbar {
+  .panel-titlebar-actions,
+  .panel-toolbar-main,
+  .panel-toolbar-actions {
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -108,24 +114,32 @@ export const panelShellStyles = `
     min-width: 0;
   }
 
-  .header-actions {
+  .panel-titlebar-actions,
+  .panel-toolbar-actions {
     justify-content: flex-end;
     flex: 0 0 auto;
   }
 
-  .toolbar {
+  .panel-toolbar-row {
+    align-items: center;
     padding: 0 0 0.65rem;
   }
 
-  .body {
+  .panel-toolbar-main {
+    flex: 1 1 auto;
+  }
+
+  .panel-content {
     display: flex;
     min-height: 0;
+    height: 100%;
     overflow: hidden;
   }
 
-  .body > slot {
+  .panel-content > slot {
     display: block;
     width: 100%;
+    height: 100%;
     min-height: 0;
   }
 
@@ -141,16 +155,21 @@ export const panelShellStyles = `
   }
 
   @media (max-width: 760px) {
-    .panel-header {
-      padding: 0.1rem 0 0.25rem;
+    .panel-titlebar,
+    .panel-toolbar-row {
       gap: 0.55rem;
     }
 
-    .toolbar {
-      padding-bottom: 0.5rem;
+    .panel-titlebar {
+      padding: 0.1rem 0 0.25rem;
     }
 
-    .panel-heading-left {
+    .panel-toolbar-row {
+      padding-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .panel-titlebar-main {
       gap: 0.45rem;
     }
 
@@ -160,6 +179,17 @@ export const panelShellStyles = `
 
     .panel-subtext {
       font-size: 0.78rem;
+    }
+
+    .panel-toolbar-main,
+    .panel-toolbar-actions,
+    .panel-titlebar-actions {
+      width: 100%;
+    }
+
+    .panel-toolbar-actions,
+    .panel-titlebar-actions {
+      justify-content: flex-start;
     }
   }
 `;

@@ -42,8 +42,8 @@ class OpenPanelShellElement extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${panelShellStyles}</style>
       <section class="panel-shell">
-        <header class="panel-header">
-          <div class="panel-heading-left">
+        <header class="panel-titlebar">
+          <div class="panel-titlebar-main">
             <button class="btn ${showBack ? '' : 'is-hidden'}" id="backBtn" type="button">Back</button>
             <div class="panel-heading-copy">
               <div class="panel-title-row">
@@ -53,10 +53,13 @@ class OpenPanelShellElement extends HTMLElement {
               ${subtitleMarkup}
             </div>
           </div>
-          <div class="header-actions"><slot name="header-actions"></slot></div>
+          <div class="panel-titlebar-actions"><slot name="header-actions"></slot></div>
         </header>
-        <div class="toolbar"><slot name="toolbar"></slot></div>
-        <div class="body"><slot></slot></div>
+        <div class="panel-toolbar-row">
+          <div class="panel-toolbar-main"><slot name="toolbar"></slot></div>
+          <div class="panel-toolbar-actions"><slot name="toolbar-actions"></slot></div>
+        </div>
+        <div class="panel-content"><slot></slot></div>
       </section>
     `;
   }

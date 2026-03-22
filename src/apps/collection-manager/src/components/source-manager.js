@@ -326,7 +326,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
 
   renderProviderVisibility() {
     const selected = this.providerById(this.model.selectedProviderId);
-    const providerLabel = selected?.label || this.model.selectedProviderId || 'Remote host';
+    const providerLabel = selected?.label || this.model.selectedProviderId || 'Remote connection';
     const isRepairFlow = this.model.flowMode === 'repair' && this.model.repairProviderId === this.model.selectedProviderId;
     const providerConfigTitle = this.shadowRoot?.getElementById('providerConfigTitle');
     if (providerConfigTitle) {
@@ -364,7 +364,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
 
     if (connectBtn) {
-      connectBtn.textContent = isRepairFlow ? 'Reconnect host' : 'Add host';
+      connectBtn.textContent = isRepairFlow ? 'Reconnect' : 'Add connection';
       connectBtn.disabled = selected?.enabled === false || !['github', 's3'].includes(this.model.selectedProviderId);
     }
   }
@@ -391,16 +391,16 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     }
 
     const subtitleByType = {
-      git: 'Remote host / Git repository / Provider',
-      s3: 'Remote host / Object storage',
-      domain: 'Remote host / Custom domain',
+      git: 'Remote connection / Git repository / Provider',
+      s3: 'Remote connection / Object storage',
+      domain: 'Remote connection / Custom domain',
     };
     if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 'git') {
-      breadcrumb.textContent = 'Remote host / Git repository / GitHub configuration';
+      breadcrumb.textContent = 'Remote connection / Git repository / GitHub configuration';
     } else if (this.model.addHostLevel === 'remote-config' && this.model.remoteSubtype === 's3') {
-      breadcrumb.textContent = 'Remote host / Object storage / S3-compatible configuration';
+      breadcrumb.textContent = 'Remote connection / Object storage / S3-compatible configuration';
     } else {
-      breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote host';
+      breadcrumb.textContent = subtitleByType[this.model.remoteSubtype] || 'Remote connection';
     }
 
     const showingProviders = this.model.addHostLevel === 'remote-providers';
@@ -473,7 +473,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
     if (!this.model.sources.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'No hosts added yet.';
+      empty.textContent = 'No connections added yet.';
       list.appendChild(empty);
       return;
     }
@@ -535,7 +535,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       statusPill.textContent = hostState.label;
       const activePill = document.createElement('span');
       activePill.className = `pill ${isActive ? 'is-ok' : ''}`.trim();
-      activePill.textContent = isActive ? 'Active host' : 'Inactive';
+      activePill.textContent = isActive ? 'Active connection' : 'Inactive';
       const publishPill = document.createElement('span');
       publishPill.className = `pill ${source.capabilities?.canPublish ? 'is-ok' : 'is-muted'}`.trim();
       publishPill.textContent = source.capabilities?.canPublish ? 'Can publish' : 'Cannot publish';
@@ -576,18 +576,18 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
       <div class="source-manager">
         <div class="provider-layout single-column">
           <div id="rootActions">
-            <p class="config-section-title">Add a host</p>
+            <p class="config-section-title">Add a connection</p>
             <div class="provider-list">
               <button class="provider-card" id="addExampleHostBtn" type="button">
-                <div class="provider-card-label-row"><strong>Add example host</strong></div>
-                <span class="panel-subtext">Connect instantly to the built-in demo host.</span>
+                <div class="provider-card-label-row"><strong>Add example connection</strong></div>
+                <span class="panel-subtext">Connect instantly to the built-in demo connection.</span>
               </button>
               <button class="provider-card" id="addLocalFolderHostBtn" type="button">
-                <div class="provider-card-label-row"><strong>Add local folder host</strong></div>
-                <span class="panel-subtext">Pick a folder and add it as a writable local host.</span>
+                <div class="provider-card-label-row"><strong>Add local connection</strong></div>
+                <span class="panel-subtext">Pick a folder and add it as a writable local connection.</span>
               </button>
               <div class="provider-config remote-card">
-                <p class="config-section-title">Remote host</p>
+                <p class="config-section-title">Remote connection</p>
                 <p class="panel-subtext">Connect a remote publish target for your local-first workflow.</p>
                 <div id="remoteSubtypeCatalog" class="dialog-actions">
                   <button class="btn" type="button" data-remote-subtype="git">Git repository</button>
@@ -606,7 +606,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
             <div id="remoteProviderPanel" class="provider-list"></div>
 
             <div id="providerConfig" class="provider-config is-hidden">
-              <p id="providerConfigTitle" class="config-section-title">Host configuration</p>
+              <p id="providerConfigTitle" class="config-section-title">Connection configuration</p>
               <p id="localFolderStatus" class="panel-subtext is-hidden">No folder selected.</p>
               <div class="field-row is-hidden"><label for="localPathInput">Collection path</label><input id="localPathInput" type="text" /></div>
               <input id="localFolderName" type="hidden" value="" />
@@ -620,7 +620,7 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
               </div>
 
               <div id="s3Config" class="is-hidden">
-                <p class="panel-subtext">S3-compatible hosts are configured now as publish targets. Upload/pull will be added next.</p>
+                <p class="panel-subtext">S3-compatible connections are configured now as publish targets. Upload/pull will be added next.</p>
                 <div class="field-row"><label for="s3Endpoint">Endpoint URL</label><input id="s3Endpoint" type="text" placeholder="https://s3.example.org" /></div>
                 <div class="field-row"><label for="s3Bucket">Bucket</label><input id="s3Bucket" type="text" /></div>
                 <div class="field-row"><label for="s3Region">Region</label><input id="s3Region" type="text" placeholder="us-east-1" /></div>
@@ -630,11 +630,11 @@ class OpenCollectionsSourceManagerElement extends HTMLElement {
               </div>
 
               <div id="placeholderConfig" class="is-hidden">
-                <div class="empty">This remote host type is not available yet in this MVP.</div>
+                <div class="empty">This remote connection type is not available yet in this MVP.</div>
               </div>
 
               <div class="dialog-actions">
-                <button class="btn btn-primary" id="connectBtn" type="button">Add host</button>
+                <button class="btn btn-primary" id="connectBtn" type="button">Add connection</button>
               </div>
             </div>
           </div>

@@ -13,10 +13,10 @@ export function renderShell(shadowRoot) {
       </open-pane-layout>
     </div>
 
-    <dialog id="providerDialog" class="host-dialog" aria-label="Add host">
+    <dialog id="providerDialog" class="host-dialog" aria-label="Add connection">
       <div class="dialog-shell">
         <div class="dialog-header">
-          <h2 class="dialog-title">Add host</h2>
+          <h2 class="dialog-title">Add connection</h2>
           <button class="btn" data-close="providerDialog" type="button">Close</button>
         </div>
         <div class="dialog-body">
@@ -27,12 +27,12 @@ export function renderShell(shadowRoot) {
 
 
 
-    <dialog id="sourcePickerDialog" class="host-dialog" aria-label="Manage hosts">
+    <dialog id="sourcePickerDialog" class="host-dialog" aria-label="Manage connections">
       <div class="dialog-shell">
         <div class="dialog-header">
-          <h2 class="dialog-title">Manage hosts</h2>
+          <h2 class="dialog-title">Manage connections</h2>
           <div class="dialog-actions">
-            <button class="btn btn-primary" id="openAddHostFromHostBtn" type="button">Add host</button>
+            <button class="btn btn-primary" id="openAddHostFromHostBtn" type="button">Add connection</button>
             <button class="btn" data-close="sourcePickerDialog" type="button">Close</button>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function renderShell(shadowRoot) {
           <div class="field-row"><label for="collectionLanguage">Collection language</label><input id="collectionLanguage" type="text" /></div>
           <div class="dialog-actions">
             <button class="btn btn-primary" id="generateManifestBtn" type="button">Generate collection.json</button>
-            <button class="btn btn-primary" id="publishToSourceBtn" type="button">Publish to active host</button>
+            <button class="btn btn-primary" id="publishToSourceBtn" type="button">Publish to active connection</button>
             <button class="btn" id="copyManifestBtn" type="button">Copy</button>
             <button class="btn" id="downloadManifestBtn" type="button">Download</button>
             <button class="btn" id="saveLocalDraftBtn" type="button">Save locally</button>

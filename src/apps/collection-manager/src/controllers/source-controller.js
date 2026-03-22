@@ -158,7 +158,7 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
   if (providerId === 'local') {
     const folderName = (config.localDirectoryName || '').trim();
     if (folderName) {
-      return `${folderName} (host root)`;
+      return `${folderName} (folder root)`;
     }
     return (config.path || '').trim() || 'Folder on this device';
   }
@@ -243,7 +243,7 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
 
   if (providerId === 'local' && !config.localDirectoryHandle) {
     app.setConnectionStatus('Select a local folder first.', false);
-    app.setStatus('Select a local folder before adding this host.', 'warn');
+    app.setStatus('Select a local folder before adding this connection.', 'warn');
     return;
   }
 
@@ -647,8 +647,8 @@ export function removeSource(app, sourceId) {
   app.syncMetadataModeFromState();
 
   if (app.state.sources.length === 0) {
-    app.setConnectionStatus('No hosts connected.', 'neutral');
-    app.setStatus('No hosts connected.', 'neutral');
+    app.setConnectionStatus('No connections yet.', 'neutral');
+    app.setStatus('No connections yet.', 'neutral');
     app.setWorkingStateFlags({ hasUnsavedChanges: false, lastSaveTarget: '', publishError: '' });
   } else {
     app.setStatus(`Removed storage source ${source.label}.`, 'ok');

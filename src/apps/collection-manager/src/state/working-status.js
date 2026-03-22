@@ -57,7 +57,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'publishing',
       label: 'Publishing',
-      detail: 'Publishing draft changes to the active host.',
+      detail: 'Publishing draft changes to the active connection.',
       tone: 'neutral',
     };
   }
@@ -75,7 +75,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'credentials-missing',
       label: 'Credentials missing',
-      detail: 'The active host is missing credentials. Use Update credentials, then publish again.',
+      detail: 'The active connection is missing credentials. Use Update credentials, then publish again.',
       tone: 'warn',
     };
   }
@@ -84,7 +84,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'example-content',
       label: 'Viewing example content',
-      detail: 'Example/demo collections are available for browsing. Connect a host to refresh from your own storage or publish changes.',
+      detail: 'Example/demo collections are available for browsing. Connect a source to refresh from your own storage or publish changes.',
       tone: 'neutral',
     };
   }
@@ -93,10 +93,10 @@ export function computeWorkingStatus(state) {
     const hasAccessibleContent = sourceHasAccessibleContent(state, source);
     return {
       id: 'host-needs-reconnect',
-      label: hasAccessibleContent ? 'Disconnected host (cached content available)' : 'Host needs reconnect',
+      label: hasAccessibleContent ? 'Disconnected connection (cached content available)' : 'Connection needs reconnect',
       detail: hasAccessibleContent
-        ? 'The active host is disconnected, but previously loaded collections remain available locally. Reconnect to refresh from the host or publish.'
-        : 'The active host is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
+        ? 'The active connection is disconnected, but previously loaded collections remain available locally. Reconnect to refresh from the connection or publish.'
+        : 'The active connection is remembered but disconnected. Re-select folder, refresh, or reconnect to publish.',
       tone: 'warn',
     };
   }
@@ -104,8 +104,8 @@ export function computeWorkingStatus(state) {
   if (source && !canPublish) {
     return {
       id: 'read-only-host',
-      label: 'Read-only host',
-      detail: 'Active host is connected but read-only for publish uploads.',
+      label: 'Read-only connection',
+      detail: 'Active connection is connected but read-only for publish uploads.',
       tone: 'neutral',
     };
   }
@@ -114,7 +114,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'ready-to-publish',
       label: 'Ready to publish',
-      detail: 'Unpublished draft changes detected. Publish will update the remote host.',
+      detail: 'Unpublished draft changes detected. Publish will update the remote connection.',
       tone: 'ok',
     };
   }
@@ -141,7 +141,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'published',
       label: 'Published',
-      detail: 'Latest changes are saved to the active host.',
+      detail: 'Latest changes are saved to the active connection.',
       tone: 'ok',
     };
   }
@@ -150,7 +150,7 @@ export function computeWorkingStatus(state) {
     return {
       id: 'draft',
       label: 'Draft only',
-      detail: 'Working in local draft mode. Connect a publishable host when ready.',
+      detail: 'Working in local draft mode. Connect a publishable connection when ready.',
       tone: 'neutral',
     };
   }
@@ -158,7 +158,7 @@ export function computeWorkingStatus(state) {
   return {
     id: 'draft',
     label: 'Draft',
-    detail: 'Connect a host or create a collection draft to get started.',
+    detail: 'Connect a source or create a collection draft to get started.',
     tone: 'neutral',
   };
 }

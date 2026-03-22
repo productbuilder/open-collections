@@ -1,16 +1,17 @@
 import { headerStyles } from '../css/header.css.js';
+import { renderChevronDownIcon } from './icons.js';
 
 class OpenCollectionsHeaderElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
     this._statusText = 'Not connected.';
-    this._workspaceText = 'Host: none | Collection: none';
-    this._hostLabel = 'Select host';
+    this._workspaceText = 'Connection: none | Collection: none';
+    this._hostLabel = 'Select connection';
     this._statusTone = 'neutral';
     this._workingStatus = {
       label: 'Draft',
-      detail: 'Connect a host or create a collection draft to get started.',
+      detail: 'Connect a source or create a collection draft to get started.',
       tone: 'neutral',
     };
   }
@@ -92,11 +93,14 @@ class OpenCollectionsHeaderElement extends HTMLElement {
           <h1 class="title">Open Collections Manager</h1>
           <div class="working-status-wrap">
             <span id="workingStatusChip" class="working-status-chip" data-tone="neutral">Draft</span>
-            <p id="workingStatusDetail" class="working-status-detail">Connect a host or create a collection draft to get started.</p>
+            <p id="workingStatusDetail" class="working-status-detail">Connect a source or create a collection draft to get started.</p>
           </div>
         </div>
         <div class="top-actions">
-          <button class="btn" id="openHostManagerBtn" type="button">Host: <span id="activeHostLabel">Select host</span></button>
+          <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="Manage connections">
+            <span id="activeHostLabel">Select connection</span>
+            ${renderChevronDownIcon()}
+          </button>
           <button class="btn" id="openHeaderMenuBtn" type="button">More</button>
         </div>
       </header>

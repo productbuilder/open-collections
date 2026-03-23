@@ -62,14 +62,14 @@ export const browserStyles = `
   .viewport-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     gap: 0.45rem;
     flex-wrap: wrap;
     min-width: 0;
   }
 
   .viewport-title-actions {
-    justify-content: center;
+    justify-content: end;
   }
 
   .viewport-toolbar-main {

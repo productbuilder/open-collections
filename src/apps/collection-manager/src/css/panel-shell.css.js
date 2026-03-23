@@ -30,7 +30,7 @@ export const panelShellStyles = `
 
   .panel-titlebar {
     padding: 0.1rem 0 0.35rem;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
   }
 
@@ -49,7 +49,7 @@ export const panelShellStyles = `
     gap: 0.2rem;
     min-width: 0;
     flex: 1 1 auto;
-    justify-items: center;
+    justify-items: start;
     text-align: center;
   }
 
@@ -58,7 +58,7 @@ export const panelShellStyles = `
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    min-width: 0;
+    <!-- min-width: 0; -->
     flex-wrap: wrap;
   }
 
@@ -119,11 +119,10 @@ export const panelShellStyles = `
   .panel-titlebar-actions,
   .panel-toolbar-actions {
     justify-content: flex-end;
-    flex: 0 0 auto;
   }
 
   .panel-titlebar-actions {
-    justify-content: center;
+    justify-content: end;
     width: 100%;
   }
 

@@ -89,13 +89,13 @@ export const viewToggleStyles = `
   }
 
   .is-mobile .option {
-    width: 2.3rem;
-    min-width: 2.3rem;
-    height: 2.3rem;
-    min-height: 2.3rem;
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+    min-height: 2rem;
     padding: 0;
     border: 1px solid #cbd5e1;
-    border-radius: 999px;
+    border-radius: 8px;
     background: transparent;
   }
 

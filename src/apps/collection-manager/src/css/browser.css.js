@@ -153,6 +153,9 @@ export const browserStyles = `
     display: flex;
   }
 
+
+
+
   @media (max-width: 760px) {
     :host {
       padding: 0.7rem 0.7rem 0.8rem;
@@ -177,7 +180,7 @@ export const browserStyles = `
     }
 
     .viewport-title-actions {
-      justify-content: center;
+      justify-content: end;
       width: 100%;
     }
 

@@ -163,13 +163,15 @@ export const panelShellStyles = `
   ${backButtonStyles}
 
   @media (max-width: 760px) {
+
+
     .panel-titlebar,
     .panel-toolbar-row {
       gap: 0.55rem;
     }
 
     .panel-titlebar {
-      padding: 0.1rem 0 0.25rem;
+      padding: 0.1rem 0 0.5rem;
       align-items: center;
     }
 
@@ -214,7 +216,6 @@ export const panelShellStyles = `
     .panel-titlebar-actions {
       width: auto;
       max-width: 100%;
-      flex: 0 0 auto;
     }
 
     .panel-titlebar-actions {

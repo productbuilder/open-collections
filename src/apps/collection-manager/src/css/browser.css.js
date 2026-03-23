@@ -181,7 +181,6 @@ export const browserStyles = `
 
     .viewport-title-actions {
       justify-content: end;
-      width: 100%;
     }
 
     .viewport-toolbar-actions {

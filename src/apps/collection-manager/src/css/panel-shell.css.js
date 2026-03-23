@@ -220,8 +220,6 @@ export const panelShellStyles = `
 
     .panel-titlebar-actions {
       align-self: center;
-      justify-content: center;
-      width: 100%;
     }
 
     .panel-toolbar-actions {

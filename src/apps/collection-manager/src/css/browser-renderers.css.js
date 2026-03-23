@@ -118,9 +118,9 @@ export const browserRendererStyles = `
   }
 
   .badge-row {
-    display: flex;
+    <!-- display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
+    gap: 0.35rem; -->
   }
 
   .badge {

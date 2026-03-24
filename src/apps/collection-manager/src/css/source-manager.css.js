@@ -1,9 +1,7 @@
 import { backButtonStyles } from '../components/back-button.js';
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const sourceManagerStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {
@@ -188,9 +186,9 @@ export const sourceManagerStyles = `
   }
 
   .pill.is-muted {
-    color: #64748b;
-    border-color: #e2e8f0;
-    background: #f8fafc;
+    color: var(--oc-text-muted);
+    border-color: var(--oc-border-subtle);
+    background: var(--oc-bg-subtle);
   }
 
   .dialog-actions {

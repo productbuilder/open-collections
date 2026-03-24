@@ -167,8 +167,7 @@ const styles = `
       align-self: flex-start;
     }
 
-    .btn,
-    .oc-btn {
+    .btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

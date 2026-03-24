@@ -5,7 +5,7 @@ export const primitiveStyles = `
 
   .oc-btn,
   .btn {
-    border: 1px solid var(--oc-border-control);
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
     background: var(--oc-bg-panel);
     color: var(--oc-text-primary);
     border-radius: var(--oc-radius-control);
@@ -54,15 +54,15 @@ export const primitiveStyles = `
     align-items: center;
     justify-content: space-between;
     padding: var(--oc-space-3) var(--oc-space-4);
-    border-bottom: 1px solid var(--oc-border-panel);
-    background: var(--oc-bg-panel);
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
+    background: var(--oc-header-bg);
   }
 
   .oc-dialog-header,
   .dialog-header {
     padding: var(--oc-space-3) var(--oc-space-4);
-    border-bottom: 1px solid var(--oc-border-panel);
-    background: var(--oc-bg-panel);
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
+    background: var(--oc-header-bg);
     font-weight: 600;
   }
 
@@ -75,7 +75,28 @@ export const primitiveStyles = `
     background: var(--oc-bg-subtle);
     color: var(--oc-text-secondary);
     font-size: 0.85em;
-    border: 1px solid var(--oc-border-control);
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
     line-height: 1.6;
+  }
+
+  .oc-icon-btn,
+  .icon-btn {
+    border: 0;
+    background: transparent;
+    color: var(--oc-color-slate-600);
+    border-radius: var(--oc-radius-pill);
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .oc-icon-btn:hover,
+  .icon-btn:hover {
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-primary);
   }
 `;

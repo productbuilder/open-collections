@@ -1,7 +1,9 @@
 import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const headerStyles = `
   ${themeTokenStyles}
+  ${primitiveStyles}
 
   :host {
     display: block;
@@ -42,38 +44,7 @@ export const headerStyles = `
   }
 
   .btn {
-    border: var(--oc-border-width-sm) solid var(--oc-border-control);
-    background: var(--oc-bg-panel);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: var(--oc-bg-subtle);
-  }
-
-  .icon-btn {
-    border: 0;
-    background: transparent;
-    color: var(--oc-color-slate-600);
-    border-radius: var(--oc-radius-pill);
-    width: 2.25rem;
-    height: 2.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .icon-btn:hover {
-    background: var(--oc-bg-subtle);
-    color: var(--oc-text-primary);
   }
 
   .btn-connection {

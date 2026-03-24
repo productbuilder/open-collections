@@ -27,6 +27,10 @@ export const paneLayoutStyles = `
     overflow: hidden;
   }
 
+  .pane-layout[data-inspector-placement="right"] .pane-inspector {
+    border-left: var(--oc-border-width-sm) solid var(--oc-border-panel);
+  }
+
   .pane-layout[data-inspector-placement="bottom"] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) 320px;
@@ -48,6 +52,11 @@ export const paneLayoutStyles = `
     .pane-layout[data-inspector-placement="right"] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .pane-layout[data-inspector-placement="right"] .pane-inspector {
+      border-left: 0;
+      border-top: var(--oc-border-width-sm) solid var(--oc-border-panel);
     }
   }
 

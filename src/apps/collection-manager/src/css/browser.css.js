@@ -10,7 +10,7 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    padding: 0.95rem;
+    padding: var(--oc-space-4);
   }
 
   * {
@@ -23,24 +23,15 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: transparent;
-    border: none;
+    background: var(--oc-bg-panel);
+    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-radius: var(--oc-radius-panel);
     box-shadow: none;
   }
 
   .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-  }
-
-  .btn-primary {
-    border-color: var(--oc-border-accent);
-    background: var(--oc-color-blue-700);
-    color: var(--oc-color-white);
-  }
-
-  .btn-primary:hover {
-    background: #0b5aa6;
   }
 
   .btn-primary:disabled {
@@ -148,7 +139,7 @@ export const browserStyles = `
 
   @media (max-width: 760px) {
     :host {
-      padding: 0.7rem 0.7rem 0.8rem;
+      padding: var(--oc-space-3);
     }
 
     .viewport-toolbar-main,

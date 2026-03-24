@@ -1,7 +1,11 @@
+import { themeTokenStyles } from './theme.css.js';
+
 export const shellStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
-    color: #111827;
+    color: var(--oc-header-title);
     font-family: "Segoe UI", Tahoma, sans-serif;
     height: 100%;
     min-height: 0;
@@ -18,9 +22,9 @@ export const shellStyles = `
   .app-shell {
     height: min(100dvh, 100vh);
     min-height: 640px;
-    background: #f3f5f8;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    background: var(--oc-bg-shell);
+    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-radius: var(--oc-radius-panel);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -45,10 +49,10 @@ export const shellStyles = `
   }
 
   .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
     cursor: pointer;
     font: inherit;
@@ -57,13 +61,13 @@ export const shellStyles = `
   }
 
   .btn:hover {
-    background: #f8fafc;
+    background: var(--oc-bg-subtle);
   }
 
   .btn-primary {
-    background: #0f6cc6;
-    color: #ffffff;
-    border-color: #0f6cc6;
+    background: var(--oc-color-blue-700);
+    color: var(--oc-color-white);
+    border-color: var(--oc-border-accent);
   }
 
   .btn-primary:hover {
@@ -73,16 +77,16 @@ export const shellStyles = `
   .panel-subtext {
     margin: 0;
     font-size: 0.83rem;
-    color: #64748b;
+    color: var(--oc-text-muted);
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
     padding: 1rem;
     text-align: center;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--oc-text-muted);
+    background: var(--oc-bg-subtle);
     font-size: 0.9rem;
   }
 
@@ -97,7 +101,7 @@ export const shellStyles = `
 
   .field-row > label {
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--oc-color-slate-600);
     font-weight: 600;
   }
 
@@ -107,11 +111,11 @@ export const shellStyles = `
     width: 100%;
     font: inherit;
     font-size: 0.9rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
     padding: 0.45rem 0.55rem;
-    background: #ffffff;
-    color: #0f172a;
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
   }
 
   textarea {
@@ -121,11 +125,11 @@ export const shellStyles = `
 
   dialog {
     width: min(760px, 94vw);
-    border: 1px solid #dbe3ec;
-    border-radius: 12px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-radius: var(--oc-radius-dialog);
     padding: 0;
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
-    background: #ffffff;
+    box-shadow: var(--oc-shadow-dialog);
+    background: var(--oc-bg-panel);
   }
 
   dialog::backdrop {
@@ -148,7 +152,7 @@ export const shellStyles = `
     align-items: center;
     gap: 0.75rem;
     padding: 0.8rem 0.95rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
   }
 
   .dialog-title {
@@ -177,8 +181,8 @@ export const shellStyles = `
   .icon-btn {
     border: 0;
     background: transparent;
-    color: #475569;
-    border-radius: 999px;
+    color: var(--oc-color-slate-600);
+    border-radius: var(--oc-radius-pill);
     width: 2.25rem;
     height: 2.25rem;
     display: inline-flex;
@@ -189,8 +193,8 @@ export const shellStyles = `
   }
 
   .icon-btn:hover {
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-primary);
   }
 
   .add-connection-view {
@@ -206,7 +210,7 @@ export const shellStyles = `
   .add-connection-view-title {
     margin: 0;
     font-size: 1rem;
-    color: #0f172a;
+    color: var(--oc-text-primary);
   }
 
   .dialog-body {

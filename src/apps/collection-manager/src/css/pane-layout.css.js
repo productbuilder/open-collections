@@ -1,4 +1,8 @@
+import { themeTokenStyles } from './theme.css.js';
+
 export const paneLayoutStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
     flex: 1;
@@ -29,7 +33,7 @@ export const paneLayoutStyles = `
   }
 
   .pane-layout[data-inspector-placement="bottom"] .pane-inspector {
-    border-top: 1px solid #dbe3ec;
+    border-top: var(--oc-border-width-sm) solid var(--oc-border-panel);
   }
 
   .pane-layout[data-inspector-placement="hidden"] {

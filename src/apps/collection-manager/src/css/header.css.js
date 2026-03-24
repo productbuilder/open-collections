@@ -1,11 +1,15 @@
+import { themeTokenStyles } from './theme.css.js';
+
 export const headerStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
   }
 
   .topbar {
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
+    background: var(--oc-header-bg);
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
     padding: 0.85rem 1rem;
     display: flex;
     align-items: center;
@@ -21,13 +25,13 @@ export const headerStyles = `
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--oc-header-title);
   }
 
   .status {
     margin: 0;
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--oc-header-subtitle);
   }
 
   .top-actions {
@@ -38,10 +42,10 @@ export const headerStyles = `
   }
 
   .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
     cursor: pointer;
     font: inherit;
@@ -50,14 +54,14 @@ export const headerStyles = `
   }
 
   .btn:hover {
-    background: #f8fafc;
+    background: var(--oc-bg-subtle);
   }
 
   .icon-btn {
     border: 0;
     background: transparent;
-    color: #475569;
-    border-radius: 999px;
+    color: var(--oc-color-slate-600);
+    border-radius: var(--oc-radius-pill);
     width: 2.25rem;
     height: 2.25rem;
     display: inline-flex;
@@ -68,8 +72,8 @@ export const headerStyles = `
   }
 
   .icon-btn:hover {
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-primary);
   }
 
   .btn-connection {

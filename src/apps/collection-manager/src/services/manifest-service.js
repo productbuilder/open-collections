@@ -33,6 +33,26 @@ export function toManifestItem(manager, item) {
   };
 }
 
+export function isItemPublishable(manager, item, context = {}) {
+  if (!item || item.include === false) {
+    return false;
+  }
+  if (!String(item.media?.url || '').trim()) {
+    return false;
+  }
+
+  const candidate = toManifestItem(manager, item);
+  const collectionMeta = context.collectionMeta || manager.currentCollectionMeta();
+  const probeManifest = {
+    id: collectionMeta.id || 'draft-collection',
+    title: collectionMeta.title || 'Draft collection',
+    description: collectionMeta.description || '',
+    items: [candidate],
+  };
+  const validationErrors = validateCollectionShape(probeManifest);
+  return validationErrors.length === 0;
+}
+
 export function buildManifestFromState(manager) {
   const baseFromCurrent =
     manager.state.manifest && typeof manager.state.manifest === 'object'
@@ -41,11 +61,24 @@ export function buildManifestFromState(manager) {
   const collectionMeta = manager.currentCollectionMeta();
   const selectedSourceId = manager.state.activeSourceFilter || 'all';
   const selectedCollectionId = manager.state.selectedCollectionId || 'all';
+  const excludedByPublishRules = { count: 0 };
   const includedItems = manager.state.assets
-    .filter((item) => item.include !== false)
     .filter((item) => (selectedSourceId === 'all' ? true : item.sourceId === selectedSourceId))
     .filter((item) => (selectedCollectionId === 'all' ? true : item.collectionId === selectedCollectionId))
+    .filter((item) => {
+      const publishable = isItemPublishable(manager, item, { collectionMeta });
+      if (!publishable) {
+        excludedByPublishRules.count += 1;
+      }
+      return publishable;
+    })
     .map((item) => toManifestItem(manager, item));
+  if (excludedByPublishRules.count > 0) {
+    manager.setStatus(
+      `${excludedByPublishRules.count} item(s) excluded from publish due to missing media or required fields.`,
+      'warn',
+    );
+  }
   return {
     ...baseFromCurrent,
     ...collectionMeta,

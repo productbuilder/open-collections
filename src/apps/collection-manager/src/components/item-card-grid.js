@@ -39,6 +39,10 @@ class OpenItemCardGridElement extends HTMLElement {
     return `<div class="thumb-frame"><img class="thumb" src="${url}" alt="${item.title || item.id}" /></div>`;
   }
 
+  hasMedia(item) {
+    return Boolean(String(item?.media?.url || '').trim());
+  }
+
   render() {
     const items = Array.isArray(this.model.items) ? this.model.items : [];
     const selectedIds = new Set(Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds : []);
@@ -59,9 +63,16 @@ class OpenItemCardGridElement extends HTMLElement {
           <span>Select</span>
         </label>
         ${this.createPreviewMarkup(item)}
-        <p class="card-title">${item.title || '(Untitled)'}</p>
+        <p class="card-title">${this.hasMedia(item) ? (item.title || '(Untitled)') : 'New item'}</p>
         <div class="badge-row"><span class="badge">Completeness ${this.requiredFieldScore(item)}</span></div>
-        <div class="card-actions"><button type="button" class="btn" data-open-id="${item.workspaceId}">View</button></div>
+        <div class="card-actions">
+          ${
+            this.hasMedia(item)
+              ? `<button type="button" class="btn" data-open-id="${item.workspaceId}">View</button>`
+              : `<button type="button" class="btn" data-upload-id="${item.workspaceId}">Upload image</button>
+                 <button type="button" class="btn" data-url-id="${item.workspaceId}">Use image URL</button>`
+          }
+        </div>
       </article>
     `).join('');
 
@@ -93,6 +104,18 @@ class OpenItemCardGridElement extends HTMLElement {
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         this.dispatch('item-view', { workspaceId: button.getAttribute('data-open-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('button[data-upload-id]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.dispatch('attach-media-upload', { itemId: button.getAttribute('data-upload-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('button[data-url-id]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.dispatch('attach-media-url', { itemId: button.getAttribute('data-url-id') });
       });
     });
   }

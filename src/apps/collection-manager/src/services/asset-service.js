@@ -406,3 +406,217 @@ export async function ingestImageFiles(manager, files) {
   );
   manager.markDirty();
 }
+
+export async function createEmptyDraftItem(manager) {
+  const source = manager.getActiveIngestionSource();
+  if (!source) {
+    return null;
+  }
+
+  const collectionId = manager.ensureCollectionForSource(source);
+  if (!collectionId) {
+    manager.setStatus('Create or select a collection before adding items.', 'warn');
+    return null;
+  }
+
+  const collectionLabel = manager.collectionLabelFor(source, collectionId);
+  const collectionRootPath = manager.activeCollectionRootPath() || manager.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
+  const itemId = manager.uniqueDraftItemId('new-item', source.id, collectionId);
+  const workspaceId = manager.toWorkspaceItemId(source.id, itemId);
+
+  const item = {
+    id: itemId,
+    title: 'New item',
+    description: '',
+    creator: '',
+    date: '',
+    location: '',
+    license: '',
+    attribution: '',
+    source: '',
+    tags: [],
+    include: false,
+    media: {
+      type: 'image',
+      mode: null,
+      url: '',
+      thumbnailUrl: '',
+    },
+    previewUrl: '',
+    thumbnailPreviewUrl: '',
+    thumbnailRepoPath: '',
+    isLocalDraftAsset: true,
+    draftUploadStatus: 'pending-media',
+    uploadError: '',
+    mediaError: false,
+    sourceAssetId: itemId,
+    workspaceId,
+    sourceId: source.id,
+    sourceLabel: source.label,
+    sourceDisplayLabel: source.displayLabel || source.label,
+    providerId: source.providerId,
+    collectionId,
+    collectionLabel,
+    collectionRootPath,
+    localFileRef: '',
+    localThumbnailRef: '',
+  };
+
+  manager.state.assets = [...manager.state.assets, item];
+  manager.refreshSourceCollectionsAndCounts(source.id);
+  manager.state.selectedCollectionId = collectionId;
+  manager.state.selectedItemId = workspaceId;
+  manager.renderSourcesList();
+  manager.renderSourceFilter();
+  manager.renderCollectionFilter();
+  manager.renderAssets();
+  manager.renderEditor();
+  manager.markDirty();
+  if (manager.state.opfsAvailable) {
+    await manager.saveLocalDraft();
+  }
+  manager.setStatus('Added empty draft item. Attach media to include it in publish output.', 'ok');
+  return item;
+}
+
+export async function attachUploadedMediaToItem(manager, itemId, file) {
+  const item = manager.state.assets.find((entry) => entry.workspaceId === itemId);
+  if (!item) {
+    manager.setStatus('Could not find item to attach uploaded media.', 'warn');
+    return;
+  }
+  if (!manager.isSupportedImageFile(file)) {
+    manager.setStatus('Unsupported image file. Use JPG, PNG, WEBP, or GIF.', 'warn');
+    return;
+  }
+
+  const ext = manager.extensionFromName(file.name, '.jpg');
+  const mediaRepoPath = `media/${item.id}${ext}`;
+  const thumbRepoPath = `thumbs/${item.id}.thumb.jpg`;
+  const localFileRef = manager.collectionAssetPath(item.workspaceId, 'original', ext);
+  const localThumbnailRef = manager.collectionAssetPath(item.workspaceId, 'thumbnail', '.jpg');
+  const previewUrl = URL.createObjectURL(file);
+  manager.registerObjectUrl(previewUrl);
+
+  let thumbnailBlob = null;
+  let thumbnailPreviewUrl = '';
+  try {
+    thumbnailBlob = await generateThumbnailBlob(manager, file);
+  } catch (_error) {
+    thumbnailBlob = null;
+  }
+  if (thumbnailBlob) {
+    thumbnailPreviewUrl = URL.createObjectURL(thumbnailBlob);
+    manager.registerObjectUrl(thumbnailPreviewUrl);
+  }
+
+  const updated = {
+    ...item,
+    fileName: file.name || item.fileName || `${item.id}${ext}`,
+    include: true,
+    mediaError: false,
+    media: {
+      mode: 'managed',
+      type: 'image',
+      url: mediaRepoPath,
+      thumbnailUrl: thumbnailBlob ? thumbRepoPath : '',
+    },
+    previewUrl,
+    thumbnailPreviewUrl,
+    thumbnailRepoPath: thumbnailBlob ? thumbRepoPath : '',
+    isLocalDraftAsset: true,
+    draftUploadStatus: 'pending-upload',
+    uploadError: '',
+    localFileRef,
+    localThumbnailRef: thumbnailBlob ? localThumbnailRef : '',
+  };
+
+  await rememberLocalAssetFiles(manager, updated, file, thumbnailBlob);
+  manager.state.assets = manager.state.assets.map((entry) => (entry.workspaceId === itemId ? updated : entry));
+  manager.state.selectedItemId = itemId;
+  manager.renderAssets();
+  manager.renderEditor();
+  manager.markDirty();
+  if (manager.state.opfsAvailable) {
+    await manager.saveLocalDraft();
+  }
+  manager.setStatus(`Attached uploaded image to ${updated.title || updated.id}.`, 'ok');
+}
+
+function canLoadImageUrl(url) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(true);
+    image.onerror = () => resolve(false);
+    image.src = url;
+  });
+}
+
+export async function attachReferencedMediaToItem(manager, itemId, url) {
+  const item = manager.state.assets.find((entry) => entry.workspaceId === itemId);
+  if (!item) {
+    manager.setStatus('Could not find item to attach URL media.', 'warn');
+    return;
+  }
+  const normalizedUrl = String(url || '').trim();
+  if (!normalizedUrl) {
+    manager.state.assets = manager.state.assets.map((entry) =>
+      entry.workspaceId === itemId
+        ? {
+            ...entry,
+            include: false,
+            mediaError: true,
+            media: {
+              ...normalizeMediaRef(entry.media),
+              mode: 'referenced',
+              type: 'image',
+              url: '',
+              thumbnailUrl: '',
+            },
+            draftUploadStatus: 'pending-media',
+          }
+        : entry,
+    );
+    manager.renderAssets();
+    manager.renderEditor();
+    manager.markDirty();
+    manager.setStatus('Image URL is required to attach referenced media.', 'warn');
+    return;
+  }
+
+  const didLoad = await canLoadImageUrl(normalizedUrl);
+  const updated = {
+    ...item,
+    include: didLoad,
+    mediaError: !didLoad,
+    media: {
+      mode: 'referenced',
+      type: 'image',
+      url: normalizedUrl,
+      thumbnailUrl: normalizedUrl,
+    },
+    previewUrl: normalizedUrl,
+    thumbnailPreviewUrl: normalizedUrl,
+    thumbnailRepoPath: '',
+    isLocalDraftAsset: false,
+    draftUploadStatus: didLoad ? 'uploaded' : 'pending-media',
+    uploadError: didLoad ? '' : 'Failed to load image URL preview.',
+    localFileRef: '',
+    localThumbnailRef: '',
+  };
+
+  manager.state.assets = manager.state.assets.map((entry) => (entry.workspaceId === itemId ? updated : entry));
+  manager.state.selectedItemId = itemId;
+  manager.renderAssets();
+  manager.renderEditor();
+  manager.markDirty();
+  if (manager.state.opfsAvailable) {
+    await manager.saveLocalDraft();
+  }
+  manager.setStatus(
+    didLoad
+      ? `Attached referenced image URL to ${updated.title || updated.id}.`
+      : 'Could not preview the image URL. Item kept as draft and excluded from publish.',
+    didLoad ? 'ok' : 'warn',
+  );
+}

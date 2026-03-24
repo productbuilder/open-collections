@@ -691,6 +691,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return AssetService.ingestImageFiles(this, files);
   }
 
+  async createEmptyDraftItem() {
+    return AssetService.createEmptyDraftItem(this);
+  }
+
+  async attachUploadedMediaToItem(itemId, file) {
+    return AssetService.attachUploadedMediaToItem(this, itemId, file);
+  }
+
+  async attachReferencedMediaToItem(itemId, url) {
+    return AssetService.attachReferencedMediaToItem(this, itemId, url);
+  }
+
   renderCapabilities(capabilitiesOrProvider) {
     const capabilities =
       typeof capabilitiesOrProvider?.getCapabilities === 'function'

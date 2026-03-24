@@ -26,7 +26,6 @@ export const browserStyles = `
     background: var(--oc-bg-panel);
     border: var(--oc-border-width-sm) solid var(--oc-border-panel);
     border-radius: var(--oc-radius-panel);
-    box-shadow: none;
   }
 
   .btn:disabled {

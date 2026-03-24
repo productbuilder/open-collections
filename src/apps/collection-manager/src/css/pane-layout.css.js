@@ -7,6 +7,7 @@ export const paneLayoutStyles = `
     display: block;
     flex: 1;
     min-height: 0;
+    --oc-pane-divider: var(--oc-border-width-sm) solid var(--oc-border-panel);
   }
 
   * {
@@ -28,7 +29,7 @@ export const paneLayoutStyles = `
   }
 
   .pane-layout[data-inspector-placement="right"] .pane-inspector {
-    border-left: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-left: var(--oc-pane-divider);
   }
 
   .pane-layout[data-inspector-placement="bottom"] {
@@ -37,7 +38,7 @@ export const paneLayoutStyles = `
   }
 
   .pane-layout[data-inspector-placement="bottom"] .pane-inspector {
-    border-top: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-top: var(--oc-pane-divider);
   }
 
   .pane-layout[data-inspector-placement="hidden"] {
@@ -56,7 +57,7 @@ export const paneLayoutStyles = `
 
     .pane-layout[data-inspector-placement="right"] .pane-inspector {
       border-left: 0;
-      border-top: var(--oc-border-width-sm) solid var(--oc-border-panel);
+      border-top: var(--oc-pane-divider);
     }
   }
 

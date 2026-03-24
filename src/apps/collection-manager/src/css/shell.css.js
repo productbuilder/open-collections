@@ -1,7 +1,9 @@
 import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const shellStyles = `
   ${themeTokenStyles}
+  ${primitiveStyles}
 
   :host {
     display: block;
@@ -49,19 +51,7 @@ export const shellStyles = `
   }
 
   .btn {
-    border: var(--oc-border-width-sm) solid var(--oc-border-control);
-    background: var(--oc-bg-panel);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: var(--oc-bg-subtle);
   }
 
   .btn-primary {
@@ -81,13 +71,7 @@ export const shellStyles = `
   }
 
   .empty {
-    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
     border-radius: var(--oc-radius-control);
-    padding: 1rem;
-    text-align: center;
-    color: var(--oc-text-muted);
-    background: var(--oc-bg-subtle);
-    font-size: 0.9rem;
   }
 
   .is-hidden {
@@ -151,8 +135,6 @@ export const shellStyles = `
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.8rem 0.95rem;
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
   }
 
   .dialog-title {
@@ -476,7 +458,8 @@ export const shellStyles = `
       min-height: 100dvh;
     }
 
-    .btn {
+    .btn,
+    .oc-btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

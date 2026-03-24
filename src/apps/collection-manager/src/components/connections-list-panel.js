@@ -1,7 +1,12 @@
 import { getSourceStatus } from '../state/source-status.js';
 import { renderTrashIcon } from './icons.js';
+import { themeTokenStyles } from '../css/theme.css.js';
+import { primitiveStyles } from '../css/primitives.css.js';
 
 const styles = `
+  ${themeTokenStyles}
+  ${primitiveStyles}
+
   :host {
     display: block;
   }
@@ -17,13 +22,7 @@ const styles = `
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
     border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    color: #64748b;
-    background: #f8fafc;
-    font-size: 0.9rem;
   }
 
   .source-card {
@@ -102,22 +101,6 @@ const styles = `
     min-width: 0;
   }
 
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: #f8fafc;
-  }
-
   .btn-primary {
     background: #0f6cc6;
     color: #ffffff;
@@ -129,12 +112,8 @@ const styles = `
   }
 
   .pill {
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
     padding: 0.1rem 0.4rem;
     font-size: 0.72rem;
-    color: #475569;
-    background: #f8fafc;
   }
 
   .pill.is-ok {
@@ -188,7 +167,8 @@ const styles = `
       align-self: flex-start;
     }
 
-    .btn {
+    .btn,
+    .oc-btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

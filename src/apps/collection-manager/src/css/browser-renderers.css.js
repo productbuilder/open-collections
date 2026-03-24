@@ -1,4 +1,10 @@
+import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
+
 export const browserRendererStyles = `
+  ${themeTokenStyles}
+  ${primitiveStyles}
+
   :host {
     display: block;
     width: 100%;
@@ -137,30 +143,12 @@ export const browserRendererStyles = `
     gap: 0.45rem;
   }
 
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
   .card-actions .btn {
     flex: 1;
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
     border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    color: #64748b;
-    background: #f8fafc;
-    font-size: 0.9rem;
   }
 
   .row-table-wrap {

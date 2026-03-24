@@ -1,7 +1,9 @@
 import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const browserStyles = `
   ${themeTokenStyles}
+  ${primitiveStyles}
 
   :host {
     display: block;
@@ -24,22 +26,6 @@ export const browserStyles = `
     background: transparent;
     border: none;
     box-shadow: none;
-  }
-
-  .btn {
-    border: var(--oc-border-width-sm) solid var(--oc-border-control);
-    background: var(--oc-bg-panel);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-control);
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: var(--oc-bg-subtle);
   }
 
   .btn:disabled {
@@ -192,7 +178,8 @@ export const browserStyles = `
       margin-left: auto;
     }
 
-    .btn {
+    .btn,
+    .oc-btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

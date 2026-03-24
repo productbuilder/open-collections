@@ -160,7 +160,11 @@ class OpenCollectionsSiteHeader extends HTMLElement {
 		this.innerHTML = `
 			<div class="site-header">
 				<div class="site-header-inner">
-					<div class="site-brand">${t.brand}</div>
+					<div class="site-brand">
+						<a href="${resolveHref(basePath, '')}" class="site-brand-link" aria-label="${t.brand}">
+							<img src="${resolveHref(basePath, 'assets/logo.png')}" alt="${t.brand}" class="site-brand-logo" />
+						</a>
+					</div>
 					<nav class="site-nav" aria-label="${t.navAriaLabel}">${navLinks}</nav>
 					${renderLanguageSwitcher(basePath, context)}
 				</div>

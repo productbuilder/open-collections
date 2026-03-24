@@ -122,7 +122,9 @@ timemap-browser {
 	text-decoration: underline;
 }
 
-
+.site-brand-logo{
+	max-height:3rem;
+}
 
 .site-footer {
 	margin-top: 2.2rem;

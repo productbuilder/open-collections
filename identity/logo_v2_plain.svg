@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="456.57355mm"
+   height="90.806068mm"
+   viewBox="0 0 456.57355 90.80607"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <rect
+       x="1748.8311"
+       y="636.5426"
+       width="1290.6327"
+       height="240.23592"
+       id="rect6-1" />
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-607.25935,-59.772764)">
+    <g
+       id="g9">
+      <g
+         id="g6-8"
+         transform="matrix(0.5506959,0,0,0.5506959,454.99397,59.494438)">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:10.4109;stroke-linecap:round;stroke-dasharray:none"
+           id="path1-8-6-2-2"
+           d="m 469.93518,120.60889 a 43.304203,43.304203 0 0 1 -58.32855,-4.88352 43.304203,43.304203 0 0 1 -0.18053,-58.532346 43.304203,43.304203 0 0 1 58.29732,-5.243222" />
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:10.4109;stroke-linecap:round;stroke-dasharray:none"
+           id="path1-1-3-4"
+           d="m 345.09008,74.252512 a 28.517899,28.517899 0 0 1 32.44739,-14.928223 28.517899,28.517899 0 0 1 21.57591,28.463395 28.517899,28.517899 0 0 1 -23.13924,27.207726 28.517899,28.517899 0 0 1 -31.5585,-16.725601" />
+      </g>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,237.34632,-87.914356)"
+         id="text6-1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:133.333px;line-height:0;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:6px;word-spacing:-15px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect6-1);display:inline;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.26772;stroke-linecap:butt;stroke-dasharray:none"
+         x="285.04883"
+         y="0"><tspan
+           x="1821.4154"
+           y="773.92671"
+           id="tspan7"><tspan
+             style="font-family:Manrope;-inkscape-font-specification:Manrope"
+             id="tspan1">open</tspan><tspan
+             dx="15.000008"
+             style="font-weight:600;line-height:1.5;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold';fill:#000000"
+             id="tspan3"> </tspan><tspan
+             dx="-15.000013"
+             style="font-weight:600;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold';fill:#000000"
+             id="tspan6">Collections</tspan></tspan></text>
+    </g>
+  </g>
+</svg>

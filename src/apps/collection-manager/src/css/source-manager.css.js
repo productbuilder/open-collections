@@ -1,6 +1,11 @@
 import { backButtonStyles } from '../components/back-button.js';
+import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const sourceManagerStyles = `
+  ${themeTokenStyles}
+  ${primitiveStyles}
+
   :host {
     display: grid;
     gap: 0.7rem;
@@ -21,9 +26,9 @@ export const sourceManagerStyles = `
   }
 
   .source-card {
-    border: 1px solid #dbe3ec;
-    border-radius: 8px;
-    background: #ffffff;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
     padding: 0.6rem;
     display: grid;
     gap: 0.45rem;
@@ -72,9 +77,9 @@ export const sourceManagerStyles = `
   }
 
   .badge-row {
-    <!-- display: flex;
+    display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem; -->
+    gap: 0.35rem;
   }
 
   .provider-layout {
@@ -106,14 +111,14 @@ export const sourceManagerStyles = `
   .root-actions-title {
     margin: 0;
     font-size: 1rem;
-    color: #0f172a;
+    color: var(--oc-text-primary);
   }
 
 
   .provider-card {
-    border: 1px solid #dbe3ec;
-    border-radius: 8px;
-    background: #ffffff;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
     padding: 0.72rem;
     min-height: 72px;
     text-align: left;
@@ -124,16 +129,16 @@ export const sourceManagerStyles = `
   }
 
   .provider-card.is-selected {
-    border-color: #0f6cc6;
+    border-color: var(--oc-border-accent);
     box-shadow: 0 0 0 1px #66a6e8 inset;
     background: #f5faff;
   }
 
   .provider-card.is-disabled {
     cursor: not-allowed;
-    background: #f8fafc;
-    color: #64748b;
-    border-color: #e2e8f0;
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-muted);
+    border-color: var(--oc-border-subtle);
   }
 
   .provider-card-label-row {
@@ -147,31 +152,27 @@ export const sourceManagerStyles = `
     display: grid;
     gap: 0.6rem;
     align-content: start;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-subtle);
     padding: 0.7rem;
   }
 
   .config-section-title {
     margin: 0;
     font-size: 0.83rem;
-    color: #334155;
+    color: var(--oc-text-secondary);
   }
 
   .panel-subtext {
     margin: 0;
     font-size: 0.83rem;
-    color: #64748b;
+    color: var(--oc-text-muted);
   }
 
   .pill {
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    padding: 0.1rem 0.4rem;
     font-size: 0.72rem;
-    color: #475569;
-    background: #f8fafc;
+    padding: 0.1rem 0.4rem;
   }
 
   .pill.is-ok {
@@ -198,30 +199,8 @@ export const sourceManagerStyles = `
     flex-wrap: wrap;
   }
 
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: #f8fafc;
-  }
-
   .btn-primary {
-    background: #0f6cc6;
-    color: #ffffff;
-    border-color: #0f6cc6;
-  }
-
-  .btn-primary:hover {
-    background: #0d5eae;
+    border-color: var(--oc-border-accent);
   }
 
   .storage-help-btn {
@@ -235,7 +214,7 @@ export const sourceManagerStyles = `
 
   .field-row > label {
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--oc-text-secondary);
     font-weight: 600;
   }
 
@@ -245,24 +224,14 @@ export const sourceManagerStyles = `
     width: 100%;
     font: inherit;
     font-size: 0.9rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
     padding: 0.45rem 0.55rem;
-    background: #ffffff;
-    color: #0f172a;
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
   }
 
   ${backButtonStyles}
-
-  .empty {
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    color: #64748b;
-    background: #f8fafc;
-    font-size: 0.9rem;
-  }
 
   .is-hidden {
     display: none;

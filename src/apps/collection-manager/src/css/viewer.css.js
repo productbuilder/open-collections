@@ -11,11 +11,11 @@ export const viewerStyles = `
 
   dialog {
     width: min(980px, 96vw);
-    border: 1px solid #dbe3ec;
-    border-radius: 12px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-dialog);
     padding: 0;
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
-    background: #ffffff;
+    box-shadow: var(--oc-shadow-dialog);
+    background: var(--oc-bg-panel);
   }
 
   dialog::backdrop {
@@ -48,9 +48,9 @@ export const viewerStyles = `
   }
 
   .viewer-media-wrap {
-    border: 1px solid #dbe3ec;
-    border-radius: 8px;
-    background: #f8fafc;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-subtle);
     min-height: 280px;
     max-height: 60vh;
     overflow: auto;
@@ -65,15 +65,15 @@ export const viewerStyles = `
     width: auto;
     height: auto;
     border-radius: 7px;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
   }
 
   .viewer-video {
     max-width: 100%;
     max-height: 56vh;
     border-radius: 7px;
-    border: 1px solid #cbd5e1;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
     background: #0f172a;
   }
 
@@ -84,7 +84,7 @@ export const viewerStyles = `
 
   .viewer-text {
     margin: 0;
-    color: #334155;
+    color: var(--oc-text-secondary);
     font-size: 0.9rem;
     white-space: pre-wrap;
   }
@@ -99,9 +99,9 @@ export const viewerStyles = `
     font-size: 0.75rem;
     padding: 0.15rem 0.4rem;
     border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    background: #f8fafc;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    color: var(--oc-text-secondary);
+    background: var(--oc-bg-subtle);
   }
 
   .badge.ok {

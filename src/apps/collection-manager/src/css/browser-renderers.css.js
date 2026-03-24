@@ -25,10 +25,10 @@ export const browserRendererStyles = `
   }
 
   .asset-card {
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: 9px;
     padding: 0.55rem;
-    background: #ffffff;
+    background: var(--oc-bg-panel);
     display: grid;
     grid-template-rows: auto minmax(2.4rem, auto) auto auto;
     align-content: start;
@@ -41,7 +41,7 @@ export const browserRendererStyles = `
 
   .asset-card:hover {
     border-color: #93c5fd;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--oc-shadow-card-hover);
     background: #f8fbff;
   }
 
@@ -68,10 +68,10 @@ export const browserRendererStyles = `
     padding: 0.2rem 0.4rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     font-size: 0.72rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--oc-text-secondary);
   }
 
   .selection-toggle input {
@@ -84,7 +84,7 @@ export const browserRendererStyles = `
     display: block;
     flex-shrink: 0;
     border-radius: 7px;
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     overflow: hidden;
     background: #eef2f7;
   }
@@ -103,11 +103,11 @@ export const browserRendererStyles = `
     width: 100%;
     height: 100%;
     border-radius: 0;
-    border: 1px dashed #cbd5e1;
+    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
     display: grid;
     place-items: center;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--oc-text-muted);
+    background: var(--oc-bg-subtle);
     font-size: 0.82rem;
   }
 
@@ -124,18 +124,18 @@ export const browserRendererStyles = `
   }
 
   .badge-row {
-    <!-- display: flex;
+    display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem; -->
+    gap: 0.35rem;
   }
 
   .badge {
     font-size: 0.75rem;
     padding: 0.15rem 0.4rem;
     border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    background: #f8fafc;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    color: var(--oc-text-secondary);
+    background: var(--oc-bg-subtle);
   }
 
   .card-actions {
@@ -152,10 +152,10 @@ export const browserRendererStyles = `
   }
 
   .row-table-wrap {
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: 10px;
     overflow: auto;
-    background: #ffffff;
+    background: var(--oc-bg-panel);
   }
 
   .row-table {
@@ -167,7 +167,7 @@ export const browserRendererStyles = `
   .row-table th,
   .row-table td {
     padding: 0.45rem 0.55rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     text-align: left;
     vertical-align: middle;
   }
@@ -195,7 +195,7 @@ export const browserRendererStyles = `
     border-radius: 6px;
     display: block;
     object-fit: cover;
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     background: #eef2f7;
   }
 
@@ -203,7 +203,7 @@ export const browserRendererStyles = `
     display: grid;
     place-items: center;
     border-style: dashed;
-    color: #64748b;
+    color: var(--oc-text-muted);
     font-size: 0.6rem;
   }
 

@@ -32,7 +32,7 @@ export const metadataStyles = `
   }
 
   .editor-panel[data-presentation="embedded"] {
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: 14px;
     overflow: hidden;
   }
@@ -101,7 +101,7 @@ export const metadataStyles = `
 
   .field-row > label {
     font-size: 0.8rem;
-    color: var(--oc-color-slate-600);
+    color: var(--oc-text-secondary);
     font-weight: 600;
   }
 
@@ -128,7 +128,7 @@ export const metadataStyles = `
     align-items: center;
     gap: 0.5rem;
     font-size: 0.84rem;
-    color: #334155;
+    color: var(--oc-text-secondary);
     padding-top: 0.2rem;
   }
 
@@ -148,7 +148,7 @@ export const metadataStyles = `
 
   .btn-danger {
     background: #dc2626;
-    color: #ffffff;
+    color: var(--oc-color-white);
     border-color: #dc2626;
   }
 
@@ -157,13 +157,13 @@ export const metadataStyles = `
   }
 
   .btn-secondary {
-    color: #0f6cc6;
-    border-color: #bfdbfe;
-    background: #eff6ff;
+    color: var(--oc-color-blue-700);
+    border-color: var(--oc-color-blue-200);
+    background: var(--oc-color-blue-50);
   }
 
   .btn-secondary:hover {
-    background: #dbeafe;
+    background: var(--oc-color-blue-200);
   }
 
   .editor-section {
@@ -198,9 +198,9 @@ export const metadataStyles = `
   }
 
   .override-field.is-override-active {
-    background: #ffffff;
-    border-color: #bfdbfe;
-    box-shadow: inset 0 0 0 1px rgba(15, 108, 198, 0.08);
+    background: var(--oc-bg-panel);
+    border-color: var(--oc-color-blue-200);
+    box-shadow: var(--oc-shadow-focus);
   }
 
   .override-row-header {
@@ -212,7 +212,7 @@ export const metadataStyles = `
 
   .override-row-header label {
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--oc-text-secondary);
     font-weight: 600;
   }
 

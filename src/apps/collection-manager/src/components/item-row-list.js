@@ -34,6 +34,10 @@ class OpenItemRowListElement extends HTMLElement {
     return `<img class="row-thumb" src="${url}" alt="${item.title || item.id}" />`;
   }
 
+  hasMedia(item) {
+    return Boolean(String(item?.media?.url || '').trim());
+  }
+
   render() {
     const items = Array.isArray(this.model.items) ? this.model.items : [];
     const selectedIds = new Set(Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds : []);
@@ -56,11 +60,18 @@ class OpenItemRowListElement extends HTMLElement {
           />
         </td>
         <td>${this.previewMarkup(item)}</td>
-        <td>${item.title || '(Untitled)'}</td>
+        <td>${this.hasMedia(item) ? (item.title || '(Untitled)') : 'New item'}</td>
         <td>${item.id || ''}</td>
         <td>${item.media?.type || ''}</td>
         <td>${this.requiredFieldScore(item)}</td>
-        <td><button type="button" class="btn" data-open-id="${item.workspaceId}">View</button></td>
+        <td>
+          ${
+            this.hasMedia(item)
+              ? `<button type="button" class="btn" data-open-id="${item.workspaceId}">View</button>`
+              : `<button type="button" class="btn" data-upload-id="${item.workspaceId}">Upload image</button>
+                 <button type="button" class="btn" data-url-id="${item.workspaceId}">Use image URL</button>`
+          }
+        </td>
       </tr>
     `).join('');
 
@@ -99,6 +110,18 @@ class OpenItemRowListElement extends HTMLElement {
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         this.dispatch('item-view', { workspaceId: button.getAttribute('data-open-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('button[data-upload-id]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.dispatch('attach-media-upload', { itemId: button.getAttribute('data-upload-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('button[data-url-id]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.dispatch('attach-media-url', { itemId: button.getAttribute('data-url-id') });
       });
     });
   }

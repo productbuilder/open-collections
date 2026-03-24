@@ -239,6 +239,46 @@ export function bindDomEvents(app) {
     target.addEventListener('add-collection', () => {
       app.openNewCollectionDialog();
     });
+    target.addEventListener('add-item', async () => {
+      await app.createEmptyDraftItem();
+    });
+    target.addEventListener('attach-media-upload', async (event) => {
+      const itemId = event.detail?.itemId || '';
+      if (!itemId) {
+        return;
+      }
+      const picker = document.createElement('input');
+      picker.type = 'file';
+      picker.accept = '.jpg,.jpeg,.png,.webp,.gif';
+      picker.hidden = true;
+      document.body.appendChild(picker);
+      picker.addEventListener(
+        'change',
+        async () => {
+          const file = picker.files && picker.files[0] ? picker.files[0] : null;
+          picker.remove();
+          if (!file) {
+            return;
+          }
+          await app.attachUploadedMediaToItem(itemId, file);
+        },
+        { once: true },
+      );
+      picker.click();
+    });
+    target.addEventListener('attach-media-url', async (event) => {
+      const itemId = event.detail?.itemId || '';
+      if (!itemId) {
+        return;
+      }
+      const current = app.state.assets.find((item) => item.workspaceId === itemId);
+      const initialValue = current?.media?.mode === 'referenced' ? String(current?.media?.url || '').trim() : '';
+      const value = window.prompt('Enter image URL', initialValue);
+      if (value === null) {
+        return;
+      }
+      await app.attachReferencedMediaToItem(itemId, value);
+    });
     target.addEventListener('publish-collection', async () => {
       await app.publishActiveSourceDraft();
     });

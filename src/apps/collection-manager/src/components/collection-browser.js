@@ -56,7 +56,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         return;
       }
       this.dispatch('add-item');
-      this.shadowRoot.getElementById('imageFileInput')?.click();
     });
     this.shadowRoot.getElementById('publishCollectionBtn')?.addEventListener('click', () => {
       this.dispatch('publish-collection');

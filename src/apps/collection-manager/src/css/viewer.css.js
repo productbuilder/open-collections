@@ -1,8 +1,6 @@
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const viewerStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   .btn {

@@ -1,8 +1,6 @@
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const browserRendererStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {
@@ -26,8 +24,8 @@ export const browserRendererStyles = `
 
   .asset-card {
     border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
-    border-radius: 9px;
-    padding: 0.55rem;
+    border-radius: var(--oc-radius-control);
+    padding: var(--oc-space-2);
     background: var(--oc-bg-panel);
     display: grid;
     grid-template-rows: auto minmax(2.4rem, auto) auto auto;
@@ -66,7 +64,7 @@ export const browserRendererStyles = `
     align-items: center;
     gap: 0.3rem;
     padding: 0.2rem 0.4rem;
-    border-radius: 999px;
+    border-radius: var(--oc-radius-pill);
     background: rgba(255, 255, 255, 0.92);
     border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     font-size: 0.72rem;
@@ -83,7 +81,7 @@ export const browserRendererStyles = `
     height: 125px;
     display: block;
     flex-shrink: 0;
-    border-radius: 7px;
+    border-radius: var(--oc-radius-control);
     border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     overflow: hidden;
     background: #eef2f7;
@@ -132,7 +130,7 @@ export const browserRendererStyles = `
   .badge {
     font-size: 0.75rem;
     padding: 0.15rem 0.4rem;
-    border-radius: 999px;
+    border-radius: var(--oc-radius-pill);
     border: var(--oc-border-width-sm) solid var(--oc-border-control);
     color: var(--oc-text-secondary);
     background: var(--oc-bg-subtle);
@@ -148,12 +146,12 @@ export const browserRendererStyles = `
   }
 
   .empty {
-    border-radius: 8px;
+    border-radius: var(--oc-radius-control);
   }
 
   .row-table-wrap {
     border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
-    border-radius: 10px;
+    border-radius: var(--oc-radius-panel);
     overflow: auto;
     background: var(--oc-bg-panel);
   }

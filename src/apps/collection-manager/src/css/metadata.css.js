@@ -1,8 +1,6 @@
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const metadataStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {
@@ -143,7 +141,7 @@ export const metadataStyles = `
   }
 
   .btn-primary:hover {
-    background: #0d5eae;
+    background: var(--oc-color-blue-800);
   }
 
   .btn-danger {
@@ -285,8 +283,7 @@ export const metadataStyles = `
       display: inline-flex;
     }
 
-    .btn,
-    .oc-btn {
+    .btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

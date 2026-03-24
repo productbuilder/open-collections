@@ -1,8 +1,6 @@
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const browserStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {
@@ -72,7 +70,7 @@ export const browserStyles = `
 
   .btn-danger {
     border-color: #dc2626;
-    color: #ffffff;
+    color: var(--oc-color-white);
     background: #dc2626;
   }
 
@@ -168,8 +166,7 @@ export const browserStyles = `
       margin-left: auto;
     }
 
-    .btn,
-    .oc-btn {
+    .btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

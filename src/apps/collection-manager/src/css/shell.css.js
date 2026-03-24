@@ -50,9 +50,6 @@ export const shellStyles = `
     min-height: 0;
   }
 
-  .btn {
-    padding: 0.42rem 0.7rem;
-  }
 
   .panel-subtext {
     margin: 0;
@@ -120,7 +117,7 @@ export const shellStyles = `
     width: min(760px, 94vw);
   }
 
-  .dialog-header {
+  .dialog-shell > .dialog-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -412,9 +409,6 @@ export const shellStyles = `
   }
 
   @media (max-width: 760px) {
-    .dialog-header {
-      padding: 0.75rem 0.8rem;
-    }
 
     .dialog-body {
       padding: 0.8rem;
@@ -430,12 +424,6 @@ export const shellStyles = `
       min-height: 100dvh;
     }
 
-    .btn,
-    .oc-btn {
-      padding: 0.3rem 0.52rem;
-      font-size: 0.77rem;
-      border-radius: 7px;
-    }
 
     .dialog-actions .btn {
       flex: 1 1 calc(50% - 0.5rem);

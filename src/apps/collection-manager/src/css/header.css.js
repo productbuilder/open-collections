@@ -43,9 +43,6 @@ export const headerStyles = `
     flex-wrap: wrap;
   }
 
-  .btn {
-    padding: 0.42rem 0.7rem;
-  }
 
   .btn-connection {
     display: inline-flex;
@@ -96,15 +93,5 @@ export const headerStyles = `
       row-gap: 0.35rem;
     }
 
-    .btn {
-      padding: 0.3rem 0.52rem;
-      font-size: 0.77rem;
-      border-radius: 7px;
-    }
-
-    .icon-btn {
-      width: 2rem;
-      height: 2rem;
-    }
   }
 `;

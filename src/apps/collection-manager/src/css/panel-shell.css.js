@@ -1,9 +1,7 @@
 import { backButtonStyles } from '../components/back-button.js';
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const panelShellStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {

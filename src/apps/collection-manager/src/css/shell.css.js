@@ -1,8 +1,6 @@
-import { themeTokenStyles } from './theme.css.js';
 import { primitiveStyles } from './primitives.css.js';
 
 export const shellStyles = `
-  ${themeTokenStyles}
   ${primitiveStyles}
 
   :host {
@@ -192,10 +190,10 @@ export const shellStyles = `
   }
 
   .source-card {
-    border: 1px solid #dbe3ec;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: 12px;
-    background: #ffffff;
-    padding: 0.75rem;
+    background: var(--oc-bg-panel);
+    padding: var(--oc-space-3);
     display: grid;
     gap: 0.55rem;
     cursor: pointer;
@@ -258,7 +256,7 @@ export const shellStyles = `
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--oc-text-primary);
     overflow-wrap: anywhere;
   }
 
@@ -318,10 +316,10 @@ export const shellStyles = `
   }
 
   .storage-section {
-    border: 1px solid #dbe3ec;
-    border-radius: 8px;
-    background: #ffffff;
-    padding: 0.75rem;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
+    padding: var(--oc-space-3);
     display: grid;
     gap: 0.45rem;
   }
@@ -329,7 +327,7 @@ export const shellStyles = `
   .storage-heading {
     margin: 0;
     font-size: 0.9rem;
-    color: #0f172a;
+    color: var(--oc-text-primary);
   }
 
   .storage-list {
@@ -337,15 +335,15 @@ export const shellStyles = `
     padding-left: 1.1rem;
     display: grid;
     gap: 0.3rem;
-    color: #334155;
+    color: var(--oc-text-secondary);
     font-size: 0.86rem;
   }
 
   .storage-table-wrap {
     overflow: auto;
-    border: 1px solid #dbe3ec;
-    border-radius: 8px;
-    background: #ffffff;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
   }
 
   .storage-table {
@@ -353,20 +351,20 @@ export const shellStyles = `
     min-width: 980px;
     border-collapse: collapse;
     font-size: 0.82rem;
-    color: #334155;
+    color: var(--oc-text-secondary);
   }
 
   .storage-table th,
   .storage-table td {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     padding: 0.45rem 0.5rem;
     text-align: left;
     vertical-align: top;
   }
 
   .storage-table th {
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-primary);
     font-weight: 700;
     position: sticky;
     top: 0;
@@ -380,9 +378,9 @@ export const shellStyles = `
   .storage-tag {
     display: inline-block;
     padding: 0.08rem 0.38rem;
-    border-radius: 999px;
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
+    border-radius: var(--oc-radius-pill);
+    border: var(--oc-border-width-sm) solid var(--oc-color-blue-200);
+    background: var(--oc-color-blue-50);
     color: #1d4ed8;
     font-size: 0.72rem;
     font-weight: 700;
@@ -391,8 +389,8 @@ export const shellStyles = `
 
   pre {
     margin: 0;
-    padding: 0.75rem;
-    border-radius: 8px;
+    padding: var(--oc-space-3);
+    border-radius: var(--oc-radius-control);
     background: #0f172a;
     color: #dbeafe;
     font-size: 0.8rem;

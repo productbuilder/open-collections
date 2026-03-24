@@ -1,6 +1,9 @@
 import { backButtonStyles } from '../components/back-button.js';
+import { themeTokenStyles } from './theme.css.js';
 
 export const panelShellStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
     height: 100%;
@@ -65,7 +68,7 @@ export const panelShellStyles = `
   .panel-title {
     margin: 0;
     font-size: 0.95rem;
-    color: #111827;
+    color: var(--oc-header-title);
     min-width: 0;
     flex: 0 1 auto;
     overflow-wrap: anywhere;
@@ -75,14 +78,14 @@ export const panelShellStyles = `
   .panel-status-chip {
     display: inline-flex;
     align-items: center;
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
+    border-radius: var(--oc-radius-pill);
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
     padding: 0.1rem 0.5rem;
     font-size: 0.72rem;
     line-height: 1.2;
     font-weight: 700;
-    color: #334155;
-    background: #f8fafc;
+    color: var(--oc-text-secondary);
+    background: var(--oc-bg-subtle);
     white-space: nowrap;
   }
 
@@ -101,7 +104,7 @@ export const panelShellStyles = `
   .panel-subtext {
     margin: 0;
     font-size: 0.83rem;
-    color: #64748b;
+    color: var(--oc-text-muted);
     min-width: 0;
     text-align: center;
   }

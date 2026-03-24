@@ -1,4 +1,8 @@
+import { themeTokenStyles } from './theme.css.js';
+
 export const browserStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
     height: 100%;
@@ -23,10 +27,10 @@ export const browserStyles = `
   }
 
   .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
     cursor: pointer;
     font: inherit;
@@ -35,7 +39,7 @@ export const browserStyles = `
   }
 
   .btn:hover {
-    background: #f8fafc;
+    background: var(--oc-bg-subtle);
   }
 
   .btn:disabled {
@@ -44,9 +48,9 @@ export const browserStyles = `
   }
 
   .btn-primary {
-    border-color: #0f6cc6;
-    background: #0f6cc6;
-    color: #ffffff;
+    border-color: var(--oc-border-accent);
+    background: var(--oc-color-blue-700);
+    color: var(--oc-color-white);
   }
 
   .btn-primary:hover {
@@ -54,9 +58,9 @@ export const browserStyles = `
   }
 
   .btn-primary:disabled {
-    background: #cbd5e1;
-    border-color: #cbd5e1;
-    color: #475569;
+    background: var(--oc-color-slate-300);
+    border-color: var(--oc-color-slate-300);
+    color: var(--oc-color-slate-600);
   }
 
   .viewport-actions {
@@ -83,10 +87,10 @@ export const browserStyles = `
   .selection-status {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #0f172a;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 999px;
+    color: var(--oc-text-primary);
+    background: var(--oc-color-blue-50);
+    border: var(--oc-border-width-sm) solid var(--oc-color-blue-200);
+    border-radius: var(--oc-radius-pill);
     padding: 0.2rem 0.55rem;
   }
 
@@ -137,13 +141,13 @@ export const browserStyles = `
   .drop-overlay {
     position: absolute;
     inset: 0;
-    border: 2px dashed #0f6cc6;
-    border-radius: 10px;
+    border: 2px dashed var(--oc-border-accent);
+    border-radius: var(--oc-radius-panel);
     background: rgba(15, 108, 198, 0.08);
     display: none;
     align-items: center;
     justify-content: center;
-    color: #0f4f8a;
+    color: var(--oc-color-blue-800);
     font-weight: 700;
     pointer-events: none;
     z-index: 4;

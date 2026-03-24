@@ -1,4 +1,8 @@
+import { themeTokenStyles } from './theme.css.js';
+
 export const metadataStyles = `
+  ${themeTokenStyles}
+
   :host {
     display: block;
     min-height: 0;
@@ -19,8 +23,8 @@ export const metadataStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: #ffffff;
-    border-left: 1px solid #e2e8f0;
+    background: var(--oc-bg-panel);
+    border-left: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: 0;
     box-shadow: none;
   }
@@ -41,7 +45,7 @@ export const metadataStyles = `
 
   .panel-header {
     padding: 0.8rem 0.95rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -51,7 +55,7 @@ export const metadataStyles = `
   .panel-title {
     margin: 0;
     font-size: 0.95rem;
-    color: #111827;
+    color: var(--oc-header-title);
   }
 
   .editor-header-meta {
@@ -64,7 +68,7 @@ export const metadataStyles = `
   .editor-context {
     margin: 0;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--oc-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -97,7 +101,7 @@ export const metadataStyles = `
 
   .field-row > label {
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--oc-color-slate-600);
     font-weight: 600;
   }
 
@@ -106,11 +110,11 @@ export const metadataStyles = `
     width: 100%;
     font: inherit;
     font-size: 0.9rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
     padding: 0.45rem 0.55rem;
-    background: #ffffff;
-    color: #0f172a;
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
   }
 
   textarea {
@@ -133,10 +137,10 @@ export const metadataStyles = `
   }
 
   .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-control);
     padding: 0.42rem 0.7rem;
     cursor: pointer;
     font: inherit;
@@ -145,13 +149,13 @@ export const metadataStyles = `
   }
 
   .btn:hover {
-    background: #f8fafc;
+    background: var(--oc-bg-subtle);
   }
 
   .btn-primary {
-    background: #0f6cc6;
-    color: #ffffff;
-    border-color: #0f6cc6;
+    background: var(--oc-color-blue-700);
+    color: var(--oc-color-white);
+    border-color: var(--oc-border-accent);
   }
 
   .btn-primary:hover {
@@ -179,7 +183,7 @@ export const metadataStyles = `
   }
 
   .editor-section {
-    border-top: 1px solid #e2e8f0;
+    border-top: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     padding-top: 0.6rem;
     display: grid;
     gap: 0.45rem;
@@ -190,7 +194,7 @@ export const metadataStyles = `
     font-size: 0.78rem;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--oc-text-muted);
     font-weight: 700;
   }
 
@@ -198,15 +202,15 @@ export const metadataStyles = `
   .field-help {
     margin: 0;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--oc-text-muted);
     line-height: 1.4;
   }
 
   .override-field {
     padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #f8fafc;
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-panel);
+    background: var(--oc-bg-subtle);
   }
 
   .override-field.is-override-active {
@@ -229,10 +233,10 @@ export const metadataStyles = `
   }
 
   .inheritance-preview {
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #334155;
+    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-secondary);
     font-size: 0.85rem;
     line-height: 1.4;
     padding: 0.65rem 0.75rem;
@@ -240,12 +244,12 @@ export const metadataStyles = `
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
+    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
     padding: 1rem;
     text-align: center;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--oc-text-muted);
+    background: var(--oc-bg-subtle);
     font-size: 0.9rem;
   }
 
@@ -265,7 +269,7 @@ export const metadataStyles = `
       border: none;
       border-radius: 0;
       box-shadow: none;
-      background: #f3f5f8;
+      background: var(--oc-bg-shell);
       display: none;
     }
 
@@ -281,8 +285,8 @@ export const metadataStyles = `
 
     .panel-header {
       padding: 0.7rem 0.8rem;
-      background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
+      background: var(--oc-bg-panel);
+      border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
       position: sticky;
       top: 0;
       z-index: 2;

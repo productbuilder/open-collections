@@ -54,16 +54,6 @@ export const shellStyles = `
     padding: 0.42rem 0.7rem;
   }
 
-  .btn-primary {
-    background: var(--oc-color-blue-700);
-    color: var(--oc-color-white);
-    border-color: var(--oc-border-accent);
-  }
-
-  .btn-primary:hover {
-    background: #0d5eae;
-  }
-
   .panel-subtext {
     margin: 0;
     font-size: 0.83rem;
@@ -140,6 +130,7 @@ export const shellStyles = `
   .dialog-title {
     margin: 0;
     font-size: 0.95rem;
+    color: var(--oc-header-title);
   }
 
   .connections-dialog-header {
@@ -158,25 +149,6 @@ export const shellStyles = `
     align-items: center;
     gap: 0.35rem;
     align-self: flex-start;
-  }
-
-  .icon-btn {
-    border: 0;
-    background: transparent;
-    color: var(--oc-color-slate-600);
-    border-radius: var(--oc-radius-pill);
-    width: 2.25rem;
-    height: 2.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .icon-btn:hover {
-    background: var(--oc-bg-subtle);
-    color: var(--oc-text-primary);
   }
 
   .add-connection-view {

@@ -1,8 +1,10 @@
 import { backButtonStyles } from '../components/back-button.js';
 import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const panelShellStyles = `
   ${themeTokenStyles}
+  ${primitiveStyles}
 
   :host {
     display: block;
@@ -20,6 +22,9 @@ export const panelShellStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
+    background: var(--oc-bg-panel);
+    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
+    border-radius: var(--oc-radius-panel);
   }
 
   .panel-titlebar,
@@ -32,9 +37,11 @@ export const panelShellStyles = `
   }
 
   .panel-titlebar {
-    padding: 0.1rem 0 0.35rem;
+    padding: var(--oc-space-3) var(--oc-space-4) var(--oc-space-2);
     flex-direction: row;
     align-items: center;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
+    background: var(--oc-header-bg);
   }
 
   .panel-titlebar-main {
@@ -61,7 +68,7 @@ export const panelShellStyles = `
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    <!-- min-width: 0; -->
+    min-width: 0;
     flex-wrap: wrap;
   }
 
@@ -131,7 +138,9 @@ export const panelShellStyles = `
 
   .panel-toolbar-row {
     align-items: center;
-    padding: 0 0 0.65rem;
+    padding: var(--oc-space-2) var(--oc-space-4);
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    background: var(--oc-bg-panel);
   }
 
   .panel-toolbar-main {
@@ -174,12 +183,12 @@ export const panelShellStyles = `
     }
 
     .panel-titlebar {
-      padding: 0.1rem 0 0.5rem;
+      padding: var(--oc-space-2) var(--oc-space-3);
       align-items: center;
     }
 
     .panel-toolbar-row {
-      padding-bottom: 0.5rem;
+      padding: var(--oc-space-2) var(--oc-space-3);
       flex-wrap: wrap;
       align-items: center;
     }

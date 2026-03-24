@@ -5,7 +5,7 @@ const DEFAULT_SITE_I18N = {
 		nl: 'Nederlands',
 	},
 	shell: {
-		brand: 'Open Collections',
+		brand: 'openCollections',
 		navAriaLabel: 'Primary navigation',
 		languageSwitcherLabel: 'Language',
 		languageSwitcherAriaLabel: 'Select language',

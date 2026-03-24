@@ -1,7 +1,9 @@
 import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
 export const metadataStyles = `
   ${themeTokenStyles}
+  ${primitiveStyles}
 
   :host {
     display: block;
@@ -44,8 +46,6 @@ export const metadataStyles = `
   }
 
   .panel-header {
-    padding: 0.8rem 0.95rem;
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -134,22 +134,6 @@ export const metadataStyles = `
 
   .checkbox-row input {
     width: auto;
-  }
-
-  .btn {
-    border: var(--oc-border-width-sm) solid var(--oc-border-control);
-    background: var(--oc-bg-panel);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-control);
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-  }
-
-  .btn:hover {
-    background: var(--oc-bg-subtle);
   }
 
   .btn-primary {
@@ -244,13 +228,7 @@ export const metadataStyles = `
   }
 
   .empty {
-    border: var(--oc-border-width-sm) dashed var(--oc-border-control);
     border-radius: var(--oc-radius-control);
-    padding: 1rem;
-    text-align: center;
-    color: var(--oc-text-muted);
-    background: var(--oc-bg-subtle);
-    font-size: 0.9rem;
   }
 
   .editor-close-btn {
@@ -285,8 +263,6 @@ export const metadataStyles = `
 
     .panel-header {
       padding: 0.7rem 0.8rem;
-      background: var(--oc-bg-panel);
-      border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
       position: sticky;
       top: 0;
       z-index: 2;
@@ -309,7 +285,8 @@ export const metadataStyles = `
       display: inline-flex;
     }
 
-    .btn {
+    .btn,
+    .oc-btn {
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;

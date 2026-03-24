@@ -1,19 +1,12 @@
-export const viewerStyles = `
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    text-decoration: none;
-  }
+import { themeTokenStyles } from './theme.css.js';
+import { primitiveStyles } from './primitives.css.js';
 
-  .btn:hover {
-    background: #f8fafc;
+export const viewerStyles = `
+  ${themeTokenStyles}
+  ${primitiveStyles}
+
+  .btn {
+    text-decoration: none;
   }
 
   dialog {
@@ -39,8 +32,6 @@ export const viewerStyles = `
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.8rem 0.95rem;
-    border-bottom: 1px solid #e2e8f0;
   }
 
   .dialog-title {
@@ -138,13 +129,7 @@ export const viewerStyles = `
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
     border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    color: #64748b;
-    background: #f8fafc;
-    font-size: 0.9rem;
   }
 
   .is-hidden {

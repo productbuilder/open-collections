@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const APP_ROOT = 'src/apps/collection-manager';
 const TARGET_GLOBS = [
@@ -13,7 +14,7 @@ const EXCLUDED_PATHS = new Set([
 ]);
 
 const HEX_PATTERN = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
-const RAW_RADIUS_PATTERN = /\bborder-radius\s*:\s*(8px|10px|12px|999px)\b/;
+const RAW_RADIUS_PATTERN = /\bborder-radius\s*:\s*(4px|6px|8px|10px|12px|999px)\b/;
 
 const ALLOWED_LOCAL_HEX = new Set([
   '#0f172a', '#111827', '#dbeafe',
@@ -101,6 +102,29 @@ function parseDiff(diffText) {
   return violations;
 }
 
+function collectTargetFiles() {
+  const pathspec = TARGET_GLOBS.map((glob) => `'${glob}'`).join(' ');
+  const trackedFiles = run(`git ls-files -- ${pathspec}`)
+    .split('\n')
+    .map((file) => file.trim())
+    .filter(Boolean)
+    .filter((file) => !EXCLUDED_PATHS.has(file));
+
+  return trackedFiles;
+}
+
+function scanAllFiles() {
+  const violations = [];
+  const files = collectTargetFiles();
+
+  for (const file of files) {
+    const lines = readFileSync(file, 'utf8').split('\n');
+    lines.forEach((line, index) => inspectLine(file, index + 1, line, violations));
+  }
+
+  return violations;
+}
+
 function inspectLine(file, lineNumber, content, violations) {
   if (!content.trim() || content.trim().startsWith('//') || content.trim().startsWith('/*')) {
     return;
@@ -136,16 +160,25 @@ function inspectLine(file, lineNumber, content, violations) {
 }
 
 function main() {
-  const baseRef = resolveBaseRef();
-  const diffText = collectDiff(baseRef);
-  const violations = parseDiff(diffText);
+  const scanAll = process.argv.includes('--all');
+  const violations = scanAll
+    ? scanAllFiles()
+    : parseDiff(collectDiff(resolveBaseRef()));
 
   if (!violations.length) {
-    console.log('✅ Collection Manager CSS token guardrail: no new raw theme values detected.');
+    if (scanAll) {
+      console.log('✅ Collection Manager CSS token guardrail: no raw theme values detected in full scan.');
+    } else {
+      console.log('✅ Collection Manager CSS token guardrail: no new raw theme values detected.');
+    }
     process.exit(0);
   }
 
-  console.error('❌ Collection Manager CSS token guardrail found potential violations:');
+  if (scanAll) {
+    console.error('❌ Collection Manager CSS token guardrail found potential violations (full scan):');
+  } else {
+    console.error('❌ Collection Manager CSS token guardrail found potential violations:');
+  }
   for (const violation of violations) {
     console.error(`- ${violation.file}:${violation.lineNumber} -> ${violation.value} (${violation.reason})`);
   }

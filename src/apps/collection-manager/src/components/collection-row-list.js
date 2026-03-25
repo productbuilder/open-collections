@@ -4,7 +4,7 @@ class OpenCollectionRowListElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.model = { collections: [], selectedCollectionId: null };
+    this.model = { collections: [], selectedCollectionId: null, selectedCollectionIds: [] };
   }
 
   update(data = {}) {
@@ -22,13 +22,17 @@ class OpenCollectionRowListElement extends HTMLElement {
 
   render() {
     const collections = Array.isArray(this.model.collections) ? this.model.collections : [];
+    const selectedIds = new Set(Array.isArray(this.model.selectedCollectionIds) ? this.model.selectedCollectionIds : []);
     if (collections.length === 0) {
       this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">No collections yet. Add a collection to begin.</div>`;
       return;
     }
 
     const rows = collections.map((collection) => `
-      <tr class="${this.model.selectedCollectionId === collection.id ? 'is-selected' : ''}" data-id="${collection.id}">
+      <tr class="${this.model.selectedCollectionId === collection.id ? 'is-focused' : ''} ${selectedIds.has(collection.id) ? 'is-selected' : ''}" data-id="${collection.id}">
+        <td>
+          <input type="checkbox" aria-label="Select ${collection.title || collection.id}" data-select-id="${collection.id}" ${selectedIds.has(collection.id) ? 'checked' : ''} />
+        </td>
         <td>${collection.title || collection.id}</td>
         <td>${collection.id}</td>
         <td><button type="button" class="btn" data-open-id="${collection.id}">Open</button></td>
@@ -39,7 +43,7 @@ class OpenCollectionRowListElement extends HTMLElement {
       <style>${browserRendererStyles}</style>
       <div class="row-table-wrap">
         <table class="row-table" aria-label="Collections list">
-          <thead><tr><th>Title</th><th>ID</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Select</th><th>Title</th><th>ID</th><th>Actions</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -48,6 +52,18 @@ class OpenCollectionRowListElement extends HTMLElement {
     this.shadowRoot.querySelectorAll('tbody tr[data-id]').forEach((row) => {
       row.addEventListener('click', () => {
         this.dispatch('collection-select', { collectionId: row.getAttribute('data-id') });
+      });
+    });
+    this.shadowRoot.querySelectorAll('input[data-select-id]').forEach((input) => {
+      input.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+      input.addEventListener('change', (event) => {
+        event.stopPropagation();
+        this.dispatch('collection-toggle-selected', {
+          collectionId: input.getAttribute('data-select-id'),
+          selected: event.target?.checked === true,
+        });
       });
     });
 

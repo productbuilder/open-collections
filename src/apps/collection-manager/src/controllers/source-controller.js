@@ -376,6 +376,7 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
     if (options.activateSource !== false) {
       app.state.activeSourceFilter = source.id;
       app.state.selectedCollectionId = source.selectedCollectionId || 'all';
+      app.state.selectedCollectionIds = [];
       app.state.currentLevel = 'collections';
       app.state.openedCollectionId = null;
       app.state.selectedItemId = null;

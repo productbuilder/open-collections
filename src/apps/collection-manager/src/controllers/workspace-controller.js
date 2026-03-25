@@ -76,6 +76,7 @@ export function currentWorkspaceSnapshot(app) {
   return {
     selectedSourceId: app.state.activeSourceFilter || 'all',
     selectedCollectionId: app.state.selectedCollectionId || 'all',
+    selectedCollectionIds: Array.isArray(app.state.selectedCollectionIds) ? [...app.state.selectedCollectionIds] : [],
     selectedItemId: app.state.selectedItemId || null,
     selectedItemIds: Array.isArray(app.state.selectedItemIds) ? [...app.state.selectedItemIds] : [],
     collectionMeta: app.currentCollectionMeta(),
@@ -94,6 +95,7 @@ export function buildLocalDraftPayload(app) {
     selectedItemIds: Array.isArray(app.state.selectedItemIds) ? [...app.state.selectedItemIds] : [],
     selectedSourceId: app.state.activeSourceFilter || 'all',
     selectedCollectionId: app.state.selectedCollectionId || 'all',
+    selectedCollectionIds: Array.isArray(app.state.selectedCollectionIds) ? [...app.state.selectedCollectionIds] : [],
     localDraftCollections: app.state.localDraftCollections || [],
     assets: app.state.assets.map((item) => ({
       ...item,
@@ -142,6 +144,12 @@ export function applyWorkspaceSnapshot(app, snapshot = {}) {
   if (snapshot.selectedCollectionId) {
     app.state.selectedCollectionId = snapshot.selectedCollectionId;
     app.renderCollectionFilter();
+  }
+  if (Array.isArray(snapshot.selectedCollectionIds)) {
+    const visibleSelection = snapshot.selectedCollectionIds.filter(
+      (collectionId) => typeof collectionId === 'string' && app.getVisibleCollections().some((entry) => entry.id === collectionId),
+    );
+    app.state.selectedCollectionIds = visibleSelection;
   }
 
   if (
@@ -200,6 +208,11 @@ export function applyLocalDraftPayload(app, payload) {
   if (payload.selectedCollectionId) {
     app.state.selectedCollectionId = payload.selectedCollectionId;
     app.renderCollectionFilter();
+  }
+  if (Array.isArray(payload.selectedCollectionIds)) {
+    app.state.selectedCollectionIds = payload.selectedCollectionIds.filter(
+      (collectionId) => typeof collectionId === 'string' && app.getVisibleCollections().some((entry) => entry.id === collectionId),
+    );
   }
 
   if (
@@ -395,6 +408,7 @@ export async function restoreRememberedSources(app) {
   app.state.assets = [];
   app.state.selectedItemId = null;
   app.state.selectedItemIds = [];
+  app.state.selectedCollectionIds = [];
   app.state.activeSourceFilter = platformType === PLATFORM_TYPES.BROWSER
     ? 'all'
     : app.state.sources.some((source) => source.id === desiredActiveSourceId)

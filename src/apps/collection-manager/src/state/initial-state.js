@@ -8,6 +8,7 @@
     selectedProviderId: 'example',
     activeSourceFilter: 'all',
     selectedCollectionId: 'all',
+    selectedCollectionIds: [],
     currentLevel: 'collections',
     metadataMode: 'collection',
     mobileView: 'browse',

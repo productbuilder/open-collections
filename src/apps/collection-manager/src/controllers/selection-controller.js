@@ -126,6 +126,9 @@ export function renderAssets(app) {
       focusedItemId: null,
       selectedItemIds: [],
       viewModes: app.state.browserViewModes,
+      onboarding: {
+        visible: app.state.sources.length === 0 && collections.length === 0,
+      },
     };
     app.dom.collectionBrowser.update(browserState);
     app.dom.mobileFlow?.setBrowserState(browserState);

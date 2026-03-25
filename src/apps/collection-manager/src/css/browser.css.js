@@ -109,6 +109,34 @@ export const browserStyles = `
     min-height: 0;
   }
 
+  .onboarding-empty {
+    margin: auto;
+    width: min(34rem, 100%);
+    border: var(--oc-border-width-sm) solid var(--oc-border-muted);
+    border-radius: var(--oc-radius-panel);
+    background: var(--oc-surface-elevated);
+    padding: var(--oc-space-5);
+    display: grid;
+    gap: var(--oc-space-3);
+  }
+
+  .onboarding-empty h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--oc-text-primary);
+  }
+
+  .onboarding-empty p {
+    margin: 0;
+    color: var(--oc-text-secondary);
+  }
+
+  .onboarding-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--oc-space-2);
+  }
+
   .drop-overlay {
     position: absolute;
     inset: 0;

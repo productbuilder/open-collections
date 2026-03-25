@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Open Collections Manager application (edit, publish, register placeholder).",
   "scripts": {
-    "start": "echo \"Serve repo root and open /src/apps/collection-manager/\""
+    "start": "echo \"Serve repo root and open /src/apps/collection-manager/\"",
+    "check:css-tokens": "node ./scripts/check-css-tokens.mjs"
   },
   "dependencies": {
     "@open-collections/collector-schema": "workspace:*",
@@ -15,4 +16,3 @@
     "@open-collections/shared-platform": "workspace:*"
   }
 }
-

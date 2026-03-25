@@ -19,6 +19,6 @@ This note describes implementation priorities for provider packages in this repo
 Providers can vary internally, but published outputs should remain portable and provider-agnostic.
 
 ## Related docs
-- `notes/collection-manifest-spec.md`
-- `notes/linked-collections-architecture.md`
+- `docs/collection-manifest-spec.md`
+- `docs/linked-collections-architecture.md`
 - `src/site/storage/index.html`

@@ -17,7 +17,7 @@ const ROOT_PASSTHROUGH_PREFIXES = [
 	'src/shared/',
 	'src/collections/',
 	'src/integrations/',
-	'notes/',
+	'docs/',
 ];
 const LOCALES = ['en', 'nl'];
 const BUILD_VERSION = process.env.OPEN_COLLECTIONS_SITE_BUILD_VERSION ?? `${Date.now()}`;

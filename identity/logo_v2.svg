@@ -27,9 +27,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showguides="true"
-     inkscape:zoom="0.53209975"
-     inkscape:cx="865.43923"
-     inkscape:cy="151.28742"
+     inkscape:zoom="0.18812567"
+     inkscape:cx="486.377"
+     inkscape:cy="130.23209"
      inkscape:window-width="1920"
      inkscape:window-height="1129"
      inkscape:window-x="1912"
@@ -54,6 +54,29 @@
        id="page1"
        margin="0"
        bleed="0" />
+    <inkscape:page
+       x="466.57355"
+       y="0"
+       width="456.57355"
+       height="90.806068"
+       id="page9"
+       margin="0"
+       bleed="0" />
+    <sodipodi:guide
+       position="548.45998,128.09936"
+       orientation="0,-1"
+       id="guide9"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="595.2009,169.3706"
+       orientation="0,-1"
+       id="guide10"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="579.78634,-6.1564841"
+       orientation="0,-1"
+       id="guide11"
+       inkscape:locked="false" />
   </sodipodi:namedview>
   <defs
      id="defs1">
@@ -69,6 +92,12 @@
        width="1290.6327"
        height="240.23592"
        id="rect6-1" />
+    <rect
+       x="1748.8311"
+       y="636.5426"
+       width="1290.6327"
+       height="240.23592"
+       id="rect6-1-3" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -81,31 +110,31 @@
          id="g6-8"
          transform="matrix(0.50577338,0,0,0.50577338,476.72824,63.965005)">
         <path
-           style="fill:none;stroke:#000000;stroke-width:9.49041644;stroke-linecap:round;stroke-dasharray:none"
+           style="fill:none;stroke:#000000;stroke-width:15.8174;stroke-linecap:round;stroke-dasharray:none"
            id="path1-8-6-2-2"
            sodipodi:type="arc"
-           sodipodi:cx="443.43387"
-           sodipodi:cy="86.360756"
+           sodipodi:cx="418.40732"
+           sodipodi:cy="85.665573"
            sodipodi:rx="43.304203"
            sodipodi:ry="43.304203"
            sodipodi:start="1.0150547"
            sodipodi:end="5.2832006"
            sodipodi:arc-type="arc"
-           d="m 466.28002,123.14808 a 43.304203,43.304203 0 0 1 -55.86015,-8.76359 43.304203,43.304203 0 0 1 0.42605,-56.541793 43.304203,43.304203 0 0 1 55.98587,-7.920814"
+           d="m 441.25347,122.4529 a 43.304203,43.304203 0 0 1 -55.86015,-8.76359 43.304203,43.304203 0 0 1 0.42605,-56.541796 43.304203,43.304203 0 0 1 55.98587,-7.920813"
            sodipodi:open="true" />
         <path
-           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:9.49042;stroke-linecap:round;stroke-dasharray:none"
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:15.8174;stroke-linecap:round;stroke-dasharray:none"
            id="path1-1-3-4"
            sodipodi:type="arc"
-           sodipodi:cx="371.65298"
-           sodipodi:cy="86.987175"
+           sodipodi:cx="346.62643"
+           sodipodi:cy="86.291992"
            sodipodi:rx="28.517899"
            sodipodi:ry="28.517899"
            sodipodi:start="3.6451016"
            sodipodi:end="2.6393626"
            sodipodi:open="true"
            sodipodi:arc-type="arc"
-           d="M 346.6743,73.227233 A 28.517899,28.517899 0 0 1 378.76572,59.370523 28.517899,28.517899 0 0 1 400.17088,87.005411 28.517899,28.517899 0 0 1 378.7304,114.6129 28.517899,28.517899 0 0 1 346.65673,100.71516" />
+           d="m 321.64775,72.53205 a 28.517899,28.517899 0 0 1 32.09142,-13.85671 28.517899,28.517899 0 0 1 21.40516,27.634888 28.517899,28.517899 0 0 1 -21.44048,27.607492 28.517899,28.517899 0 0 1 -32.07367,-13.89774" />
       </g>
       <text
          xml:space="preserve"
@@ -116,15 +145,54 @@
          y="0"><tspan
            x="1825.4154"
            y="773.92671"
-           id="tspan7"><tspan
+           id="tspan12"><tspan
              style="font-family:Manrope;-inkscape-font-specification:Manrope"
-             id="tspan1">open</tspan><tspan
+             id="tspan9">open</tspan><tspan
              dx="23.000008"
              style="font-weight:600;line-height:1.5;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold';fill:#000000"
-             id="tspan3"> </tspan><tspan
+             id="tspan10"> </tspan><tspan
              dx="-23.000013"
              style="font-weight:600;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold';fill:#000000"
-             id="tspan6">Collections</tspan></tspan></text>
+             id="tspan11">Collections</tspan></tspan></text>
+      <rect
+         style="fill:#0fe8cd;fill-opacity:1;stroke:#0fe8cd;stroke-width:3.31997;stroke-dasharray:none;stroke-opacity:1"
+         id="rect9"
+         width="46.680031"
+         height="46.680027"
+         x="1116.193"
+         y="84.603264"
+         ry="0.51774347" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.7705;stroke-dasharray:none"
+         id="path9"
+         cx="1129.932"
+         cy="108.29671"
+         r="11.049664" />
+      <ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:4.5553;stroke-dasharray:none"
+         id="path9-1"
+         cx="1155.7507"
+         cy="107.14929"
+         rx="18.327225"
+         ry="18.01012" />
     </g>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.26458333,0,0,0.26458333,693.64453,-86.125727)"
+       id="text6-1-1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:133.333px;line-height:0;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:6px;word-spacing:-23px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect6-1-3);display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.64567;stroke-linecap:butt;stroke-dasharray:none"
+       x="285.04883"
+       y="0"><tspan
+         x="1825.4154"
+         y="773.92671"
+         id="tspan16"><tspan
+           style="font-family:Manrope;-inkscape-font-specification:Manrope"
+           id="tspan13">open</tspan><tspan
+           dx="23.000008"
+           style="font-weight:600;line-height:1.5;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold'"
+           id="tspan14"> </tspan><tspan
+           dx="-23.000013"
+           style="font-weight:600;font-family:Manrope;-inkscape-font-specification:'Manrope Semi-Bold'"
+           id="tspan15">Collections</tspan></tspan></text>
   </g>
 </svg>

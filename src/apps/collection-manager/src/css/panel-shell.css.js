@@ -33,10 +33,9 @@ export const panelShellStyles = `
   }
 
   .panel-titlebar {
-    padding: var(--oc-space-3) var(--oc-space-4) var(--oc-space-2);
+    padding: var(--oc-space-3) 0 var(--oc-space-2);
     flex-direction: row;
     align-items: center;
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
     background: transparent;
   }
 
@@ -134,8 +133,7 @@ export const panelShellStyles = `
 
   .panel-toolbar-row {
     align-items: center;
-    padding: var(--oc-space-2) var(--oc-space-4);
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    padding: var(--oc-space-2) 0;
     background: transparent;
   }
 
@@ -179,12 +177,12 @@ export const panelShellStyles = `
     }
 
     .panel-titlebar {
-      padding: var(--oc-space-2) var(--oc-space-3);
+      padding: var(--oc-space-2) 0;
       align-items: center;
     }
 
     .panel-toolbar-row {
-      padding: var(--oc-space-2) var(--oc-space-3);
+      padding: var(--oc-space-2) 0;
       flex-wrap: wrap;
       align-items: center;
     }

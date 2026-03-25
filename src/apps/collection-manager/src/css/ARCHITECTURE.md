@@ -21,3 +21,11 @@ This app uses a layered CSS system to keep styles stable and maintainable:
 ## Contributor expectation
 
 When updating Collection Manager styles, avoid introducing raw palette values in component CSS when an existing semantic token or primitive applies.
+
+## Lightweight token guardrail
+
+Use `pnpm --filter @open-collections/manager-app run check:css-tokens` (or run inside the app package) to check for newly introduced raw theme-like values in Collection Manager style changes.
+
+This check is intentionally lightweight and regex-based. It focuses on obvious drift such as new hex colors and raw border-radius primitives added in component CSS, and reports file/line/value with guidance to use `--oc-*` tokens or shared primitives.
+
+It intentionally allows known local exceptions (for example overlays, media/code/dark surfaces, and some status/accent states) so component-specific visuals can remain local when justified.

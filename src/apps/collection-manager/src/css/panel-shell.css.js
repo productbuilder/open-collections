@@ -20,9 +20,7 @@ export const panelShellStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: var(--oc-bg-panel);
-    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
-    border-radius: var(--oc-radius-panel);
+    background: transparent;
   }
 
   .panel-titlebar,
@@ -39,7 +37,7 @@ export const panelShellStyles = `
     flex-direction: row;
     align-items: center;
     border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
-    background: var(--oc-header-bg);
+    background: transparent;
   }
 
   .panel-titlebar-main {
@@ -138,7 +136,7 @@ export const panelShellStyles = `
     align-items: center;
     padding: var(--oc-space-2) var(--oc-space-4);
     border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
-    background: var(--oc-bg-panel);
+    background: transparent;
   }
 
   .panel-toolbar-main {

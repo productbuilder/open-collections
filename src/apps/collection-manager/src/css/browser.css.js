@@ -5,6 +5,7 @@ export const browserStyles = `
 
   :host {
     display: block;
+    box-sizing: border-box;
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -21,9 +22,7 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: var(--oc-bg-panel);
-    border: var(--oc-border-width-sm) solid var(--oc-border-panel);
-    border-radius: var(--oc-radius-panel);
+    background: transparent;
   }
 
   .btn:disabled {
@@ -89,7 +88,7 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     width: 100%;
-    padding: 0 0 0.35rem;
+    padding: 0;
     overflow: hidden;
     position: relative;
     overscroll-behavior: contain;
@@ -99,9 +98,7 @@ export const browserStyles = `
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
-    height: 100%;
     width: 100%;
-    padding-bottom: 0.2rem;
     overflow: auto;
     overscroll-behavior: contain;
   }
@@ -180,11 +177,7 @@ export const browserStyles = `
     }
 
     .asset-wrap {
-      padding: 0 0 0.25rem;
-    }
-
-    .browser-host {
-      padding-bottom: 0;
+      padding: 0;
     }
   }
 `;

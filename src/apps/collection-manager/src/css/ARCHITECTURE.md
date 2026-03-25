@@ -26,6 +26,8 @@ When updating Collection Manager styles, avoid introducing raw palette values in
 
 Use `pnpm --filter @open-collections/manager-app run check:css-tokens` (or run inside the app package) to check for newly introduced raw theme-like values in Collection Manager style changes.
 
-This check is intentionally lightweight and regex-based. It focuses on obvious drift such as new hex colors and raw border-radius primitives added in component CSS, and reports file/line/value with guidance to use `--oc-*` tokens or shared primitives.
+For occasional auditing, run `pnpm --filter @open-collections/manager-app run check:css-tokens:all` (or `node ./scripts/check-css-tokens.mjs --all`) to scan all targeted Collection Manager CSS/component sources.
 
-It intentionally allows known local exceptions (for example overlays, media/code/dark surfaces, and some status/accent states) so component-specific visuals can remain local when justified.
+This check is intentionally lightweight and regex-based. It focuses on obvious drift such as new hex colors and raw border-radius primitives (`4px`, `6px`, `8px`, `10px`, `12px`, `999px`) added in component CSS, and reports file/line/value with guidance to use `--oc-*` tokens or shared primitives.
+
+It intentionally allows known local exceptions (for example overlays, media/code/dark surfaces, and some status/accent states) so component-specific visuals can remain local when justified, and intentionally stays conservative (no broad rgb/rgba/hsl matching) to keep false positives low.

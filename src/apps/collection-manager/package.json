@@ -6,7 +6,8 @@
   "description": "Open Collections Manager application (edit, publish, register placeholder).",
   "scripts": {
     "start": "echo \"Serve repo root and open /src/apps/collection-manager/\"",
-    "check:css-tokens": "node ./scripts/check-css-tokens.mjs"
+    "check:css-tokens": "node ./scripts/check-css-tokens.mjs",
+    "check:css-tokens:all": "node ./scripts/check-css-tokens.mjs --all"
   },
   "dependencies": {
     "@open-collections/collector-schema": "workspace:*",

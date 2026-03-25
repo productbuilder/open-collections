@@ -1,6 +1,6 @@
 import { sourceManagerStyles } from '../css/source-manager.css.js';
 import { renderBackButton } from './back-button.js';
-import { renderInfoIcon } from './icons.js';
+import { renderCloseIcon, renderInfoIcon } from './icons.js';
 
 const DESKTOP_APP_URL = 'https://github.com/productbuilder/open-collections/tree/main/src/desktop/workbench';
 
@@ -531,8 +531,8 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
                 <div class="provider-card-label-row"><strong>Example</strong></div>
                 <span class="panel-subtext">Connect instantly to the built-in example collections.</span>
               </button>
-              <div class="provider-card-row">
-                <button class="provider-card" id="addLocalFolderConnectionBtn" type="button">
+              <div class="provider-card-wrap">
+                <button class="provider-card provider-card-has-info" id="addLocalFolderConnectionBtn" type="button">
                   <div class="provider-card-label-row"><strong>Local folder</strong></div>
                   <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
                 </button>
@@ -612,7 +612,9 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
         <div class="dialog-shell">
           <div class="dialog-header">
             <h2 class="dialog-title">Local folder support</h2>
-            <button class="btn" id="closeLocalFolderInfoBtn" type="button">Close</button>
+            <button class="icon-btn" id="closeLocalFolderInfoBtn" type="button" aria-label="Close Local folder support dialog">
+              ${renderCloseIcon()}
+            </button>
           </div>
           <div class="dialog-body">
             <p class="panel-subtext">Local folder lets you edit collections directly from a folder on your device.</p>

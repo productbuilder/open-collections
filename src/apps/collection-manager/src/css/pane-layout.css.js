@@ -63,11 +63,9 @@ export const paneLayoutStyles = `
 
   @media (max-width: 760px) {
     .pane-layout {
-      padding: 0.65rem;
-      gap: 0.65rem;
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr);
-      overflow: auto;
+      overflow: hidden;
     }
   }
 `;

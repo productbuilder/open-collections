@@ -126,19 +126,24 @@ export const sourceManagerStyles = `
     cursor: pointer;
   }
 
-  .provider-card-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.45rem;
-    align-items: stretch;
+  .provider-card-wrap {
+    position: relative;
+  }
+
+  .provider-card-has-info {
+    padding-right: 2.8rem;
   }
 
   .provider-card-info {
     width: 2rem;
-    min-height: 72px;
+    min-height: 2rem;
     padding: 0;
     display: grid;
     place-items: center;
+    position: absolute;
+    top: 0.55rem;
+    right: 0.45rem;
+    z-index: 1;
   }
 
   .provider-card-info .icon {
@@ -156,7 +161,41 @@ export const sourceManagerStyles = `
   }
 
   .support-dialog {
-    max-width: 420px;
+    width: min(420px, 94vw);
+    border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-dialog);
+    padding: 0;
+    box-shadow: var(--oc-shadow-dialog);
+    background: var(--oc-bg-panel);
+  }
+
+  .support-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  .dialog-shell {
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .dialog-title {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .dialog-body {
+    padding: 0.95rem;
+    overflow: auto;
+    display: grid;
+    gap: 0.8rem;
+    align-content: start;
   }
 
   .support-table {

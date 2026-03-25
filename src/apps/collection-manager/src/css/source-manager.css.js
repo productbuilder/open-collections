@@ -126,6 +126,53 @@ export const sourceManagerStyles = `
     cursor: pointer;
   }
 
+  .provider-card-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: stretch;
+  }
+
+  .provider-card-info {
+    width: 2rem;
+    min-height: 72px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .provider-card-info .icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .provider-card-support-note {
+    margin-top: -0.25rem;
+  }
+
+  .support-dialog {
+    max-width: 420px;
+  }
+
+  .support-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.25rem 0;
+    font-size: 0.8rem;
+  }
+
+  .support-table th,
+  .support-table td {
+    text-align: left;
+    padding: 0.3rem 0.4rem;
+    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-subtle);
+  }
+
   .provider-card.is-selected {
     border-color: var(--oc-border-accent);
     box-shadow: 0 0 0 1px #66a6e8 inset;

@@ -35,3 +35,13 @@ export function renderCloseIcon(className = 'icon icon-close') {
     </svg>
   `;
 }
+
+export function renderInfoIcon(className = 'icon icon-info') {
+  return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6" />
+      <circle cx="12" cy="7" r="1" />
+    </svg>
+  `;
+}

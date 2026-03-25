@@ -165,6 +165,7 @@ export function bindDomEvents(app) {
     target.addEventListener('source-filter-change', (event) => {
       app.state.activeSourceFilter = event.detail?.value || 'all';
       app.state.selectedCollectionId = 'all';
+      app.state.selectedCollectionIds = [];
       app.state.currentLevel = 'collections';
       app.state.openedCollectionId = null;
       app.state.selectedItemId = null;
@@ -213,6 +214,15 @@ export function bindDomEvents(app) {
       app.renderAssets();
       app.renderEditor();
       app.refreshWorkingStatus();
+    });
+    target.addEventListener('collection-toggle-selected', (event) => {
+      app.toggleCollectionSelection(event.detail?.collectionId || '', event.detail?.selected);
+    });
+    target.addEventListener('clear-collection-selection', () => {
+      app.clearCollectionSelection();
+    });
+    target.addEventListener('delete-selected-collections', async () => {
+      await app.deleteSelectedCollections();
     });
     target.addEventListener('collection-open', (event) => {
       app.openCollectionView(event.detail?.collectionId || '');

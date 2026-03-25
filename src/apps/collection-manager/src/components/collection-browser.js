@@ -21,6 +21,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       collections: [],
       items: [],
       selectedCollectionId: null,
+      selectedCollectionIds: [],
+      deletableSelectedCollectionCount: 0,
       focusedItemId: null,
       selectedItemIds: [],
       dropTargetActive: false,
@@ -81,9 +83,17 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       this.setCurrentViewMode(event.detail?.mode || 'cards');
     });
     this.shadowRoot.getElementById('deleteSelectedBtn')?.addEventListener('click', () => {
+      if (this.model.currentLevel === 'collections') {
+        this.dispatch('delete-selected-collections');
+        return;
+      }
       this.dispatch('delete-selected-items');
     });
     this.shadowRoot.getElementById('clearSelectionBtn')?.addEventListener('click', () => {
+      if (this.model.currentLevel === 'collections') {
+        this.dispatch('clear-collection-selection');
+        return;
+      }
       this.dispatch('clear-item-selection');
     });
 
@@ -239,12 +249,28 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       publishBtn.setAttribute('aria-label', publishBtn.textContent);
     }
 
-    const selectedCount = Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds.length : 0;
-    const showSelectionToolbar = this.model.currentLevel === 'items' && selectedCount > 0;
-    selectionStatus.hidden = !showSelectionToolbar;
-    deleteSelectedBtn.hidden = !showSelectionToolbar;
-    clearSelectionBtn.hidden = !showSelectionToolbar;
-    selectionStatus.textContent = `${selectedCount} selected`;
+    const isItemsView = this.model.currentLevel === 'items';
+    const selectedItemCount = Array.isArray(this.model.selectedItemIds) ? this.model.selectedItemIds.length : 0;
+    const selectedCollectionCount = Array.isArray(this.model.selectedCollectionIds) ? this.model.selectedCollectionIds.length : 0;
+    const deletableSelectedCollectionCount = Number.isFinite(this.model.deletableSelectedCollectionCount)
+      ? this.model.deletableSelectedCollectionCount
+      : 0;
+
+    if (isItemsView) {
+      const showSelectionToolbar = selectedItemCount > 0;
+      selectionStatus.hidden = !showSelectionToolbar;
+      deleteSelectedBtn.hidden = !showSelectionToolbar;
+      clearSelectionBtn.hidden = !showSelectionToolbar;
+      selectionStatus.textContent = `${selectedItemCount} selected`;
+      deleteSelectedBtn.disabled = false;
+      return;
+    }
+
+    selectionStatus.hidden = selectedCollectionCount === 0;
+    selectionStatus.textContent = `${selectedCollectionCount} selected`;
+    deleteSelectedBtn.hidden = false;
+    deleteSelectedBtn.disabled = deletableSelectedCollectionCount === 0;
+    clearSelectionBtn.hidden = selectedCollectionCount === 0;
   }
 
   renderBody() {
@@ -280,6 +306,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       renderer.update({
         collections: this.model.collections,
         selectedCollectionId: this.model.selectedCollectionId,
+        selectedCollectionIds: this.model.selectedCollectionIds,
       });
     } else {
       renderer.update({

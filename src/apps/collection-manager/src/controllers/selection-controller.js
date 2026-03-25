@@ -13,6 +13,28 @@ export function getSelectedItemIds(app) {
   return Array.isArray(app.state.selectedItemIds) ? app.state.selectedItemIds : [];
 }
 
+export function getVisibleCollections(app) {
+  if (app.state.activeSourceFilter !== 'all') {
+    const source = app.getSourceById(app.state.activeSourceFilter);
+    return Array.isArray(source?.collections) ? source.collections : [];
+  }
+  return Array.isArray(app.state.localDraftCollections) ? app.state.localDraftCollections : [];
+}
+
+export function getSelectedCollectionIds(app) {
+  return Array.isArray(app.state.selectedCollectionIds) ? app.state.selectedCollectionIds : [];
+}
+
+export function repairCollectionSelectionState(app) {
+  const visibleCollectionIds = new Set(
+    getVisibleCollections(app)
+      .map((collection) => collection?.id)
+      .filter((id) => typeof id === 'string' && id.length > 0),
+  );
+  app.state.selectedCollectionIds = getSelectedCollectionIds(app).filter((collectionId) => visibleCollectionIds.has(collectionId));
+  return app.state.selectedCollectionIds;
+}
+
 export function repairSelectionState(app) {
   const existingIds = new Set(app.state.assets.map((item) => item.workspaceId));
   let allowedIds = existingIds;
@@ -63,6 +85,35 @@ export function clearItemSelection(app) {
   }
 }
 
+export function toggleCollectionSelection(app, collectionId, selected = null) {
+  if (!collectionId || collectionId === 'all') {
+    return getSelectedCollectionIds(app);
+  }
+  const current = new Set(repairCollectionSelectionState(app));
+  const shouldSelect = selected == null ? !current.has(collectionId) : Boolean(selected);
+  if (shouldSelect) {
+    current.add(collectionId);
+  } else {
+    current.delete(collectionId);
+  }
+  app.state.selectedCollectionIds = [...current];
+  app.renderAssets();
+  app.renderEditor();
+  if (app.state.opfsAvailable) {
+    app.persistWorkspaceToOpfs().catch(() => {});
+  }
+  return app.state.selectedCollectionIds;
+}
+
+export function clearCollectionSelection(app) {
+  app.state.selectedCollectionIds = [];
+  app.renderAssets();
+  app.renderEditor();
+  if (app.state.opfsAvailable) {
+    app.persistWorkspaceToOpfs().catch(() => {});
+  }
+}
+
 export function openViewer(app, itemId) {
   const item = app.state.assets.find((entry) => entry.workspaceId === itemId);
   if (!item) {
@@ -100,6 +151,7 @@ export function renderViewer(app) {
 }
 
 export function renderAssets(app) {
+  repairCollectionSelectionState(app);
   repairSelectionState(app);
   app.renderSourceContext();
 
@@ -123,6 +175,8 @@ export function renderAssets(app) {
       collections,
       items: [],
       selectedCollectionId: app.state.selectedCollectionId,
+      selectedCollectionIds: app.state.selectedCollectionIds,
+      deletableSelectedCollectionCount: app.getDeletableSelectedCollectionIds().length,
       focusedItemId: null,
       selectedItemIds: [],
       viewModes: app.state.browserViewModes,

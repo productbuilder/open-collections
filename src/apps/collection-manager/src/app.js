@@ -47,12 +47,16 @@ import {
   setCollectionMetaFields,
 } from './controllers/collection-controller.js';
 import {
+  clearCollectionSelection,
   clearItemSelection,
   closeViewer,
   findSelectedItem,
+  getSelectedCollectionIds,
   getSelectedItemIds,
+  getVisibleCollections,
   getVisibleAssets,
   isItemSelected,
+  repairCollectionSelectionState,
   openViewer,
   repairSelectionState,
   renderAssets,
@@ -63,6 +67,7 @@ import {
   selectItem,
   setBrowserViewMode,
   syncMetadataModeFromState,
+  toggleCollectionSelection,
   toggleItemSelection,
 } from './controllers/selection-controller.js';
 import './components/manager-header.js';
@@ -1122,6 +1127,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.state.currentLevel = 'collections';
     this.state.openedCollectionId = null;
     this.state.selectedCollectionId = source.selectedCollectionId || 'all';
+    this.state.selectedCollectionIds = [];
     this.state.selectedItemId = null;
     this.state.selectedItemIds = [];
     this.syncMetadataModeFromState();
@@ -1161,16 +1167,36 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return getSelectedItemIds(this);
   }
 
+  getSelectedCollectionIds() {
+    return getSelectedCollectionIds(this);
+  }
+
+  getVisibleCollections() {
+    return getVisibleCollections(this);
+  }
+
   isItemSelected(itemId) {
     return isItemSelected(this, itemId);
+  }
+
+  repairCollectionSelectionState() {
+    return repairCollectionSelectionState(this);
   }
 
   repairSelectionState() {
     return repairSelectionState(this);
   }
 
+  toggleCollectionSelection(collectionId, selected = null) {
+    return toggleCollectionSelection(this, collectionId, selected);
+  }
+
   toggleItemSelection(itemId, selected = null) {
     return toggleItemSelection(this, itemId, selected);
+  }
+
+  clearCollectionSelection() {
+    return clearCollectionSelection(this);
   }
 
   clearItemSelection() {
@@ -1222,6 +1248,28 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return window.confirm(`${heading}\n\n${body}`);
   }
 
+  canDeleteCollection(collectionId) {
+    if (!collectionId || collectionId === 'all') {
+      return false;
+    }
+    if (this.state.activeSourceFilter !== 'all') {
+      const source = this.getSourceById(this.state.activeSourceFilter);
+      const inActiveSource = (source?.collections || []).some((entry) => entry.id === collectionId);
+      if (!inActiveSource) {
+        return false;
+      }
+      if (source?.provider && typeof source.provider.deleteCollection === 'function' && source.capabilities?.canSaveMetadata) {
+        return true;
+      }
+      return this.state.localDraftCollections.some((entry) => entry.id === collectionId);
+    }
+    return this.state.localDraftCollections.some((entry) => entry.id === collectionId);
+  }
+
+  getDeletableSelectedCollectionIds() {
+    return this.getSelectedCollectionIds().filter((collectionId) => this.canDeleteCollection(collectionId));
+  }
+
   repairFocusAfterDeletion(removedIds = []) {
     const removed = new Set((Array.isArray(removedIds) ? removedIds : []).filter(Boolean));
     this.state.selectedItemIds = this.getSelectedItemIds().filter((workspaceId) => !removed.has(workspaceId));
@@ -1258,6 +1306,95 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const selectedIds = this.getSelectedItemIds();
     const items = this.state.assets.filter((item) => selectedIds.includes(item.workspaceId));
     return this.deleteItems(items, { mode: 'bulk' });
+  }
+
+  async deleteSelectedCollections() {
+    const selectedIds = this.getSelectedCollectionIds();
+    const deletableCollectionIds = selectedIds.filter((collectionId) => this.canDeleteCollection(collectionId));
+    if (deletableCollectionIds.length === 0) {
+      return false;
+    }
+
+    const confirmed = window.confirm(
+      deletableCollectionIds.length === 1
+        ? 'Delete this selected collection? This also removes its items from the draft.'
+        : `Delete ${deletableCollectionIds.length} selected collections? This also removes their items from the draft.`,
+    );
+    if (!confirmed) {
+      return false;
+    }
+
+    const removedSet = new Set();
+    try {
+      for (const collectionId of deletableCollectionIds) {
+        if (this.state.activeSourceFilter !== 'all') {
+          const source = this.getSourceById(this.state.activeSourceFilter);
+          const inActiveSource = (source?.collections || []).some((entry) => entry.id === collectionId);
+          if (inActiveSource && source?.provider && typeof source.provider.deleteCollection === 'function' && source.capabilities?.canSaveMetadata) {
+            await source.provider.deleteCollection(collectionId);
+          }
+        }
+        removedSet.add(collectionId);
+      }
+    } catch (error) {
+      this.setStatus(`Delete failed: ${error.message}`, 'warn');
+      return false;
+    }
+
+    this.state.localDraftCollections = this.state.localDraftCollections.filter((entry) => !removedSet.has(entry.id));
+    this.state.assets = this.state.assets.filter((item) => !removedSet.has(item.collectionId));
+    for (const source of this.state.sources) {
+      source.collections = (source.collections || []).filter((entry) => !removedSet.has(entry.id));
+      if (removedSet.has(source.selectedCollectionId)) {
+        source.selectedCollectionId = source.collections[0]?.id || null;
+      }
+    }
+
+    this.state.selectedCollectionIds = this.getSelectedCollectionIds().filter((id) => !removedSet.has(id));
+    if (removedSet.has(this.state.selectedCollectionId)) {
+      this.state.selectedCollectionId = 'all';
+    }
+    if (removedSet.has(this.state.openedCollectionId)) {
+      this.state.currentLevel = 'collections';
+      this.state.openedCollectionId = null;
+      this.state.selectedItemId = null;
+      this.state.selectedItemIds = [];
+      this.closeMobileDetail();
+    } else {
+      this.state.selectedItemIds = this.getSelectedItemIds().filter((workspaceId) => {
+        const item = this.state.assets.find((entry) => entry.workspaceId === workspaceId);
+        return Boolean(item);
+      });
+    }
+    if (this.state.selectedItemId) {
+      const selectedItemStillExists = this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId);
+      if (!selectedItemStillExists) {
+        this.state.selectedItemId = null;
+      }
+    }
+
+    this.repairCollectionSelectionState();
+    this.repairSelectionState();
+    this.syncMetadataModeFromState();
+    this.renderSourcesList();
+    this.renderSourceFilter();
+    this.renderCollectionFilter();
+    this.renderAssets();
+    this.renderEditor();
+    this.refreshWorkingStatus();
+
+    if (this.state.opfsAvailable) {
+      await this.saveLocalDraft();
+    }
+    this.saveSourcesToStorage();
+    this.markDirty();
+    this.setStatus(
+      deletableCollectionIds.length === 1
+        ? 'Deleted 1 collection.'
+        : `Deleted ${deletableCollectionIds.length} collections.`,
+      'ok',
+    );
+    return true;
   }
 
   async deleteItem(workspaceId) {

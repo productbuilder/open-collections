@@ -1,5 +1,8 @@
 import { sourceManagerStyles } from '../css/source-manager.css.js';
 import { renderBackButton } from './back-button.js';
+import { renderInfoIcon } from './icons.js';
+
+const DESKTOP_APP_URL = 'https://github.com/productbuilder/open-collections/tree/main/src/desktop/workbench';
 
 class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
   constructor() {
@@ -13,6 +16,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
       flowMode: 'add',
       repairProviderId: '',
       capabilities: {},
+      supportsLocalFolderPicker: true,
       connectionStatusText: 'Not connected.',
       connectionStatusTone: 'neutral',
       localFolderStatusText: 'No folder selected.',
@@ -67,12 +71,22 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
     });
 
     this.shadowRoot.getElementById('addLocalFolderConnectionBtn')?.addEventListener('click', () => {
+      if (!this.model.supportsLocalFolderPicker) {
+        this.openLocalFolderInfoDialog();
+        return;
+      }
       this.model.flowMode = 'add';
       this.model.repairProviderId = '';
       this.model.addHostLevel = 'root';
       this.model.remoteSubtype = '';
       this.model.selectedProviderId = 'local';
       this.dispatch('add-local-folder-connection');
+    });
+    this.shadowRoot.getElementById('openLocalFolderInfoBtn')?.addEventListener('click', () => {
+      this.openLocalFolderInfoDialog();
+    });
+    this.shadowRoot.getElementById('closeLocalFolderInfoBtn')?.addEventListener('click', () => {
+      this.closeLocalFolderInfoDialog();
     });
 
     this.shadowRoot.getElementById('addRemoteConnectionBtn')?.addEventListener('click', () => {
@@ -141,6 +155,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
     this.renderProviderVisibility();
     this.applyConfigValues();
     this.setCapabilities(this.model.capabilities);
+    this.renderLocalFolderCardState();
     this.setConnectionStatus(this.model.connectionStatusText, this.model.connectionStatusTone);
     this.setLocalFolderStatus(this.model.localFolderStatusText, this.model.localFolderStatusTone);
   }
@@ -174,6 +189,13 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
   setCapabilities(capabilities) {
     this.model.capabilities = capabilities || {};
+  }
+
+  setLocalFolderSupport(supported) {
+    this.model.supportsLocalFolderPicker = Boolean(supported);
+    if (this.isReady()) {
+      this.renderLocalFolderCardState();
+    }
   }
 
   setLocalFolderStatus(text, tone = 'neutral') {
@@ -450,6 +472,45 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
     }
   }
 
+  renderLocalFolderCardState() {
+    const addLocalBtn = this.shadowRoot?.getElementById('addLocalFolderConnectionBtn');
+    const supportText = this.shadowRoot?.getElementById('localFolderSupportNote');
+    if (!addLocalBtn || !supportText) {
+      return;
+    }
+    const supported = this.model.supportsLocalFolderPicker;
+    addLocalBtn.disabled = !supported;
+    addLocalBtn.classList.toggle('is-disabled', !supported);
+    supportText.classList.toggle('is-hidden', supported);
+  }
+
+  openLocalFolderInfoDialog() {
+    const dialog = this.shadowRoot?.getElementById('localFolderInfoDialog');
+    if (!dialog) {
+      return;
+    }
+    if (dialog.open) {
+      return;
+    }
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+      return;
+    }
+    dialog.setAttribute('open', 'open');
+  }
+
+  closeLocalFolderInfoDialog() {
+    const dialog = this.shadowRoot?.getElementById('localFolderInfoDialog');
+    if (!dialog || !dialog.open) {
+      return;
+    }
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+      return;
+    }
+    dialog.removeAttribute('open');
+  }
+
   render() {
     this.shadowRoot.innerHTML = `
       <style>${sourceManagerStyles}</style>
@@ -470,10 +531,16 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
                 <div class="provider-card-label-row"><strong>Example</strong></div>
                 <span class="panel-subtext">Connect instantly to the built-in example collections.</span>
               </button>
-              <button class="provider-card" id="addLocalFolderConnectionBtn" type="button">
-                <div class="provider-card-label-row"><strong>Local folder</strong></div>
-                <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
-              </button>
+              <div class="provider-card-row">
+                <button class="provider-card" id="addLocalFolderConnectionBtn" type="button">
+                  <div class="provider-card-label-row"><strong>Local folder</strong></div>
+                  <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
+                </button>
+                <button class="icon-btn provider-card-info" id="openLocalFolderInfoBtn" type="button" aria-label="Local folder support details">
+                  ${renderInfoIcon()}
+                </button>
+              </div>
+              <p id="localFolderSupportNote" class="panel-subtext provider-card-support-note is-hidden">Requires a supported browser or the desktop app.</p>
               <button class="provider-card" id="addRemoteConnectionBtn" type="button">
                 <div class="provider-card-label-row"><strong>Remote</strong></div>
                 <span class="panel-subtext">Connect a remote publish target and choose a remote connection type next.</span>
@@ -540,7 +607,36 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
         <p id="connectionStatus" class="panel-subtext">Not connected.</p>
       </div>
+
+      <dialog id="localFolderInfoDialog" class="support-dialog" aria-label="Local folder support">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 class="dialog-title">Local folder support</h2>
+            <button class="btn" id="closeLocalFolderInfoBtn" type="button">Close</button>
+          </div>
+          <div class="dialog-body">
+            <p class="panel-subtext">Local folder lets you edit collections directly from a folder on your device.</p>
+            <table class="support-table" aria-label="Local folder browser support">
+              <tbody>
+                <tr><th scope="row">Chrome / Edge</th><td>Supported</td></tr>
+                <tr><th scope="row">Firefox</th><td>Not supported in browser</td></tr>
+                <tr><th scope="row">Safari</th><td>Not supported in browser</td></tr>
+                <tr><th scope="row">Desktop app</th><td>Supported</td></tr>
+              </tbody>
+            </table>
+            <p class="panel-subtext">For persistent local storage across browsers, use the desktop app or connect to a backend such as GitHub or S3.</p>
+            <div class="dialog-actions">
+              <a class="btn btn-primary" href="${DESKTOP_APP_URL}" target="_blank" rel="noopener noreferrer">Desktop app</a>
+              <button class="btn" id="closeLocalFolderInfoBtnSecondary" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+      </dialog>
     `;
+    this.shadowRoot.getElementById('closeLocalFolderInfoBtnSecondary')?.addEventListener('click', () => {
+      this.closeLocalFolderInfoDialog();
+    });
+    this.renderLocalFolderCardState();
   }
 }
 

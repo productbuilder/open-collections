@@ -4,7 +4,7 @@ import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
 import { MEDIA_MODES, normalizeMediaRef } from '../../../packages/collector-schema/src/schema.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
-import { pickLocalHostDirectory, subscribeToManagerFileDrops } from './platform/manager-source-api.js';
+import { pickLocalHostDirectory, subscribeToManagerFileDrops, supportsLocalHostDirectoryPicker } from './platform/manager-source-api.js';
 import { createInitialState } from './state/initial-state.js';
 import { computeWorkingStatus } from './state/working-status.js';
 import { getSourceStatus, isExampleSource as isExampleProviderSource, sourceHasAccessibleContent as sourceHasAccessibleItems } from './state/source-status.js';
@@ -107,6 +107,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.objectUrls = new Set();
     this.selectedLocalDirectoryHandle = null;
     this.pendingSourceRepair = null;
+    this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
 
     this.providerFactories = {
       example: createLocalProvider(),
@@ -193,6 +194,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.refreshWorkingStatus();
     this.setConnectionStatus('No connections yet.', 'neutral');
     this.renderCapabilities(this.providerFactories.example.getCapabilities());
+    this.dom.addConnectionPanel?.setLocalFolderSupport(this.localFolderPickerSupported);
     this.renderProviderCatalog();
     this.setSelectedProvider('example');
     this.renderSourcesList();
@@ -853,6 +855,11 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   async pickLocalFolder() {
+    if (!this.localFolderPickerSupported) {
+      this.dom.addConnectionPanel?.setLocalFolderStatus('Local folder requires a supported browser or the desktop app.', 'warn');
+      this.setStatus('Local folder is unavailable in this browser. Use the desktop app, GitHub, or S3.', 'warn');
+      return false;
+    }
     try {
       const handle = await pickLocalHostDirectory();
       const folderName = (handle?.name || '').trim() || 'Selected folder';

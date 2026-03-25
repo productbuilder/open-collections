@@ -239,6 +239,17 @@ export function bindDomEvents(app) {
     target.addEventListener('add-collection', () => {
       app.openNewCollectionDialog();
     });
+    target.addEventListener('add-connection', () => {
+      app.openConnectionsDialog();
+    });
+    target.addEventListener('add-example-collection', async () => {
+      app.setSelectedProvider('example');
+      await app.connectCurrentProvider({
+        providerId: 'example',
+        closeProviderDialog: false,
+        openSourcePicker: false,
+      });
+    });
     target.addEventListener('add-item', async () => {
       await app.createEmptyDraftItem();
     });

@@ -34,6 +34,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         collections: 'cards',
         items: 'cards',
       },
+      onboarding: {
+        visible: false,
+      },
     };
   }
 
@@ -56,6 +59,19 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         return;
       }
       this.dispatch('add-item');
+    });
+    this.shadowRoot.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target.closest('button') : null;
+      if (!target) {
+        return;
+      }
+      if (target.id === 'addExampleCollectionBtn') {
+        this.dispatch('add-example-collection');
+      } else if (target.id === 'addConnectionBtn') {
+        this.dispatch('add-connection');
+      } else if (target.id === 'createCollectionEmptyBtn') {
+        this.dispatch('add-collection');
+      }
     });
     this.shadowRoot.getElementById('publishCollectionBtn')?.addEventListener('click', () => {
       this.dispatch('publish-collection');
@@ -237,6 +253,21 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       return;
     }
     host.innerHTML = '';
+
+    if (this.model.onboarding?.visible) {
+      host.innerHTML = `
+        <section class="onboarding-empty" aria-label="Get started">
+          <h3>Start your first collection workspace</h3>
+          <p>Choose how you want to begin.</p>
+          <div class="onboarding-actions">
+            <button class="btn" id="addExampleCollectionBtn" type="button">Add example collection</button>
+            <button class="btn" id="addConnectionBtn" type="button">Add connection</button>
+            <button class="btn btn-primary" id="createCollectionEmptyBtn" type="button">Create collection</button>
+          </div>
+        </section>
+      `;
+      return;
+    }
 
     const level = this.model.currentLevel === 'items' ? 'items' : 'collections';
     const mode = this.getCurrentViewMode();

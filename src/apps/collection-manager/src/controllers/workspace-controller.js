@@ -377,8 +377,7 @@ export async function restoreRememberedSources(app) {
     restored.push(source);
   }
 
-  const needsBrowserExample = platformType === PLATFORM_TYPES.BROWSER && !restored.some((source) => source.providerId === 'example');
-  if (restored.length === 0 && !needsBrowserExample) {
+  if (restored.length === 0) {
     return;
   }
 
@@ -414,15 +413,7 @@ export async function restoreRememberedSources(app) {
   app.renderAssets();
   app.renderEditor();
 
-  if (needsBrowserExample) {
-    await app.connectCurrentProvider({
-      providerId: 'example',
-      closeProviderDialog: false,
-      openSourcePicker: false,
-    });
-  } else {
-    app.activatePreferredBrowserStartupSource();
-  }
+  app.activatePreferredBrowserStartupSource();
 
   for (const source of app.state.sources) {
     const shouldAutoRefresh = shouldAutoReconnectRememberedSource(source, platformType);

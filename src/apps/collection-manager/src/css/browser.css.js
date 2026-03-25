@@ -61,10 +61,33 @@ export const browserStyles = `
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--oc-text-primary);
-    background: var(--oc-color-blue-50);
-    border: var(--oc-border-width-sm) solid var(--oc-color-blue-200);
-    border-radius: var(--oc-radius-pill);
-    padding: 0.2rem 0.55rem;
+    line-height: 1;
+  }
+
+  .viewport-actions .btn {
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.22rem;
+  }
+
+  .icon {
+    font-family: 'Material Icons';
+    font-size: 1.1rem;
+    line-height: 1;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
   }
 
   .btn-danger {
@@ -195,6 +218,10 @@ export const browserStyles = `
       padding: 0.3rem 0.52rem;
       font-size: 0.77rem;
       border-radius: 7px;
+    }
+
+    .viewport-actions .btn {
+      min-height: 2rem;
     }
 
     .viewport-title-actions > .btn,

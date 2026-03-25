@@ -43,11 +43,20 @@ class OpenCollectionsBrowserElement extends HTMLElement {
   }
 
   connectedCallback() {
+    this.mediaQueryList = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 760px)')
+      : null;
+    this.handleViewportChange = () => this.renderFrame();
     this.render();
     this.bindEvents();
+    this.mediaQueryList?.addEventListener?.('change', this.handleViewportChange);
     this.renderFrame();
     this.renderBody();
     this.setDropTargetActive(this.model.dropTargetActive);
+  }
+
+  disconnectedCallback() {
+    this.mediaQueryList?.removeEventListener?.('change', this.handleViewportChange);
   }
 
   bindEvents() {
@@ -262,13 +271,19 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       deleteSelectedBtn.hidden = !showSelectionToolbar;
       clearSelectionBtn.hidden = !showSelectionToolbar;
       selectionStatus.textContent = `${selectedItemCount} selected`;
+      deleteSelectedBtn.textContent = 'Delete selected';
       deleteSelectedBtn.disabled = false;
       return;
     }
 
+    const isMobile = this.mediaQueryList?.matches ?? false;
     selectionStatus.hidden = selectedCollectionCount === 0;
-    selectionStatus.textContent = `${selectedCollectionCount} selected`;
+    selectionStatus.textContent = `#${selectedCollectionCount}`;
     deleteSelectedBtn.hidden = false;
+    deleteSelectedBtn.innerHTML = isMobile
+      ? '<span class="material-icons icon" aria-hidden="true">delete</span>'
+      : 'Delete selected';
+    deleteSelectedBtn.setAttribute('aria-label', 'Delete selected collections');
     deleteSelectedBtn.disabled = deletableSelectedCollectionCount === 0;
     clearSelectionBtn.hidden = selectedCollectionCount === 0;
   }
@@ -329,8 +344,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
-            <span id="selectionStatus" class="selection-status" hidden>0 selected</span>
             <button class="btn btn-danger" id="deleteSelectedBtn" type="button" hidden>Delete selected</button>
+            <span id="selectionStatus" class="selection-status" hidden>#0</span>
             <button class="btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
           </div>
           <div class="viewport-actions viewport-toolbar-actions" slot="toolbar-actions">

@@ -34,11 +34,12 @@ Open Collections Manager is the writable collection-management app.
 - Each collection uses its own root directory namespace (for example `harbor-collection/collection.json`, `harbor-collection/media/*`, `harbor-collection/thumbs/*`).
 - Open Collections Manager publishes one selected source + one selected collection at a time.
 - Image ingestion supports drag-and-drop and file picker (`jpg`, `jpeg`, `png`, `webp`, `gif`).
+- Mobile/Capacitor flow uses explicit pickers for image/document input; drag-and-drop remains desktop-only by design.
+- Unsupported mobile behavior (for example local directory handles) fails with explicit platform errors instead of silent fallback.
 - New images are added immediately as local draft items with upload status badges.
 - Thumbnails are generated automatically for image assets when possible.
 - GitHub publish uploads `media/*`, `thumbs/*.thumb.jpg`, and updates `collection.json`.
 - Publishing remains separate from OPFS and uses storage providers.
 - Secrets (PATs, OAuth tokens, passwords) are never persisted in OPFS.
-
 
 

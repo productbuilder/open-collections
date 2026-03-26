@@ -15,6 +15,30 @@ async function invoke(command, args = {}) {
   return fn(command, args);
 }
 
+async function pickFilesWithInput({ accept = '', multiple = false } = {}) {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = String(accept || '');
+    input.multiple = Boolean(multiple);
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      resolve(Array.from(input.files || []));
+      input.remove();
+    });
+    input.addEventListener('cancel', () => {
+      resolve([]);
+      input.remove();
+    });
+    input.addEventListener('error', () => {
+      reject(new Error('Failed to pick files.'));
+      input.remove();
+    });
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
 function logCredentialBridge(event, payload = {}) {
   try {
     console.info(`[tauri-platform][credentials] ${event}`, payload);
@@ -292,6 +316,20 @@ export const tauriPlatform = createPlatformApi({
       return null;
     }
     return { ...result, handle: new TauriFileHandle(result.path) };
+  },
+
+  async pickImageFiles({ multiple = true } = {}) {
+    return pickFilesWithInput({
+      accept: '.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,image/*',
+      multiple,
+    });
+  },
+
+  async pickDocumentFiles({ multiple = false } = {}) {
+    return pickFilesWithInput({
+      accept: '.json,.txt,.md,.csv,.pdf,.doc,.docx,.odt,.rtf,text/plain,application/json,application/pdf',
+      multiple,
+    });
   },
 
   async saveTextFile(text, { suggestedName = 'file.txt', handle = null } = {}) {

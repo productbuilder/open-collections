@@ -28,6 +28,15 @@ function decodeBase64(base64) {
   }
 }
 
+function base64ToBytes(base64) {
+  const text = decodeBase64(base64);
+  const bytes = new Uint8Array(text.length);
+  for (let index = 0; index < text.length; index += 1) {
+    bytes[index] = text.charCodeAt(index);
+  }
+  return bytes;
+}
+
 async function pickSingleFile(accept = '.json,application/json,text/plain') {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
@@ -49,6 +58,47 @@ async function pickSingleFile(accept = '.json,application/json,text/plain') {
     document.body.appendChild(input);
     input.click();
   });
+}
+
+async function pickFilesWithInput({ accept = '', multiple = false } = {}) {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = String(accept || '');
+    input.multiple = Boolean(multiple);
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      resolve(Array.from(input.files || []));
+      input.remove();
+    });
+    input.addEventListener('cancel', () => {
+      resolve([]);
+      input.remove();
+    });
+    input.addEventListener('error', () => {
+      reject(new Error('Failed to pick files.'));
+      input.remove();
+    });
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+function normalizeCapacitorPickedFile(file = {}) {
+  if (file.file instanceof File) {
+    return file.file;
+  }
+  if (typeof file.data === 'string' && file.data) {
+    const bytes = base64ToBytes(file.data);
+    const type = String(file.mimeType || file.type || 'application/octet-stream');
+    const name = String(file.name || 'file');
+    try {
+      return new File([bytes], name, { type });
+    } catch (_error) {
+      return new Blob([bytes], { type });
+    }
+  }
+  return null;
 }
 
 async function openFileWithInputFallback(accept, suggestedType = 'application/octet-stream') {
@@ -92,6 +142,36 @@ async function openFileWithCapacitorPicker(extensions = ['json', 'txt', 'md']) {
   };
 }
 
+async function pickFilesWithCapacitor({ extensions = [], multiple = false } = {}) {
+  const { FilePicker } = getCapacitorPlugins();
+  if (!FilePicker || typeof FilePicker.pickFiles !== 'function') {
+    return null;
+  }
+  const result = await FilePicker.pickFiles({
+    multiple: Boolean(multiple),
+    readData: true,
+    types: extensions,
+  });
+  const files = Array.isArray(result?.files) ? result.files.map(normalizeCapacitorPickedFile).filter(Boolean) : [];
+  return files;
+}
+
+async function pickImagesWithCapacitor({ multiple = true } = {}) {
+  const { FilePicker } = getCapacitorPlugins();
+  if (!FilePicker) {
+    return null;
+  }
+  if (typeof FilePicker.pickImages === 'function') {
+    const result = await FilePicker.pickImages({ multiple: Boolean(multiple), readData: true });
+    const files = Array.isArray(result?.files) ? result.files.map(normalizeCapacitorPickedFile).filter(Boolean) : [];
+    return files;
+  }
+  return pickFilesWithCapacitor({
+    extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'heic', 'heif'],
+    multiple,
+  });
+}
+
 async function triggerDownload(text, suggestedName, type = 'application/json') {
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
@@ -126,6 +206,31 @@ export const capacitorPlatform = createPlatformApi({
       return picked;
     }
     return openFileWithInputFallback('.json,application/json', 'application/json');
+  },
+
+  async pickImageFiles({ multiple = true } = {}) {
+    const nativeFiles = await pickImagesWithCapacitor({ multiple });
+    if (Array.isArray(nativeFiles)) {
+      return nativeFiles;
+    }
+    return pickFilesWithInput({
+      accept: '.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,image/*',
+      multiple,
+    });
+  },
+
+  async pickDocumentFiles({ multiple = false } = {}) {
+    const nativeFiles = await pickFilesWithCapacitor({
+      extensions: ['json', 'txt', 'md', 'csv', 'pdf', 'doc', 'docx', 'odt', 'rtf'],
+      multiple,
+    });
+    if (Array.isArray(nativeFiles)) {
+      return nativeFiles;
+    }
+    return pickFilesWithInput({
+      accept: '.json,.txt,.md,.csv,.pdf,.doc,.docx,.odt,.rtf,text/plain,application/json,application/pdf',
+      multiple,
+    });
   },
 
   async saveTextFile(text, { suggestedName = 'file.txt' } = {}) {

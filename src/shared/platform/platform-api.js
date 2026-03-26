@@ -14,6 +14,8 @@ export function createPlatformApi(implementation) {
     'subscribeToFileDrops',
     'openTextFile',
     'openJsonFile',
+    'pickImageFiles',
+    'pickDocumentFiles',
     'saveTextFile',
     'saveJsonFile',
     'openDirectory',

@@ -1,4 +1,5 @@
 import { PLATFORM_TYPES, createPlatformApi } from './platform-api.js';
+import { persistLocalStateString, readLocalStorageString, mirrorNativePreferencesToLocalStorage } from './mobile-persistence.js';
 
 const WORKSPACE_KEY = 'open-collections:workspace-state:v1';
 const sessionCredentials = new Map();
@@ -164,11 +165,12 @@ export const capacitorPlatform = createPlatformApi({
   },
 
   async rememberWorkspaceState(snapshot) {
-    window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(snapshot));
+    await persistLocalStateString(WORKSPACE_KEY, JSON.stringify(snapshot));
   },
 
   async loadWorkspaceState() {
-    const raw = window.localStorage.getItem(WORKSPACE_KEY);
+    await mirrorNativePreferencesToLocalStorage([WORKSPACE_KEY]);
+    const raw = readLocalStorageString(WORKSPACE_KEY, '');
     if (!raw) {
       return null;
     }

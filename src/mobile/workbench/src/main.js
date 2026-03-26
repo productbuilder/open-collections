@@ -1,4 +1,5 @@
 import '../../../apps/collection-browser/src/index.js';
+import { mirrorNativePreferencesToLocalStorage, readLocalStorageString, persistLocalStateStringSoon } from '../../../shared/platform/mobile-persistence.js';
 
 const STORAGE_KEYS = {
   browserManifestUrl: 'open-collections-workbench:browser-manifest-url:v1',
@@ -14,13 +15,13 @@ function resolveStartupBrowserManifestUrl() {
     return fromQuery.trim();
   }
 
-  const remembered = window.localStorage.getItem(STORAGE_KEYS.browserManifestUrl) || '';
+  const remembered = readLocalStorageString(STORAGE_KEYS.browserManifestUrl, '');
   if (remembered.trim()) {
     return remembered.trim();
   }
 
   try {
-    const recentUrls = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.browserRecentManifestUrls) || '[]');
+    const recentUrls = JSON.parse(readLocalStorageString(STORAGE_KEYS.browserRecentManifestUrls, '[]'));
     if (Array.isArray(recentUrls) && typeof recentUrls[0] === 'string' && recentUrls[0].trim()) {
       return recentUrls[0].trim();
     }
@@ -45,10 +46,15 @@ function mountBrowser() {
     if (!manifestUrl || !manifestUrl.trim()) {
       return;
     }
-    window.localStorage.setItem(STORAGE_KEYS.browserManifestUrl, manifestUrl.trim());
+    persistLocalStateStringSoon(STORAGE_KEYS.browserManifestUrl, manifestUrl.trim());
   });
 
   hostEl.replaceChildren(browserEl);
 }
 
-mountBrowser();
+async function bootstrapMobileWorkbench() {
+  await mirrorNativePreferencesToLocalStorage(Object.values(STORAGE_KEYS));
+  mountBrowser();
+}
+
+void bootstrapMobileWorkbench();

@@ -4,7 +4,7 @@ This is the mobile host shell for the existing browser-first Open Collections ap
 
 ## What this shell does
 
-- Reuses the same shell behavior as desktop (`src/desktop/workbench/src/main.js`).
+- Hosts `src/apps/collection-browser` as the first mobile target.
 - Stages the existing `src/apps`, `src/shared`, and package code into `dist/`.
 - Lets Capacitor host that staged frontend in Android/iOS WebViews.
 

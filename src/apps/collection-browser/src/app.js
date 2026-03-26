@@ -4,6 +4,7 @@ import { bindDomEvents, cacheDomElements } from './controllers/dom-bindings.js';
 import {
   announceManifestUrl,
   clearRecentManifestUrls,
+  hydrateRecentManifestUrls,
   readRecentManifestUrls,
   rememberRecentManifestUrl,
   resolveStartupManifestUrl,
@@ -47,8 +48,14 @@ class TimemapBrowserElement extends ComponentBase {
     this.renderManifestControls();
     this.renderViewport();
     this.renderMetadata();
-    this.initializeStartupManifest();
     this.syncMetadataPanelVisibility();
+    void this.hydrateRecentStateAndInitialize();
+  }
+
+  async hydrateRecentStateAndInitialize() {
+    await hydrateRecentManifestUrls(this);
+    this.renderManifestControls();
+    this.initializeStartupManifest();
   }
 
   disconnectedCallback() {

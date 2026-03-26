@@ -1,6 +1,7 @@
 import * as DraftService from '../services/draft-service.js';
 import { makeSourceId } from '../utils/id-utils.js';
 import { getPlatformType, PLATFORM_TYPES, revivePlatformHandle } from '../../../../shared/platform/index.js';
+import { mirrorNativePreferencesToLocalStorage, persistLocalStateStringSoon, readLocalStorageString } from '../../../../shared/platform/mobile-persistence.js';
 
 const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
@@ -236,8 +237,8 @@ export function saveSourcesToStorage(app) {
   const payload = app.state.sources.map((source) => app.toPersistedSource(source));
 
   try {
-    window.localStorage.setItem(SOURCES_STORAGE_KEY, JSON.stringify(payload));
-    window.localStorage.setItem(
+    persistLocalStateStringSoon(SOURCES_STORAGE_KEY, JSON.stringify(payload));
+    persistLocalStateStringSoon(
       WORKSPACE_SELECTION_STORAGE_KEY,
       JSON.stringify({
         selectedSourceId: app.state.activeSourceFilter || 'all',
@@ -265,6 +266,8 @@ export async function restoreRememberedSources(app) {
   const isFilesystemLikePath = (value) => /^[a-z]:[\\/]/i.test(value) || value.startsWith('\\\\') || value.includes('\\');
   let remembered = [];
 
+  await mirrorNativePreferencesToLocalStorage([SOURCES_STORAGE_KEY, WORKSPACE_SELECTION_STORAGE_KEY]);
+
   if (app.state.opfsAvailable) {
     try {
       remembered = await app.loadRememberedSourcesFromOpfs();
@@ -275,7 +278,7 @@ export async function restoreRememberedSources(app) {
 
   if (!Array.isArray(remembered) || remembered.length === 0) {
     try {
-      remembered = JSON.parse(window.localStorage.getItem(SOURCES_STORAGE_KEY) || '[]');
+      remembered = JSON.parse(readLocalStorageString(SOURCES_STORAGE_KEY, '[]'));
     } catch (error) {
       remembered = [];
     }
@@ -397,7 +400,7 @@ export async function restoreRememberedSources(app) {
 
   let desiredActiveSourceId = 'all';
   try {
-    const stored = JSON.parse(window.localStorage.getItem(WORKSPACE_SELECTION_STORAGE_KEY) || '{}');
+    const stored = JSON.parse(readLocalStorageString(WORKSPACE_SELECTION_STORAGE_KEY, '{}'));
     desiredActiveSourceId = stored.selectedSourceId || 'all';
   } catch (error) {
     desiredActiveSourceId = 'all';

@@ -1,9 +1,11 @@
+import { persistLocalStateStringSoon, readLocalStorageString, mirrorNativePreferencesToLocalStorage } from '../../../../shared/platform/mobile-persistence.js';
+
 const RECENT_MANIFEST_STORAGE_KEY = 'open-collections-browser:recent-manifest-urls:v1';
 const MAX_RECENT_MANIFEST_URLS = 8;
 
 export function readRecentManifestUrls() {
   try {
-    const raw = window.localStorage.getItem(RECENT_MANIFEST_STORAGE_KEY) || '[]';
+    const raw = readLocalStorageString(RECENT_MANIFEST_STORAGE_KEY, '[]');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
       return [];
@@ -20,7 +22,7 @@ export function readRecentManifestUrls() {
 export function writeRecentManifestUrls(app, urls) {
   app.state.recentManifestUrls = urls;
   try {
-    window.localStorage.setItem(RECENT_MANIFEST_STORAGE_KEY, JSON.stringify(urls));
+    persistLocalStateStringSoon(RECENT_MANIFEST_STORAGE_KEY, JSON.stringify(urls));
   } catch {
     // Ignore storage failures and keep in-memory state for this session.
   }
@@ -80,4 +82,13 @@ export function announceManifestUrl(app, manifestUrl) {
     bubbles: true,
     composed: true,
   }));
+}
+
+export async function hydrateRecentManifestUrls(app) {
+  await mirrorNativePreferencesToLocalStorage([RECENT_MANIFEST_STORAGE_KEY]);
+  const hydrated = readRecentManifestUrls();
+  if (!Array.isArray(hydrated)) {
+    return;
+  }
+  app.state.recentManifestUrls = hydrated;
 }

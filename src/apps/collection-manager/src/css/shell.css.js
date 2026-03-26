@@ -37,6 +37,13 @@ export const shellStyles = `
     border-radius: 0;
   }
 
+  :host([data-mobile-shell]) .app-shell {
+    min-height: 0;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
   #paneLayout {
     flex: 1;
     min-height: 0;
@@ -46,6 +53,14 @@ export const shellStyles = `
     display: none;
     flex: 1;
     min-height: 0;
+  }
+
+  :host([data-mobile-shell]) #paneLayout {
+    display: none;
+  }
+
+  :host([data-mobile-shell]) #mobileFlow {
+    display: block;
   }
 
 

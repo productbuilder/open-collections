@@ -1,0 +1,26 @@
+{
+  "name": "@open-collections/workbench-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Capacitor mobile shell that hosts the Open Collections web apps.",
+  "scripts": {
+    "stage:frontend": "node ./scripts/stage-frontend.mjs",
+    "mobile:dev": "pnpm run stage:frontend && node ./scripts/dev-mobile-server.mjs",
+    "cap:sync": "pnpm run stage:frontend && capacitor sync",
+    "cap:open:android": "capacitor open android",
+    "cap:open:ios": "capacitor open ios",
+    "cap:add:android": "capacitor add android",
+    "cap:add:ios": "capacitor add ios"
+  },
+  "dependencies": {
+    "@open-collections/browser-app": "workspace:*",
+    "@open-collections/manager-app": "workspace:*"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  }
+}

@@ -12,10 +12,13 @@
     "desktop:build": "pnpm --filter @open-collections/workbench-desktop tauri:build",
     "desktop:info": "pnpm --filter @open-collections/workbench-desktop tauri:info",
     "desktop:stage": "pnpm --filter @open-collections/workbench-desktop stage:frontend",
+    "mobile:dev": "pnpm --filter @open-collections/workbench-mobile mobile:dev",
+    "mobile:sync": "pnpm --filter @open-collections/workbench-mobile cap:sync",
+    "mobile:open:android": "pnpm --filter @open-collections/workbench-mobile cap:open:android",
+    "mobile:open:ios": "pnpm --filter @open-collections/workbench-mobile cap:open:ios",
     "collection-manager:start": "pnpm --filter @open-collections/manager-app start",
     "collection-browser:start": "pnpm --filter @open-collections/browser-app start",
     "configurator:start": "pnpm --filter @open-collections/configurator-app start",
     "bucket-browser:start": "pnpm --filter @open-collections/bucket-browser-app start"
   }
 }
-

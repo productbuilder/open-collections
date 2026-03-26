@@ -1,0 +1,9 @@
+{
+  "appId": "org.opencollections.workbench",
+  "appName": "Open Collections Workbench",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

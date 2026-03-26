@@ -4,3 +4,4 @@ packages:
   - src/shared/library-core
   - src/packages/*
   - src/shared/platform
+  - src/mobile/workbench

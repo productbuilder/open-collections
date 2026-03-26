@@ -11,6 +11,7 @@ Open Collections combines the public website, browser apps, desktop workbench, a
 - Collection content: `src/collections/`
 - Integrations: `src/integrations/`
 - Desktop/Tauri workbench: `src/desktop/workbench/`
+- Mobile/Capacitor workbench: `src/mobile/workbench/`
 
 ## Publish layout (repository root)
 
@@ -38,6 +39,26 @@ Other useful commands:
 - `pnpm bucket-browser:start` -> `/src/apps/bucket-browser/`
 - `pnpm desktop:dev`
 - `pnpm desktop:build`
+- `pnpm mobile:dev`
+- `pnpm mobile:sync`
+- `pnpm mobile:open:android`
+- `pnpm mobile:open:ios`
+
+## Shell architecture (browser, desktop, mobile)
+
+Open Collections apps stay browser-first and run from `src/apps/*`.
+
+- Browser mode runs those apps directly in a regular web page.
+- Desktop mode uses the Tauri shell in `src/desktop/workbench` and routes platform calls through `src/shared/platform/tauri-platform.js`.
+- Mobile mode uses the Capacitor shell in `src/mobile/workbench` and routes platform calls through `src/shared/platform/capacitor-platform.js`.
+
+Runtime selection happens in `src/shared/platform/index.js`:
+
+- Tauri runtime -> Tauri adapter
+- native Capacitor runtime -> Capacitor adapter
+- otherwise -> browser adapter
+
+For mobile build/sync/run details, see `src/mobile/workbench/README.md`.
 
 ## Website workflow
 

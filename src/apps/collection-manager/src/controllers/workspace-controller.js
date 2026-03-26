@@ -56,7 +56,7 @@ function shouldAutoReconnectRememberedSource(source, platformType = PLATFORM_TYP
     return false;
   }
 
-  if (platformType === PLATFORM_TYPES.BROWSER) {
+  if (platformType === PLATFORM_TYPES.BROWSER || platformType === PLATFORM_TYPES.CAPACITOR) {
     return source.providerId === 'example';
   }
 
@@ -261,6 +261,7 @@ export function saveSourcesToStorage(app) {
 export async function restoreRememberedSources(app) {
   const platformType = getPlatformType();
   const isTauriDesktop = platformType === PLATFORM_TYPES.TAURI;
+  const isWebLikeRuntime = platformType === PLATFORM_TYPES.BROWSER || platformType === PLATFORM_TYPES.CAPACITOR;
   const isFilesystemLikePath = (value) => /^[a-z]:[\\/]/i.test(value) || value.startsWith('\\\\') || value.includes('\\');
   let remembered = [];
 
@@ -409,7 +410,7 @@ export async function restoreRememberedSources(app) {
   app.state.selectedItemId = null;
   app.state.selectedItemIds = [];
   app.state.selectedCollectionIds = [];
-  app.state.activeSourceFilter = platformType === PLATFORM_TYPES.BROWSER
+  app.state.activeSourceFilter = isWebLikeRuntime
     ? 'all'
     : app.state.sources.some((source) => source.id === desiredActiveSourceId)
       ? desiredActiveSourceId

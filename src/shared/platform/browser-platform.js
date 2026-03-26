@@ -163,6 +163,13 @@ export const browserPlatform = createPlatformApi({
   async deleteCredential({ namespace, account }) {
     sessionCredentials.delete(credentialKey(namespace, account));
   },
+  async openExternalUrl(url) {
+    const normalized = String(url || '').trim();
+    if (!normalized) {
+      return;
+    }
+    window.open(normalized, '_blank', 'noopener');
+  },
 
   reviveHandle(raw) {
     return raw || null;

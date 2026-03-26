@@ -58,6 +58,8 @@ export function initializeDomDefaults(app) {
   app.dom.manifestPreview.textContent = '{}';
 }
 
+import { pickManagerImageFiles } from '../platform/manager-source-api.js';
+
 export function bindDomEvents(app) {
   if (app._eventsBound) {
     return;
@@ -268,24 +270,12 @@ export function bindDomEvents(app) {
       if (!itemId) {
         return;
       }
-      const picker = document.createElement('input');
-      picker.type = 'file';
-      picker.accept = '.jpg,.jpeg,.png,.webp,.gif';
-      picker.hidden = true;
-      document.body.appendChild(picker);
-      picker.addEventListener(
-        'change',
-        async () => {
-          const file = picker.files && picker.files[0] ? picker.files[0] : null;
-          picker.remove();
-          if (!file) {
-            return;
-          }
-          await app.attachUploadedMediaToItem(itemId, file);
-        },
-        { once: true },
-      );
-      picker.click();
+      const files = await pickManagerImageFiles({ multiple: false });
+      const [file] = files;
+      if (!file) {
+        return;
+      }
+      await app.attachUploadedMediaToItem(itemId, file);
     });
     target.addEventListener('attach-media-url', async (event) => {
       const itemId = event.detail?.itemId || '';

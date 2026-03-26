@@ -32,6 +32,39 @@ async function pickSingleFile(accept = '.json,application/json,text/plain') {
   });
 }
 
+async function pickFilesWithInput({ accept = '', multiple = false } = {}) {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = String(accept || '');
+    input.multiple = Boolean(multiple);
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      resolve(Array.from(input.files || []));
+      input.remove();
+    });
+    input.addEventListener('cancel', () => {
+      resolve([]);
+      input.remove();
+    });
+    input.addEventListener('error', () => {
+      reject(new Error('Failed to pick files.'));
+      input.remove();
+    });
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+async function pickFilesWithPicker({ types, multiple = false, accept = '' } = {}) {
+  if (typeof window.showOpenFilePicker === 'function') {
+    const handles = await window.showOpenFilePicker({ multiple: Boolean(multiple), types });
+    const files = await Promise.all((Array.isArray(handles) ? handles : []).map((handle) => handle.getFile()));
+    return files.filter(Boolean);
+  }
+  return pickFilesWithInput({ accept, multiple });
+}
+
 async function openFileWithPicker(types) {
   if (typeof window.showOpenFilePicker === 'function') {
     const [handle] = await window.showOpenFilePicker({ multiple: false, types });
@@ -84,6 +117,37 @@ export const browserPlatform = createPlatformApi({
 
   async openJsonFile() {
     return openFileWithPicker([{ description: 'JSON files', accept: { 'application/json': ['.json'] } }]);
+  },
+
+  async pickImageFiles({ multiple = true } = {}) {
+    return pickFilesWithPicker({
+      multiple,
+      accept: '.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,image/*',
+      types: [{
+        description: 'Images',
+        accept: {
+          'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.heic', '.heif'],
+        },
+      }],
+    });
+  },
+
+  async pickDocumentFiles({ multiple = false } = {}) {
+    return pickFilesWithPicker({
+      multiple,
+      accept: '.json,.txt,.md,.csv,.pdf,.doc,.docx,.odt,.rtf,text/plain,application/json,application/pdf',
+      types: [{
+        description: 'Documents',
+        accept: {
+          'application/json': ['.json'],
+          'text/plain': ['.txt', '.md', '.csv', '.rtf'],
+          'application/pdf': ['.pdf'],
+          'application/msword': ['.doc'],
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+          'application/vnd.oasis.opendocument.text': ['.odt'],
+        },
+      }],
+    });
   },
 
   async saveTextFile(text, { suggestedName = 'file.txt', handle = null } = {}) {

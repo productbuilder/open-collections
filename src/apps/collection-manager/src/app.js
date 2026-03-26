@@ -194,6 +194,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   connectedCallback() {
+    this.toggleAttribute('data-mobile-shell', this.isMobileShellRuntime());
     this.bindEvents();
     this.setStatus('No connections yet.', 'neutral');
     this.refreshWorkingStatus();
@@ -331,7 +332,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   isMobileViewport() {
+    if (this.isMobileShellRuntime()) {
+      return true;
+    }
     return typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  isMobileShellRuntime() {
+    return getPlatformType() === PLATFORM_TYPES.CAPACITOR;
   }
 
   openMobileDetail() {

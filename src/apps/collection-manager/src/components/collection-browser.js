@@ -26,6 +26,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       focusedItemId: null,
       selectedItemIds: [],
       dropTargetActive: false,
+      desktopFileDropEnabled: true,
       publishAction: {
         label: 'Publish collection',
         visible: false,
@@ -43,6 +44,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
   }
 
   connectedCallback() {
+    this.model.desktopFileDropEnabled = this.detectDesktopFileDropSupport();
     this.mediaQueryList = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(max-width: 760px)')
       : null;
@@ -53,6 +55,20 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     this.renderFrame();
     this.renderBody();
     this.setDropTargetActive(this.model.dropTargetActive);
+  }
+
+  detectDesktopFileDropSupport() {
+    const capacitor = typeof window !== 'undefined' ? window.Capacitor : null;
+    if (!capacitor) {
+      return true;
+    }
+    if (typeof capacitor.isNativePlatform === 'function') {
+      return !capacitor.isNativePlatform();
+    }
+    if (typeof capacitor.getPlatform === 'function') {
+      return capacitor.getPlatform() === 'web';
+    }
+    return true;
   }
 
   disconnectedCallback() {
@@ -115,6 +131,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     });
 
     const assetWrap = this.shadowRoot.getElementById('assetWrap');
+    if (!this.model.desktopFileDropEnabled) {
+      return;
+    }
     assetWrap?.addEventListener('dragenter', (event) => {
       event.preventDefault();
       this.dispatch('drop-target-change', { active: true });
@@ -154,7 +173,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
   }
 
   setDropTargetActive(active) {
-    this.model.dropTargetActive = Boolean(active);
+    this.model.dropTargetActive = this.model.desktopFileDropEnabled && Boolean(active);
     const overlay = this.shadowRoot?.getElementById('assetDropOverlay');
     if (overlay) {
       overlay.classList.toggle('is-active', this.model.dropTargetActive);
@@ -256,6 +275,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     } else {
       publishBtn.removeAttribute('title');
       publishBtn.setAttribute('aria-label', publishBtn.textContent);
+    }
+    const overlay = this.shadowRoot.getElementById('assetDropOverlay');
+    if (overlay) {
+      overlay.hidden = !this.model.desktopFileDropEnabled;
     }
 
     const isItemsView = this.model.currentLevel === 'items';

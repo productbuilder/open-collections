@@ -1,6 +1,7 @@
 export const PLATFORM_TYPES = Object.freeze({
   BROWSER: 'browser',
   TAURI: 'tauri',
+  CAPACITOR: 'capacitor',
 });
 
 export function createPlatformApi(implementation) {
@@ -23,6 +24,7 @@ export function createPlatformApi(implementation) {
     'setCredential',
     'getCredential',
     'deleteCredential',
+    'openExternalUrl',
     'reviveHandle',
   ];
 

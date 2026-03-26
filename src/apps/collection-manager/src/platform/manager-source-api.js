@@ -1,12 +1,17 @@
-import { getPlatform } from '../../../../shared/platform/index.js';
+import { getPlatform, PLATFORM_TYPES } from '../../../../shared/platform/index.js';
 
 const platform = getPlatform();
 
 export function supportsLocalHostDirectoryPicker() {
-  if (platform.getPlatformType() === 'tauri') {
+  const platformType = platform.getPlatformType();
+  if (platformType === PLATFORM_TYPES.TAURI) {
     return true;
   }
-  return typeof window.showDirectoryPicker === 'function';
+  if (platformType === PLATFORM_TYPES.BROWSER) {
+    return typeof window.showDirectoryPicker === 'function';
+  }
+  // Mobile/Capacitor currently does not expose a directory-handle equivalent.
+  return false;
 }
 
 export async function pickLocalHostDirectory() {

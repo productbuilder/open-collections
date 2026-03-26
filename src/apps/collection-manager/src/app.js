@@ -748,7 +748,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   isBrowserRuntime() {
-    return getPlatformType() === PLATFORM_TYPES.BROWSER;
+    const platformType = getPlatformType();
+    return platformType === PLATFORM_TYPES.BROWSER || platformType === PLATFORM_TYPES.CAPACITOR;
   }
 
   sortSourcesForDisplay(sources = []) {

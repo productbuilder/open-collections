@@ -401,6 +401,17 @@ export const tauriPlatform = createPlatformApi({
       throw error;
     }
   },
+  async openExternalUrl(url) {
+    const normalized = String(url || '').trim();
+    if (!normalized) {
+      return;
+    }
+    try {
+      await invoke('platform_open_external_url', { url: normalized });
+    } catch (_error) {
+      window.open(normalized, '_blank', 'noopener');
+    }
+  },
 
   reviveHandle,
 });

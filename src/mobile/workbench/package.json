@@ -14,8 +14,7 @@
     "cap:add:ios": "capacitor add ios"
   },
   "dependencies": {
-    "@open-collections/browser-app": "workspace:*",
-    "@open-collections/manager-app": "workspace:*"
+    "@open-collections/browser-app": "workspace:*"
   },
   "devDependencies": {
     "@capacitor/android": "^7.0.0",

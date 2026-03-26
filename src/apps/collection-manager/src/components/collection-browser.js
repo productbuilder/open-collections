@@ -5,6 +5,7 @@ import './collection-card-grid.js';
 import './collection-row-list.js';
 import './item-card-grid.js';
 import './item-row-list.js';
+import { getPlatformType, PLATFORM_TYPES } from '../../../../shared/platform/index.js';
 
 class OpenCollectionsBrowserElement extends HTMLElement {
   constructor() {
@@ -58,17 +59,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
   }
 
   detectDesktopFileDropSupport() {
-    const capacitor = typeof window !== 'undefined' ? window.Capacitor : null;
-    if (!capacitor) {
-      return true;
-    }
-    if (typeof capacitor.isNativePlatform === 'function') {
-      return !capacitor.isNativePlatform();
-    }
-    if (typeof capacitor.getPlatform === 'function') {
-      return capacitor.getPlatform() === 'web';
-    }
-    return true;
+    return getPlatformType() !== PLATFORM_TYPES.CAPACITOR;
   }
 
   disconnectedCallback() {

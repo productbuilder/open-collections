@@ -50,17 +50,17 @@ class OpenAppShellElement extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>${appShellStyles}</style>
-      <div class="shell">
-        <header class="shell-header">
+      <div class="oc-app-frame">
+        <header class="oc-app-bar">
           <h1 class="shell-title">Open Collections</h1>
           <p class="shell-subtitle">Shared app shell scaffold</p>
         </header>
 
-        <nav class="shell-nav" aria-label="Open Collections sections">
+        <nav class="oc-app-nav" aria-label="Open Collections sections">
           ${renderShellNav(activeSectionKey)}
         </nav>
 
-        <main class="shell-viewport" id="shellViewport" tabindex="-1">
+        <main class="oc-app-viewport" id="shellViewport" tabindex="-1">
           ${renderView()}
         </main>
       </div>

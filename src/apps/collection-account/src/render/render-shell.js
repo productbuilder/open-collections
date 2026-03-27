@@ -4,14 +4,14 @@ export function renderShell(shadowRoot) {
   shadowRoot.innerHTML = `
     <style>${accountShellStyles}</style>
 
-    <main class="account-shell">
-      <section class="account-hero" aria-labelledby="accountTitle">
+    <main class="oc-page oc-app-viewport account-shell">
+      <section class="oc-page-intro" aria-labelledby="accountTitle">
         <h1 class="account-title" id="accountTitle">Account</h1>
         <p class="account-description">Manage account-level connections used across Open Collections workflows.</p>
         <p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
       </section>
 
-      <section class="connections-surface" aria-labelledby="connectionsHeading">
+      <section class="oc-surface" aria-labelledby="connectionsHeading">
         <h2 class="connections-heading" id="connectionsHeading">Connections</h2>
         <p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
         <div class="connections-body">

@@ -12,10 +12,13 @@ This is **not** a rewrite plan and does **not** introduce a duplicate `collectio
 
 The manager cleanup has advanced to an account-first posture for connection entry points in embedded/shell mode:
 
-- Header and onboarding connection CTAs in `collection-manager` now point users toward Account language (`Manage connections in Account` / `Manage in Account`) when embedded.
+- Legacy manager top header chrome has been removed from the global app shell position. Connection/workflow actions now live in manager-local browser toolbar UI.
+- Embedded manager no longer renders a manager-owned global top bar; shell owns app-level chrome in that mode.
+- Standalone and embedded manager both keep lightweight, in-viewport workflow context (active connection label, collection/root context, working status chip, and status line).
+- Toolbar and onboarding connection CTAs in `collection-manager` now point users toward Account language (`Manage connections in Account` / `Manage in Account`) when embedded.
 - Embedded connection launch continues to use `openManageConnections(options)` and `app:navigate` to hand off to `collection-account` as canonical.
 - Manager-owned connections dialog remains available as a **compatibility fallback** only; it now presents fallback-specific labeling when reached in embedded mode.
-- Manager still keeps workflow-relevant source context (active source label, connection health/readiness, publish gating, and missing connection warnings).
+- Manager still keeps workflow-relevant source context (active source label, connection health/readiness, publish gating, and missing connection warnings) as local workflow UI, not app-level shell chrome.
 
 This keeps standalone manager behavior intact while reducing the impression that manager is the canonical home for full connection management.
 
@@ -25,10 +28,10 @@ This keeps standalone manager behavior intact while reducing the impression that
 
 ### 1.1 Header and entry points
 
-- `open-collections-header` contains a dedicated **Connections** button and emits `open-host-menu` which currently opens manager-owned connections UI. (`src/apps/collection-manager/src/components/manager-header.js`)
-- DOM bindings route both header and browser-level “add connection” events into manager-owned connections flows:
-  - `open-host-menu` → `openConnectionsDialog()`
-  - `collection-browser` event `add-connection` → `openConnectionsDialog()`
+- Historically, `open-collections-header` provided manager-owned top chrome and connection entry points. This has been demoted from active shell rendering and replaced by manager-local browser toolbar actions.
+- DOM bindings route browser-level connection events into manager handoff/fallback flows:
+  - `collection-browser` event `open-manage-connections` → `openManageConnections()`
+  - `collection-browser` event `add-connection` (onboarding) → `openManageConnections()`
   - `connections-list-panel` actions (`open-add-connection`, `refresh-connection`, `repair-connection`, `remove-connection`) call manager app methods directly. (`src/apps/collection-manager/src/controllers/dom-bindings.js`)
 
 ### 1.2 Dialogs and panels currently owned by manager

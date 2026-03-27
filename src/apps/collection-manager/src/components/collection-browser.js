@@ -42,6 +42,10 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         visible: false,
       },
       connectionActionLabel: 'Add connection',
+      activeSourceLabel: 'Select connection',
+      workspaceContextText: '',
+      statusText: 'No connections yet.',
+      statusTone: 'neutral',
     };
   }
 
@@ -94,6 +98,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     });
     this.shadowRoot.getElementById('publishCollectionBtn')?.addEventListener('click', () => {
       this.dispatch('publish-collection');
+    });
+    this.shadowRoot.getElementById('manageConnectionsBtn')?.addEventListener('click', () => {
+      this.dispatch('open-manage-connections', { source: 'browser-toolbar' });
+    });
+    this.shadowRoot.getElementById('openWorkflowMenuBtn')?.addEventListener('click', () => {
+      this.dispatch('open-workflow-menu', { source: 'browser-toolbar' });
     });
 
     this.shadowRoot.getElementById('viewToggle')?.addEventListener('view-mode-change', (event) => {
@@ -228,7 +238,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     const deleteSelectedBtn = this.shadowRoot.getElementById('deleteSelectedBtn');
     const clearSelectionBtn = this.shadowRoot.getElementById('clearSelectionBtn');
     const publishBtn = this.shadowRoot.getElementById('publishCollectionBtn');
-    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn || !publishBtn) {
+    const manageConnectionsBtn = this.shadowRoot.getElementById('manageConnectionsBtn');
+    const workflowStatusLine = this.shadowRoot.getElementById('workflowStatusLine');
+    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn || !publishBtn || !manageConnectionsBtn || !workflowStatusLine) {
       return;
     }
 
@@ -236,7 +248,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 
     panelShell.setAttribute('title', this.model.viewportTitle || 'Collections');
     if (isCollectionsView) {
-      panelShell.removeAttribute('subtitle');
+      const contextText = this.model.workspaceContextText || '';
+      if (contextText) {
+        panelShell.setAttribute('subtitle', contextText);
+      } else {
+        panelShell.removeAttribute('subtitle');
+      }
       panelShell.setAttribute('show-back', 'false');
     } else {
       const subtitle = this.model.assetCountText || 'No assets loaded.';
@@ -268,6 +285,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       publishBtn.removeAttribute('title');
       publishBtn.setAttribute('aria-label', publishBtn.textContent);
     }
+    manageConnectionsBtn.textContent = this.model.connectionActionLabel || 'Manage connections';
+    manageConnectionsBtn.title = this.model.activeSourceLabel || 'Select connection';
+    manageConnectionsBtn.setAttribute('aria-label', `${manageConnectionsBtn.textContent}. Active: ${this.model.activeSourceLabel || 'none'}`);
+    const statusTone = this.model.statusTone || 'neutral';
+    workflowStatusLine.dataset.tone = statusTone;
+    workflowStatusLine.textContent = this.model.statusText || 'Ready';
     const overlay = this.shadowRoot.getElementById('assetDropOverlay');
     if (overlay) {
       overlay.hidden = !this.model.desktopFileDropEnabled;
@@ -354,6 +377,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       <section class="viewport-panel" aria-label="Collection browser">
         <open-panel-shell id="panelShell" title="Collections" show-back="false">
           <div class="viewport-actions viewport-title-actions" slot="header-actions">
+            <button class="btn" id="manageConnectionsBtn" type="button">Manage connections</button>
+            <button class="btn" id="openWorkflowMenuBtn" type="button" aria-label="More workflow actions">More</button>
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>
@@ -367,6 +392,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
             <button class="btn" id="addImagesBtn" type="button">Add item</button>
           </div>
           <div id="assetWrap" class="asset-wrap">
+            <p id="workflowStatusLine" class="workflow-status" data-tone="neutral">No connections yet.</p>
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
             <div id="browserHost" class="browser-host"></div>
           </div>

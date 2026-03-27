@@ -67,7 +67,6 @@ import {
   toggleCollectionSelection,
   toggleItemSelection,
 } from './controllers/selection-controller.js';
-import './components/manager-header.js';
 import './components/collection-browser.js?v=20260322-mobile-publish-padding';
 import './components/metadata-editor.js';
 import './components/pane-layout.js';
@@ -299,7 +298,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   applyConnectionEntryPresentation() {
-    this.dom.managerHeader?.setConnectionEntryLabel?.(this.connectionEntryLabelForRuntime());
+    const connectionActionLabel = this.connectionEntryLabelForRuntime();
+    this.dom.collectionBrowser?.update?.({ connectionActionLabel });
+    this.dom.mobileFlow?.setBrowserState?.({ connectionActionLabel });
   }
 
   renderConnectionsFallbackNotice() {
@@ -413,7 +414,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   setStatus(text, tone = 'neutral') {
-    this.dom.managerHeader?.setStatus(text, tone);
+    const statusText = String(text || '').trim() || 'Ready';
+    const statusTone = tone || 'neutral';
+    this.dom.collectionBrowser?.update?.({ statusText, statusTone });
+    this.dom.mobileFlow?.setBrowserState?.({ statusText, statusTone });
   }
 
   setWorkingStateFlags(patch = {}) {
@@ -453,7 +457,6 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.dom.mobileFlow?.setPublishActionState?.(publishAction);
     this.dom.collectionBrowser?.setWorkingStatus?.(workingStatus);
     this.dom.mobileFlow?.setWorkingStatus?.(workingStatus);
-    this.dom.managerHeader?.setWorkingStatus(workingStatus);
   }
 
   setConnectionStatus(text, tone = false) {
@@ -1121,11 +1124,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   renderSourceContext() {
-    const source = this.getSourceById(this.state.activeSourceFilter);
-    const sourceName = source
-      ? (source.displayLabel || source.label || source.providerLabel || 'Connection')
-      : 'Select connection';
-    this.dom.managerHeader?.setHostLabel(sourceName);
+    const activeSourceLabel = this.activeSourceLabel();
+    const workspaceContextText = this.workflowContextText();
+    this.dom.collectionBrowser?.update?.({ activeSourceLabel, workspaceContextText });
+    this.dom.mobileFlow?.setBrowserState?.({ activeSourceLabel, workspaceContextText });
     this.applyConnectionEntryPresentation();
     this.refreshWorkingStatus();
   }
@@ -2000,6 +2002,22 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   downloadManifest() {
     return ManifestService.downloadManifest(this);
+  }
+
+  activeSourceLabel() {
+    const source = this.getSourceById(this.state.activeSourceFilter);
+    return source
+      ? (source.displayLabel || source.label || source.providerLabel || 'Connection')
+      : 'Select connection';
+  }
+
+  workflowContextText() {
+    const sourceLabel = this.activeSourceLabel() || 'none';
+    const collectionId = this.state.selectedCollectionId && this.state.selectedCollectionId !== 'all'
+      ? this.state.selectedCollectionId
+      : 'none';
+    const rootPath = collectionId !== 'none' ? this.activeCollectionRootPath() : 'n/a';
+    return `Connection: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
   }
 }
 

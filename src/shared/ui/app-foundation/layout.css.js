@@ -11,6 +11,7 @@ export const appFoundationLayoutStyles = `
 
   .oc-app-frame {
     min-height: 100dvh;
+    padding: var(--oc-layout-safe-top) var(--oc-layout-safe-right) 0 var(--oc-layout-safe-left);
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
     background: var(--oc-bg-canvas);
@@ -94,7 +95,7 @@ export const appFoundationLayoutStyles = `
 
   @media (max-width: 760px) {
     .oc-app-viewport {
-      padding: var(--oc-space-3) var(--oc-space-3) calc(var(--oc-space-3) + env(safe-area-inset-bottom));
+      padding: var(--oc-space-3) var(--oc-space-3) calc(var(--oc-space-3) + var(--oc-layout-safe-bottom));
     }
 
     .oc-page {

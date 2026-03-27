@@ -29,3 +29,8 @@ Use these primitives for app framing and section/page containers in newer or act
 ## Migration note
 
 This is intentionally conservative. It provides a common baseline so `collection-manager` and `collection-browser` can adopt shared tokens/layout classes gradually, without risky broad rewrites.
+
+
+## Related runtime primitives
+
+For cross-app runtime states (loader/empty/error/success) and host toast feedback, use `src/shared/ui/app-runtime/*`.

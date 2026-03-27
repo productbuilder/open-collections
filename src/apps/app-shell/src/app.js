@@ -1,6 +1,12 @@
 import { renderShellNav } from './components/shell-nav.js';
-import { SHELL_VIEW_RENDERERS } from './components/shell-view.js';
 import { appShellStyles } from './styles/shell.css.js';
+import { SHELL_SECTION_ADAPTERS } from './components/section-adapters.js';
+import {
+  APP_RUNTIME_MODES,
+  createAppRuntimeContext,
+} from '../../../../shared/runtime/app-mount-contract.js';
+import { createHostCapabilities } from '../../../../shared/runtime/host-capabilities.js';
+import { createToastLayer } from '../../../../shared/ui/app-runtime/primitives.js';
 
 const DEFAULT_SECTION_KEY = 'browse';
 
@@ -12,11 +18,19 @@ class OpenAppShellElement extends HTMLElement {
     };
 
     this.shadow = this.attachShadow({ mode: 'open' });
+    this.activeSectionSession = null;
+    this.toastLayer = null;
     this.render();
   }
 
   connectedCallback() {
     this.bindEvents();
+    this.mountActiveSection();
+  }
+
+  disconnectedCallback() {
+    this.unmountActiveSection();
+    this.destroyToastLayer();
   }
 
   bindEvents() {
@@ -35,25 +49,82 @@ class OpenAppShellElement extends HTMLElement {
     });
   }
 
+  ensureToastLayer() {
+    if (this.toastLayer) {
+      return this.toastLayer;
+    }
+    this.toastLayer = createToastLayer(this.shadow);
+    return this.toastLayer;
+  }
+
+  destroyToastLayer() {
+    this.toastLayer?.destroy();
+    this.toastLayer = null;
+  }
+
+  createHostCapabilities() {
+    return createHostCapabilities({
+      mode: APP_RUNTIME_MODES.EMBEDDED,
+      notify: (message, options = {}) => {
+        this.ensureToastLayer().show(message, {
+          tone: options.tone || 'neutral',
+          timeout: options.timeout ?? 2600,
+        });
+      },
+    });
+  }
+
   setActiveSection(sectionKey) {
-    if (!SHELL_VIEW_RENDERERS[sectionKey]) {
+    if (!SHELL_SECTION_ADAPTERS[sectionKey]) {
       return;
     }
 
+    this.unmountActiveSection();
     this.state.activeSectionKey = sectionKey;
     this.render();
+    this.mountActiveSection();
+  }
+
+  mountActiveSection() {
+    const mountTarget = this.shadow.getElementById('shellViewportContent');
+    const section = SHELL_SECTION_ADAPTERS[this.state.activeSectionKey] || SHELL_SECTION_ADAPTERS[DEFAULT_SECTION_KEY];
+
+    if (!mountTarget || !section) {
+      return;
+    }
+
+    const runtimeContext = createAppRuntimeContext({
+      appId: section.appId,
+      mode: APP_RUNTIME_MODES.EMBEDDED,
+      target: mountTarget,
+      config: {
+        sectionKey: this.state.activeSectionKey,
+      },
+      hostCapabilities: this.createHostCapabilities(),
+      onEvent: (type, detail) => {
+        if (type === 'app:request-notification' && detail.message) {
+          this.ensureToastLayer().show(detail.message, { tone: detail.tone || 'neutral' });
+        }
+      },
+    });
+
+    this.activeSectionSession = section.adapter.mount(runtimeContext);
+  }
+
+  unmountActiveSection() {
+    this.activeSectionSession?.unmount?.();
+    this.activeSectionSession = null;
   }
 
   render() {
     const activeSectionKey = this.state.activeSectionKey;
-    const renderView = SHELL_VIEW_RENDERERS[activeSectionKey] || SHELL_VIEW_RENDERERS[DEFAULT_SECTION_KEY];
 
     this.shadow.innerHTML = `
       <style>${appShellStyles}</style>
       <div class="oc-app-frame">
         <header class="oc-app-bar">
           <h1 class="shell-title">Open Collections</h1>
-          <p class="shell-subtitle">Shared app shell scaffold</p>
+          <p class="shell-subtitle">Shared app shell runtime</p>
         </header>
 
         <nav class="oc-app-nav" aria-label="Open Collections sections">
@@ -61,7 +132,7 @@ class OpenAppShellElement extends HTMLElement {
         </nav>
 
         <main class="oc-app-viewport" id="shellViewport" tabindex="-1">
-          ${renderView()}
+          <div id="shellViewportContent" class="shell-section-mount"></div>
         </main>
       </div>
     `;

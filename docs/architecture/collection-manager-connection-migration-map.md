@@ -1,0 +1,266 @@
+# Collection Manager → Collection Account: Connection Management Migration Map
+
+Date: 2026-03-27
+
+## Scope and intent
+
+This note audits where connection/account management currently lives in `collection-manager`, defines target ownership, and proposes an incremental migration path that keeps manager behavior stable during transition.
+
+This is **not** a rewrite plan and does **not** introduce a duplicate `collection-manager-v2`.
+
+---
+
+## 1) Current connection/account surface area in `collection-manager`
+
+### 1.1 Header and entry points
+
+- `open-collections-header` contains a dedicated **Connections** button and emits `open-host-menu` which currently opens manager-owned connections UI. (`src/apps/collection-manager/src/components/manager-header.js`)
+- DOM bindings route both header and browser-level “add connection” events into manager-owned connections flows:
+  - `open-host-menu` → `openConnectionsDialog()`
+  - `collection-browser` event `add-connection` → `openConnectionsDialog()`
+  - `connections-list-panel` actions (`open-add-connection`, `refresh-connection`, `repair-connection`, `remove-connection`) call manager app methods directly. (`src/apps/collection-manager/src/controllers/dom-bindings.js`)
+
+### 1.2 Dialogs and panels currently owned by manager
+
+- `render-shell` defines a manager-local `connectionsDialog` and mounts:
+  - `open-collections-connections-list`
+  - `open-collections-add-connection-panel`
+  (`src/apps/collection-manager/src/render/render-shell.js`)
+- Manager app methods own dialog-level view orchestration and repair flows:
+  - `showConnectionsListView`, `showAddConnectionView`, `openConnectionsDialog`, `openAddHostDialog`, `openCredentialRepairDialog`, `prepareSourceRepair`, `clearPendingSourceRepair`. (`src/apps/collection-manager/src/app.js`)
+
+### 1.3 Connection UI components reused by both apps
+
+- `connections-list-panel` renders connection cards, status pills, and per-connection actions (refresh, reconnect, credentials update, remove). (`src/apps/collection-manager/src/components/connections-list-panel.js`)
+- `add-connection-panel` renders provider selection and provider configuration forms (example/local/github/s3), including repair mode and storage guidance trigger. (`src/apps/collection-manager/src/components/add-connection-panel.js`)
+
+### 1.4 Connection runtime logic inside manager controllers
+
+- `source-controller` owns most connection lifecycle logic:
+  - provider selection/config collection and normalization
+  - connect/add source
+  - inspect source
+  - refresh/reconnect source
+  - remove source
+  - source label/detail derivation
+  - persisted source shaping/sanitization
+  - secret persistence hooks via credential store
+  (`src/apps/collection-manager/src/controllers/source-controller.js`)
+- `workspace-controller` restores remembered sources and attempts auto-reconnect, also loading secure credentials during restore. (`src/apps/collection-manager/src/controllers/workspace-controller.js`)
+
+### 1.5 Connection-related state and models in manager
+
+- Manager state includes connection-specific fields:
+  - `sources`, `selectedProviderId`, `activeSourceFilter`, `connectionsDialogView`. (`src/apps/collection-manager/src/state/initial-state.js`)
+- Connection status and working-state computation are manager-local and heavily coupled to workflow UX:
+  - `getSourceStatus` in `source-status.js`
+  - `computeWorkingStatus` in `working-status.js`
+
+### 1.6 Shared pieces already extracted
+
+- Manager’s `services/credential-store.js` is already just a re-export of shared account runtime: `../../../../shared/account/credential-store.js`.
+- `shared/account/*` currently provides:
+  - credential storage (`credential-store.js`)
+  - connection id helper (`connection-id.js`)
+  - generic connection context container (`connections-context.js`)
+
+### 1.7 Existing `collection-account` state (important migration baseline)
+
+- `collection-account` already hosts a full in-page connections experience and reuses manager components (`connections-list-panel`, `add-connection-panel`) while duplicating substantial manager logic in its own `app.js`. (`src/apps/collection-account/src/app.js`)
+- This is a key seam: there is enough parity to migrate ownership, but runtime logic is currently duplicated across manager and account.
+
+---
+
+## 2) Responsibility categorization (by piece)
+
+### Should remain in `collection-manager`
+
+- Workflow-gating logic that depends on connection state in the context of editing/publishing:
+  - source-based publish eligibility, working status, and draft/publish prompts. (`state/working-status.js`)
+- Active workflow source selection (`activeSourceFilter`) used for browsing/editing/publishing current collection context.
+- Lightweight status display in header and browser context (e.g., selected connection label and connection health as consumed by manager UX).
+
+### Should move to `collection-account`
+
+- Canonical connection management UI and flows:
+  - add connection
+  - edit/repair credentials
+  - reconnect/reselect folder
+  - remove connection
+  - provider-specific setup forms
+- Account-facing connection list as the primary management surface.
+- Future account settings UI.
+
+### Should become shared runtime/service logic
+
+- Connection lifecycle service currently duplicated between manager/account:
+  - provider catalog model
+  - provider config normalization/sanitization
+  - connect/refresh/remove/inspect operations
+  - source identity/dedup rules
+  - persisted source shape
+  - remembered-source restore + credential hydration
+- Secret handling and account-scoped credential policies (already mostly shared via `shared/account/credential-store.js`).
+- Connection repository/context adapter for cross-app read/write access (manager consumes; account owns management actions).
+
+### Should become shared UI primitive
+
+- `connections-list-panel` and `add-connection-panel` should move (or be aliased) to shared UI location because they are already reused by manager and account.
+- Dialog shell wrapper around connection UI should become optional composition (manager can embed a lightweight launcher/status; account embeds full-page surface).
+
+### Should be removed later after migration
+
+- Manager-owned connections modal orchestration once account handoff is stable:
+  - `connectionsDialog` and related open/close/view-mode methods.
+- Manager-local duplicated connection management code once replaced by shared runtime adapters.
+- Manager-only direct ownership of provider setup forms once account is canonical and manager only links/handoffs.
+
+---
+
+## 3) Target ownership model
+
+### `collection-account` (canonical owner)
+
+Owns:
+- full connection management UX (list + create + repair + remove)
+- account-facing setup/edit/remove/reconnect flows
+- account settings surface
+
+Contract:
+- publishes connection state changes to shared runtime/context
+- exposes stable navigation targets/entry points for other apps (including manager)
+
+### `collection-manager` (workflow owner)
+
+Owns:
+- collection-editing workflows that depend on connection availability
+- contextual connection usage (active source for publish/refresh in workflow)
+- lightweight entry points/status indicators
+
+Does not own (target):
+- canonical setup/edit/remove UX
+- provider credential management forms
+
+### Shared runtime (`shared/account` + possibly new `shared/runtime/connections/*`)
+
+Owns:
+- connection service layer (connect/refresh/inspect/remove; restore remembered)
+- normalized connection state model + status model
+- credential store integration
+- reusable helpers (identity, labels, config normalization)
+
+---
+
+## 4) Compatibility bridge points inside `collection-manager`
+
+These are the safest transition seams to keep manager stable:
+
+1. **Header action bridge**
+   - current: `open-host-menu` opens manager modal
+   - bridge: preserve button but route to account surface (in-shell navigation or deep-link) while fallback to manager modal during rollout.
+
+2. **Browser add-connection bridge**
+   - current: browser emits `add-connection` and manager opens connections dialog
+   - bridge: switch handler to “open account connections” action; keep old behavior behind fallback flag.
+
+3. **Repair action bridge**
+   - current: list panel emits `repair-connection` and manager opens local repair flows
+   - bridge: map repair events to account route with optional preselected `sourceId` + `mode` query/state.
+
+4. **Manager assumptions of setup ownership**
+   - hotspots:
+     - dialog view state `connectionsDialogView`
+     - pending repair state `pendingSourceRepair`
+     - provider selection/config collection in manager controllers
+   - bridge: keep state for compatibility short-term, but progressively replace with shared runtime actions and account-managed UX.
+
+5. **Storage and restore coupling**
+   - current manager persists/reloads remembered sources and credentials via `workspace-controller`
+   - bridge: move persistence authority to shared connection repository and keep manager on read/subscribe path.
+
+---
+
+## 5) Recommended incremental migration phases
+
+### Phase 0 — Baseline + guardrails (no behavior change)
+
+- Document canonical ownership intent (this note).
+- Freeze net-new connection setup UX changes in manager unless required for compatibility/bugfix.
+- Add explicit TODO markers in manager connection entry handlers indicating future handoff.
+
+### Phase 1 — Extract shared connection runtime (first code extraction)
+
+- Create a shared connection runtime module (under `src/shared/account` or `src/shared/runtime/connections`) by lifting duplicated logic from:
+  - manager `source-controller` + `workspace-controller` connection portions
+  - account `app.js` connection portions
+- Keep existing manager/account UI components unchanged.
+- Provide an API like:
+  - `connectConnection(...)`
+  - `refreshConnection(...)`
+  - `removeConnection(...)`
+  - `inspectConnection(...)`
+  - `restoreRememberedConnections(...)`
+
+### Phase 2 — Make account canonical UI owner
+
+- Point `collection-account` to shared runtime actions (replace duplicated local logic first).
+- Ensure account writes to shared connection repository/context.
+- Validate parity for add/repair/remove/reconnect for example/local/github/s3.
+
+### Phase 3 — Adapt manager to consume shared runtime and handoff
+
+- Replace manager connection mutation codepaths with shared runtime calls.
+- Update manager header/browser “add connection” entry points to prefer account handoff.
+- Keep manager modal as compatibility fallback for one phase (feature flag or runtime check).
+
+### Phase 4 — De-scope manager-owned connection management UI
+
+- Remove manager’s canonical connection setup/edit surfaces after parity is proven.
+- Keep only:
+  - lightweight status indicator
+  - optional quick-action launcher to account
+  - workflow-context source selector if still needed for editing/publishing.
+
+### Phase 5 — Cleanup and deprecation removal
+
+- Remove deprecated manager dialog/view-state code and dead handlers.
+- Consolidate docs and update architecture references to account canonical ownership.
+
+---
+
+## 6) Major risks and coupling hotspots
+
+1. **Logic duplication drift (manager vs account)**
+   - same behaviors implemented in both apps can diverge (auth handling, error messaging, dedup rules).
+
+2. **State ownership ambiguity**
+   - manager currently acts as both workflow consumer and source-of-truth for connections in session/local storage.
+
+3. **Credential restore edge cases across runtimes**
+   - browser/capacitor/desktop behavior differs for folder handles and secure credential access.
+
+4. **Workflow regressions in manager publish paths**
+   - manager’s publish/readiness logic depends on source flags (`needsReconnect`, `needsCredentials`, capabilities) and must remain stable as ownership shifts.
+
+5. **Storage key and persistence migration**
+   - manager/account currently use different storage keys/scopes; unifying without data loss needs a compatibility migration strategy.
+
+---
+
+## 7) Safest next implementation step
+
+**Next step:** extract a shared non-UI connection runtime module and switch only `collection-account` to it first.
+
+Why this is safest:
+- keeps manager behavior unchanged initially
+- reduces duplication immediately
+- proves shared runtime contract in the canonical owner app first
+- creates a low-risk path for manager to adopt read/consume mode afterward
+
+Suggested first extraction candidates:
+- provider catalog + provider factory mapping
+- source identity key and sanitized persisted-source model
+- connect/refresh/remove core operations
+- restore remembered-source + secure credential hydration helpers
+
+Once account runs on shared runtime, manager can adopt the same runtime API behind existing handlers with minimal UI churn.

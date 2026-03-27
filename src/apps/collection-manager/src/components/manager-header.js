@@ -14,6 +14,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
       detail: 'Connect a source or create a collection draft to get started.',
       tone: 'neutral',
     };
+    this._connectionEntryLabel = 'Connections';
   }
 
   connectedCallback() {
@@ -73,6 +74,15 @@ class OpenCollectionsHeaderElement extends HTMLElement {
     }
   }
 
+  setConnectionEntryLabel(text = 'Connections') {
+    this._connectionEntryLabel = String(text || '').trim() || 'Connections';
+    const button = this.shadowRoot?.getElementById('openHostManagerBtn');
+    if (button) {
+      button.setAttribute('aria-label', this._connectionEntryLabel);
+      button.title = this._connectionEntryLabel;
+    }
+  }
+
   render() {
     this.shadowRoot.innerHTML = `
       <style>${headerStyles}</style>
@@ -82,7 +92,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
           <h1 class="title">Collection Manager</h1>
         </div>
         <div class="top-actions">
-          <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="Connections">
+          <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="${this._connectionEntryLabel}" title="${this._connectionEntryLabel}">
             <span id="activeHostLabel">Select connection</span>
             ${renderChevronDownIcon()}
           </button>
@@ -92,6 +102,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
         </div>
       </header>
     `;
+    this.setConnectionEntryLabel(this._connectionEntryLabel);
   }
 }
 

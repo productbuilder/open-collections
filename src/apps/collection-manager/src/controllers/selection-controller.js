@@ -183,6 +183,7 @@ export function renderAssets(app) {
       onboarding: {
         visible: app.state.sources.length === 0 && collections.length === 0,
       },
+      connectionActionLabel: app.browserConnectionActionLabel(),
     };
     app.dom.collectionBrowser.update(browserState);
     app.dom.mobileFlow?.setBrowserState(browserState);
@@ -203,6 +204,7 @@ export function renderAssets(app) {
     focusedItemId: app.state.selectedItemId,
     selectedItemIds: app.state.selectedItemIds,
     viewModes: app.state.browserViewModes,
+    connectionActionLabel: app.browserConnectionActionLabel(),
   };
   app.dom.collectionBrowser.update(browserState);
   app.dom.mobileFlow?.setBrowserState(browserState);

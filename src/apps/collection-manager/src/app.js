@@ -153,6 +153,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.renderEditor();
     this.renderWorkspaceContext();
     this.renderSourceContext();
+    this.applyConnectionEntryPresentation();
     this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
     this.setLocalDraftControlsEnabled(false);
     this.initializeLocalDraftState();
@@ -242,17 +243,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.renderConnectionsListPanel();
     this.dom?.connectionsListPanel?.classList.remove('is-hidden');
     this.dom?.addConnectionPanel?.classList.add('is-hidden');
-    this.setConnectionsDialogHeader('Connections');
+    this.setConnectionsDialogHeader(this.shouldPreferAccountConnectionsHandoff() ? 'Connections (fallback)' : 'Connections');
   }
 
   showAddConnectionView() {
     this.state.connectionsDialogView = 'add';
     this.dom?.connectionsListPanel?.classList.add('is-hidden');
     this.dom?.addConnectionPanel?.classList.remove('is-hidden');
-    this.setConnectionsDialogHeader('Connections');
+    this.setConnectionsDialogHeader(this.shouldPreferAccountConnectionsHandoff() ? 'Connections (fallback)' : 'Connections');
   }
 
   openConnectionsDialog() {
+    this.renderConnectionsFallbackNotice();
     this.showConnectionsListView();
     this.openDialog(this.dom.connectionsDialog);
   }
@@ -277,11 +279,42 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   shouldPreferAccountConnectionsHandoff() {
+    return this.isEmbeddedRuntime();
+  }
+
+  isEmbeddedRuntime() {
     const runtimeMode = this.dataset?.ocAppMode || this.getAttribute('data-oc-app-mode');
     if (runtimeMode === APP_RUNTIME_MODES.EMBEDDED) {
       return true;
     }
     return this.hasAttribute('data-shell-embed') || this.hasAttribute('data-workbench-embed');
+  }
+
+  connectionEntryLabelForRuntime() {
+    return this.shouldPreferAccountConnectionsHandoff() ? 'Manage connections in Account' : 'Connections';
+  }
+
+  browserConnectionActionLabel() {
+    return this.shouldPreferAccountConnectionsHandoff() ? 'Manage in Account' : 'Add connection';
+  }
+
+  applyConnectionEntryPresentation() {
+    this.dom.managerHeader?.setConnectionEntryLabel?.(this.connectionEntryLabelForRuntime());
+  }
+
+  renderConnectionsFallbackNotice() {
+    if (!this.dom?.connectionsFallbackNote) {
+      return;
+    }
+    const compatibilityMode = this.shouldPreferAccountConnectionsHandoff();
+    this.dom.connectionsFallbackNote.hidden = !compatibilityMode;
+    if (compatibilityMode) {
+      this.dom.connectionsFallbackNote.textContent = 'Account is the primary place to manage connections. This local dialog is a compatibility fallback.';
+      this.setConnectionsDialogHeader('Connections (fallback)');
+      return;
+    }
+    this.dom.connectionsFallbackNote.textContent = '';
+    this.setConnectionsDialogHeader('Connections');
   }
 
   requestAccountConnectionsNavigation(options = {}) {
@@ -1093,6 +1126,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
       ? (source.displayLabel || source.label || source.providerLabel || 'Connection')
       : 'Select connection';
     this.dom.managerHeader?.setHostLabel(sourceName);
+    this.applyConnectionEntryPresentation();
     this.refreshWorkingStatus();
   }
 

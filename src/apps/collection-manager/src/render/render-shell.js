@@ -25,6 +25,7 @@ export function renderShell(shadowRoot) {
           <button class="icon-btn" data-close="connectionsDialog" type="button" aria-label="Close connections dialog">${renderCloseIcon()}</button>
         </div>
         <div class="dialog-body dialog-panels">
+          <p id="connectionsFallbackNote" class="panel-subtext dialog-panel" hidden></p>
           <open-collections-connections-list id="connectionsListPanel" class="dialog-panel"></open-collections-connections-list>
           <open-collections-add-connection-panel id="addConnectionPanel" class="dialog-panel is-hidden"></open-collections-add-connection-panel>
         </div>

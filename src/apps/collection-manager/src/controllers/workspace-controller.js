@@ -3,7 +3,7 @@ import { makeSourceId } from '../utils/id-utils.js';
 import { getPlatformType, PLATFORM_TYPES, revivePlatformHandle } from '../../../../shared/platform/index.js';
 import { mirrorNativePreferencesToLocalStorage, persistLocalStateStringSoon, readLocalStorageString } from '../../../../shared/platform/mobile-persistence.js';
 
-const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
+export const SOURCES_STORAGE_KEY = 'timemap_manager_sources_v1';
 const WORKSPACE_SELECTION_STORAGE_KEY = 'timemap_manager_workspace_selection_v1';
 
 function normalizeLocalDraftCollectionEntry(app, entry = {}) {
@@ -237,7 +237,7 @@ export function saveSourcesToStorage(app) {
   const payload = app.state.sources.map((source) => app.toPersistedSource(source));
 
   try {
-    persistLocalStateStringSoon(SOURCES_STORAGE_KEY, JSON.stringify(payload));
+    app.connectionsRuntime.persistSources(app.state.sources);
     persistLocalStateStringSoon(
       WORKSPACE_SELECTION_STORAGE_KEY,
       JSON.stringify({
@@ -276,12 +276,9 @@ export async function restoreRememberedSources(app) {
     }
   }
 
-  if (!Array.isArray(remembered) || remembered.length === 0) {
-    try {
-      remembered = JSON.parse(readLocalStorageString(SOURCES_STORAGE_KEY, '[]'));
-    } catch (error) {
-      remembered = [];
-    }
+  const usingOpfsRemembered = Array.isArray(remembered) && remembered.length > 0;
+  if (!usingOpfsRemembered) {
+    remembered = app.connectionsRuntime.restoreRememberedSources();
   }
 
   const restored = [];
@@ -291,23 +288,30 @@ export async function restoreRememberedSources(app) {
       continue;
     }
 
-    const source = {
-      id: entry.id || makeSourceId(entry.providerId || 'source'),
-      providerId: entry.providerId,
-      providerLabel: entry.providerLabel || app.providerCatalog.find((p) => p.id === entry.providerId)?.label || 'Source',
-      displayLabel: entry.displayLabel || entry.label || 'Source',
-      detailLabel: entry.detailLabel || entry.label || 'Source',
-      label: entry.detailLabel || entry.label || entry.displayLabel || 'Source',
-      config: app.sanitizeSourceConfig(entry.providerId, entry.config || {}),
-      capabilities: entry.capabilities || app.providerFactories[entry.providerId]?.getCapabilities?.() || {},
-      status: 'Remembered storage source. Click Refresh to reconnect.',
-      authMode: entry.authMode || 'public',
-      itemCount: Number(entry.itemCount) || 0,
-      provider: null,
-      needsReconnect: true,
-      needsCredentials: false,
-      lastPublishResult: entry.lastPublishResult || null,
-    };
+    const source = usingOpfsRemembered
+      ? {
+          id: entry.id || makeSourceId(entry.providerId || 'source'),
+          providerId: entry.providerId,
+          providerLabel: entry.providerLabel || app.providerCatalog.find((p) => p.id === entry.providerId)?.label || 'Source',
+          displayLabel: entry.displayLabel || entry.label || 'Source',
+          detailLabel: entry.detailLabel || entry.label || 'Source',
+          label: entry.detailLabel || entry.label || entry.displayLabel || 'Source',
+          config: app.sanitizeSourceConfig(entry.providerId, entry.config || {}),
+          capabilities: entry.capabilities || app.providerFactories[entry.providerId]?.getCapabilities?.() || {},
+          status: 'Remembered storage source. Click Refresh to reconnect.',
+          authMode: entry.authMode || 'public',
+          itemCount: Number(entry.itemCount) || 0,
+          provider: null,
+          needsReconnect: true,
+          needsCredentials: false,
+          lastPublishResult: entry.lastPublishResult || null,
+        }
+      : {
+          ...entry,
+          label: entry.label || entry.detailLabel || entry.displayLabel || 'Source',
+          config: app.sanitizeSourceConfig(entry.providerId, entry.config || {}),
+          lastPublishResult: entry.lastPublishResult || null,
+        };
     if (source.providerId === 'local') {
       const rawHandle =
         entry.config?.localDirectoryHandle && typeof entry.config.localDirectoryHandle === 'object'

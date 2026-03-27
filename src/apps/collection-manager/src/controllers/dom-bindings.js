@@ -68,7 +68,7 @@ export function bindDomEvents(app) {
   app._eventsBound = true;
 
   app.dom.managerHeader.addEventListener('open-host-menu', () => {
-    app.openConnectionsDialog();
+    app.openManageConnections({ intent: 'list', source: 'header' });
   });
   app.dom.managerHeader.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
 
@@ -114,10 +114,10 @@ export function bindDomEvents(app) {
     app.prepareSourceRepair(sourceId, 'reconnect');
     await app.refreshSource(sourceId);
   });
-  app.dom.connectionsListPanel.addEventListener('remove-connection', (event) => {
+  app.dom.connectionsListPanel.addEventListener('remove-connection', async (event) => {
     const sourceId = event.detail?.sourceId || '';
     if (sourceId) {
-      app.removeSource(sourceId);
+      await app.removeSource(sourceId);
     }
   });
 
@@ -252,7 +252,7 @@ export function bindDomEvents(app) {
       app.openNewCollectionDialog();
     });
     target.addEventListener('add-connection', () => {
-      app.openConnectionsDialog();
+      app.openManageConnections({ intent: 'add', source: 'browser' });
     });
     target.addEventListener('add-example-collection', async () => {
       app.setSelectedProvider('example');

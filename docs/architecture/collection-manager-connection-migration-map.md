@@ -287,3 +287,33 @@ Still temporarily manager-owned:
 Next clean handoff step:
 
 - Move manager `connectCurrentProvider` / `refreshSource` mutation internals behind the shared runtime action contract (retain existing manager handlers as delegates), then convert manager UI entry points to account-first navigation with manager dialog fallback.
+
+---
+
+## 9) Phase 2 incremental compatibility step (implemented 2026-03-27)
+
+Completed in this step:
+
+- Refactored manager mutation internals to delegate to shared runtime action methods:
+  - `connectCurrentProvider` now delegates connect/add mutation behavior through `connectionsRuntime.connectSource(...)`.
+  - `refreshSource` now delegates reconnect/repair mutation behavior through `connectionsRuntime.refreshSource(...)`.
+  - `removeSource` now delegates removal/credential cleanup through `connectionsRuntime.removeSource(...)`.
+- Aligned manager persistence/restore coupling one step further with shared runtime:
+  - manager `saveSourcesToStorage` now uses `connectionsRuntime.persistSources(...)` for local remembered-source persistence.
+  - manager restore flow now uses `connectionsRuntime.restoreRememberedSources()` as the local-storage baseline when OPFS-backed state is not present, while preserving manager-specific restore policy and post-processing.
+- Added a low-risk manager handoff seam:
+  - new `openManageConnections(options)` bridge in manager app supports future account-first navigation via optional `onManageConnections` delegate, with manager dialog fallback preserved.
+  - header and browser “add connection” entry points now route through this seam.
+- Extended shared runtime action responses with optional compatibility payload (`loadedAssets`, `providerResult`) so manager can preserve current asset/collection merge behavior while consuming shared mutation actions.
+
+Still temporarily manager-owned:
+
+- Manager connections dialog and repair view orchestration (`connectionsDialogView`, pending repair state and add-panel flow).
+- Manager workflow-coupled source/asset/collection merge behavior and publish/readiness orchestration.
+- Manager-specific remembered-source auto-reconnect policy and runtime-specific local-folder restore handling.
+
+Remaining before canonical account handoff / manager UI removal:
+
+- Route manager `openManageConnections` to account navigation by default (keeping modal fallback behind a compatibility gate).
+- Migrate remaining manager-owned restore/reconnect edge handling into shared runtime adapters where safe.
+- De-scope manager-owned connection setup dialogs once account-first entry parity and workflow safety are validated.

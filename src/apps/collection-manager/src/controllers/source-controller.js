@@ -1,5 +1,4 @@
 import { MANAGER_CONFIG } from '../config.js';
-import { makeSourceId } from '../utils/id-utils.js';
 import {
   sanitizeConnectionConfig,
   sourceDetailLabelFor as sharedSourceDetailLabelFor,
@@ -9,40 +8,6 @@ import {
 function localDirectoryPathFromHandle(handle) {
   const path = typeof handle?.path === 'string' ? handle.path.trim() : '';
   return path || '';
-}
-
-function summarizeCredentialConfig(providerId, config = {}) {
-  if (providerId === 'github') {
-    return {
-      owner: String(config.owner || '').trim(),
-      repo: String(config.repo || '').trim(),
-      branch: String(config.branch || '').trim() || 'main',
-      path: String(config.path || '').trim(),
-      hasToken: Boolean(String(config.token || '').trim()),
-      tokenLength: String(config.token || '').length,
-    };
-  }
-  if (providerId === 's3') {
-    return {
-      endpoint: String(config.endpoint || '').trim(),
-      bucket: String(config.bucket || '').trim(),
-      region: String(config.region || '').trim(),
-      basePath: String(config.basePath || '').trim(),
-      hasAccessKey: Boolean(String(config.accessKey || '').trim()),
-      accessKeyLength: String(config.accessKey || '').length,
-      hasSecretKey: Boolean(String(config.secretKey || '').trim()),
-      secretKeyLength: String(config.secretKey || '').length,
-    };
-  }
-  return {};
-}
-
-function logCredentialTrace(stage, payload = {}) {
-  try {
-    console.info(`[source-controller][credentials] ${stage}`, payload);
-  } catch (_error) {
-    // ignore logging failures
-  }
 }
 
 export function setSelectedProvider(app, providerId) {
@@ -146,78 +111,44 @@ export function toPersistedSource(app, source) {
 
 export async function connectCurrentProvider(app, options = {}) { /* delegated from app.js */
   const providerId = options.providerId || app.state.selectedProviderId;
-  const providerFactory = app.providers[providerId];
   const selectedProvider = app.providerCatalog.find((entry) => entry.id === providerId);
-
-  if (!providerFactory || selectedProvider?.enabled === false) {
-    app.setConnectionStatus('Selected storage source type is not yet available.', false);
-    app.setStatus('Selected storage source type is not yet available.', 'warn');
-    return;
-  }
-
   const config = app.collectCurrentProviderConfig(providerId);
-
-  if (providerId === 'local' && !config.localDirectoryHandle) {
-    app.setConnectionStatus('Select a local folder first.', false);
-    app.setStatus('Select a local folder before adding this connection.', 'warn');
-    return;
-  }
-
-  const provider = providerFactory();
+  const repairingSource = app.pendingSourceRepair?.sourceId ? app.getSourceById(app.pendingSourceRepair.sourceId) : null;
 
   try {
-    const result = await provider.connect(config);
-    app.renderCapabilities(provider);
-
+    const result = await app.connectionsRuntime.connectSource({
+      providerId,
+      config,
+      pendingRepairSource: repairingSource,
+      sources: app.state.sources,
+    });
     if (!result.ok) {
-      app.setConnectionStatus(result.message, false);
-      app.setStatus(result.message, 'warn');
+      app.setConnectionStatus(result.message || 'Connection failed.', false);
+      app.setStatus(result.message || 'Connection failed.', 'warn');
       app.renderAssets();
       app.renderEditor();
       return;
     }
 
-    app.setConnectionStatus(result.message, true);
-
-    const loaded = await provider.listAssets();
+    const loaded = Array.isArray(result.loadedAssets) ? result.loadedAssets : [];
+    app.renderCapabilities(result.source.provider?.getCapabilities?.() || {});
     const derivedConfig = { ...config };
-    if (providerId === 'local' && result.sourceDisplayLabel) {
-      derivedConfig.localDirectoryName = result.sourceDisplayLabel;
+    if (providerId === 'local' && result.source.displayLabel) {
+      derivedConfig.localDirectoryName = result.source.displayLabel;
     }
     const displayLabel =
-      result.sourceDisplayLabel ||
-      app.sourceDisplayLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
+      result.source.displayLabel ||
+      app.sourceDisplayLabelFor(providerId, derivedConfig, result.source.providerLabel || selectedProvider?.label || providerId);
     const detailLabel =
-      result.sourceDetailLabel ||
-      app.sourceDetailLabelFor(providerId, derivedConfig, selectedProvider?.label || providerId);
-    const pendingRepair = app.pendingSourceRepair || null;
-    const repairingSource = pendingRepair?.sourceId ? app.getSourceById(pendingRepair.sourceId) : null;
+      result.source.detailLabel ||
+      app.sourceDetailLabelFor(providerId, derivedConfig, result.source.providerLabel || selectedProvider?.label || providerId);
     const draftSource = {
-      id: repairingSource?.id || makeSourceId(providerId),
-      providerId,
-      providerLabel: selectedProvider?.label || providerId,
+      ...result.source,
       label: detailLabel,
       displayLabel,
       detailLabel,
-      config: { ...config },
-      capabilities: provider.getCapabilities(),
-      status: result.message,
-      authMode:
-        providerId === 'github'
-          ? (config.token || '').trim()
-            ? 'token'
-            : 'public'
-          : providerId === 'local' && config.localDirectoryHandle
-            ? 'local-folder'
-            : providerId === 's3'
-              ? 'access-key'
-              : providerId === 'example'
-                ? 'example'
-                : 'public',
-      itemCount: loaded.length,
-      provider,
-      needsReconnect: false,
-      needsCredentials: false,
+      config: { ...(result.source.config || config) },
+      status: result.source.status || 'Connected',
       collections: repairingSource?.collections || [],
       selectedCollectionId: repairingSource?.selectedCollectionId || null,
       lastPublishResult: repairingSource?.lastPublishResult || null,
@@ -235,31 +166,9 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
       lastPublishResult: targetSource?.lastPublishResult || draftSource.lastPublishResult,
     };
 
-    if (providerId === 'github' || providerId === 's3') {
-      try {
-        logCredentialTrace('store:start', {
-          sourceId: source.id,
-          providerId,
-          summary: summarizeCredentialConfig(providerId, config),
-        });
-        await app.credentialStore.storeSourceSecret(source, config);
-        logCredentialTrace('store:ok', {
-          sourceId: source.id,
-          providerId,
-        });
-      } catch (error) {
-        logCredentialTrace('store:error', {
-          sourceId: source.id,
-          providerId,
-          error: error?.message || String(error),
-        });
-        app.setStatus(`Connected, but secure credential storage failed: ${error.message}`, 'warn');
-      }
-    }
-
     const normalized = app.normalizeSourceAssets(source, loaded);
-    const providerCollections = Array.isArray(result.collections)
-      ? app.normalizeCollectionsFromProvider(result.collections)
+    const providerCollections = Array.isArray(result.providerResult?.collections)
+      ? app.normalizeCollectionsFromProvider(result.providerResult.collections)
       : null;
     const collections = providerCollections || app.buildCollectionsForSource(source, normalized);
     const defaultCollectionId = collections[0]?.id || null;
@@ -303,6 +212,7 @@ export async function connectCurrentProvider(app, options = {}) { /* delegated f
     app.state.manifest = null;
     app.dom.manifestPreview.textContent = '{}';
 
+    app.setConnectionStatus(source.status || 'Connected.', true);
     app.setStatus(
       targetSource
         ? `Reconnected storage source ${displayLabel} (${loaded.length} items).`
@@ -375,103 +285,50 @@ export async function refreshSource(app, sourceId, options = {}) {
     return;
   }
 
-  const providerFactory = app.providers[source.providerId];
-  if (!providerFactory) {
-    app.setStatus(`Storage source type for ${source.label} is unavailable.`, 'warn');
-    return;
-  }
-
   try {
-    const provider = providerFactory();
-    let refreshConfig = { ...(source.config || {}), ...(options.configOverrides || {}) };
-    if (source.providerId === 'github' && !(refreshConfig.token || '').trim()) {
-      logCredentialTrace('refresh:load-secret:start', {
-        sourceId,
-        providerId: source.providerId,
-        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
-      });
-      refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
-      logCredentialTrace('refresh:load-secret:done', {
-        sourceId,
-        providerId: source.providerId,
-        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
-      });
-    }
-    if (source.providerId === 's3' && (!(refreshConfig.accessKey || '').trim() || !(refreshConfig.secretKey || '').trim())) {
-      logCredentialTrace('refresh:load-secret:start', {
-        sourceId,
-        providerId: source.providerId,
-        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
-      });
-      refreshConfig = await app.credentialStore.loadSourceSecret(source, refreshConfig);
-      logCredentialTrace('refresh:load-secret:done', {
-        sourceId,
-        providerId: source.providerId,
-        summary: summarizeCredentialConfig(source.providerId, refreshConfig),
-      });
-    }
-    if (source.providerId === 'local') {
-      const explicitHandle = options.configOverrides?.localDirectoryHandle;
-      const repairHandle =
-        app.pendingSourceRepair?.sourceId === sourceId && app.pendingSourceRepair?.mode === 'folder'
-          ? app.selectedLocalDirectoryHandle
-          : null;
-      const handle = explicitHandle || refreshConfig.localDirectoryHandle || repairHandle;
-      if (handle) {
-        refreshConfig.localDirectoryHandle = handle;
-        if (!refreshConfig.localDirectoryName) {
-          refreshConfig.localDirectoryName = handle.name || refreshConfig.localDirectoryName || '';
-        }
-      }
-    }
-    const result = await provider.connect(refreshConfig);
+    const result = await app.connectionsRuntime.refreshSource({
+      source,
+      sources: app.state.sources,
+      configOverrides: options.configOverrides || {},
+      pendingSourceRepair: app.pendingSourceRepair,
+      selectedLocalDirectoryHandle: app.selectedLocalDirectoryHandle,
+    });
     if (!result.ok) {
-      const next = {
-        ...source,
-        status: result.message,
-        needsReconnect: true,
-        needsCredentials: Boolean(result.capabilities?.requiresCredentials) && !Boolean(result.capabilities?.hasCredentials),
-      };
-      app.state.sources = app.sortSourcesForDisplay(
-        app.state.sources.map((entry) => (entry.id === sourceId ? next : entry)),
-      );
+      app.state.sources = app.sortSourcesForDisplay(result.sources || app.state.sources);
       app.renderSourcesList();
       app.saveSourcesToStorage();
-      app.setConnectionStatus(result.message, false);
-      app.setStatus(`Refresh failed: ${result.message}`, 'warn');
+      app.setConnectionStatus(result.message || 'Refresh failed.', false);
+      app.setStatus(`Refresh failed: ${result.message || 'Connection failed.'}`, 'warn');
       app.refreshWorkingStatus();
       return;
     }
 
-    const loaded = await provider.listAssets();
-    const refreshedConfig = { ...refreshConfig };
-    if (source.providerId === 'local' && result.sourceDisplayLabel) {
-      refreshedConfig.localDirectoryName = result.sourceDisplayLabel;
+    const loaded = Array.isArray(result.loadedAssets) ? result.loadedAssets : [];
+    const refreshedConfig = { ...(result.source.config || source.config || {}) };
+    if (source.providerId === 'local' && result.source.displayLabel) {
+      refreshedConfig.localDirectoryName = result.source.displayLabel;
     }
     const displayLabel =
-      result.sourceDisplayLabel || app.sourceDisplayLabelFor(source.providerId, refreshedConfig, source.providerLabel);
+      result.source.displayLabel || app.sourceDisplayLabelFor(source.providerId, refreshedConfig, source.providerLabel);
     const detailLabel =
-      result.sourceDetailLabel || app.sourceDetailLabelFor(source.providerId, refreshedConfig, source.providerLabel);
+      result.source.detailLabel || app.sourceDetailLabelFor(source.providerId, refreshedConfig, source.providerLabel);
     const updatedSource = {
       ...source,
-      provider,
-      capabilities: provider.getCapabilities(),
-      itemCount: loaded.length,
-      status: result.message,
+      ...result.source,
+      itemCount: result.source.itemCount ?? loaded.length,
+      status: result.source.status || 'Connected',
       authMode: source.providerId === 's3' ? 'access-key' : source.authMode,
       displayLabel,
       detailLabel,
       label: detailLabel,
-      config: refreshConfig,
+      config: refreshedConfig,
       collections: source.collections || [],
       selectedCollectionId: source.selectedCollectionId || null,
-      needsReconnect: false,
-      needsCredentials: false,
       lastPublishResult: source.lastPublishResult || null,
     };
     const normalized = app.normalizeSourceAssets(updatedSource, loaded);
-    const providerCollections = Array.isArray(result.collections)
-      ? app.normalizeCollectionsFromProvider(result.collections)
+    const providerCollections = Array.isArray(result.providerResult?.collections)
+      ? app.normalizeCollectionsFromProvider(result.providerResult.collections)
       : null;
     const collections = providerCollections || app.buildCollectionsForSource(updatedSource, normalized);
     const defaultCollectionId = collections[0]?.id || null;
@@ -534,17 +391,25 @@ export async function refreshSource(app, sourceId, options = {}) {
   }
 }
 
-export function removeSource(app, sourceId) {
+export async function removeSource(app, sourceId) {
   const source = app.getSourceById(sourceId);
   if (!source) {
     return;
   }
 
+  const result = await app.connectionsRuntime.removeSource({
+    sourceId,
+    sources: app.state.sources,
+    activeSourceId: app.state.activeSourceFilter || 'all',
+  });
+  if (!result?.ok) {
+    return;
+  }
   if (app.pendingSourceRepair?.sourceId === sourceId) {
     app.clearPendingSourceRepair();
   }
-  app.credentialStore.deleteSourceSecret(source).catch(() => {});
-  app.state.sources = app.sortSourcesForDisplay(app.state.sources.filter((entry) => entry.id !== sourceId));
+  app.state.sources = app.sortSourcesForDisplay(result.sources);
+  app.state.activeSourceFilter = result.activeSourceId;
   app.state.assets = app.state.assets.filter((entry) => entry.sourceId !== sourceId);
   if (app.state.sources.length === 0) {
     app.closeMobileDetail();

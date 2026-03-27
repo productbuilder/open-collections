@@ -124,7 +124,6 @@ class OpenAppShellElement extends HTMLElement {
       <div class="oc-app-frame">
         <header class="oc-app-bar">
           <h1 class="shell-title">Open Collections</h1>
-          <p class="shell-subtitle">Shared app shell runtime</p>
         </header>
 
         <nav class="oc-app-nav" aria-label="Open Collections sections">

@@ -20,6 +20,7 @@
     "collection-browser:start": "pnpm --filter @open-collections/browser-app start",
     "app-shell:start": "pnpm --filter @open-collections/app-shell-app start",
     "configurator:start": "pnpm --filter @open-collections/configurator-app start",
-    "bucket-browser:start": "pnpm --filter @open-collections/bucket-browser-app start"
+    "bucket-browser:start": "pnpm --filter @open-collections/bucket-browser-app start",
+    "collection-account:start": "pnpm --filter @open-collections/account-app start"
   }
 }

@@ -1,8 +1,8 @@
 export const SHELL_SECTIONS = [
-  { key: 'browse', label: 'Browse' },
-  { key: 'collect', label: 'Collect' },
-  { key: 'present', label: 'Present' },
-  { key: 'account', label: 'Account' },
+  { key: 'browse', label: 'Browse', icon: 'search' },
+  { key: 'collect', label: 'Collect', icon: 'add' },
+  { key: 'present', label: 'Present', icon: 'play_arrow' },
+  { key: 'account', label: 'Account', icon: 'account_circle' },
 ];
 
 export function renderShellNav(activeSectionKey) {
@@ -15,7 +15,7 @@ export function renderShellNav(activeSectionKey) {
         data-section-key="${section.key}"
         ${isActive ? 'aria-current="page"' : ''}
       >
-        <span class="shell-nav-icon" aria-hidden="true"></span>
+        <span class="material-icons shell-nav-icon" aria-hidden="true">${section.icon}</span>
         <span class="shell-nav-label">${section.label}</span>
       </button>
     `;

@@ -32,7 +32,7 @@ export const appShellStyles = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     border: var(--oc-border-width-sm) solid var(--oc-border-strong);
     border-radius: var(--oc-radius-sm);
     background: var(--oc-bg-surface);
@@ -45,12 +45,13 @@ export const appShellStyles = `
   }
 
   .shell-nav-icon {
-    display: none;
-    width: 0.62rem;
-    height: 0.62rem;
-    border-radius: 50%;
-    border: var(--oc-border-width-sm) solid currentColor;
-    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Material Icons', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1;
     flex-shrink: 0;
   }
 
@@ -112,19 +113,13 @@ export const appShellStyles = `
       border: 0;
       border-radius: var(--oc-radius-md);
       padding: 0.3rem 0.2rem;
-      font-size: 0.7rem;
+      font-size: 0.74rem;
       font-weight: 600;
       display: inline-flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 0.3rem;
-    }
-
-    .shell-nav-icon {
-      display: block;
-      width: 0.68rem;
-      height: 0.68rem;
+      gap: 0.32rem;
     }
 
     .shell-nav-btn[aria-current="page"] {

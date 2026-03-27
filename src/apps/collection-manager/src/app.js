@@ -89,6 +89,7 @@ import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
 import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
+import { APP_LIFECYCLE_EVENTS, APP_RUNTIME_MODES } from '../../../shared/runtime/app-mount-contract.js';
 import {
   createConnectionsRuntime,
   createDefaultConnectionProviderCatalog,
@@ -257,7 +258,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   openManageConnections(options = {}) {
-    // Compatibility seam: manager keeps local dialog fallback until account-first handoff is finalized.
+    // Compatibility seam: prefer account handoff in embedded/shell mode, keep local manager dialog fallback.
+    if (this.shouldPreferAccountConnectionsHandoff()) {
+      const didNavigate = this.requestAccountConnectionsNavigation(options);
+      if (didNavigate) {
+        return;
+      }
+    }
+
     const delegate = typeof this.onManageConnections === 'function' ? this.onManageConnections : null;
     if (delegate) {
       const handled = delegate(options);
@@ -266,6 +274,34 @@ class OpenCollectionsManagerElement extends HTMLElement {
       }
     }
     this.openConnectionsDialog();
+  }
+
+  shouldPreferAccountConnectionsHandoff() {
+    const runtimeMode = this.dataset?.ocAppMode || this.getAttribute('data-oc-app-mode');
+    if (runtimeMode === APP_RUNTIME_MODES.EMBEDDED) {
+      return true;
+    }
+    return this.hasAttribute('data-shell-embed') || this.hasAttribute('data-workbench-embed');
+  }
+
+  requestAccountConnectionsNavigation(options = {}) {
+    const detail = {
+      sourceAppId: 'collection-manager',
+      targetAppId: 'collection-account',
+      targetSection: 'connections',
+      intent: String(options.intent || 'list'),
+      source: String(options.source || ''),
+      sourceId: String(options.sourceId || ''),
+      mode: String(options.mode || ''),
+    };
+    const navigateEvent = new CustomEvent(APP_LIFECYCLE_EVENTS.NAVIGATE, {
+      detail,
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    // Returns true when shell/host claims navigation via preventDefault().
+    return this.dispatchEvent(navigateEvent) === false;
   }
 
   openAddHostDialog() {

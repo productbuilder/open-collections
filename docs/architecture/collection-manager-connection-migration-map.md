@@ -317,3 +317,36 @@ Remaining before canonical account handoff / manager UI removal:
 - Route manager `openManageConnections` to account navigation by default (keeping modal fallback behind a compatibility gate).
 - Migrate remaining manager-owned restore/reconnect edge handling into shared runtime adapters where safe.
 - De-scope manager-owned connection setup dialogs once account-first entry parity and workflow safety are validated.
+
+---
+
+## 10) Phase 3 account-first handoff default (implemented 2026-03-27)
+
+Completed in this step:
+
+- `collection-manager` now treats account handoff as the default `openManageConnections(options)` behavior in shell/embedded-friendly runtime detection (`data-oc-app-mode="embedded"`, `data-shell-embed`, or `data-workbench-embed`).
+- Manager now emits a cancelable `app:navigate` request with a lightweight handoff payload:
+  - `sourceAppId: "collection-manager"`
+  - `targetAppId: "collection-account"`
+  - `targetSection: "connections"`
+  - passthrough metadata (`intent`, `source`, optional `sourceId`, optional `mode`)
+- `app-shell` now handles this navigation request by switching to the Account section and acknowledging handling via `preventDefault()`.
+- `collection-manager` keeps compatibility fallback behavior intact:
+  1. prefer embedded handoff first
+  2. then optional `onManageConnections` delegate (if present)
+  3. finally fallback to manager-owned local connections dialog
+
+Fallback conditions (still supported):
+
+- standalone manager runtime (no shell/embed markers)
+- embedded runtime where no host/shell listener handles `app:navigate`
+- explicit compatibility delegate path via `onManageConnections`
+
+Still temporarily manager-owned after this step:
+
+- local connections dialog, list/add/repair orchestration, and pending-repair view state
+- manager-side connection repair and mutation affordances used when fallback is active
+
+Next cleanup step after this migration:
+
+- remove manager’s canonical connection management dialog entry surfaces after one stabilization pass confirms shell/account handoff coverage, while retaining only lightweight status/quick-launch affordances into Account.

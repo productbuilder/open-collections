@@ -45,14 +45,15 @@ export const appShellStyles = `
   }
 
   .shell-nav-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Material Icons', sans-serif;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1;
+    width: 1rem;
+    height: 1rem;
+    display: block;
     flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .shell-nav-label {

@@ -4,9 +4,9 @@ import { SHELL_SECTION_ADAPTERS } from './components/section-adapters.js';
 import {
   APP_RUNTIME_MODES,
   createAppRuntimeContext,
-} from '../../../../shared/runtime/app-mount-contract.js';
-import { createHostCapabilities } from '../../../../shared/runtime/host-capabilities.js';
-import { createToastLayer } from '../../../../shared/ui/app-runtime/primitives.js';
+} from '../../../shared/runtime/app-mount-contract.js';
+import { createHostCapabilities } from '../../../shared/runtime/host-capabilities.js';
+import { createToastLayer } from '../../../shared/ui/app-runtime/primitives.js';
 
 const DEFAULT_SECTION_KEY = 'browse';
 

@@ -29,9 +29,14 @@ For now, the account landing view is intentionally connections-first.
 
 ## Mounting direction
 
-This app is intended to be mounted as the **Account** section within `app-shell` in a later integration step.
+This app is mount-ready for the **Account** section within `app-shell` using the shared mount contract.
 
 ## Entry
 
 - Source app host page: `/src/apps/collection-account/`
 - Source web component script: `/src/apps/collection-account/src/index.js`
+
+
+## Shared account runtime basis
+
+Account now depends on shared account foundations from `src/shared/account/*` and shared host directory capability helpers in `src/shared/platform/host-directory.js`, instead of manager-local ownership.

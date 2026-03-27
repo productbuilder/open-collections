@@ -1,7 +1,9 @@
 import { appFoundationLayoutStyles } from '../../../../shared/ui/app-foundation/layout.css.js';
+import { appRuntimeStyles } from '../../../../shared/ui/app-runtime/styles.css.js';
 
 export const appShellStyles = `
   ${appFoundationLayoutStyles}
+  ${appRuntimeStyles}
 
   :host {
     display: block;
@@ -70,6 +72,16 @@ export const appShellStyles = `
     border-color: var(--oc-border-accent);
     background: var(--oc-border-accent);
     color: var(--oc-color-white);
+  }
+
+  .shell-section-mount {
+    min-height: 100%;
+    height: 100%;
+  }
+
+  .shell-section-mount > * {
+    display: block;
+    min-height: 100%;
   }
 
 

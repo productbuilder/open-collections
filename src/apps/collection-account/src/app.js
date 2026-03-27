@@ -1,13 +1,9 @@
 import { createLocalProvider } from '../../../packages/provider-local/src/index.js';
 import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
 import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
-import {
-  pickLocalHostDirectory,
-  supportsLocalHostDirectoryPicker,
-} from '../../collection-manager/src/platform/manager-source-api.js';
+import { pickHostDirectory, supportsHostDirectoryPicker } from '../../../shared/platform/host-directory.js';
 import { MANAGER_CONFIG } from '../../collection-manager/src/config.js';
-import { createCredentialStore } from '../../collection-manager/src/services/credential-store.js';
-import { makeSourceId } from '../../collection-manager/src/utils/id-utils.js';
+import { createCredentialStore, makeConnectionId } from '../../../shared/account/index.js';
 import { renderShell } from './render/render-shell.js';
 import '../../collection-manager/src/components/connections-list-panel.js';
 import '../../collection-manager/src/components/add-connection-panel.js';
@@ -42,7 +38,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
     this.pendingSourceRepair = null;
     this.selectedLocalDirectoryHandle = null;
-    this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
+    this.localFolderPickerSupported = supportsHostDirectoryPicker();
     this.credentialStore = createCredentialStore();
 
     this.providerFactories = {
@@ -463,7 +459,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
     }
 
     try {
-      const handle = await pickLocalHostDirectory();
+      const handle = await pickHostDirectory();
       const folderName = (handle?.name || '').trim() || 'Selected folder';
       const folderPath = String(handle?.path || '').trim();
       this.selectedLocalDirectoryHandle = handle || null;
@@ -522,7 +518,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
       const repairingSource = this.pendingSourceRepair?.sourceId ? this.getSourceById(this.pendingSourceRepair.sourceId) : null;
       const draftSource = {
-        id: repairingSource?.id || makeSourceId(providerId),
+        id: repairingSource?.id || makeConnectionId(providerId),
         providerId,
         providerLabel: providerMeta?.label || providerId,
         label: detailLabel,
@@ -763,7 +759,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
     this.state.sources = remembered
       .filter((entry) => entry && typeof entry === 'object' && entry.providerId)
       .map((entry) => ({
-        id: entry.id || makeSourceId(entry.providerId || 'source'),
+        id: entry.id || makeConnectionId(entry.providerId || 'source'),
         providerId: entry.providerId,
         providerLabel: entry.providerLabel || this.providerCatalog.find((provider) => provider.id === entry.providerId)?.label || 'Connection',
         displayLabel: entry.displayLabel || entry.label || 'Connection',

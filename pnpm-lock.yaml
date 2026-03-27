@@ -8,11 +8,28 @@ importers:
 
   .: {}
 
+  src/apps/app-shell: {}
+
   src/apps/bucket-browser:
     dependencies:
       '@open-collections/library-core':
         specifier: workspace:*
         version: link:../../shared/library-core
+
+  src/apps/collection-account:
+    dependencies:
+      '@open-collections/provider-github':
+        specifier: workspace:*
+        version: link:../../packages/provider-github
+      '@open-collections/provider-local':
+        specifier: workspace:*
+        version: link:../../packages/provider-local
+      '@open-collections/provider-s3':
+        specifier: workspace:*
+        version: link:../../packages/provider-s3
+      '@open-collections/shared-platform':
+        specifier: workspace:*
+        version: link:../../shared/platform
 
   src/apps/collection-browser:
     dependencies:

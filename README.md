@@ -51,7 +51,8 @@ Open Collections apps stay browser-first and run from `src/apps/*`.
 - Browser mode runs those apps directly in a regular web page.
 - Desktop mode uses the Tauri shell in `src/desktop/workbench` and routes platform calls through `src/shared/platform/tauri-platform.js`.
 - Mobile mode uses the Capacitor shell in `src/mobile/workbench` and routes platform calls through `src/shared/platform/capacitor-platform.js`.
-- The current mobile shell mounts `src/apps/collection-browser` (browser app) as the single in-shell target.
+- `src/apps/app-shell` now mounts the four app sections through a shared runtime contract (`collection-browser`, `collection-manager`, `collection-presenter`, `collection-account`).
+- The current mobile workbench still targets `src/apps/collection-browser` while app-shell/mobile routing is integrated incrementally.
 
 Runtime selection happens in `src/shared/platform/index.js`:
 

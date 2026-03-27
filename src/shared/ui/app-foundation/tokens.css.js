@@ -30,6 +30,11 @@ export const appFoundationTokenStyles = `
     --oc-layout-content-max: 1100px;
     --oc-layout-panel-max: 720px;
     --oc-layout-nav-height: 64px;
+    --oc-layout-mobile-nav-height: 72px;
+    --oc-layout-safe-top: env(safe-area-inset-top, 0px);
+    --oc-layout-safe-right: env(safe-area-inset-right, 0px);
+    --oc-layout-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --oc-layout-safe-left: env(safe-area-inset-left, 0px);
 
     /* App foundation semantic tokens */
     --oc-bg-canvas: var(--oc-color-slate-100);

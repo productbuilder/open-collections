@@ -1,23 +1,33 @@
 # Open Collections App Shell
 
-`app-shell` is a shared shell container for Open Collections sub-apps.
+`app-shell` is the shared shell container for Open Collections sub-apps.
 
 ## Purpose
 
-The shell centralizes:
+The shell owns:
 
 - global navigation
-- the main app viewport/content region
+- section-level app mounting
+- shared host runtime seams (notifications/capabilities)
 
-This is scaffolding only. It does not yet mount the real app implementations.
+## Embedded section mapping
 
-## Current placeholder sections
+`app-shell` mounts these sub-apps through shared mount adapters:
 
-- **Browse** → placeholder for `collection-browser`
-- **Collect** → placeholder for `collection-manager`
-- **Present** → placeholder for future `collection-presenter`
-- **Account** → placeholder for the future account area
+- **Browse** → `collection-browser` (`timemap-browser`)
+- **Collect** → `collection-manager` (`open-collections-manager`)
+- **Present** → `collection-presenter` (`open-collections-presenter`)
+- **Account** → `collection-account` (`open-collections-account`)
 
-## Next step
+## Runtime direction
 
-Replace each section placeholder renderer with a mounted sub-app boundary, keeping the shell navigation and responsive layout owned by this app.
+Mounting uses the incremental shared contract from:
+
+- `src/shared/runtime/app-mount-contract.js`
+- `src/shared/runtime/host-capabilities.js`
+- `src/shared/ui/app-runtime/*`
+
+## Notes
+
+- The shell stays lightweight and does not absorb app-specific business workflows.
+- Apps still run standalone from their own app URLs.

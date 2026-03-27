@@ -20,16 +20,7 @@ export function activeCollectionRootPath(app) {
 }
 
 export function renderWorkspaceContext(app) {
-  const source =
-    app.state.activeSourceFilter !== 'all'
-      ? app.getSourceById(app.state.activeSourceFilter)
-      : null;
-  const sourceLabel = source?.displayLabel || source?.label || 'none';
-  const collectionId = app.state.selectedCollectionId && app.state.selectedCollectionId !== 'all'
-    ? app.state.selectedCollectionId
-    : 'none';
-  const rootPath = collectionId !== 'none' ? app.activeCollectionRootPath() : 'n/a';
-  app.dom.managerHeader?.setWorkspaceContext(`Host: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`);
+  app.renderSourceContext();
 }
 
 export function openNewCollectionDialog(app) {

@@ -68,10 +68,10 @@ export function bindDomEvents(app) {
 
   app._eventsBound = true;
 
-  app.dom.managerHeader.addEventListener('open-host-menu', () => {
+  app.dom.managerHeader?.addEventListener('open-host-menu', () => {
     app.openManageConnections({ intent: 'list', source: 'header' });
   });
-  app.dom.managerHeader.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
+  app.dom.managerHeader?.addEventListener('open-header-menu', () => app.openDialog(app.dom.headerMenuDialog));
 
   app.dom.connectionsListPanel.addEventListener('open-add-connection', () => {
     app.openAddHostDialog();
@@ -254,6 +254,12 @@ export function bindDomEvents(app) {
     });
     target.addEventListener('add-connection', () => {
       app.openManageConnections({ intent: 'add', source: 'browser' });
+    });
+    target.addEventListener('open-manage-connections', () => {
+      app.openManageConnections({ intent: 'list', source: 'browser-toolbar' });
+    });
+    target.addEventListener('open-workflow-menu', () => {
+      app.openDialog(app.dom.headerMenuDialog);
     });
     target.addEventListener('add-example-collection', async () => {
       app.setSelectedProvider('example');

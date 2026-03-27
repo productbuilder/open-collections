@@ -66,6 +66,8 @@ class OpenCollectionsMobileFlowElement extends HTMLElement {
       'item-view',
       'view-mode-change',
       'add-collection',
+      'open-manage-connections',
+      'open-workflow-menu',
       'publish-collection',
       'files-selected',
       'drop-target-change',

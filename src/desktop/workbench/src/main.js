@@ -1,5 +1,6 @@
 import '../../../apps/collection-manager/src/index.js';
 import '../../../apps/collection-browser/src/index.js';
+import '../../../apps/app-shell/src/index.js';
 
 const STORAGE_KEYS = {
   activeApp: 'open-collections-workbench:active-app:v1',
@@ -8,6 +9,11 @@ const STORAGE_KEYS = {
 };
 
 const APPS = {
+  shell: {
+    id: 'shell',
+    title: 'Shell',
+    tag: 'open-app-shell',
+  },
   manager: {
     id: 'manager',
     title: 'Manager',
@@ -36,7 +42,7 @@ function resolveStartupAppId() {
     return remembered;
   }
 
-  return 'manager';
+  return 'shell';
 }
 
 function resolveStartupBrowserManifestUrl() {
@@ -72,7 +78,7 @@ function setActiveButton(appId) {
 }
 
 function createAppElement(appId) {
-  const app = APPS[appId] || APPS.manager;
+  const app = APPS[appId] || APPS.shell;
   const element = document.createElement(app.tag);
   element.setAttribute('data-workbench-embed', 'true');
   element.dataset.workbenchApp = app.id;
@@ -108,12 +114,13 @@ function ensureAppMounted(appId) {
 }
 
 function initializeMountedApps() {
+  ensureAppMounted(APPS.shell.id);
   ensureAppMounted(APPS.manager.id);
   ensureAppMounted(APPS.browser.id);
 }
 
 function setActiveApp(appId) {
-  const app = APPS[appId] || APPS.manager;
+  const app = APPS[appId] || APPS.shell;
   ensureAppMounted(app.id);
 
   for (const [id, element] of appInstances.entries()) {
@@ -138,5 +145,3 @@ for (const button of switcherButtons) {
 
 initializeMountedApps();
 setActiveApp(resolveStartupAppId());
-
-

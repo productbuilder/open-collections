@@ -349,7 +349,14 @@ export function createConnectionsRuntime(options = {}) {
         ? sources.map((entry) => (entry.id === target.id ? source : entry))
         : [...sources, source];
 
-      return { ok: true, source, sources: nextSources, target };
+      return {
+        ok: true,
+        source,
+        sources: nextSources,
+        target,
+        loadedAssets: Array.isArray(loaded) ? loaded : [],
+        providerResult: result,
+      };
     },
     async refreshSource({ source, sources = [], configOverrides = {}, pendingSourceRepair = null, selectedLocalDirectoryHandle = null }) {
       const providerFactory = providers[source.providerId];
@@ -410,6 +417,8 @@ export function createConnectionsRuntime(options = {}) {
         ok: true,
         source: updated,
         sources: sources.map((entry) => (entry.id === source.id ? updated : entry)),
+        loadedAssets: Array.isArray(loaded) ? loaded : [],
+        providerResult: result,
       };
     },
     async removeSource({ sourceId, sources = [], activeSourceId = 'all' }) {

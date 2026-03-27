@@ -5,7 +5,7 @@ import { pickLocalHostDirectory, subscribeToManagerFileDrops, supportsLocalHostD
 import { createInitialState } from './state/initial-state.js';
 import { computeWorkingStatus } from './state/working-status.js';
 import { getSourceStatus, isExampleSource as isExampleProviderSource, sourceHasAccessibleContent as sourceHasAccessibleItems } from './state/source-status.js';
-import { toWorkspaceItemId } from './utils/id-utils.js';
+import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
 import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
 import {
   collectCurrentProviderConfig,
@@ -90,10 +90,12 @@ import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
 import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
 import {
+  createConnectionsRuntime,
   createDefaultConnectionProviderCatalog,
   createDefaultConnectionProviderFactories,
   createDefaultConnectionProviders,
 } from '../../../shared/account/index.js';
+import { SOURCES_STORAGE_KEY } from './controllers/workspace-controller.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -119,6 +121,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.providerFactories = createDefaultConnectionProviderFactories();
     this.providers = createDefaultConnectionProviders();
     this.providerCatalog = createDefaultConnectionProviderCatalog(this.providerFactories);
+    this.connectionsRuntime = createConnectionsRuntime({
+      defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
+      storageKey: SOURCES_STORAGE_KEY,
+      providers: this.providers,
+      providerFactories: this.providerFactories,
+      providerCatalog: this.providerCatalog,
+      credentialStore: this.credentialStore,
+      makeConnectionId: makeSourceId,
+    });
 
     this.shadow = this.attachShadow({ mode: 'open' });
     this.renderShell();
@@ -243,6 +254,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
   openConnectionsDialog() {
     this.showConnectionsListView();
     this.openDialog(this.dom.connectionsDialog);
+  }
+
+  openManageConnections(options = {}) {
+    // Compatibility seam: manager keeps local dialog fallback until account-first handoff is finalized.
+    const delegate = typeof this.onManageConnections === 'function' ? this.onManageConnections : null;
+    if (delegate) {
+      const handled = delegate(options);
+      if (handled) {
+        return;
+      }
+    }
+    this.openConnectionsDialog();
   }
 
   openAddHostDialog() {

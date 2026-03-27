@@ -34,6 +34,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
       activeSourceId: 'all',
       selectedProviderId: 'example',
       view: 'list',
+      activeSection: 'connections',
     };
 
     this.pendingSourceRepair = null;
@@ -125,6 +126,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
     this.dom.addConnectionPanel?.setLocalFolderSupport(this.localFolderPickerSupported);
     this.renderProviderCatalog();
     this.setSelectedProvider('example');
+    this.setActiveSection('connections');
     this.renderConnectionsListPanel();
     this.restoreRememberedSources();
     this.setStatus(this.state.sources.length ? 'Select a connection to inspect or refresh.' : 'No connections yet.', 'neutral');
@@ -133,6 +135,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
   cacheDom() {
     this.dom = {
       accountStatus: this.shadow.getElementById('accountStatus'),
+      sectionButtons: Array.from(this.shadow.querySelectorAll('[data-section-button]')),
+      connectionsSection: this.shadow.getElementById('connectionsSection'),
+      settingsSection: this.shadow.getElementById('settingsSection'),
       connectionsListPanel: this.shadow.getElementById('connectionsListPanel'),
       addConnectionPanel: this.shadow.getElementById('addConnectionPanel'),
     };
@@ -143,6 +148,15 @@ class OpenCollectionsAccountElement extends HTMLElement {
       return;
     }
     this._eventsBound = true;
+
+    this.dom.sectionButtons?.forEach((button) => {
+      button.addEventListener('click', () => {
+        const section = button.dataset.sectionButton || '';
+        if (section) {
+          this.setActiveSection(section);
+        }
+      });
+    });
 
     this.dom.connectionsListPanel?.addEventListener('open-add-connection', () => this.openAddConnectionView());
     this.dom.connectionsListPanel?.addEventListener('select-connection', (event) => {
@@ -229,8 +243,23 @@ class OpenCollectionsAccountElement extends HTMLElement {
     this.dom.addConnectionPanel?.setConnectionStatus(text, tone);
   }
 
+  setActiveSection(sectionId) {
+    const nextSection = sectionId === 'settings' ? 'settings' : 'connections';
+    this.state.activeSection = nextSection;
+
+    this.dom.connectionsSection?.classList.toggle('is-hidden', nextSection !== 'connections');
+    this.dom.settingsSection?.classList.toggle('is-hidden', nextSection !== 'settings');
+
+    this.dom.sectionButtons?.forEach((button) => {
+      const isActive = button.dataset.sectionButton === nextSection;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
   showConnectionsListView() {
     this.state.view = 'list';
+    this.setActiveSection('connections');
     this.dom.connectionsListPanel?.classList.remove('is-hidden');
     this.dom.addConnectionPanel?.classList.add('is-hidden');
     this.renderConnectionsListPanel();
@@ -244,6 +273,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
   showAddConnectionView() {
     this.state.view = 'add';
+    this.setActiveSection('connections');
     this.dom.connectionsListPanel?.classList.add('is-hidden');
     this.dom.addConnectionPanel?.classList.remove('is-hidden');
   }

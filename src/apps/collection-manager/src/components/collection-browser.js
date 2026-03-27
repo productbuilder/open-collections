@@ -41,6 +41,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       onboarding: {
         visible: false,
       },
+      connectionActionLabel: 'Add connection',
     };
   }
 
@@ -316,7 +317,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           <p>Choose how you want to begin.</p>
           <div class="onboarding-actions">
             <button class="btn" id="addExampleCollectionBtn" type="button">Add example collection</button>
-            <button class="btn" id="addConnectionBtn" type="button">Add connection</button>
+            <button class="btn" id="addConnectionBtn" type="button">${this.model.connectionActionLabel || 'Add connection'}</button>
             <button class="btn btn-primary" id="createCollectionEmptyBtn" type="button">Create collection</button>
           </div>
         </section>

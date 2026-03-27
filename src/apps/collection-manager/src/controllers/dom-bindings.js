@@ -16,6 +16,7 @@ export function cacheDomElements(root) {
     registerDialog: root.getElementById('registerDialog'),
     headerMenuDialog: root.getElementById('headerMenuDialog'),
     connectionsDialogTitle: root.getElementById('connectionsDialogTitle'),
+    connectionsFallbackNote: root.getElementById('connectionsFallbackNote'),
     openRegisterFromMenuBtn: root.getElementById('openRegisterFromMenuBtn'),
     storageOptionsDialog: root.getElementById('storageOptionsDialog'),
     collectionId: root.getElementById('collectionId'),

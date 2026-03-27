@@ -8,6 +8,17 @@ This note audits where connection/account management currently lives in `collect
 
 This is **not** a rewrite plan and does **not** introduce a duplicate `collection-manager-v2`.
 
+## Migration status update (current cleanup step)
+
+The manager cleanup has advanced to an account-first posture for connection entry points in embedded/shell mode:
+
+- Header and onboarding connection CTAs in `collection-manager` now point users toward Account language (`Manage connections in Account` / `Manage in Account`) when embedded.
+- Embedded connection launch continues to use `openManageConnections(options)` and `app:navigate` to hand off to `collection-account` as canonical.
+- Manager-owned connections dialog remains available as a **compatibility fallback** only; it now presents fallback-specific labeling when reached in embedded mode.
+- Manager still keeps workflow-relevant source context (active source label, connection health/readiness, publish gating, and missing connection warnings).
+
+This keeps standalone manager behavior intact while reducing the impression that manager is the canonical home for full connection management.
+
 ---
 
 ## 1) Current connection/account surface area in `collection-manager`
@@ -220,6 +231,12 @@ These are the safest transition seams to keep manager stable:
   - lightweight status indicator
   - optional quick-action launcher to account
   - workflow-context source selector if still needed for editing/publishing.
+
+Current incremental status:
+
+- Header and empty-state entry points are now reduced to lightweight Account-oriented launch surfaces in embedded mode.
+- Local manager dialog remains for compatibility and standalone safety, but is explicitly labeled fallback when used in embedded contexts.
+- Remaining local add/repair/remove controls are retained for standalone and non-shell fallback operation.
 
 ### Phase 5 — Cleanup and deprecation removal
 

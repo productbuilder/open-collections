@@ -1,5 +1,6 @@
 import '../../../apps/collection-manager/src/index.js';
 import '../../../apps/collection-browser/src/index.js';
+import '../../../apps/collection-presenter/src/index.js';
 import '../../../apps/app-shell/src/index.js';
 
 const STORAGE_KEYS = {
@@ -23,6 +24,11 @@ const APPS = {
     id: 'browser',
     title: 'Browser',
     tag: 'timemap-browser',
+  },
+  presenter: {
+    id: 'presenter',
+    title: 'Presenter',
+    tag: 'open-collections-presenter',
   },
 };
 
@@ -117,6 +123,7 @@ function initializeMountedApps() {
   ensureAppMounted(APPS.shell.id);
   ensureAppMounted(APPS.manager.id);
   ensureAppMounted(APPS.browser.id);
+  ensureAppMounted(APPS.presenter.id);
 }
 
 function setActiveApp(appId) {

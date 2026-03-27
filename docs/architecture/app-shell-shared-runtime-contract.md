@@ -40,6 +40,11 @@ Lifecycle/event names are shared as constants:
 - `app:status`
 - `app:request-notification`
 
+Current shell handling:
+
+- `app:request-notification` → host toast presentation
+- `app:navigate` (when `targetAppId` is `collection-account`) → shell section switch to Account
+
 ### Adapter seam
 
 `createWebComponentAppAdapter({...})` provides an incremental adapter for existing web-component apps. It standardizes:

@@ -3,6 +3,7 @@ import { appShellStyles } from './styles/shell.css.js';
 import { SHELL_SECTION_ADAPTERS } from './components/section-adapters.js';
 import {
   APP_RUNTIME_MODES,
+  APP_LIFECYCLE_EVENTS,
   createAppRuntimeContext,
 } from '../../../shared/runtime/app-mount-contract.js';
 import { createHostCapabilities } from '../../../shared/runtime/host-capabilities.js';
@@ -46,6 +47,15 @@ class OpenAppShellElement extends HTMLElement {
         return;
       }
       this.setActiveSection(sectionKey);
+    });
+
+    this.addEventListener(APP_LIFECYCLE_EVENTS.NAVIGATE, (event) => {
+      const detail = event.detail || {};
+      if (detail.targetAppId !== 'collection-account') {
+        return;
+      }
+      event.preventDefault();
+      this.setActiveSection('account');
     });
   }
 

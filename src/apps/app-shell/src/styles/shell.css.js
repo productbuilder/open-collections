@@ -22,12 +22,6 @@ export const appShellStyles = `
     font-size: 1rem;
   }
 
-  .shell-subtitle {
-    margin: 0.3rem 0 0;
-    color: var(--oc-text-muted);
-    font-size: 0.9rem;
-  }
-
   .shell-nav-btn {
     display: inline-flex;
     align-items: center;

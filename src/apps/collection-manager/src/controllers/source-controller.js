@@ -1,25 +1,14 @@
 import { MANAGER_CONFIG } from '../config.js';
 import { makeSourceId } from '../utils/id-utils.js';
+import {
+  sanitizeConnectionConfig,
+  sourceDetailLabelFor as sharedSourceDetailLabelFor,
+  sourceDisplayLabelFor as sharedSourceDisplayLabelFor,
+} from '../../../../shared/account/index.js';
 
 function localDirectoryPathFromHandle(handle) {
   const path = typeof handle?.path === 'string' ? handle.path.trim() : '';
   return path || '';
-}
-
-function serializeLocalDirectoryHandle(handle) {
-  if (!handle || handle.kind !== 'directory') {
-    return null;
-  }
-  const path = localDirectoryPathFromHandle(handle);
-  if (!path) {
-    return null;
-  }
-  const fallbackName = path.split(/[\\/]/).filter(Boolean).pop() || '';
-  return {
-    kind: 'directory',
-    path,
-    name: String(handle.name || fallbackName).trim() || fallbackName,
-  };
 }
 
 function summarizeCredentialConfig(providerId, config = {}) {
@@ -107,54 +96,13 @@ export function collectCurrentProviderConfig(app, providerId) {
 }
 
 export function sourceDisplayLabelFor(app, providerId, config, fallbackLabel) {
-  if (providerId === 'github') {
-    const repo = (config.repo || '').trim();
-    return repo || 'GitHub';
-  }
-
-  if (providerId === 'example') {
-    return 'Built-in examples';
-  }
-
-  if (providerId === 's3') {
-    const bucket = (config.bucket || '').trim();
-    return bucket || 'S3-compatible storage';
-  }
-
   if (providerId === 'local') {
     return (config.localDirectoryName || '').trim() || app.hostNameFromPath(config.path, 'Folder on this device');
   }
-
-  return fallbackLabel || 'Source';
+  return sharedSourceDisplayLabelFor(providerId, config, fallbackLabel || 'Source');
 }
 
 export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
-  if (providerId === 'github') {
-    const owner = (config.owner || '').trim();
-    const repo = (config.repo || '').trim();
-    const path = (config.path || '').trim();
-    const branch = (config.branch || 'main').trim() || 'main';
-    const base = owner && repo ? `${owner}/${repo}` : fallbackLabel;
-    const scope = path || '/';
-    return `${base} @ ${branch}:${scope}`;
-  }
-
-  if (providerId === 'example') {
-    return MANAGER_CONFIG.defaultLocalManifestPath;
-  }
-
-  if (providerId === 's3') {
-    const endpoint = (config.endpoint || '').trim();
-    const bucket = (config.bucket || '').trim();
-    const region = (config.region || '').trim();
-    const basePath = (config.basePath || '').trim();
-    const base = endpoint || 'S3 endpoint';
-    const bucketPart = bucket ? `/${bucket}` : '';
-    const prefixPart = basePath ? `/${basePath.replace(/^\/+/, '')}` : '';
-    const regionPart = region ? ` (${region})` : '';
-    return `${base}${bucketPart}${prefixPart}${regionPart}`;
-  }
-
   if (providerId === 'local') {
     const folderName = (config.localDirectoryName || '').trim();
     if (folderName) {
@@ -162,52 +110,20 @@ export function sourceDetailLabelFor(app, providerId, config, fallbackLabel) {
     }
     return (config.path || '').trim() || 'Folder on this device';
   }
-
-  return fallbackLabel || 'Source';
+  return sharedSourceDetailLabelFor(providerId, config, fallbackLabel || 'Source', MANAGER_CONFIG.defaultLocalManifestPath);
 }
 
 export function sanitizeSourceConfig(app, providerId, config = {}) {
   void app;
-  if (providerId === 'github') {
-    // NOTE: keep credentials/session secrets out of persisted workspace state.
-    // TODO(desktop-secure-storage): move token persistence to OS-backed secure storage when available.
-    return {
-      owner: (config.owner || '').trim(),
-      repo: (config.repo || '').trim(),
-      branch: (config.branch || 'main').trim() || 'main',
-      path: (config.path || '').trim(),
-    };
-  }
-
-  if (providerId === 's3') {
-    // NOTE: keep object storage credentials out of persisted workspace state.
-    return {
-      endpoint: (config.endpoint || '').trim(),
-      bucket: (config.bucket || '').trim(),
-      region: (config.region || '').trim(),
-      basePath: (config.basePath || '').trim(),
-    };
-  }
-
-  if (providerId === 'example') {
-    return {
-      path: MANAGER_CONFIG.defaultLocalManifestPath,
-      localDirectoryName: '',
-    };
-  }
-
+  const sanitized = sanitizeConnectionConfig(providerId, config, MANAGER_CONFIG.defaultLocalManifestPath);
   if (providerId === 'local') {
-    const serializedHandle = serializeLocalDirectoryHandle(config.localDirectoryHandle);
-    const localDirectoryPath = (config.localDirectoryPath || serializedHandle?.path || '').trim();
+    const localDirectoryPath = (config.localDirectoryPath || sanitized.localDirectoryHandle?.path || '').trim();
     return {
-      path: (config.path || '').trim() || MANAGER_CONFIG.defaultLocalManifestPath,
-      localDirectoryName: (config.localDirectoryName || '').trim(),
-      ...(serializedHandle ? { localDirectoryHandle: serializedHandle } : {}),
+      ...sanitized,
       ...(localDirectoryPath ? { localDirectoryPath } : {}),
     };
   }
-
-  return {};
+  return sanitized;
 }
 
 export function toPersistedSource(app, source) {

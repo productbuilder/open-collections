@@ -8,6 +8,7 @@ export const appShellStyles = `
     width: 100%;
     height: 100%;
     min-height: 100dvh;
+    --oc-shell-mobile-tabbar-height: 4.5rem;
   }
 
   .oc-app-nav {
@@ -26,6 +27,10 @@ export const appShellStyles = `
   }
 
   .shell-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
     border: var(--oc-border-width-sm) solid var(--oc-border-strong);
     border-radius: var(--oc-radius-sm);
     background: var(--oc-bg-surface);
@@ -35,6 +40,20 @@ export const appShellStyles = `
     font-weight: 600;
     padding: 0.45rem 0.55rem;
     cursor: pointer;
+  }
+
+  .shell-nav-icon {
+    display: none;
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    border: var(--oc-border-width-sm) solid currentColor;
+    background: transparent;
+    flex-shrink: 0;
+  }
+
+  .shell-nav-label {
+    line-height: 1;
   }
 
   .shell-nav-btn:focus-visible {
@@ -47,7 +66,7 @@ export const appShellStyles = `
     background: #f8fbff;
   }
 
-  .shell-nav-btn[aria-pressed="true"] {
+  .shell-nav-btn[aria-current="page"] {
     border-color: var(--oc-border-accent);
     background: var(--oc-border-accent);
     color: var(--oc-color-white);
@@ -56,25 +75,56 @@ export const appShellStyles = `
 
   @media (max-width: 760px) {
     .oc-app-frame {
-      grid-template-rows: auto minmax(0, 1fr) var(--oc-layout-nav-height);
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
     }
 
     .oc-app-nav {
-      position: sticky;
+      position: fixed;
+      left: 0;
+      right: 0;
       bottom: 0;
       z-index: 20;
       border-top: var(--oc-border-width-sm) solid var(--oc-border-default);
       border-bottom: 0;
-      padding: 0.5rem 0.6rem calc(0.5rem + env(safe-area-inset-bottom));
+      padding: 0.4rem 0.6rem calc(0.45rem + env(safe-area-inset-bottom));
       gap: 0.35rem;
       align-items: stretch;
-      min-height: var(--oc-layout-nav-height);
+      min-height: var(--oc-shell-mobile-tabbar-height);
+      background: var(--oc-bg-surface);
     }
 
     .shell-nav-btn {
-      min-height: 2.35rem;
-      padding: 0.35rem 0.25rem;
-      font-size: 0.8rem;
+      min-height: 3.2rem;
+      border: 0;
+      border-radius: var(--oc-radius-md);
+      padding: 0.3rem 0.2rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .shell-nav-icon {
+      display: block;
+      width: 0.68rem;
+      height: 0.68rem;
+    }
+
+    .shell-nav-btn[aria-current="page"] {
+      background: #e9f2ff;
+      color: var(--oc-border-accent);
+    }
+
+    .oc-app-viewport {
+      flex: 1 1 auto;
+      padding-bottom: calc(
+        var(--oc-shell-mobile-tabbar-height) + var(--oc-space-3) + env(safe-area-inset-bottom)
+      );
     }
   }
 `;

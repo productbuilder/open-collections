@@ -13,10 +13,10 @@ export function renderShellNav(activeSectionKey) {
         type="button"
         class="shell-nav-btn"
         data-section-key="${section.key}"
-        aria-pressed="${isActive ? 'true' : 'false'}"
-        aria-current="${isActive ? 'page' : 'false'}"
+        ${isActive ? 'aria-current="page"' : ''}
       >
-        ${section.label}
+        <span class="shell-nav-icon" aria-hidden="true"></span>
+        <span class="shell-nav-label">${section.label}</span>
       </button>
     `;
   }).join('');

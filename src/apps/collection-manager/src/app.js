@@ -1,6 +1,3 @@
-import { createLocalProvider } from '../../../packages/provider-local/src/index.js';
-import { createGithubProvider } from '../../../packages/provider-github/src/index.js';
-import { createS3Provider } from '../../../packages/provider-s3/src/index.js';
 import { MEDIA_MODES, normalizeMediaRef } from '../../../packages/collector-schema/src/schema.js';
 import { MANAGER_CONFIG } from './config.js';
 import { createOpfsStorage } from './services/opfs_storage.js';
@@ -92,6 +89,11 @@ import * as ManifestService from './services/manifest-service.js';
 import * as DraftService from './services/draft-service.js';
 import { createCredentialStore } from './services/credential-store.js';
 import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
+import {
+  createDefaultConnectionProviderCatalog,
+  createDefaultConnectionProviderFactories,
+  createDefaultConnectionProviders,
+} from '../../../shared/account/index.js';
 const COLLECTIONS_DIR_PATH = 'collections';
 const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
@@ -114,79 +116,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.pendingSourceRepair = null;
     this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
 
-    this.providerFactories = {
-      example: createLocalProvider(),
-      local: createLocalProvider(),
-      github: createGithubProvider(),
-      s3: createS3Provider(),
-    };
-
-    this.providers = {
-      example: createLocalProvider,
-      local: createLocalProvider,
-      github: createGithubProvider,
-      s3: createS3Provider,
-    };
-
-    this.providerCatalog = [
-      {
-        ...this.providerFactories.example.getDescriptor(),
-        id: 'example',
-        category: 'example',
-        label: 'Built-in example collections',
-        description: 'Connect instantly to the built-in example collections from this repository.',
-      },
-      {
-        ...this.providerFactories.local.getDescriptor(),
-        category: 'local',
-        label: 'Folder on this device',
-        description: 'Use a folder on this device as a writable local connection (browser support required).',
-      },
-      {
-        ...this.providerFactories.github.getDescriptor(),
-        id: 'github',
-        category: 'remote',
-        remoteSubtype: 'git',
-        label: 'GitHub',
-        description: 'Connect a GitHub repository for managed collections.',
-      },
-      {
-        id: 'gitlab',
-        category: 'remote',
-        remoteSubtype: 'git',
-        label: 'GitLab',
-        enabled: false,
-        statusLabel: 'Coming soon',
-        description: 'GitLab repository connections are planned but not yet available in this MVP.',
-      },
-      {
-        id: 'gitea',
-        category: 'remote',
-        remoteSubtype: 'git',
-        label: 'Gitea',
-        enabled: false,
-        statusLabel: 'Coming soon',
-        description: 'Gitea repository connections are planned but not yet available in this MVP.',
-      },
-      {
-        ...this.providerFactories.s3.getDescriptor(),
-        id: 's3',
-        category: 'remote',
-        remoteSubtype: 's3',
-        label: 'S3-compatible storage',
-        statusLabel: 'Foundation',
-        description: 'Configure an S3-compatible object storage connection as a publish target in a local-first workflow.',
-      },
-      {
-        id: 'custom-domain',
-        category: 'remote',
-        remoteSubtype: 'domain',
-        label: 'Custom domain',
-        enabled: false,
-        statusLabel: 'Planned',
-        description: 'Connect a custom-hosted manifest endpoint.',
-      },
-    ];
+    this.providerFactories = createDefaultConnectionProviderFactories();
+    this.providers = createDefaultConnectionProviders();
+    this.providerCatalog = createDefaultConnectionProviderCatalog(this.providerFactories);
 
     this.shadow = this.attachShadow({ mode: 'open' });
     this.renderShell();

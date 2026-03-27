@@ -264,3 +264,26 @@ Suggested first extraction candidates:
 - restore remembered-source + secure credential hydration helpers
 
 Once account runs on shared runtime, manager can adopt the same runtime API behind existing handlers with minimal UI churn.
+
+---
+
+## 8) Phase 1 follow-up (implemented 2026-03-27)
+
+Completed in this step:
+
+- Added `src/shared/account/connections-runtime.js` as a shared non-UI connection runtime/service layer.
+  - Centralizes provider factories/catalog construction.
+  - Centralizes connection config sanitization and source label/detail derivation.
+  - Provides runtime actions for account flows: connect, refresh, remove, persist, restore remembered sources.
+- Updated `collection-account` to use the shared runtime as the canonical logic basis for connection lifecycle actions.
+- Updated `collection-manager` to consume shared runtime primitives (provider catalog/factory creation and shared config/label helpers) while preserving manager UI behavior and manager-specific workflow state ownership.
+
+Still temporarily manager-owned:
+
+- Manager dialog orchestration (`connectionsDialogView`, pending repair dialog flow state).
+- Manager publish/readiness workflow coupling (`working-status`, source collections/assets merge behavior, publish guards).
+- Manager-specific remembered-source auto-reconnect policy and workspace-selection restore behavior.
+
+Next clean handoff step:
+
+- Move manager `connectCurrentProvider` / `refreshSource` mutation internals behind the shared runtime action contract (retain existing manager handlers as delegates), then convert manager UI entry points to account-first navigation with manager dialog fallback.

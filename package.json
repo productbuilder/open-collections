@@ -18,6 +18,7 @@
     "mobile:open:ios": "pnpm --filter @open-collections/workbench-mobile cap:open:ios",
     "collection-manager:start": "pnpm --filter @open-collections/manager-app start",
     "collection-browser:start": "pnpm --filter @open-collections/browser-app start",
+    "app-shell:start": "pnpm --filter @open-collections/app-shell-app start",
     "configurator:start": "pnpm --filter @open-collections/configurator-app start",
     "bucket-browser:start": "pnpm --filter @open-collections/bucket-browser-app start"
   }

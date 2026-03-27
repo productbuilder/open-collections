@@ -1,7 +1,8 @@
 # Open Collections Workbench (Tauri)
 
-This is a lightweight shared desktop shell that hosts both existing Web Component apps:
+This is a lightweight shared desktop shell that hosts existing Web Component apps:
 
+- `src/apps/app-shell`
 - `src/apps/collection-manager`
 - `src/apps/collection-browser`
 
@@ -13,7 +14,7 @@ pnpm install
 pnpm tauri:dev
 ```
 
-The Tauri window opens Manager by default. Use the shell bar to switch between Manager and Browser.
+The Tauri window opens Shell by default. Use the shell bar to switch between Shell, Manager, and Browser.
 The shell is full-window and embeds the selected app directly (no launcher screen).
 
 ## Windows release artifacts

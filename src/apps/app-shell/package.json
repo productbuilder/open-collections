@@ -1,0 +1,10 @@
+{
+  "name": "@open-collections/app-shell-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Open Collections shared shell scaffold application.",
+  "scripts": {
+    "start": "echo \"Serve repo root and open /src/apps/app-shell/\""
+  }
+}

@@ -29,16 +29,15 @@ const PRESENTER_PLACEHOLDER_SECTIONS = [
 export function renderPresenterHomeView() {
 	const sectionsMarkup = PRESENTER_PLACEHOLDER_SECTIONS.map(
 		(section) => `
-    <article class="oc-surface presenter-placeholder-card" aria-label="${section.title} placeholder">
-      <open-collections-section-header
-        title="${section.title}"
-        description="${section.description}"
-      ></open-collections-section-header>
-      <open-collections-empty-state
-        compact
-        message="Scaffold only. Presenter modules will replace this card in a later step."
-      ></open-collections-empty-state>
-    </article>
+    <open-collections-empty-state-panel
+      class="oc-surface presenter-placeholder-card"
+      aria-label="${section.title} placeholder"
+      heading-level="2"
+      compact
+      title="${section.title}"
+      description="${section.description}"
+      message="Scaffold only. Presenter modules will replace this card in a later step."
+    ></open-collections-empty-state-panel>
   `,
 	).join("");
 

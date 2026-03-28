@@ -5,6 +5,8 @@ import "./collection-card-grid.js";
 import "./collection-row-list.js";
 import "./item-card-grid.js";
 import "./item-row-list.js";
+import "../../../../shared/ui/panels/index.js";
+import "../../../../shared/ui/primitives/index.js";
 import {
 	getPlatformType,
 	PLATFORM_TYPES,
@@ -404,15 +406,25 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 
 		if (this.model.onboarding?.visible) {
 			host.innerHTML = `
-        <section class="onboarding-empty" aria-label="Get started">
-          <h3>Start your first collection workspace</h3>
-          <p>Choose how you want to begin.</p>
+        <open-collections-section-panel
+          class="onboarding-panel"
+          title="Start your first collection workspace"
+          description="Choose how you want to begin."
+          heading-level="3"
+          surface
+        >
+          <open-collections-empty-state
+            class="onboarding-empty-callout"
+            title="No active workspace yet"
+            message="Connect a source, create a new collection, or load the example to get started."
+            compact
+          ></open-collections-empty-state>
           <div class="onboarding-actions">
             <button class="btn" id="addExampleCollectionBtn" type="button">Add example collection</button>
             <button class="btn" id="addConnectionBtn" type="button">${this.model.connectionActionLabel || "Add connection"}</button>
             <button class="btn btn-primary" id="createCollectionEmptyBtn" type="button">Create collection</button>
           </div>
-        </section>
+        </open-collections-section-panel>
       `;
 			return;
 		}

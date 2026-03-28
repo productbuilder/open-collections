@@ -149,26 +149,13 @@ export const browserStyles = `
     min-height: 0;
   }
 
-  .onboarding-empty {
+  .onboarding-panel {
     margin: auto;
     width: min(34rem, 100%);
-    border: var(--oc-border-width-sm) solid var(--oc-border-muted);
-    border-radius: var(--oc-radius-panel);
-    background: var(--oc-surface-elevated);
-    padding: var(--oc-space-5);
-    display: grid;
-    gap: var(--oc-space-3);
   }
 
-  .onboarding-empty h3 {
+  .onboarding-empty-callout {
     margin: 0;
-    font-size: 1rem;
-    color: var(--oc-text-primary);
-  }
-
-  .onboarding-empty p {
-    margin: 0;
-    color: var(--oc-text-secondary);
   }
 
   .onboarding-actions {

@@ -1,6 +1,9 @@
 import { accountShellStyles } from "../css/shell.css.js";
 import { sourceManagerStyles } from "../../../collection-manager/src/css/source-manager.css.js";
-import { renderBackButton } from "../../../../shared/components/back-button.js";
+import {
+	renderArrowIcon,
+	renderBackButton,
+} from "../../../../shared/components/back-button.js";
 
 export function renderShell(shadowRoot) {
 	shadowRoot.innerHTML = `
@@ -16,12 +19,12 @@ export function renderShell(shadowRoot) {
 
 				<button type="button" class="account-entry-button" data-account-entry="connections">
 					<span class="account-entry-label">Connections</span>
-					<span class="material-icons account-entry-icon" aria-hidden="true">chevron_right</span>
+					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
 				</button>
 
 				<button type="button" class="account-entry-button" data-account-entry="settings">
 					<span class="account-entry-label">Settings</span>
-					<span class="material-icons account-entry-icon" aria-hidden="true">chevron_right</span>
+					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
 				</button>
 				
 			</section>

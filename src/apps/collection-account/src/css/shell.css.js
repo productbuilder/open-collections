@@ -6,12 +6,23 @@ export const accountShellStyles = `
 
   :host {
     display: block;
+    height: 100%;
     min-height: 100vh;
   }
 
+  :host([data-app-presentation-embedded]) {
+    min-height: 100%;
+  }
+
   .account-shell {
+    min-height: 100%;
     max-width: var(--oc-layout-content-max);
     padding:1rem;
+  }
+
+  :host([data-app-presentation-embedded]) .account-shell {
+    max-width: none;
+    padding: var(--oc-space-3);
   }
 
   .account-title {

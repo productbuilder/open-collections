@@ -77,9 +77,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			entryButtons: Array.from(
 				this.shadow.querySelectorAll("[data-account-entry]"),
 			),
-			backButtons: Array.from(
-				this.shadow.querySelectorAll("[data-back-to-root]"),
-			),
+			backButtons: [
+				this.shadow.getElementById("accountBackBtn"),
+				this.shadow.getElementById("settingsBackBtn"),
+			].filter(Boolean),
 			connectionsSection:
 				this.shadow.getElementById("connectionsSection"),
 			settingsSection: this.shadow.getElementById("settingsSection"),

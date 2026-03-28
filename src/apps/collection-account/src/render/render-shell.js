@@ -1,9 +1,5 @@
 import { accountShellStyles } from "../css/shell.css.js";
 import { sourceManagerStyles } from "../../../collection-manager/src/css/source-manager.css.js";
-import {
-	renderCloseIcon,
-	renderInfoIcon,
-} from "../../../../shared/components/icons.js";
 import { renderBackButton } from "../../../../shared/components/back-button.js";
 
 export function renderShell(shadowRoot) {
@@ -32,11 +28,11 @@ export function renderShell(shadowRoot) {
 
 			<section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
 				<header class="account-subpage-header">
-					
-					<button type="button" class="account-back-button" data-back-to-root aria-label="Back to account">
-						${renderBackButton({ id: "accountBackBtn" })}
-						<!-- <span class="material-icons account-back-icon" aria-hidden="true">arrow_back</span> -->
-					</button>
+					${renderBackButton({
+						id: "accountBackBtn",
+						label: "Back to account",
+						className: "back-btn",
+					})}
 					
 					<h2 class="connections-heading" id="connectionsHeading">Connections</h2>
 				</header>
@@ -52,9 +48,11 @@ export function renderShell(shadowRoot) {
 
 			<section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
 				<header class="account-subpage-header">
-					<button type="button" class="account-back-button" data-back-to-root aria-label="Back to account">
-						<span class="material-icons account-back-icon" aria-hidden="true">arrow_back</span>
-					</button>
+					${renderBackButton({
+						id: "settingsBackBtn",
+						label: "Back to account",
+						className: "back-btn",
+					})}
 					<h2 class="connections-heading" id="settingsHeading">User settings</h2>
 				</header>
 				<p class="account-description">This area will host user and account preferences as the account app grows.</p>

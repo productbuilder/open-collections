@@ -27,38 +27,43 @@ export function renderShell(shadowRoot) {
 			</section>
 
 			<section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
-				<open-collections-section-header title="Connections" heading-level="2" id="connectionsHeading">
+				<open-collections-section-panel
+					title="Connections"
+					heading-level="2"
+					id="connectionsHeading"
+				>
 					${renderBackButton({
 						id: "accountBackBtn",
 						label: "Back to account",
 						className: "back-btn",
 						slot: "leading",
 					})}
-				</open-collections-section-header>
+					<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
+					<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
 
-				<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
-				<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
-
-				<div class="connections-body">
-					<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
-					<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
-				</div>
+					<div class="connections-body">
+						<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
+						<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
+					</div>
+				</open-collections-section-panel>
 			</section>
 
 			<section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
-				<open-collections-section-header title="User settings" heading-level="2" id="settingsHeading">
+				<open-collections-empty-state-panel
+					title="User settings"
+					heading-level="2"
+					id="settingsHeading"
+					empty-title="Settings coming soon"
+					message="Future account preferences and profile-level configuration will be managed here."
+				>
 					${renderBackButton({
 						id: "settingsBackBtn",
 						label: "Back to account",
 						className: "back-btn",
 						slot: "leading",
 					})}
-				</open-collections-section-header>
-				<p class="account-description">This area will host user and account preferences as the account app grows.</p>
-				<open-collections-empty-state
-					title="Settings coming soon"
-					message="Future account preferences and profile-level configuration will be managed here."
-				></open-collections-empty-state>
+					<p class="account-description">This area will host user and account preferences as the account app grows.</p>
+				</open-collections-empty-state-panel>
 			</section>
 		</main>
 	`;

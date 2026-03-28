@@ -7,10 +7,12 @@ export function renderShell(shadowRoot) {
     <main class="oc-page oc-app-viewport account-shell">
       <section class="account-root-view" id="accountRootView" aria-label="Account areas">
         <button type="button" class="account-entry-button" data-account-entry="connections">
-          Connections
+          <span class="account-entry-label">Connections</span>
+          <span class="material-icons account-entry-icon" aria-hidden="true">chevron_right</span>
         </button>
         <button type="button" class="account-entry-button" data-account-entry="settings">
-          Settings
+          <span class="account-entry-label">Settings</span>
+          <span class="material-icons account-entry-icon" aria-hidden="true">chevron_right</span>
         </button>
       </section>
 

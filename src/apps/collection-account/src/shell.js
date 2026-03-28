@@ -73,13 +73,11 @@ function renderShell(shadowRoot) {
 				</open-collections-section-panel>
 			</section>
 
-			<section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
-				<open-collections-empty-state-panel
+			<section class="account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
+				<open-collections-section-panel
 					title="User settings"
 					heading-level="2"
 					id="settingsHeading"
-					empty-title="Settings coming soon"
-					message="Future account preferences and profile-level configuration will be managed here."
 				>
 					${renderBackButton({
 						id: "settingsBackBtn",
@@ -88,7 +86,11 @@ function renderShell(shadowRoot) {
 						slot: "leading",
 					})}
 					<p class="account-description">This area will host user and account preferences as the account app grows.</p>
-				</open-collections-empty-state-panel>
+					<open-collections-empty-state
+						title="Settings coming soon"
+						message="Future account preferences and profile-level configuration will be managed here."
+					></open-collections-empty-state>
+				</open-collections-section-panel>
 			</section>
 		</main>
 	`;

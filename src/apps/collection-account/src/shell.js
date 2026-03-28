@@ -13,6 +13,10 @@ import {
 	renderArrowIcon,
 	renderBackButton,
 } from "../../../shared/components/back-button.js";
+import {
+	renderLinkIcon,
+	renderProfileIcon,
+} from "../../../shared/components/icons.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
@@ -32,12 +36,20 @@ function renderShell(shadowRoot) {
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 
 				<button type="button" class="account-entry-button" data-account-entry="connections">
-					<span class="account-entry-label">Connections</span>
+					<span class="account-entry-leading-icon" aria-hidden="true">${renderLinkIcon()}</span>
+					<span class="account-entry-content">
+						<span class="account-entry-label">Connections</span>
+						<span class="account-entry-subtitle">Manage source and service connections for your collections.</span>
+					</span>
 					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
 				</button>
 
 				<button type="button" class="account-entry-button" data-account-entry="settings">
-					<span class="account-entry-label">Settings</span>
+					<span class="account-entry-leading-icon" aria-hidden="true">${renderProfileIcon()}</span>
+					<span class="account-entry-content">
+						<span class="account-entry-label">Profile</span>
+						<span class="account-entry-subtitle">Update personal and account profile preferences.</span>
+					</span>
 					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
 				</button>
 				
@@ -75,7 +87,7 @@ function renderShell(shadowRoot) {
 
 			<section class="account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
 				<open-collections-section-panel
-					title="User settings"
+					title="Profile"
 					heading-level="2"
 					id="settingsHeading"
 				>
@@ -85,9 +97,9 @@ function renderShell(shadowRoot) {
 						className: "back-btn",
 						slot: "leading",
 					})}
-					<p class="account-description">This area will host user and account preferences as the account app grows.</p>
+					<p class="account-description">This area will host profile and account preferences as the account app grows.</p>
 					<open-collections-empty-state
-						title="Settings coming soon"
+						title="Profile coming soon"
 						message="Future account preferences and profile-level configuration will be managed here."
 					></open-collections-empty-state>
 				</open-collections-section-panel>

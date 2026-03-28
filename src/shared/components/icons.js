@@ -45,3 +45,22 @@ export function renderInfoIcon(className = "icon icon-info") {
     </svg>
   `;
 }
+
+
+export function renderLinkIcon(className = "icon icon-link") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M10.59 13.41a1 1 0 0 0 1.41 1.41l4.24-4.24a3 3 0 1 0-4.24-4.24L9.88 8.46a1 1 0 1 0 1.41 1.41l2.12-2.12a1 1 0 1 1 1.41 1.41L10.59 13.41z" />
+      <path d="M13.41 10.59a1 1 0 1 0-1.41-1.41l-4.24 4.24a3 3 0 0 0 4.24 4.24l2.12-2.12a1 1 0 0 0-1.41-1.41l-2.12 2.12a1 1 0 1 1-1.41-1.41l4.24-4.24z" />
+    </svg>
+  `;
+}
+
+export function renderProfileIcon(className = "icon icon-profile") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="8" r="3.25" />
+      <path d="M5.5 18.5a6.5 6.5 0 0 1 13 0" />
+    </svg>
+  `;
+}

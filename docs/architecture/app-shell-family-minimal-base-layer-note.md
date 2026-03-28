@@ -19,7 +19,8 @@ Concepts adopted (minimal subset):
 
 - base class for shared shadow DOM + render lifecycle plumbing
 - explicit overridable methods for styles and template output
-- explicit lifecycle hooks (`onFirstConnected`, `onConnected`) without hidden runtime registration
+- explicit lifecycle hooks (`onFirstConnected`, `onConnected`, `onDisconnected`, `onAttributeChanged`) without hidden runtime registration
+- thin, explicit attribute helpers for common reads/writes (`getBoolAttr`, `getStringAttr`, `getNumberAttr`, `setBoolAttr`, `setStringAttr`)
 
 Concepts intentionally not adopted:
 
@@ -27,6 +28,7 @@ Concepts intentionally not adopted:
 - deep inheritance tree (`BasePage`, `BasePanel`, etc.) before repetition clearly requires it
 - automatic event wiring abstraction
 - centralized rendering engine replacing native custom element behavior
+- attribute schema/metadata reflection systems or auto-defined properties
 
 Notes on cross-repo references:
 
@@ -37,24 +39,23 @@ Notes on cross-repo references:
 
 - `src/shared/ui/app-foundation/base-element.js`:
   - small `BaseElement extends HTMLElement`
-  - default shadow root setup
-  - standard render path (`renderStyles()` + `renderTemplate()`)
+  - standard render path (`renderStyles()` + `renderTemplate()` + `render()`)
   - lightweight lifecycle hooks for first connect / subsequent connects / disconnect / attribute changes
+  - explicit attribute helpers for boolean/string/number reads and boolean/string writes
 
 This stays intentionally narrow: it removes repetitive boilerplate but does not create a custom framework.
 
-## Initial proof of direction
+## Incremental usage proof
 
-Applied incrementally to two components only:
+Applied incrementally to one existing component:
 
-- `src/apps/collection-presenter/src/app.js`
 - `src/apps/collection-browser/src/components/browser-metadata-panel.js`
 
-Both remain plain custom elements with explicit methods and events.
+The component now uses an explicit opt-in attribute/property surface (`mobile-open` + `mobileOpen`) and the base hook `onAttributeChanged`, while remaining a plain custom element.
 
 ## Guidance going forward
 
 1. Prefer extracting shared primitives/panels first when the repeated concern is visual structure (header rows, section containers, panel wrappers, empty states).
-2. Use `BaseElement` only for repeated component plumbing (shadow + style/template lifecycle).
+2. Use `BaseElement` only for repeated component plumbing (shadow + style/template lifecycle + tiny attribute helpers).
 3. Add `BasePage` or `BasePanel` only after concrete duplication is demonstrated in at least 2–3 real components.
 4. Keep public APIs explicit via attributes/properties/events (`CustomEvent` for outward communication).

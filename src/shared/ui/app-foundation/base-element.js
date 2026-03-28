@@ -19,12 +19,14 @@ export class BaseElement extends HTMLElement {
 		this.onDisconnected();
 	}
 
-	attributeChangedCallback() {
-		if (!this.shadowRoot) {
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue === newValue) {
 			return;
 		}
-		this.render();
-		this.onAttributesChanged();
+		if (this.shadowRoot) {
+			this.render();
+		}
+		this.onAttributeChanged(name, oldValue, newValue);
 	}
 
 	render() {
@@ -46,13 +48,49 @@ export class BaseElement extends HTMLElement {
 		return "";
 	}
 
+	getBoolAttr(name) {
+		return this.hasAttribute(name);
+	}
+
+	getStringAttr(name) {
+		if (!this.hasAttribute(name)) {
+			return null;
+		}
+		return this.getAttribute(name);
+	}
+
+	getNumberAttr(name) {
+		const value = this.getStringAttr(name);
+		if (value === null || value.trim() === "") {
+			return null;
+		}
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+
+	setBoolAttr(name, value) {
+		if (value) {
+			this.setAttribute(name, "");
+			return;
+		}
+		this.removeAttribute(name);
+	}
+
+	setStringAttr(name, value) {
+		if (value === null || value === undefined || value === "") {
+			this.removeAttribute(name);
+			return;
+		}
+		this.setAttribute(name, String(value));
+	}
+
 	onFirstConnected() {}
 
 	onConnected() {}
 
 	onDisconnected() {}
 
-	onAttributesChanged() {}
+	onAttributeChanged(_name, _oldValue, _newValue) {}
 
 	afterRender() {}
 }

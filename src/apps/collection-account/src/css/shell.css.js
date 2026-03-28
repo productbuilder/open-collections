@@ -40,7 +40,7 @@ export const accountShellStyles = `
 
   .account-entry-button {
     width: 100%;
-    min-height: 3.25rem;
+    min-height: 4.1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -49,10 +49,9 @@ export const accountShellStyles = `
     background: var(--oc-bg-surface);
     color: var(--oc-text-primary);
     border-radius: var(--oc-radius-md);
-    padding: 0.95rem var(--oc-space-4);
+    padding: 0.9rem var(--oc-space-4);
     text-align: left;
     font: inherit;
-    font-weight: 600;
     cursor: pointer;
     transition: border-color 120ms ease, background-color 120ms ease;
   }
@@ -62,8 +61,44 @@ export const accountShellStyles = `
     background: var(--oc-bg-surface);
   }
 
+  .account-entry-leading-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: var(--oc-text-muted);
+  }
+
+  .account-entry-leading-icon .icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .account-entry-content {
+    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
+    flex: 1;
+  }
+
   .account-entry-label {
     text-align: left;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .account-entry-subtitle {
+    color: var(--oc-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.3;
+    font-weight: 500;
   }
 
   .account-entry-icon {
@@ -151,6 +186,10 @@ export const accountShellStyles = `
 
     .account-entry-button {
       padding-inline: var(--oc-space-4);
+    }
+
+    .account-entry-subtitle {
+      font-size: 0.79rem;
     }
   }
 

@@ -19,6 +19,7 @@ export const shellStyles = `
     display: none !important;
   }
 
+  .manager-root,
   .app-shell {
     height: min(100dvh, 100vh);
     min-height: 640px;
@@ -30,6 +31,7 @@ export const shellStyles = `
     flex-direction: column;
   }
 
+  :host([data-workbench-embed]) .manager-root,
   :host([data-workbench-embed]) .app-shell {
     height: 100%;
     min-height: 0;
@@ -37,6 +39,7 @@ export const shellStyles = `
     border-radius: 0;
   }
 
+  :host([data-mobile-shell]) .manager-root,
   :host([data-mobile-shell]) .app-shell {
     min-height: 0;
     height: 100dvh;

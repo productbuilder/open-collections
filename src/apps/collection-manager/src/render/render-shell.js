@@ -5,7 +5,7 @@ export function renderShell(shadowRoot) {
 	shadowRoot.innerHTML = `
     <style>${shellStyles}</style>
 
-    <div class="app-shell">
+    <main class="manager-root" aria-label="Collection Manager workspace">
       <open-collections-header id="managerHeader" hidden></open-collections-header>
       <open-pane-layout id="paneLayout" inspector-placement="right">
         <open-collections-browser id="collectionBrowser" slot="main"></open-collections-browser>
@@ -13,7 +13,7 @@ export function renderShell(shadowRoot) {
       </open-pane-layout>
 
       <open-collections-mobile-flow id="mobileFlow"></open-collections-mobile-flow>
-    </div>
+    </main>
 
     <dialog id="connectionsDialog" class="host-dialog" aria-label="Connections">
       <div class="dialog-shell">
@@ -86,10 +86,14 @@ export function renderShell(shadowRoot) {
           <button class="btn" data-close="registerDialog" type="button">Close</button>
         </div>
         <div class="dialog-body">
-          <div class="empty">
-            Collection registration will be added here.
-            Collection Manager will later register published collections with the registry.
-          </div>
+          <open-collections-empty-state-panel
+            title="Registration workflow"
+            description="Collection registration remains a planned follow-up."
+            empty-title="Coming soon"
+            message="Collection Manager will later register published collections with the registry."
+            compact
+            surface
+          ></open-collections-empty-state-panel>
         </div>
       </div>
     </dialog>

@@ -206,14 +206,18 @@ class TimemapBrowserElement extends ComponentBase {
           grid-template-rows: minmax(0, 1fr);
         }
 
-        :host([data-workbench-embed]) .app-shell {
+        :host([data-workbench-embed]) .app-shell,
+        :host([data-shell-embed]) .app-shell,
+        :host([data-oc-app-mode="embedded"]) .app-shell {
           height: 100%;
           min-height: 0;
           border: 0;
           border-radius: 0;
         }
 
-        :host([data-workbench-embed]) .shell {
+        :host([data-workbench-embed]) .shell,
+        :host([data-shell-embed]) .shell,
+        :host([data-oc-app-mode="embedded"]) .shell {
           min-height: 0;
         }
 

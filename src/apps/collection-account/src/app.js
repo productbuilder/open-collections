@@ -12,12 +12,16 @@ import {
 import { renderShell } from "./render/render-shell.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
+import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 
 
 
 const ACCOUNT_SOURCES_STORAGE_KEY = "open_collections_account_sources_v1";
 
 class OpenCollectionsAccountElement extends HTMLElement {
+	static get observedAttributes() {
+		return ["data-oc-app-mode", "data-shell-embed", "data-workbench-embed"];
+	}
 
 	constructor() {
 		super();
@@ -49,10 +53,24 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		renderShell(this.shadow);
 
 		this.cacheDom();
-		
+		this.applyRuntimePresentation();
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue === newValue) {
+			return;
+		}
+		if (
+			name === "data-oc-app-mode" ||
+			name === "data-shell-embed" ||
+			name === "data-workbench-embed"
+		) {
+			this.applyRuntimePresentation();
+		}
 	}
 
 	connectedCallback() {
+		this.applyRuntimePresentation();
 		this.bindEvents();
 		this.dom.addConnectionPanel?.setLocalFolderSupport(
 			this.localFolderPickerSupported,
@@ -67,6 +85,25 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				? "Select a connection to inspect or refresh."
 				: "No connections yet.",
 			"neutral",
+		);
+	}
+
+	isEmbeddedRuntime() {
+		const runtimeMode =
+			this.dataset?.ocAppMode || this.getAttribute("data-oc-app-mode");
+		if (runtimeMode === APP_RUNTIME_MODES.EMBEDDED) {
+			return true;
+		}
+		return (
+			this.hasAttribute("data-shell-embed") ||
+			this.hasAttribute("data-workbench-embed")
+		);
+	}
+
+	applyRuntimePresentation() {
+		this.toggleAttribute(
+			"data-app-presentation-embedded",
+			this.isEmbeddedRuntime(),
 		);
 	}
 

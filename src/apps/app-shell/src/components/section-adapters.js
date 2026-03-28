@@ -3,16 +3,20 @@ import {
 	APP_RUNTIME_MODES,
 } from "../../../../shared/runtime/app-mount-contract.js";
 
+function mapEmbeddedRuntimeAttributes(_config, context) {
+	return {
+		"data-workbench-embed":
+			context.mode === APP_RUNTIME_MODES.EMBEDDED ? "true" : null,
+	};
+}
+
 export const SHELL_SECTION_ADAPTERS = {
 	browse: {
 		appId: "collection-browser",
 		adapter: createWebComponentAppAdapter({
 			appId: "collection-browser",
 			tagName: "timemap-browser",
-			mapConfigToAttributes: (_config, context) => ({
-				"data-workbench-embed":
-					context.mode === APP_RUNTIME_MODES.EMBEDDED ? "true" : null,
-			}),
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
 	collect: {
@@ -20,10 +24,7 @@ export const SHELL_SECTION_ADAPTERS = {
 		adapter: createWebComponentAppAdapter({
 			appId: "collection-manager",
 			tagName: "open-collections-manager",
-			mapConfigToAttributes: (_config, context) => ({
-				"data-workbench-embed":
-					context.mode === APP_RUNTIME_MODES.EMBEDDED ? "true" : null,
-			}),
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
 	present: {
@@ -31,6 +32,7 @@ export const SHELL_SECTION_ADAPTERS = {
 		adapter: createWebComponentAppAdapter({
 			appId: "collection-presenter",
 			tagName: "open-collections-presenter",
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
 	account: {
@@ -38,6 +40,7 @@ export const SHELL_SECTION_ADAPTERS = {
 		adapter: createWebComponentAppAdapter({
 			appId: "collection-account",
 			tagName: "open-collections-account",
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
 };

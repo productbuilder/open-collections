@@ -9,14 +9,82 @@ import {
 	makeConnectionId,
 	uniqueConnectionsForDisplay,
 } from "../../../shared/account/index.js";
-import { renderShell } from "./render/render-shell.js";
+import {
+	renderArrowIcon,
+	renderBackButton,
+} from "../../../shared/components/back-button.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
-
-
+import { accountShellStyles } from "./css/shell.css.js";
 
 const ACCOUNT_SOURCES_STORAGE_KEY = "open_collections_account_sources_v1";
+
+function renderShell(shadowRoot) {
+	shadowRoot.innerHTML = `
+
+		<style>
+			${accountShellStyles}
+		</style>
+
+		<main class="oc-page oc-app-viewport account-shell">
+
+			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
+
+				<button type="button" class="account-entry-button" data-account-entry="connections">
+					<span class="account-entry-label">Connections</span>
+					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
+				</button>
+
+				<button type="button" class="account-entry-button" data-account-entry="settings">
+					<span class="account-entry-label">Settings</span>
+					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
+				</button>
+				
+			</section>
+
+			<section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
+				<open-collections-section-panel
+					title="Connections"
+					heading-level="2"
+					id="connectionsHeading"
+				>
+					${renderBackButton({
+						id: "accountBackBtn",
+						label: "Back to account",
+						className: "back-btn",
+						slot: "leading",
+					})}
+					<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
+					<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
+
+					<div class="connections-body">
+						<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
+						<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
+					</div>
+				</open-collections-section-panel>
+			</section>
+
+			<section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
+				<open-collections-empty-state-panel
+					title="User settings"
+					heading-level="2"
+					id="settingsHeading"
+					empty-title="Settings coming soon"
+					message="Future account preferences and profile-level configuration will be managed here."
+				>
+					${renderBackButton({
+						id: "settingsBackBtn",
+						label: "Back to account",
+						className: "back-btn",
+						slot: "leading",
+					})}
+					<p class="account-description">This area will host user and account preferences as the account app grows.</p>
+				</open-collections-empty-state-panel>
+			</section>
+		</main>
+	`;
+}
 
 class OpenCollectionsAccountElement extends HTMLElement {
 	static get observedAttributes() {

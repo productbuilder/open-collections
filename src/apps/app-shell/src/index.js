@@ -1,3 +1,4 @@
+import "../../../shared/ui/primitives/index.js";
 import "../../collection-browser/src/index.js";
 import "../../collection-manager/src/index.js";
 import "../../collection-presenter/src/index.js";

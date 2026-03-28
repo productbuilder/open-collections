@@ -75,21 +75,12 @@ export const accountShellStyles = `
     color: #9a3412;
   }
 
-  .connections-heading {
-    margin: 0;
-    font-size: 1.1rem;
-  }
 
   .account-section-content {
     display: grid;
     gap: 0.75rem;
   }
 
-  .account-subpage-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
 
   /* Reuse shared back button styling for account subpage navigation. */
   ${backButtonStyles}
@@ -99,25 +90,6 @@ export const accountShellStyles = `
     gap: 0.75rem;
   }
 
-  .settings-placeholder {
-    border: 1px dashed var(--oc-border-subtle);
-    border-radius: var(--oc-radius-md);
-    padding: 1rem;
-    background: var(--oc-surface-base);
-    display: grid;
-    gap: 0.35rem;
-  }
-
-  .settings-placeholder-title {
-    margin: 0;
-    font-weight: 600;
-    color: var(--oc-text-primary);
-  }
-
-  .settings-placeholder-copy {
-    margin: 0;
-    color: var(--oc-text-muted);
-  }
 
   .is-hidden {
     display: none !important;

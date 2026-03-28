@@ -34,7 +34,7 @@ export const accountShellStyles = `
   .account-root-view {
     display: grid;
     gap: 0.75rem;
-    width: min(100%, var(--oc-layout-content-max));
+    width: 100%;
   }
 
   .account-entry-button {
@@ -65,10 +65,17 @@ export const accountShellStyles = `
   }
 
   .account-entry-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    font-size: 1.125rem;
-    line-height: 1;
     color: var(--oc-text-muted);
+  }
+
+  .account-entry-icon .icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
   }
 
   .account-description,
@@ -99,6 +106,12 @@ export const accountShellStyles = `
   .connections-body {
     display: grid;
     gap: 0.75rem;
+  }
+
+  @media (min-width: 48rem) {
+    .account-root-view {
+      max-width: 32rem;
+    }
   }
 
 

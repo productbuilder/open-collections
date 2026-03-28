@@ -2,6 +2,10 @@ import { BaseElement } from "../../../../shared/ui/app-foundation/base-element.j
 import { metadataStyles } from "../css/metadata.css.js";
 
 class OpenBrowserMetadataPanelElement extends BaseElement {
+	static get observedAttributes() {
+		return ["mobile-open"];
+	}
+
 	constructor() {
 		super();
 		this.model = {
@@ -14,10 +18,24 @@ class OpenBrowserMetadataPanelElement extends BaseElement {
 		};
 	}
 
+	get mobileOpen() {
+		return this.getBoolAttr("mobile-open");
+	}
+
+	set mobileOpen(value) {
+		this.setBoolAttr("mobile-open", value);
+	}
+
 	onFirstConnected() {
 		this.bindEvents();
 		this.applyView();
-		this.setMobileOpen(this.model.mobileOpen);
+		this.setMobileOpen(this.mobileOpen || this.model.mobileOpen);
+	}
+
+	onAttributeChanged(name, _oldValue, _newValue) {
+		if (name === "mobile-open") {
+			this.setMobileOpen(this.mobileOpen);
+		}
 	}
 
 	renderStyles() {
@@ -64,8 +82,11 @@ class OpenBrowserMetadataPanelElement extends BaseElement {
 
 	setView(data = {}) {
 		this.model = { ...this.model, ...data };
+		if (Object.hasOwn(data, "mobileOpen")) {
+			this.mobileOpen = this.model.mobileOpen;
+		}
 		this.applyView();
-		this.setMobileOpen(this.model.mobileOpen);
+		this.setMobileOpen(this.mobileOpen || this.model.mobileOpen);
 	}
 
 	applyView() {

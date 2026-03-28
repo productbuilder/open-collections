@@ -74,6 +74,7 @@ import './components/mobile-flow.js?v=20260322-mobile-publish-padding';
 import './components/connections-list-panel.js';
 import './components/add-connection-panel.js';
 import './components/asset-viewer.js';
+import './components/manager-header.js';
 import {
   slugifySegment as slugifySegmentUtil,
   hostNameFromPath as hostNameFromPathUtil,
@@ -105,6 +106,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     return [
       'show-header',
       'show-connections-action',
+      'show-manage-account-action',
       'show-more-action',
       'data-oc-app-mode',
       'data-shell-embed',
@@ -151,7 +153,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
     if (oldValue === newValue) {
       return;
     }
-    if (name === 'show-header' || name === 'show-connections-action' || name === 'show-more-action') {
+    if (
+      name === 'show-header'
+      || name === 'show-connections-action'
+      || name === 'show-manage-account-action'
+      || name === 'show-more-action'
+    ) {
       this.applyHeaderActionPresentation();
       return;
     }
@@ -343,6 +350,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
   }
 
   get showConnectionsAction() {
+    if (this.hasAttribute('show-manage-account-action')) {
+      return this.parseBooleanAttribute('show-manage-account-action', false);
+    }
     return this.parseBooleanAttribute('show-connections-action', false);
   }
 
@@ -362,10 +372,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
     const showHeaderActions = this.showHeader;
     const showConnectionsAction = showHeaderActions && this.showConnectionsAction;
     const showMoreAction = showHeaderActions && this.showMoreAction;
+    if (this.dom.managerHeader) {
+      this.dom.managerHeader.hidden = !showHeaderActions;
+      this.dom.managerHeader.setActionsVisibility?.({
+        showHeaderActions,
+        showConnectionsAction,
+        showMoreAction,
+      });
+    }
     const headerState = {
-      showHeaderActions,
-      showConnectionsAction,
-      showMoreAction,
+      showHeaderActions: false,
+      showConnectionsAction: false,
+      showMoreAction: false,
     };
     this.dom.collectionBrowser?.update?.(headerState);
     this.dom.mobileFlow?.setBrowserState?.(headerState);
@@ -373,6 +391,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   applyConnectionEntryPresentation() {
     const connectionActionLabel = this.connectionEntryLabelForRuntime();
+    this.dom.managerHeader?.setConnectionEntryLabel?.(connectionActionLabel);
     this.dom.collectionBrowser?.update?.({ connectionActionLabel });
     this.dom.mobileFlow?.setBrowserState?.({ connectionActionLabel });
   }
@@ -1200,6 +1219,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
   renderSourceContext() {
     const activeSourceLabel = this.activeSourceLabel();
     const workspaceContextText = this.workflowContextText();
+    this.dom.managerHeader?.setHostLabel?.(activeSourceLabel);
     this.dom.collectionBrowser?.update?.({ activeSourceLabel, workspaceContextText });
     this.dom.mobileFlow?.setBrowserState?.({ activeSourceLabel, workspaceContextText });
     this.applyConnectionEntryPresentation();

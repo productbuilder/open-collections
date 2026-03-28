@@ -15,6 +15,9 @@ class OpenCollectionsHeaderElement extends HTMLElement {
       tone: 'neutral',
     };
     this._connectionEntryLabel = 'Connections';
+    this._showHeaderActions = false;
+    this._showConnectionsAction = false;
+    this._showMoreAction = false;
   }
 
   connectedCallback() {
@@ -83,6 +86,24 @@ class OpenCollectionsHeaderElement extends HTMLElement {
     }
   }
 
+  setActionsVisibility(options = {}) {
+    this._showHeaderActions = options.showHeaderActions !== false;
+    this._showConnectionsAction = this._showHeaderActions && options.showConnectionsAction !== false;
+    this._showMoreAction = this._showHeaderActions && options.showMoreAction !== false;
+    const actions = this.shadowRoot?.getElementById('topActions');
+    const hostButton = this.shadowRoot?.getElementById('openHostManagerBtn');
+    const moreButton = this.shadowRoot?.getElementById('openHeaderMenuBtn');
+    if (actions) {
+      actions.hidden = !this._showHeaderActions;
+    }
+    if (hostButton) {
+      hostButton.hidden = !this._showConnectionsAction;
+    }
+    if (moreButton) {
+      moreButton.hidden = !this._showMoreAction;
+    }
+  }
+
   render() {
     this.shadowRoot.innerHTML = `
       <style>${headerStyles}</style>
@@ -91,7 +112,7 @@ class OpenCollectionsHeaderElement extends HTMLElement {
         <div class="brand">
           <h1 class="title">Collection Manager</h1>
         </div>
-        <div class="top-actions">
+        <div class="top-actions" id="topActions">
           <button class="btn btn-connection" id="openHostManagerBtn" type="button" aria-label="${this._connectionEntryLabel}" title="${this._connectionEntryLabel}">
             <span id="activeHostLabel">Select connection</span>
             ${renderChevronDownIcon()}
@@ -103,6 +124,11 @@ class OpenCollectionsHeaderElement extends HTMLElement {
       </header>
     `;
     this.setConnectionEntryLabel(this._connectionEntryLabel);
+    this.setActionsVisibility({
+      showHeaderActions: this._showHeaderActions,
+      showConnectionsAction: this._showConnectionsAction,
+      showMoreAction: this._showMoreAction,
+    });
   }
 }
 

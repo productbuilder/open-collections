@@ -46,15 +46,15 @@ Open Collections Manager is the writable collection-management app.
 
 `open-collections-manager` now keeps auxiliary header actions hidden by default so embedded usage stays content-focused.
 
-- `show-header` – enables the manager header action group.
-- `show-connections-action` – shows the connection/manage-connections header action (requires `show-header`).
+- `show-header` – enables the optional manager-local header/action bar.
+- `show-connections-action` – shows the manage-account/manage-connections action in that local header (requires `show-header`).
+- `show-manage-account-action` – alias for `show-connections-action` (takes precedence when both are set).
 - `show-more-action` – shows the more/workflow menu header action (requires `show-header`).
 
-All three are optional boolean attributes/properties. Defaults are `false`, so connection + more actions are not shown unless explicitly enabled.
+All attributes/properties are optional booleans. Defaults are `false`, so embedded usage keeps the main manager view focused on workflow content with no auxiliary header actions.
 
 Example standalone usage with both actions visible:
 
 ```html
 <open-collections-manager show-header show-connections-action show-more-action></open-collections-manager>
 ```
-

@@ -46,9 +46,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       workspaceContextText: '',
       statusText: 'No connections yet.',
       statusTone: 'neutral',
-      showHeaderActions: false,
-      showConnectionsAction: false,
-      showMoreAction: false,
     };
   }
 
@@ -101,12 +98,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     });
     this.shadowRoot.getElementById('publishCollectionBtn')?.addEventListener('click', () => {
       this.dispatch('publish-collection');
-    });
-    this.shadowRoot.getElementById('manageConnectionsBtn')?.addEventListener('click', () => {
-      this.dispatch('open-manage-connections', { source: 'browser-toolbar' });
-    });
-    this.shadowRoot.getElementById('openWorkflowMenuBtn')?.addEventListener('click', () => {
-      this.dispatch('open-workflow-menu', { source: 'browser-toolbar' });
     });
 
     this.shadowRoot.getElementById('viewToggle')?.addEventListener('view-mode-change', (event) => {
@@ -241,9 +232,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
     const deleteSelectedBtn = this.shadowRoot.getElementById('deleteSelectedBtn');
     const clearSelectionBtn = this.shadowRoot.getElementById('clearSelectionBtn');
     const publishBtn = this.shadowRoot.getElementById('publishCollectionBtn');
-    const manageConnectionsBtn = this.shadowRoot.getElementById('manageConnectionsBtn');
     const workflowStatusLine = this.shadowRoot.getElementById('workflowStatusLine');
-    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn || !publishBtn || !manageConnectionsBtn || !workflowStatusLine) {
+    if (!panelShell || !addBtn || !viewToggle || !selectionStatus || !deleteSelectedBtn || !clearSelectionBtn || !publishBtn || !workflowStatusLine) {
       return;
     }
 
@@ -288,19 +278,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       publishBtn.removeAttribute('title');
       publishBtn.setAttribute('aria-label', publishBtn.textContent);
     }
-    const showHeaderActions = this.model.showHeaderActions !== false;
-    const showConnectionsAction = showHeaderActions && this.model.showConnectionsAction !== false;
-    const showMoreAction = showHeaderActions && this.model.showMoreAction !== false;
-
-    manageConnectionsBtn.hidden = !showConnectionsAction;
-    const workflowMenuBtn = this.shadowRoot.getElementById('openWorkflowMenuBtn');
-    if (workflowMenuBtn) {
-      workflowMenuBtn.hidden = !showMoreAction;
-    }
-
-    manageConnectionsBtn.textContent = this.model.connectionActionLabel || 'Manage connections';
-    manageConnectionsBtn.title = this.model.activeSourceLabel || 'Select connection';
-    manageConnectionsBtn.setAttribute('aria-label', `${manageConnectionsBtn.textContent}. Active: ${this.model.activeSourceLabel || 'none'}`);
     const statusTone = this.model.statusTone || 'neutral';
     workflowStatusLine.dataset.tone = statusTone;
     workflowStatusLine.textContent = this.model.statusText || 'Ready';
@@ -390,8 +367,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       <section class="viewport-panel" aria-label="Collection browser">
         <open-panel-shell id="panelShell" title="Collections" show-back="false">
           <div class="viewport-actions viewport-title-actions" slot="header-actions">
-            <button class="btn" id="manageConnectionsBtn" type="button">Manage connections</button>
-            <button class="btn" id="openWorkflowMenuBtn" type="button" aria-label="More workflow actions">More</button>
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>

@@ -1,9 +1,9 @@
+import { BaseElement } from "../../../../shared/ui/app-foundation/base-element.js";
 import { metadataStyles } from "../css/metadata.css.js";
 
-class OpenBrowserMetadataPanelElement extends HTMLElement {
+class OpenBrowserMetadataPanelElement extends BaseElement {
 	constructor() {
 		super();
-		this.attachShadow({ mode: "open" });
 		this.model = {
 			title: "Metadata",
 			contextText: "Read-only details for the selected item.",
@@ -14,11 +14,31 @@ class OpenBrowserMetadataPanelElement extends HTMLElement {
 		};
 	}
 
-	connectedCallback() {
-		this.render();
+	onFirstConnected() {
 		this.bindEvents();
 		this.applyView();
 		this.setMobileOpen(this.model.mobileOpen);
+	}
+
+	renderStyles() {
+		return metadataStyles;
+	}
+
+	renderTemplate() {
+		return `
+      <aside class="metadata-panel" aria-label="Metadata panel">
+        <div class="panel-header">
+          <div class="header-meta">
+            <h2 id="panelTitle" class="panel-title">Metadata</h2>
+            <p id="panelContext" class="panel-context">Read-only details for the selected item.</p>
+          </div>
+          <div class="header-actions">
+            <button id="closeBtn" class="btn close-btn" type="button">Close</button>
+          </div>
+        </div>
+        <div id="panelBody" class="panel-body"></div>
+      </aside>
+    `;
 	}
 
 	bindEvents() {
@@ -88,31 +108,10 @@ class OpenBrowserMetadataPanelElement extends HTMLElement {
 		}
 		body.appendChild(list);
 	}
-
-	render() {
-		this.shadowRoot.innerHTML = `
-      <style>${metadataStyles}</style>
-      <aside class="metadata-panel" aria-label="Metadata panel">
-        <div class="panel-header">
-          <div class="header-meta">
-            <h2 id="panelTitle" class="panel-title">Metadata</h2>
-            <p id="panelContext" class="panel-context">Read-only details for the selected item.</p>
-          </div>
-          <div class="header-actions">
-            <button id="closeBtn" class="btn close-btn" type="button">Close</button>
-          </div>
-        </div>
-        <div id="panelBody" class="panel-body"></div>
-      </aside>
-    `;
-	}
 }
 
 if (!customElements.get("open-browser-metadata-panel")) {
-	customElements.define(
-		"open-browser-metadata-panel",
-		OpenBrowserMetadataPanelElement,
-	);
+	customElements.define("open-browser-metadata-panel", OpenBrowserMetadataPanelElement);
 }
 
 export { OpenBrowserMetadataPanelElement };

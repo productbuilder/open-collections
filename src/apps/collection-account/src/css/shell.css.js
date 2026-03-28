@@ -101,12 +101,18 @@ export const accountShellStyles = `
     justify-content: center;
     font: inherit;
     font-size: 1rem;
+    line-height: 1;
     cursor: pointer;
   }
 
   .account-back-button:hover {
     border-color: var(--oc-border-strong);
     background: var(--oc-surface-elevated);
+  }
+
+  .account-back-icon {
+    font-size: 1.1rem;
+    color: var(--oc-text-muted);
   }
 
   .connections-body {

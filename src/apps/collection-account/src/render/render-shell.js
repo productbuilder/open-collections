@@ -16,10 +16,10 @@ export function renderShell(shadowRoot) {
         </button>
       </section>
 
-      <section class="oc-surface account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
+      <section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
         <header class="account-subpage-header">
           <button type="button" class="account-back-button" data-back-to-root aria-label="Back to account">
-            ←
+            <span class="material-icons account-back-icon" aria-hidden="true">arrow_back</span>
           </button>
           <h2 class="connections-heading" id="connectionsHeading">Connections</h2>
         </header>
@@ -34,7 +34,7 @@ export function renderShell(shadowRoot) {
       <section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
         <header class="account-subpage-header">
           <button type="button" class="account-back-button" data-back-to-root aria-label="Back to account">
-            ←
+            <span class="material-icons account-back-icon" aria-hidden="true">arrow_back</span>
           </button>
           <h2 class="connections-heading" id="settingsHeading">User settings</h2>
         </header>

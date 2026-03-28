@@ -20,7 +20,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
       activeSourceId: 'all',
       selectedProviderId: 'example',
       view: 'list',
-      activeSection: 'connections',
+      activePage: 'root',
     };
 
     this.pendingSourceRepair = null;
@@ -47,7 +47,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
     this.dom.addConnectionPanel?.setLocalFolderSupport(this.localFolderPickerSupported);
     this.renderProviderCatalog();
     this.setSelectedProvider('example');
-    this.setActiveSection('connections');
+    this.setActivePage('root');
     this.renderConnectionsListPanel();
     this.restoreRememberedSources();
     this.setStatus(this.state.sources.length ? 'Select a connection to inspect or refresh.' : 'No connections yet.', 'neutral');
@@ -55,8 +55,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
   cacheDom() {
     this.dom = {
+      accountRootView: this.shadow.getElementById('accountRootView'),
       accountStatus: this.shadow.getElementById('accountStatus'),
-      sectionButtons: Array.from(this.shadow.querySelectorAll('[data-section-button]')),
+      entryButtons: Array.from(this.shadow.querySelectorAll('[data-account-entry]')),
+      backButtons: Array.from(this.shadow.querySelectorAll('[data-back-to-root]')),
       connectionsSection: this.shadow.getElementById('connectionsSection'),
       settingsSection: this.shadow.getElementById('settingsSection'),
       connectionsListPanel: this.shadow.getElementById('connectionsListPanel'),
@@ -70,13 +72,16 @@ class OpenCollectionsAccountElement extends HTMLElement {
     }
     this._eventsBound = true;
 
-    this.dom.sectionButtons?.forEach((button) => {
+    this.dom.entryButtons?.forEach((button) => {
       button.addEventListener('click', () => {
-        const section = button.dataset.sectionButton || '';
-        if (section) {
-          this.setActiveSection(section);
+        const page = button.dataset.accountEntry || '';
+        if (page) {
+          this.setActivePage(page);
         }
       });
+    });
+    this.dom.backButtons?.forEach((button) => {
+      button.addEventListener('click', () => this.setActivePage('root'));
     });
 
     this.dom.connectionsListPanel?.addEventListener('open-add-connection', () => this.openAddConnectionView());
@@ -164,23 +169,23 @@ class OpenCollectionsAccountElement extends HTMLElement {
     this.dom.addConnectionPanel?.setConnectionStatus(text, tone);
   }
 
-  setActiveSection(sectionId) {
-    const nextSection = sectionId === 'settings' ? 'settings' : 'connections';
-    this.state.activeSection = nextSection;
+  setActivePage(pageId) {
+    const nextPage = ['connections', 'settings'].includes(pageId) ? pageId : 'root';
+    if (nextPage !== 'connections') {
+      this.state.view = 'list';
+      this.dom.connectionsListPanel?.classList.remove('is-hidden');
+      this.dom.addConnectionPanel?.classList.add('is-hidden');
+    }
+    this.state.activePage = nextPage;
 
-    this.dom.connectionsSection?.classList.toggle('is-hidden', nextSection !== 'connections');
-    this.dom.settingsSection?.classList.toggle('is-hidden', nextSection !== 'settings');
-
-    this.dom.sectionButtons?.forEach((button) => {
-      const isActive = button.dataset.sectionButton === nextSection;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
+    this.dom.accountRootView?.classList.toggle('is-hidden', nextPage !== 'root');
+    this.dom.connectionsSection?.classList.toggle('is-hidden', nextPage !== 'connections');
+    this.dom.settingsSection?.classList.toggle('is-hidden', nextPage !== 'settings');
   }
 
   showConnectionsListView() {
     this.state.view = 'list';
-    this.setActiveSection('connections');
+    this.setActivePage('connections');
     this.dom.connectionsListPanel?.classList.remove('is-hidden');
     this.dom.addConnectionPanel?.classList.add('is-hidden');
     this.renderConnectionsListPanel();
@@ -194,7 +199,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
   showAddConnectionView() {
     this.state.view = 'add';
-    this.setActiveSection('connections');
+    this.setActivePage('connections');
     this.dom.connectionsListPanel?.classList.add('is-hidden');
     this.dom.addConnectionPanel?.classList.remove('is-hidden');
   }

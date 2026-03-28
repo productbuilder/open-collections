@@ -18,6 +18,31 @@ export const accountShellStyles = `
     line-height: 1.2;
   }
 
+  .account-root-view {
+    display: grid;
+    gap: 0.75rem;
+    width: min(100%, var(--oc-layout-content-max));
+  }
+
+  .account-entry-button {
+    width: 100%;
+    border: 1px solid var(--oc-border-subtle);
+    background: var(--oc-surface-elevated);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-md);
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+
+  .account-entry-button:hover {
+    border-color: var(--oc-border-strong);
+    background: var(--oc-surface-base);
+  }
+
   .account-description,
   .account-note,
   .status-note {
@@ -38,38 +63,35 @@ export const accountShellStyles = `
     font-size: 1.1rem;
   }
 
-  .account-sections {
-    display: inline-flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .account-section-button {
-    border: 1px solid var(--oc-border-subtle);
-    background: var(--oc-surface-base);
-    color: var(--oc-text-muted);
-    border-radius: var(--oc-radius-pill, 999px);
-    padding: 0.45rem 0.85rem;
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
-  }
-
-  .account-section-button:hover {
-    border-color: var(--oc-border-strong);
-    color: var(--oc-text-primary);
-  }
-
-  .account-section-button.is-active {
-    background: var(--oc-surface-elevated);
-    color: var(--oc-text-primary);
-    border-color: var(--oc-border-strong);
-  }
-
   .account-section-content {
     display: grid;
     gap: 0.75rem;
+  }
+
+  .account-subpage-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .account-back-button {
+    border: 1px solid var(--oc-border-subtle);
+    background: var(--oc-surface-base);
+    color: var(--oc-text-primary);
+    border-radius: var(--oc-radius-sm);
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .account-back-button:hover {
+    border-color: var(--oc-border-strong);
+    background: var(--oc-surface-elevated);
   }
 
   .connections-body {

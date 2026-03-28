@@ -34,29 +34,9 @@ export const browserStyles = `
   .viewport-region {
     min-height: 0;
     height: 100%;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0.85rem;
+    display: block;
     padding: 0.95rem;
     overflow: hidden;
-  }
-
-  .viewport-summary {
-    display: grid;
-    gap: 0.2rem;
-    padding: 0 0.1rem;
-  }
-
-  .viewport-title {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #111827;
-  }
-
-  .viewport-subtitle {
-    margin: 0;
-    font-size: 0.83rem;
-    color: #64748b;
   }
 
   .browser-host {

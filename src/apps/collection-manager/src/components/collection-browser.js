@@ -1,5 +1,4 @@
 import { browserStyles } from "../css/browser.css.js?v=20260322-titlebar-center";
-import "./panel-shell.js?v=20260322-titlebar-center";
 import "./view-toggle.js";
 import "./collection-card-grid.js";
 import "./collection-row-list.js";
@@ -462,7 +461,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
-        <open-panel-shell id="panelShell" title="Collections" show-back="false">
+        <open-collections-panel-chrome id="panelShell" title="Collections" show-back="false">
           <div class="viewport-actions viewport-title-actions" slot="header-actions">
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
@@ -481,7 +480,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
             <div id="browserHost" class="browser-host"></div>
           </div>
-        </open-panel-shell>
+        </open-collections-panel-chrome>
       </section>
     `;
 	}

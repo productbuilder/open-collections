@@ -31,9 +31,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	renderFrame() {
 		const sectionPanel = this.shadowRoot.getElementById("viewportPanel");
-		const title = this.shadowRoot.getElementById("viewportTitle");
-		const subtitle = this.shadowRoot.getElementById("viewportSubtitle");
-		if (!sectionPanel || !title || !subtitle) {
+		if (!sectionPanel) {
 			return;
 		}
 
@@ -41,8 +39,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			"title",
 			this.model.viewportTitle || "Collection items",
 		);
-		title.textContent = this.model.viewportTitle || "Collection items";
-		subtitle.textContent = this.model.viewportSubtitle || "";
+		sectionPanel.setAttribute("subtitle", this.model.viewportSubtitle || "");
 	}
 
 	renderBody() {
@@ -63,27 +60,21 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
-        <open-collections-section-panel
+        <open-collections-panel-chrome
           id="viewportPanel"
           title="Collection items"
-          description="Load a collection to browse its items."
-          heading-level="2"
-          surface
+          subtitle="Load a collection to browse its items."
         >
-          <slot name="toolbar" slot="actions"></slot>
+          <slot name="toolbar" slot="toolbar"></slot>
           <section class="viewport-layout">
             <section class="viewport-region">
-              <div class="viewport-summary">
-                <h3 id="viewportTitle" class="viewport-title">Collection items</h3>
-                <p id="viewportSubtitle" class="viewport-subtitle">Load a collection to browse its items.</p>
-              </div>
               <div id="browserHost" class="browser-host"></div>
             </section>
             <aside class="viewport-inspector">
               <slot class="inspector-slot" name="inspector"></slot>
             </aside>
           </section>
-        </open-collections-section-panel>
+        </open-collections-panel-chrome>
       </section>
     `;
 	}

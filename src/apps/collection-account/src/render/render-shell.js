@@ -10,7 +10,6 @@ export function renderShell(shadowRoot) {
 
 		<style>
 			${accountShellStyles}
-			${sourceManagerStyles}
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">

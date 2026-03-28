@@ -21,12 +21,6 @@ const styles = `
     align-content: start;
   }
 
-  .panel-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
   .panel-empty {
     margin: 0;
     color: #64748b;
@@ -115,6 +109,13 @@ const styles = `
 
   .source-card-actions .btn {
     min-width: 0;
+  }
+
+  .btn {
+    min-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-primary {
@@ -260,12 +261,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		);
 	}
 
-	renderAddButton() {
-		return `
-      <button class="btn btn-primary" type="button" data-action="open-add">Add connection</button>
-    `;
-	}
-
 	renderSourceCard(source) {
 		const isActive = this.model.activeSourceId === source.id;
 		const label =
@@ -334,9 +329,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>${styles}</style>
       <div class="panel">
-        <div class="panel-actions">
-          ${this.renderAddButton()}
-        </div>
         ${emptyState}
         <div class="source-list">
           ${sourceCards}
@@ -349,12 +341,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 
 	bindEvents() {
 		const root = this.shadowRoot;
-		root.querySelector('[data-action="open-add"]')?.addEventListener(
-			"click",
-			() => {
-				this.dispatch("open-add-connection");
-			},
-		);
 		root.querySelectorAll('[data-action="select"]').forEach((card) => {
 			const sourceId = card.getAttribute("data-source-id") || "";
 			const activate = () => {

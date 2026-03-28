@@ -55,6 +55,14 @@ function renderShell(shadowRoot) {
 						className: "back-btn",
 						slot: "leading",
 					})}
+					<button
+						type="button"
+						id="connectionsAddBtn"
+						class="account-header-action-btn"
+						slot="actions"
+					>
+						Add connection
+					</button>
 					<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
 					<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
 
@@ -186,6 +194,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				this.shadow.getElementById("accountBackBtn"),
 				this.shadow.getElementById("settingsBackBtn"),
 			].filter(Boolean),
+			connectionsAddBtn: this.shadow.getElementById("connectionsAddBtn"),
 			connectionsSection:
 				this.shadow.getElementById("connectionsSection"),
 			settingsSection: this.shadow.getElementById("settingsSection"),
@@ -214,11 +223,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.backButtons?.forEach((button) => {
 			button.addEventListener("click", () => this.setActivePage("root"));
 		});
+		this.dom.connectionsAddBtn?.addEventListener("click", () => {
+			this.openAddConnectionView();
+		});
 
-		this.dom.connectionsListPanel?.addEventListener(
-			"open-add-connection",
-			() => this.openAddConnectionView(),
-		);
 		this.dom.connectionsListPanel?.addEventListener(
 			"select-connection",
 			(event) => {

@@ -62,8 +62,8 @@ export const accountShellStyles = `
   }
 
   .account-entry-leading-icon {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2.35rem;
+    height: 2.35rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -72,8 +72,8 @@ export const accountShellStyles = `
   }
 
   .account-entry-leading-icon .icon {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 2.2rem;
+    height: 2.2rem;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;

@@ -26,8 +26,12 @@ export const accountShellStyles = `
 
   .account-entry-button {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     border: 1px solid var(--oc-border-subtle);
-    background: var(--oc-surface-elevated);
+    background: var(--oc-bg-surface);
     color: var(--oc-text-primary);
     border-radius: var(--oc-radius-md);
     padding: 0.85rem 1rem;
@@ -40,7 +44,18 @@ export const accountShellStyles = `
 
   .account-entry-button:hover {
     border-color: var(--oc-border-strong);
-    background: var(--oc-surface-base);
+    background: var(--oc-bg-surface);
+  }
+
+  .account-entry-label {
+    text-align: left;
+  }
+
+  .account-entry-icon {
+    flex-shrink: 0;
+    font-size: 1.125rem;
+    line-height: 1;
+    color: var(--oc-text-muted);
   }
 
   .account-description,

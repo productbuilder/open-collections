@@ -341,21 +341,9 @@ class TimemapBrowserElement extends ComponentBase {
 		return { contextText, manifestText };
 	}
 
-	syncShellFrame() {
-		const collectionTitle = this.state.collection?.title?.trim();
-		const itemCount = this.state.collection?.items?.length || 0;
-		return {
-			shellTitle: collectionTitle || "Collection browser",
-			shellSubtitle: collectionTitle
-				? `${itemCount} item${itemCount === 1 ? "" : "s"} - Read-only browser`
-				: "Load a manifest to browse a single collection.",
-		};
-	}
-
 	viewportModel() {
 		const items = this.state.collection?.items || [];
 		return {
-			...this.syncShellFrame(),
 			viewportTitle: "Collection items",
 			viewportSubtitle:
 				items.length > 0

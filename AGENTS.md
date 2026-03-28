@@ -22,6 +22,15 @@ Primary targets:
 - Preferred UI model: plain Web Components.
 - Meaningful UI units should usually be components.
 - App roots, pages/screens, and reusable interactive blocks should generally be components.
+- Prefer existing shared/library components and primitives before introducing app-local UI elements.
+- If a pattern is reused (or likely to be), move it to shared/library instead of duplicating variants across apps.
+
+## UI hierarchy (use consistently)
+
+- **Shell**: global host/chrome/orchestration, app switching/navigation, embedded app container responsibilities.
+- **Page**: page-level screen/view inside an app; owns page composition.
+- **Panel**: grouped section within a page; reusable mid-level container/functional block.
+- **Primitive**: lowest-level reusable building block (for example back button, icon button, card container, section header, row, placeholder state).
 
 ## Component ownership
 
@@ -46,6 +55,14 @@ Controllers, services, and shared runtime should mainly own non-visual concerns:
 
 Keep rendering ownership with components.
 
+## Placement rule
+
+- Put shell concerns in shell-level components.
+- Put page composition in page components.
+- Put reusable mid-level content blocks in panels.
+- Put low-level reusable building blocks in shared primitives.
+- Avoid collapsing shell/page/panel/primitive layers without clear need.
+
 ## Practical decision rule
 
 Make it a component when any of the following are true:
@@ -56,6 +73,11 @@ Make it a component when any of the following are true:
 - it has configurable inputs or host-facing API
 
 If none are true and markup is tiny/local, an internal helper is acceptable.
+
+## Practical reuse rule
+
+- If UI is used across multiple apps, it should usually become a shared primitive or shared panel, not duplicated local implementations.
+- New app-shell family code should prefer composing from shared primitives/panels where practical.
 
 ## Migration approach
 

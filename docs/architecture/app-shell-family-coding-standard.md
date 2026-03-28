@@ -25,6 +25,18 @@ Use custom elements for:
 
 Avoid introducing new top-level UI patterns that compete with component-based architecture.
 
+Prefer existing shared/library components and primitives before creating app-local UI elements.
+If a pattern is reused or expected to be reused across apps, move it into shared/library rather than maintaining near-duplicate local variants.
+
+## UI hierarchy (explicit levels)
+
+Use these levels consistently:
+
+- **Shell**: global app host/chrome/orchestration, app switching/navigation, embedded app container responsibilities.
+- **Page**: page-level screen/view inside an app; owns page-level composition.
+- **Panel**: grouped section inside a page; reusable mid-level container/functional block.
+- **Primitive**: lowest-level reusable building block (for example back button, icon button, card container, section header, row, placeholder state).
+
 ## Component-first rule
 
 If a piece of UI has its own lifecycle, state, behavior, configuration, or events, implement it as a component.
@@ -37,6 +49,14 @@ Components should own their template.
 
 - Keep markup generation in the component class/module.
 - Do not spread core component template ownership across controllers/services.
+
+Place code by hierarchy:
+
+- Shell concerns live in shell-level components.
+- Page composition lives in page components.
+- Reusable mid-level content blocks become panels.
+- Low-level shared building blocks become primitives.
+- Avoid collapsing shell/page/panel/primitive layers unless there is a clear, specific reason.
 
 ## Styling rule
 
@@ -114,6 +134,9 @@ Keep host/runtime seams explicit and avoid hard-coding one host context.
 ## Reuse rule
 
 When reuse is needed across apps, prefer extracting/reusing a component (or low-level shared primitive) over duplicating markup logic.
+
+If something is used across multiple apps, it should usually become a shared primitive or shared panel rather than duplicated app-local implementations.
+New app-shell family work should prefer composition from shared primitives/panels where practical.
 
 ## Migration guidance
 

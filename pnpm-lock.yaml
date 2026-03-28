@@ -55,6 +55,8 @@ importers:
         specifier: workspace:*
         version: link:../../shared/platform
 
+  src/apps/collection-presenter: {}
+
   src/apps/configurator:
     dependencies:
       '@open-collections/shared-platform':

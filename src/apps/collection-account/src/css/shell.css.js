@@ -17,7 +17,7 @@ export const accountShellStyles = `
   .account-shell {
     min-height: 100%;
     max-width: var(--oc-layout-content-max);
-    padding:1rem;
+    padding: var(--oc-space-4);
   }
 
   :host([data-app-presentation-embedded]) .account-shell {
@@ -33,21 +33,23 @@ export const accountShellStyles = `
 
   .account-root-view {
     display: grid;
-    gap: 0.75rem;
-    width: 100%;
+    gap: var(--oc-space-3);
+    width: min(100%, var(--oc-layout-panel-max));
+    margin-inline: auto;
   }
 
   .account-entry-button {
     width: 100%;
+    min-height: 3.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--oc-space-3);
     border: 1px solid var(--oc-border-subtle);
     background: var(--oc-bg-surface);
     color: var(--oc-text-primary);
     border-radius: var(--oc-radius-md);
-    padding: 0.85rem 1rem;
+    padding: 0.95rem var(--oc-space-4);
     text-align: left;
     font: inherit;
     font-weight: 600;
@@ -108,9 +110,23 @@ export const accountShellStyles = `
     gap: 0.75rem;
   }
 
+  @media (max-width: 47.99rem) {
+    :host(:not([data-app-presentation-embedded])) .account-shell {
+      padding:
+        var(--oc-space-3)
+        calc(var(--oc-space-3) + var(--oc-layout-safe-right))
+        calc(var(--oc-space-3) + var(--oc-layout-safe-bottom))
+        calc(var(--oc-space-3) + var(--oc-layout-safe-left));
+    }
+
+    .account-entry-button {
+      padding-inline: var(--oc-space-4);
+    }
+  }
+
   @media (min-width: 48rem) {
     .account-root-view {
-      max-width: 32rem;
+      max-width: 38rem;
     }
   }
 

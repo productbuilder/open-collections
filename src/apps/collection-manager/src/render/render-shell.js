@@ -6,6 +6,7 @@ export function renderShell(shadowRoot) {
     <style>${shellStyles}</style>
 
     <div class="app-shell">
+      <open-collections-header id="managerHeader" hidden></open-collections-header>
       <open-pane-layout id="paneLayout" inspector-placement="right">
         <open-collections-browser id="collectionBrowser" slot="main"></open-collections-browser>
         <open-collections-metadata id="metadataEditor" slot="inspector"></open-collections-metadata>

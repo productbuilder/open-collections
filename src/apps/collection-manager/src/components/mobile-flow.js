@@ -1,5 +1,5 @@
-import './collection-browser.js?v=20260322-mobile-publish-padding';
-import './mobile-detail.js';
+import "./collection-browser.js?v=20260322-mobile-publish-padding";
+import "./mobile-detail.js";
 
 const mobileFlowStyles = `
   :host {
@@ -26,93 +26,104 @@ const mobileFlowStyles = `
 `;
 
 class OpenCollectionsMobileFlowElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.mobileView = 'browse';
-  }
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.mobileView = "browse";
+	}
 
-  connectedCallback() {
-    this.render();
-    this.bindEvents();
-    this.applyView();
-  }
+	connectedCallback() {
+		this.render();
+		this.bindEvents();
+		this.applyView();
+	}
 
-  bindEvents() {
-    const browser = this.shadowRoot.getElementById('mobileBrowser');
-    const detail = this.shadowRoot.getElementById('mobileDetail');
-    const forward = (source, name) => {
-      source?.addEventListener(name, (event) => {
-        const detailData = event.detail ? { ...event.detail } : {};
-        if (name === 'collection-select') {
-          this.dispatch('collection-open', detailData);
-          return;
-        }
-        this.dispatch(name, detailData);
-      });
-    };
+	bindEvents() {
+		const browser = this.shadowRoot.getElementById("mobileBrowser");
+		const detail = this.shadowRoot.getElementById("mobileDetail");
+		const forward = (source, name) => {
+			source?.addEventListener(name, (event) => {
+				const detailData = event.detail ? { ...event.detail } : {};
+				if (name === "collection-select") {
+					this.dispatch("collection-open", detailData);
+					return;
+				}
+				this.dispatch(name, detailData);
+			});
+		};
 
-    [
-      'back-to-collections',
-      'collection-select',
-      'collection-open',
-      'collection-toggle-selected',
-      'item-select',
-      'item-toggle-selected',
-      'clear-collection-selection',
-      'clear-item-selection',
-      'delete-selected-collections',
-      'delete-selected-items',
-      'item-view',
-      'view-mode-change',
-      'add-collection',
-      'open-manage-connections',
-      'open-workflow-menu',
-      'publish-collection',
-      'files-selected',
-      'drop-target-change',
-    ].forEach((name) => forward(browser, name));
+		[
+			"back-to-collections",
+			"collection-select",
+			"collection-open",
+			"collection-toggle-selected",
+			"item-select",
+			"item-toggle-selected",
+			"clear-collection-selection",
+			"clear-item-selection",
+			"delete-selected-collections",
+			"delete-selected-items",
+			"item-view",
+			"view-mode-change",
+			"add-collection",
+			"open-manage-connections",
+			"open-workflow-menu",
+			"publish-collection",
+			"files-selected",
+			"drop-target-change",
+		].forEach((name) => forward(browser, name));
 
-    ['back-to-browse', 'save-item', 'save-collection', 'delete-item'].forEach((name) => forward(detail, name));
-  }
+		[
+			"back-to-browse",
+			"save-item",
+			"save-collection",
+			"delete-item",
+		].forEach((name) => forward(detail, name));
+	}
 
-  dispatch(name, detail = {}) {
-    this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
-  }
+	dispatch(name, detail = {}) {
+		this.dispatchEvent(
+			new CustomEvent(name, { detail, bubbles: true, composed: true }),
+		);
+	}
 
-  setMobileView(view = 'browse') {
-    this.mobileView = view === 'detail' ? 'detail' : 'browse';
-    this.applyView();
-  }
+	setMobileView(view = "browse") {
+		this.mobileView = view === "detail" ? "detail" : "browse";
+		this.applyView();
+	}
 
-  setBrowserState(state = {}) {
-    this.shadowRoot.getElementById('mobileBrowser')?.update(state);
-  }
+	setBrowserState(state = {}) {
+		this.shadowRoot.getElementById("mobileBrowser")?.update(state);
+	}
 
-  setPublishActionState(action = {}) {
-    this.shadowRoot.getElementById('mobileBrowser')?.setPublishActionState?.(action);
-  }
+	setPublishActionState(action = {}) {
+		this.shadowRoot
+			.getElementById("mobileBrowser")
+			?.setPublishActionState?.(action);
+	}
 
-  setWorkingStatus(status = {}) {
-    this.shadowRoot.getElementById('mobileBrowser')?.setWorkingStatus?.(status);
-  }
+	setWorkingStatus(status = {}) {
+		this.shadowRoot
+			.getElementById("mobileBrowser")
+			?.setWorkingStatus?.(status);
+	}
 
-  setDetailState(state = {}) {
-    this.shadowRoot.getElementById('mobileDetail')?.setView(state);
-  }
+	setDetailState(state = {}) {
+		this.shadowRoot.getElementById("mobileDetail")?.setView(state);
+	}
 
-  applyView() {
-    const browseLevel = this.shadowRoot.getElementById('browseLevel');
-    const detailLevel = this.shadowRoot.getElementById('detailLevel');
-    if (!browseLevel || !detailLevel) {
-      return;
-    }
-    browseLevel.hidden = this.mobileView !== 'browse';
-    detailLevel.hidden = this.mobileView !== 'detail';
-  }
+	applyView() {
+		const browseLevel = this.shadowRoot.getElementById("browseLevel");
+		const detailLevel = this.shadowRoot.getElementById("detailLevel");
+		if (!browseLevel || !detailLevel) {
+			return;
+		}
+		browseLevel.hidden = this.mobileView !== "browse";
+		detailLevel.hidden = this.mobileView !== "detail";
+	}
 
-  render() {
-    this.shadowRoot.innerHTML = `
+	render() {
+		this.shadowRoot.innerHTML = `
       <style>${mobileFlowStyles}</style>
       <section class="mobile-flow" aria-label="Mobile collection manager flow">
         <div id="browseLevel" class="mobile-level">
@@ -123,11 +134,14 @@ class OpenCollectionsMobileFlowElement extends HTMLElement {
         </div>
       </section>
     `;
-  }
+	}
 }
 
-if (!customElements.get('open-collections-mobile-flow')) {
-  customElements.define('open-collections-mobile-flow', OpenCollectionsMobileFlowElement);
+if (!customElements.get("open-collections-mobile-flow")) {
+	customElements.define(
+		"open-collections-mobile-flow",
+		OpenCollectionsMobileFlowElement,
+	);
 }
 
 export { OpenCollectionsMobileFlowElement };

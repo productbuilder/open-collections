@@ -34,13 +34,13 @@ export const backButtonStyles = `
 `;
 
 export function renderBackButton({
-  id = 'backBtn',
-  className = 'back-btn',
-  label = 'Back',
-  hidden = false,
+	id = "backBtn",
+	className = "back-btn",
+	label = "Back",
+	hidden = false,
 } = {}) {
-  const hiddenClass = hidden ? ' is-hidden' : '';
-  return `
+	const hiddenClass = hidden ? " is-hidden" : "";
+	return `
     <button class="${className}${hiddenClass}" id="${id}" type="button" aria-label="${label}">
       <svg class="icon icon-back" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z" />

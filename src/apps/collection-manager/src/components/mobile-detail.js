@@ -1,6 +1,9 @@
-import { resolveItemPreviewUrl, resolveItemViewerMediaUrl } from '../utils/preview-utils.js';
-import { backButtonStyles, renderBackButton } from './back-button.js';
-import './metadata-editor.js';
+import {
+	resolveItemPreviewUrl,
+	resolveItemViewerMediaUrl,
+} from "../utils/preview-utils.js";
+import { backButtonStyles, renderBackButton } from "../../../../shared/components/back-button.js";
+import "./metadata-editor.js";
 
 const mobileDetailStyles = `
   :host {
@@ -168,116 +171,158 @@ const mobileDetailStyles = `
 `;
 
 class OpenCollectionsMobileDetailElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.model = {
-      mode: 'none',
-      item: null,
-      canSaveItem: false,
-      canDeleteItem: false,
-    };
-  }
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.model = {
+			mode: "none",
+			item: null,
+			canSaveItem: false,
+			canDeleteItem: false,
+		};
+	}
 
-  connectedCallback() {
-    this.render();
-    this.bindEvents();
-    this.applyView();
-  }
+	connectedCallback() {
+		this.render();
+		this.bindEvents();
+		this.applyView();
+	}
 
-  bindEvents() {
-    this.shadowRoot.getElementById('backBtn')?.addEventListener('click', () => {
-      this.dispatch('back-to-browse');
-    });
-    this.shadowRoot.getElementById('saveBtn')?.addEventListener('click', () => {
-      const editor = this.shadowRoot.getElementById('detailMetadataEditor');
-      if (this.model.mode === 'item' && editor) {
-        this.dispatch('save-item', { patch: editor.getItemPatch() });
-      }
-    });
-    this.shadowRoot.getElementById('deleteBtn')?.addEventListener('click', () => {
-      if (this.model.mode === 'item' && this.model.item?.workspaceId) {
-        this.dispatch('delete-item', { workspaceId: this.model.item.workspaceId });
-      }
-    });
+	bindEvents() {
+		this.shadowRoot
+			.getElementById("backBtn")
+			?.addEventListener("click", () => {
+				this.dispatch("back-to-browse");
+			});
+		this.shadowRoot
+			.getElementById("saveBtn")
+			?.addEventListener("click", () => {
+				const editor = this.shadowRoot.getElementById(
+					"detailMetadataEditor",
+				);
+				if (this.model.mode === "item" && editor) {
+					this.dispatch("save-item", {
+						patch: editor.getItemPatch(),
+					});
+				}
+			});
+		this.shadowRoot
+			.getElementById("deleteBtn")
+			?.addEventListener("click", () => {
+				if (
+					this.model.mode === "item" &&
+					this.model.item?.workspaceId
+				) {
+					this.dispatch("delete-item", {
+						workspaceId: this.model.item.workspaceId,
+					});
+				}
+			});
 
-    this.shadowRoot.getElementById('detailMetadataEditor')?.addEventListener('save-item', (event) => {
-      this.dispatch('save-item', event.detail || {});
-    });
-    this.shadowRoot.getElementById('detailMetadataEditor')?.addEventListener('save-collection', (event) => {
-      this.dispatch('save-collection', event.detail || {});
-    });
-    this.shadowRoot.getElementById('detailMetadataEditor')?.addEventListener('delete-item', (event) => {
-      this.dispatch('delete-item', event.detail || {});
-    });
-  }
+		this.shadowRoot
+			.getElementById("detailMetadataEditor")
+			?.addEventListener("save-item", (event) => {
+				this.dispatch("save-item", event.detail || {});
+			});
+		this.shadowRoot
+			.getElementById("detailMetadataEditor")
+			?.addEventListener("save-collection", (event) => {
+				this.dispatch("save-collection", event.detail || {});
+			});
+		this.shadowRoot
+			.getElementById("detailMetadataEditor")
+			?.addEventListener("delete-item", (event) => {
+				this.dispatch("delete-item", event.detail || {});
+			});
+	}
 
-  dispatch(name, detail = {}) {
-    this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
-  }
+	dispatch(name, detail = {}) {
+		this.dispatchEvent(
+			new CustomEvent(name, { detail, bubbles: true, composed: true }),
+		);
+	}
 
-  setView(data = {}) {
-    this.model = {
-      ...this.model,
-      ...data,
-    };
-    this.applyView();
-  }
+	setView(data = {}) {
+		this.model = {
+			...this.model,
+			...data,
+		};
+		this.applyView();
+	}
 
-  mediaMarkup(item) {
-    if (!item) {
-      return '<div class="media-placeholder">Select an item to view its media and metadata.</div>';
-    }
+	mediaMarkup(item) {
+		if (!item) {
+			return '<div class="media-placeholder">Select an item to view its media and metadata.</div>';
+		}
 
-    const mediaType = String(item.media?.type || '').toLowerCase();
-    const viewerUrl = resolveItemViewerMediaUrl(item) || resolveItemPreviewUrl(item);
-    if (!viewerUrl) {
-      return '<div class="media-placeholder">No image or media preview is available for this item yet.</div>';
-    }
+		const mediaType = String(item.media?.type || "").toLowerCase();
+		const viewerUrl =
+			resolveItemViewerMediaUrl(item) || resolveItemPreviewUrl(item);
+		if (!viewerUrl) {
+			return '<div class="media-placeholder">No image or media preview is available for this item yet.</div>';
+		}
 
-    if (mediaType.includes('video')) {
-      return `<video controls playsinline preload="metadata" src="${viewerUrl}"></video>`;
-    }
+		if (mediaType.includes("video")) {
+			return `<video controls playsinline preload="metadata" src="${viewerUrl}"></video>`;
+		}
 
-    return `<img src="${viewerUrl}" alt="${item.title || item.id || 'Collection item'}" />`;
-  }
+		return `<img src="${viewerUrl}" alt="${item.title || item.id || "Collection item"}" />`;
+	}
 
-  applyView() {
-    const title = this.shadowRoot.getElementById('detailTitle');
-    const context = this.shadowRoot.getElementById('detailContext');
-    const summaryHeading = this.shadowRoot.getElementById('summaryHeading');
-    const summaryCopy = this.shadowRoot.getElementById('summaryCopy');
-    const mediaWrap = this.shadowRoot.getElementById('mediaWrap');
-    const deleteBtn = this.shadowRoot.getElementById('deleteBtn');
-    const saveBtn = this.shadowRoot.getElementById('saveBtn');
-    const editor = this.shadowRoot.getElementById('detailMetadataEditor');
+	applyView() {
+		const title = this.shadowRoot.getElementById("detailTitle");
+		const context = this.shadowRoot.getElementById("detailContext");
+		const summaryHeading = this.shadowRoot.getElementById("summaryHeading");
+		const summaryCopy = this.shadowRoot.getElementById("summaryCopy");
+		const mediaWrap = this.shadowRoot.getElementById("mediaWrap");
+		const deleteBtn = this.shadowRoot.getElementById("deleteBtn");
+		const saveBtn = this.shadowRoot.getElementById("saveBtn");
+		const editor = this.shadowRoot.getElementById("detailMetadataEditor");
 
-    if (!title || !context || !summaryHeading || !summaryCopy || !mediaWrap || !deleteBtn || !saveBtn || !editor) {
-      return;
-    }
+		if (
+			!title ||
+			!context ||
+			!summaryHeading ||
+			!summaryCopy ||
+			!mediaWrap ||
+			!deleteBtn ||
+			!saveBtn ||
+			!editor
+		) {
+			return;
+		}
 
-    const item = this.model.mode === 'item' ? this.model.item : null;
-    title.textContent = item?.title || item?.id || 'Item detail';
-    context.textContent = item
-      ? [item.collectionLabel || item.collectionId, item.sourceDisplayLabel || item.sourceLabel].filter(Boolean).join(' • ')
-      : 'Select an item to inspect it.';
-    summaryHeading.textContent = item?.title || item?.id || 'No item selected';
-    summaryCopy.textContent = item?.description || item?.itemSpecific?.description || 'Media appears first on mobile, with editable metadata below for quick review and updates.';
-    mediaWrap.innerHTML = this.mediaMarkup(item);
-    deleteBtn.hidden = !this.model.canDeleteItem;
-    saveBtn.hidden = !item;
+		const item = this.model.mode === "item" ? this.model.item : null;
+		title.textContent = item?.title || item?.id || "Item detail";
+		context.textContent = item
+			? [
+					item.collectionLabel || item.collectionId,
+					item.sourceDisplayLabel || item.sourceLabel,
+				]
+					.filter(Boolean)
+					.join(" • ")
+			: "Select an item to inspect it.";
+		summaryHeading.textContent =
+			item?.title || item?.id || "No item selected";
+		summaryCopy.textContent =
+			item?.description ||
+			item?.itemSpecific?.description ||
+			"Media appears first on mobile, with editable metadata below for quick review and updates.";
+		mediaWrap.innerHTML = this.mediaMarkup(item);
+		deleteBtn.hidden = !this.model.canDeleteItem;
+		saveBtn.hidden = !item;
 
-    editor.setPresentation?.('embedded');
-    editor.setView({
-      mode: item ? 'item' : 'none',
-      item,
-      canSaveItem: this.model.canSaveItem,
-      canDeleteItem: this.model.canDeleteItem,
-    });
-  }
+		editor.setPresentation?.("embedded");
+		editor.setView({
+			mode: item ? "item" : "none",
+			item,
+			canSaveItem: this.model.canSaveItem,
+			canDeleteItem: this.model.canDeleteItem,
+		});
+	}
 
-  render() {
-    this.shadowRoot.innerHTML = `
+	render() {
+		this.shadowRoot.innerHTML = `
       <style>${mobileDetailStyles}</style>
       <section class="mobile-detail" aria-label="Item detail view">
         <header class="detail-header">
@@ -306,11 +351,14 @@ class OpenCollectionsMobileDetailElement extends HTMLElement {
         </div>
       </section>
     `;
-  }
+	}
 }
 
-if (!customElements.get('open-collections-mobile-detail')) {
-  customElements.define('open-collections-mobile-detail', OpenCollectionsMobileDetailElement);
+if (!customElements.get("open-collections-mobile-detail")) {
+	customElements.define(
+		"open-collections-mobile-detail",
+		OpenCollectionsMobileDetailElement,
+	);
 }
 
 export { OpenCollectionsMobileDetailElement };

@@ -1,66 +1,232 @@
 <!doctype html>
 <html lang="nl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Docs: Get started | Open Collections</title>
-    <link rel="stylesheet" href="../index.css?v=1774431131032" />
-    <script>window.OPEN_COLLECTIONS_SITE = {"locale":"nl","alternates":{"en":"../../en/docs/get-started.html","nl":"./get-started.html"},"page":{"id":"docs/get-started","route":"docs/get-started.html","activeSection":"docs","isTranslated":false},"i18n":{"locale":"nl","siteName":"Open Collections","languageName":"Nederlands","languages":{"en":"English","nl":"Nederlands"},"shell":{"brand":"Open Collections","navAriaLabel":"Hoofdnavigatie","languageSwitcherLabel":"Taal","languageSwitcherAriaLabel":"Selecteer taal","nav":{"home":"Home","get-started":"Aan de slag","tools":"Tools","hosting":"Hosting","docs":"Docs"},"footer":{"description":"Een open, webgerichte aanpak voor het publiceren en delen van culturele collecties.","groups":{"project":"Project","docs-and-developer":"Docs en ontwikkeling","collections":"Collecties"},"links":{"home":"Home","get-started":"Aan de slag","tools":"Tools","docs":"Docs","hosting":"Hosting","registry":"Register","organizations":"Organisaties"}},"breadcrumbs":{"home":"Home"},"untranslatedNotice":{"title":"Vertaling volgt","body":"Deze pagina is nog niet volledig vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde gelokaliseerde site-structuur."}},"docsNav":{"ariaLabel":"Docs-navigatie","items":[{"href":"./","label":"Overzicht"},{"href":"./open-collections-desktop-getting-started.html","label":"Desktop snel aan de slag"},{"href":"./open-collections-desktop-v0.1.0-release-notes.html","label":"Desktop v0.1.0 release-opmerkingen"},{"href":"./open-collections-desktop-v0.1.0-release-checklist.html","label":"Desktop v0.1.0 release-checklist"},{"href":"./get-started.html","label":"Aan de slag"},{"href":"./publish-a-collection.html","label":"Publiceren naar GitHub"},{"href":"./open-collections-protocol.html","label":"Protocol"},{"href":"./optional-collection-access-capabilities.html","label":"Optionele mogelijkheden"},{"href":"./hosting-and-storage.html","label":"Hosting en opslag"},{"href":"./tools-overview.html","label":"Overzicht tools"},{"href":"./components-and-embedding.html","label":"Componenten en embedding"},{"href":"./wordpress-integration.html","label":"WordPress-integratie"},{"href":"./collection-registry-and-indexer.html","label":"Register en indexer"},{"href":"./developer-reference.html","label":"Ontwikkelaarsreferentie"}]}}};</script>
-    <script type="module" src="../shared/site-shell-components.js?v=1774431131032"></script>
-    
-    
-  </head>
-  <body class="docs-page">
-    <open-collections-site-header base-path="../"></open-collections-site-header>
-    <main>
-      
-    <section class="section-soft" data-i18n-fallback-notice>
-      <h2>Vertaling volgt</h2>
-      <p>Deze pagina is nog niet volledig vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde gelokaliseerde site-structuur.</p>
-    </section>
-  
-      <p class="breadcrumbs"><a href="../">Home</a> / <a href="./">Docs</a> / Get started</p>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Docs: Get started | Open Collections</title>
+		<link rel="stylesheet" href="../index.css?v=1774431131032" />
+		<script>
+			window.OPEN_COLLECTIONS_SITE = {
+				locale: "nl",
+				alternates: {
+					en: "../../en/docs/get-started.html",
+					nl: "./get-started.html",
+				},
+				page: {
+					id: "docs/get-started",
+					route: "docs/get-started.html",
+					activeSection: "docs",
+					isTranslated: false,
+				},
+				i18n: {
+					locale: "nl",
+					siteName: "Open Collections",
+					languageName: "Nederlands",
+					languages: { en: "English", nl: "Nederlands" },
+					shell: {
+						brand: "Open Collections",
+						navAriaLabel: "Hoofdnavigatie",
+						languageSwitcherLabel: "Taal",
+						languageSwitcherAriaLabel: "Selecteer taal",
+						nav: {
+							home: "Home",
+							"get-started": "Aan de slag",
+							tools: "Tools",
+							hosting: "Hosting",
+							docs: "Docs",
+						},
+						footer: {
+							description:
+								"Een open, webgerichte aanpak voor het publiceren en delen van culturele collecties.",
+							groups: {
+								project: "Project",
+								"docs-and-developer": "Docs en ontwikkeling",
+								collections: "Collecties",
+							},
+							links: {
+								home: "Home",
+								"get-started": "Aan de slag",
+								tools: "Tools",
+								docs: "Docs",
+								hosting: "Hosting",
+								registry: "Register",
+								organizations: "Organisaties",
+							},
+						},
+						breadcrumbs: { home: "Home" },
+						untranslatedNotice: {
+							title: "Vertaling volgt",
+							body: "Deze pagina is nog niet volledig vertaald. Daarom zie je hier voorlopig de Engelse inhoud met de gedeelde gelokaliseerde site-structuur.",
+						},
+					},
+					docsNav: {
+						ariaLabel: "Docs-navigatie",
+						items: [
+							{ href: "./", label: "Overzicht" },
+							{
+								href: "./open-collections-desktop-getting-started.html",
+								label: "Desktop snel aan de slag",
+							},
+							{
+								href: "./open-collections-desktop-v0.1.0-release-notes.html",
+								label: "Desktop v0.1.0 release-opmerkingen",
+							},
+							{
+								href: "./open-collections-desktop-v0.1.0-release-checklist.html",
+								label: "Desktop v0.1.0 release-checklist",
+							},
+							{
+								href: "./get-started.html",
+								label: "Aan de slag",
+							},
+							{
+								href: "./publish-a-collection.html",
+								label: "Publiceren naar GitHub",
+							},
+							{
+								href: "./open-collections-protocol.html",
+								label: "Protocol",
+							},
+							{
+								href: "./optional-collection-access-capabilities.html",
+								label: "Optionele mogelijkheden",
+							},
+							{
+								href: "./hosting-and-storage.html",
+								label: "Hosting en opslag",
+							},
+							{
+								href: "./tools-overview.html",
+								label: "Overzicht tools",
+							},
+							{
+								href: "./components-and-embedding.html",
+								label: "Componenten en embedding",
+							},
+							{
+								href: "./wordpress-integration.html",
+								label: "WordPress-integratie",
+							},
+							{
+								href: "./collection-registry-and-indexer.html",
+								label: "Register en indexer",
+							},
+							{
+								href: "./developer-reference.html",
+								label: "Ontwikkelaarsreferentie",
+							},
+						],
+					},
+				},
+			};
+		</script>
+		<script
+			type="module"
+			src="../shared/site-shell-components.js?v=1774431131032"
+		></script>
+	</head>
+	<body class="docs-page">
+		<open-collections-site-header
+			base-path="../"
+		></open-collections-site-header>
+		<main>
+			<section class="section-soft" data-i18n-fallback-notice>
+				<h2>Vertaling volgt</h2>
+				<p>
+					Deze pagina is nog niet volledig vertaald. Daarom zie je
+					hier voorlopig de Engelse inhoud met de gedeelde
+					gelokaliseerde site-structuur.
+				</p>
+			</section>
+
+			<p class="breadcrumbs">
+				<a href="../">Home</a> / <a href="./">Docs</a> / Get started
+			</p>
 			<div class="docs-shell">
-				<aside class="docs-sidebar" aria-label="Docs navigation" data-docs-nav></aside>
+				<aside
+					class="docs-sidebar"
+					aria-label="Docs navigation"
+					data-docs-nav
+				></aside>
 				<div class="docs-content">
 					<header>
 						<h1>Get started (technical companion)</h1>
-						<p>Use this with the public <a href="../get-started/">Get started page</a> when your technical team needs deeper implementation detail.</p>
+						<p>
+							Use this with the public
+							<a href="../get-started/">Get started page</a> when
+							your technical team needs deeper implementation
+							detail.
+						</p>
 					</header>
 
 					<section>
 						<h2>Collection outputs</h2>
 						<ul>
-							<li><code>collection.json</code> at a stable URL</li>
+							<li>
+								<code>collection.json</code> at a stable URL
+							</li>
 							<li>stable item and media URLs</li>
-							<li>optional domain discovery file at <code>/.well-known/collections.json</code></li>
+							<li>
+								optional domain discovery file at
+								<code>/.well-known/collections.json</code>
+							</li>
 						</ul>
 					</section>
 
 					<section>
 						<h2>Practical flow</h2>
 						<ol>
-							<li>Start from the source you already have: local files, existing media URLs, or exported records from spreadsheets and other systems.</li>
-							<li>Open Collection Manager and create or update collection data.</li>
-							<li>Add metadata, confirm item links, and verify public media URLs where you are referencing externally hosted assets.</li>
-							<li>Host the collection files and verify the published URLs.</li>
+							<li>
+								Start from the source you already have: local
+								files, existing media URLs, or exported records
+								from spreadsheets and other systems.
+							</li>
+							<li>
+								Open Collection Manager and create or update
+								collection data.
+							</li>
+							<li>
+								Add metadata, confirm item links, and verify
+								public media URLs where you are referencing
+								externally hosted assets.
+							</li>
+							<li>
+								Host the collection files and verify the
+								published URLs.
+							</li>
 						</ol>
 					</section>
 
 					<section>
 						<h2>Referenced media example</h2>
-						<p>Create a collection for a small exhibit, add two item records, and point each item to an existing public image URL. Add titles, descriptions, and rights details in the collection metadata, then publish <code>collection.json</code> so the collection can be shared without moving the media files to a new host.</p>
+						<p>
+							Create a collection for a small exhibit, add two
+							item records, and point each item to an existing
+							public image URL. Add titles, descriptions, and
+							rights details in the collection metadata, then
+							publish <code>collection.json</code> so the
+							collection can be shared without moving the media
+							files to a new host.
+						</p>
 					</section>
 
 					<section>
 						<h2>Legacy page</h2>
-						<p>The older guide is retained at <a href="./publish-a-collection.html">publish-a-collection</a> as a redirect for existing links.</p>
+						<p>
+							The older guide is retained at
+							<a href="./publish-a-collection.html"
+								>publish-a-collection</a
+							>
+							as a redirect for existing links.
+						</p>
 					</section>
 				</div>
 			</div>
-    </main>
-    
-    <script src="./docs-nav.js?v=1774431131032"></script>
-    <open-collections-site-footer base-path="../"></open-collections-site-footer>
-  </body>
+		</main>
+
+		<script src="./docs-nav.js?v=1774431131032"></script>
+		<open-collections-site-footer
+			base-path="../"
+		></open-collections-site-footer>
+	</body>
 </html>

@@ -1,99 +1,113 @@
 class OpenBrowserViewerDialogElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.model = { item: null };
-  }
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.model = { item: null };
+	}
 
-  connectedCallback() {
-    this.render();
-    this.bindEvents();
-    this.applyView();
-  }
+	connectedCallback() {
+		this.render();
+		this.bindEvents();
+		this.applyView();
+	}
 
-  bindEvents() {
-    this.shadowRoot.getElementById('closeViewerBtn')?.addEventListener('click', () => {
-      this.close();
-      this.dispatchEvent(new CustomEvent('close-viewer', { bubbles: true, composed: true }));
-    });
+	bindEvents() {
+		this.shadowRoot
+			.getElementById("closeViewerBtn")
+			?.addEventListener("click", () => {
+				this.close();
+				this.dispatchEvent(
+					new CustomEvent("close-viewer", {
+						bubbles: true,
+						composed: true,
+					}),
+				);
+			});
 
-    this.shadowRoot.getElementById('viewerDialog')?.addEventListener('close', () => {
-      this.dispatchEvent(new CustomEvent('close-viewer', { bubbles: true, composed: true }));
-    });
-  }
+		this.shadowRoot
+			.getElementById("viewerDialog")
+			?.addEventListener("close", () => {
+				this.dispatchEvent(
+					new CustomEvent("close-viewer", {
+						bubbles: true,
+						composed: true,
+					}),
+				);
+			});
+	}
 
-  setItem(item) {
-    this.model.item = item || null;
-    this.applyView();
-  }
+	setItem(item) {
+		this.model.item = item || null;
+		this.applyView();
+	}
 
-  clear() {
-    this.model.item = null;
-    this.applyView();
-  }
+	clear() {
+		this.model.item = null;
+		this.applyView();
+	}
 
-  open() {
-    const dialog = this.shadowRoot.getElementById('viewerDialog');
-    if (!dialog || dialog.open) {
-      return;
-    }
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      return;
-    }
-    dialog.setAttribute('open', 'open');
-  }
+	open() {
+		const dialog = this.shadowRoot.getElementById("viewerDialog");
+		if (!dialog || dialog.open) {
+			return;
+		}
+		if (typeof dialog.showModal === "function") {
+			dialog.showModal();
+			return;
+		}
+		dialog.setAttribute("open", "open");
+	}
 
-  close() {
-    const dialog = this.shadowRoot.getElementById('viewerDialog');
-    if (!dialog || !dialog.open) {
-      return;
-    }
-    if (typeof dialog.close === 'function') {
-      dialog.close();
-      return;
-    }
-    dialog.removeAttribute('open');
-  }
+	close() {
+		const dialog = this.shadowRoot.getElementById("viewerDialog");
+		if (!dialog || !dialog.open) {
+			return;
+		}
+		if (typeof dialog.close === "function") {
+			dialog.close();
+			return;
+		}
+		dialog.removeAttribute("open");
+	}
 
-  applyView() {
-    const title = this.shadowRoot.getElementById('viewerTitle');
-    const body = this.shadowRoot.getElementById('viewerBody');
-    if (!title || !body) {
-      return;
-    }
+	applyView() {
+		const title = this.shadowRoot.getElementById("viewerTitle");
+		const body = this.shadowRoot.getElementById("viewerBody");
+		if (!title || !body) {
+			return;
+		}
 
-    body.innerHTML = '';
-    const item = this.model.item;
-    if (!item) {
-      title.textContent = 'Viewer';
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = 'Choose an item to view.';
-      body.appendChild(empty);
-      return;
-    }
+		body.innerHTML = "";
+		const item = this.model.item;
+		if (!item) {
+			title.textContent = "Viewer";
+			const empty = document.createElement("div");
+			empty.className = "empty";
+			empty.textContent = "Choose an item to view.";
+			body.appendChild(empty);
+			return;
+		}
 
-    title.textContent = item.title || item.id || 'Viewer';
-    const mediaType = (item.media?.type || '').toLowerCase();
-    if (mediaType.includes('video')) {
-      const video = document.createElement('video');
-      video.className = 'viewer-media';
-      video.src = item.media?.url || '';
-      video.controls = true;
-      body.appendChild(video);
-      return;
-    }
+		title.textContent = item.title || item.id || "Viewer";
+		const mediaType = (item.media?.type || "").toLowerCase();
+		if (mediaType.includes("video")) {
+			const video = document.createElement("video");
+			video.className = "viewer-media";
+			video.src = item.media?.url || "";
+			video.controls = true;
+			body.appendChild(video);
+			return;
+		}
 
-    const image = document.createElement('img');
-    image.className = 'viewer-media';
-    image.src = item.media?.url || item.media?.thumbnailUrl || '';
-    image.alt = item.title || item.id || '';
-    body.appendChild(image);
-  }
+		const image = document.createElement("img");
+		image.className = "viewer-media";
+		image.src = item.media?.url || item.media?.thumbnailUrl || "";
+		image.alt = item.title || item.id || "";
+		body.appendChild(image);
+	}
 
-  render() {
-    this.shadowRoot.innerHTML = `
+	render() {
+		this.shadowRoot.innerHTML = `
       <style>
         :host { display: contents; }
         * { box-sizing: border-box; }
@@ -157,11 +171,14 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         </div>
       </dialog>
     `;
-  }
+	}
 }
 
-if (!customElements.get('open-browser-viewer-dialog')) {
-  customElements.define('open-browser-viewer-dialog', OpenBrowserViewerDialogElement);
+if (!customElements.get("open-browser-viewer-dialog")) {
+	customElements.define(
+		"open-browser-viewer-dialog",
+		OpenBrowserViewerDialogElement,
+	);
 }
 
 export { OpenBrowserViewerDialogElement };

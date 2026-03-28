@@ -1,4 +1,4 @@
-import { themeTokenStyles } from './theme.css.js';
+import { themeTokenStyles } from "./theme.css.js";
 
 export const viewToggleStyles = `
   ${themeTokenStyles}

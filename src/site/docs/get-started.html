@@ -8,51 +8,100 @@
 		<script type="module" src="../shared/site-shell-components.js"></script>
 	</head>
 	<body class="docs-page">
-		<open-collections-site-header base-path="../../" active-page="docs"></open-collections-site-header>
+		<open-collections-site-header
+			base-path="../../"
+			active-page="docs"
+		></open-collections-site-header>
 
 		<main>
-			<p class="breadcrumbs"><a href="../../">Home</a> / <a href="./">Docs</a> / Get started</p>
+			<p class="breadcrumbs">
+				<a href="../../">Home</a> / <a href="./">Docs</a> / Get started
+			</p>
 			<div class="docs-shell">
-				<aside class="docs-sidebar" aria-label="Docs navigation" data-docs-nav></aside>
+				<aside
+					class="docs-sidebar"
+					aria-label="Docs navigation"
+					data-docs-nav
+				></aside>
 				<div class="docs-content">
 					<header>
 						<h1>Get started (technical companion)</h1>
-						<p>Use this with the public <a href="../get-started/">Get started page</a> when your technical team needs deeper implementation detail.</p>
+						<p>
+							Use this with the public
+							<a href="../get-started/">Get started page</a> when
+							your technical team needs deeper implementation
+							detail.
+						</p>
 					</header>
 
 					<section>
 						<h2>Collection outputs</h2>
 						<ul>
-							<li><code>collection.json</code> at a stable URL</li>
+							<li>
+								<code>collection.json</code> at a stable URL
+							</li>
 							<li>stable item and media URLs</li>
-							<li>optional domain discovery file at <code>/.well-known/collections.json</code></li>
+							<li>
+								optional domain discovery file at
+								<code>/.well-known/collections.json</code>
+							</li>
 						</ul>
 					</section>
 
 					<section>
 						<h2>Practical flow</h2>
 						<ol>
-							<li>Start from the source you already have: local files, existing media URLs, or exported records from spreadsheets and other systems.</li>
-							<li>Open Collection Manager and create or update collection data.</li>
-							<li>Add metadata, confirm item links, and verify public media URLs where you are referencing externally hosted assets.</li>
-							<li>Host the collection files and verify the published URLs.</li>
+							<li>
+								Start from the source you already have: local
+								files, existing media URLs, or exported records
+								from spreadsheets and other systems.
+							</li>
+							<li>
+								Open Collection Manager and create or update
+								collection data.
+							</li>
+							<li>
+								Add metadata, confirm item links, and verify
+								public media URLs where you are referencing
+								externally hosted assets.
+							</li>
+							<li>
+								Host the collection files and verify the
+								published URLs.
+							</li>
 						</ol>
 					</section>
 
 					<section>
 						<h2>Referenced media example</h2>
-						<p>Create a collection for a small exhibit, add two item records, and point each item to an existing public image URL. Add titles, descriptions, and rights details in the collection metadata, then publish <code>collection.json</code> so the collection can be shared without moving the media files to a new host.</p>
+						<p>
+							Create a collection for a small exhibit, add two
+							item records, and point each item to an existing
+							public image URL. Add titles, descriptions, and
+							rights details in the collection metadata, then
+							publish <code>collection.json</code> so the
+							collection can be shared without moving the media
+							files to a new host.
+						</p>
 					</section>
 
 					<section>
 						<h2>Legacy page</h2>
-						<p>The older guide is retained at <a href="./publish-a-collection.html">publish-a-collection</a> as a redirect for existing links.</p>
+						<p>
+							The older guide is retained at
+							<a href="./publish-a-collection.html"
+								>publish-a-collection</a
+							>
+							as a redirect for existing links.
+						</p>
 					</section>
 				</div>
 			</div>
 		</main>
 
 		<script src="./docs-nav.js"></script>
-		<open-collections-site-footer base-path="../../"></open-collections-site-footer>
+		<open-collections-site-footer
+			base-path="../../"
+		></open-collections-site-footer>
 	</body>
 </html>

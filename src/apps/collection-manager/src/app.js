@@ -1,2120 +1,2567 @@
-import { MEDIA_MODES, normalizeMediaRef } from '../../../packages/collector-schema/src/schema.js';
-import { MANAGER_CONFIG } from './config.js';
-import { createOpfsStorage } from './services/opfs_storage.js';
-import { pickLocalHostDirectory, subscribeToManagerFileDrops, supportsLocalHostDirectoryPicker } from './platform/manager-source-api.js';
-import { createInitialState } from './state/initial-state.js';
-import { computeWorkingStatus } from './state/working-status.js';
-import { getSourceStatus, isExampleSource as isExampleProviderSource, sourceHasAccessibleContent as sourceHasAccessibleItems } from './state/source-status.js';
-import { makeSourceId, toWorkspaceItemId } from './utils/id-utils.js';
-import { bindDomEvents, cacheDomElements, initializeDomDefaults } from './controllers/dom-bindings.js';
 import {
-  collectCurrentProviderConfig,
-  connectCurrentProvider,
-  inspectSource,
-  refreshSource,
-  removeSource,
-  sanitizeSourceConfig,
-  setSelectedProvider,
-  sourceDetailLabelFor,
-  sourceDisplayLabelFor,
-  toPersistedSource,
-} from './controllers/source-controller.js';
+	MEDIA_MODES,
+	normalizeMediaRef,
+} from "../../../packages/collector-schema/src/schema.js";
+import { MANAGER_CONFIG } from "./config.js";
+import { createOpfsStorage } from "./services/opfs_storage.js";
 import {
-  applyLocalDraftPayload,
-  applyWorkspaceSnapshot,
-  buildLocalDraftPayload,
-  currentWorkspaceSnapshot,
-  discardLocalDraft,
-  initializeLocalDraftState,
-  restoreLocalDraft,
-  restoreRememberedSources,
-  saveLocalDraft,
-  saveSourcesToStorage,
-} from './controllers/workspace-controller.js';
+	pickLocalHostDirectory,
+	subscribeToManagerFileDrops,
+	supportsLocalHostDirectoryPicker,
+} from "./platform/manager-source-api.js";
+import { createInitialState } from "./state/initial-state.js";
+import { computeWorkingStatus } from "./state/working-status.js";
 import {
-  activeCollectionRootPath,
-  collectionLabelFor,
-  currentCollectionMeta,
-  ensureCollectionForSource,
-  findSelectedCollectionMeta,
-  openNewCollectionDialog,
-  refreshSourceCollectionsAndCounts,
-  renderCollectionFilter,
-  renderWorkspaceContext,
-  setCollectionMetaFields,
-} from './controllers/collection-controller.js';
+	getSourceStatus,
+	isExampleSource as isExampleProviderSource,
+	sourceHasAccessibleContent as sourceHasAccessibleItems,
+} from "./state/source-status.js";
+import { makeSourceId, toWorkspaceItemId } from "./utils/id-utils.js";
 import {
-  clearCollectionSelection,
-  clearItemSelection,
-  closeViewer,
-  findSelectedItem,
-  getSelectedCollectionIds,
-  getSelectedItemIds,
-  getVisibleCollections,
-  getVisibleAssets,
-  isItemSelected,
-  repairCollectionSelectionState,
-  openViewer,
-  repairSelectionState,
-  renderAssets,
-  renderEditor,
-  renderMetadataMode,
-  renderViewer,
-  resolveMetadataMode,
-  selectItem,
-  setBrowserViewMode,
-  syncMetadataModeFromState,
-  toggleCollectionSelection,
-  toggleItemSelection,
-} from './controllers/selection-controller.js';
-import './components/collection-browser.js?v=20260322-mobile-publish-padding';
-import './components/metadata-editor.js';
-import './components/pane-layout.js';
-import './components/mobile-flow.js?v=20260322-mobile-publish-padding';
-import './components/connections-list-panel.js';
-import './components/add-connection-panel.js';
-import './components/asset-viewer.js';
-import './components/manager-header.js';
+	bindDomEvents,
+	cacheDomElements,
+	initializeDomDefaults,
+} from "./controllers/dom-bindings.js";
 import {
-  slugifySegment as slugifySegmentUtil,
-  hostNameFromPath as hostNameFromPathUtil,
-  normalizeCollectionRootPath as normalizeCollectionRootPathUtil,
-  joinCollectionRootPath as joinCollectionRootPathUtil,
-} from './utils/path-utils.js';
-import { renderShell } from './render/render-shell.js';
-import { deriveItemEditorState, getItemOverridePatch, resolveItemMetadata } from './utils/metadata-inheritance.js';
-import * as AssetService from './services/asset-service.js';
-import * as CollectionService from './services/collection-service.js';
-import * as ManifestService from './services/manifest-service.js';
-import * as DraftService from './services/draft-service.js';
-import { createCredentialStore } from './services/credential-store.js';
-import { getPlatformType, PLATFORM_TYPES } from '../../../shared/platform/index.js';
-import { APP_LIFECYCLE_EVENTS, APP_RUNTIME_MODES } from '../../../shared/runtime/app-mount-contract.js';
+	collectCurrentProviderConfig,
+	connectCurrentProvider,
+	inspectSource,
+	refreshSource,
+	removeSource,
+	sanitizeSourceConfig,
+	setSelectedProvider,
+	sourceDetailLabelFor,
+	sourceDisplayLabelFor,
+	toPersistedSource,
+} from "./controllers/source-controller.js";
 import {
-  createConnectionsRuntime,
-  createDefaultConnectionProviderCatalog,
-  createDefaultConnectionProviderFactories,
-  createDefaultConnectionProviders,
-} from '../../../shared/account/index.js';
-import { SOURCES_STORAGE_KEY } from './controllers/workspace-controller.js';
-const COLLECTIONS_DIR_PATH = 'collections';
-const SOURCES_DIR_PATH = 'sources';
-const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
+	applyLocalDraftPayload,
+	applyWorkspaceSnapshot,
+	buildLocalDraftPayload,
+	currentWorkspaceSnapshot,
+	discardLocalDraft,
+	initializeLocalDraftState,
+	restoreLocalDraft,
+	restoreRememberedSources,
+	saveLocalDraft,
+	saveSourcesToStorage,
+} from "./controllers/workspace-controller.js";
+import {
+	activeCollectionRootPath,
+	collectionLabelFor,
+	currentCollectionMeta,
+	ensureCollectionForSource,
+	findSelectedCollectionMeta,
+	openNewCollectionDialog,
+	refreshSourceCollectionsAndCounts,
+	renderCollectionFilter,
+	renderWorkspaceContext,
+	setCollectionMetaFields,
+} from "./controllers/collection-controller.js";
+import {
+	clearCollectionSelection,
+	clearItemSelection,
+	closeViewer,
+	findSelectedItem,
+	getSelectedCollectionIds,
+	getSelectedItemIds,
+	getVisibleCollections,
+	getVisibleAssets,
+	isItemSelected,
+	repairCollectionSelectionState,
+	openViewer,
+	repairSelectionState,
+	renderAssets,
+	renderEditor,
+	renderMetadataMode,
+	renderViewer,
+	resolveMetadataMode,
+	selectItem,
+	setBrowserViewMode,
+	syncMetadataModeFromState,
+	toggleCollectionSelection,
+	toggleItemSelection,
+} from "./controllers/selection-controller.js";
+import "./components/collection-browser.js?v=20260322-mobile-publish-padding";
+import "./components/metadata-editor.js";
+import "./components/pane-layout.js";
+import "./components/mobile-flow.js?v=20260322-mobile-publish-padding";
+import "../../collection-account/src/components/connections-list-panel.js";
+import "../../collection-account/src/components/add-connection-panel.js";
+import "./components/asset-viewer.js";
+import "./components/manager-header.js";
+import {
+	slugifySegment as slugifySegmentUtil,
+	hostNameFromPath as hostNameFromPathUtil,
+	normalizeCollectionRootPath as normalizeCollectionRootPathUtil,
+	joinCollectionRootPath as joinCollectionRootPathUtil,
+} from "./utils/path-utils.js";
+import { renderShell } from "./render/render-shell.js";
+import {
+	deriveItemEditorState,
+	getItemOverridePatch,
+	resolveItemMetadata,
+} from "./utils/metadata-inheritance.js";
+import * as AssetService from "./services/asset-service.js";
+import * as CollectionService from "./services/collection-service.js";
+import * as ManifestService from "./services/manifest-service.js";
+import * as DraftService from "./services/draft-service.js";
+import { createCredentialStore } from "./services/credential-store.js";
+import {
+	getPlatformType,
+	PLATFORM_TYPES,
+} from "../../../shared/platform/index.js";
+import {
+	APP_LIFECYCLE_EVENTS,
+	APP_RUNTIME_MODES,
+} from "../../../shared/runtime/app-mount-contract.js";
+import {
+	createConnectionsRuntime,
+	createDefaultConnectionProviderCatalog,
+	createDefaultConnectionProviderFactories,
+	createDefaultConnectionProviders,
+} from "../../../shared/account/index.js";
+import { SOURCES_STORAGE_KEY } from "./controllers/workspace-controller.js";
+const COLLECTIONS_DIR_PATH = "collections";
+const SOURCES_DIR_PATH = "sources";
+const DRAFT_ASSETS_DIR_PATH = "draft-assets";
 
 class OpenCollectionsManagerElement extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      'show-header',
-      'show-connections-action',
-      'show-manage-account-action',
-      'show-more-action',
-      'data-oc-app-mode',
-      'data-shell-embed',
-      'data-workbench-embed',
-    ];
-  }
-
-  constructor() {
-    super();
-
-    // State buckets: workspace persistence, provider/source connectivity, active collection, selection, and UI mode.
-    this.state = createInitialState();
-
-    this.opfsStorage = createOpfsStorage();
-    this.credentialStore = createCredentialStore();
-    this._autosaveTimer = null;
-    this._platformDropCleanup = null;
-    this._platformDropReady = null;
-    this.localAssetBlobs = new Map();
-    this.objectUrls = new Set();
-    this.selectedLocalDirectoryHandle = null;
-    this.pendingSourceRepair = null;
-    this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
-
-    this.providerFactories = createDefaultConnectionProviderFactories();
-    this.providers = createDefaultConnectionProviders();
-    this.providerCatalog = createDefaultConnectionProviderCatalog(this.providerFactories);
-    this.connectionsRuntime = createConnectionsRuntime({
-      defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
-      storageKey: SOURCES_STORAGE_KEY,
-      providers: this.providers,
-      providerFactories: this.providerFactories,
-      providerCatalog: this.providerCatalog,
-      credentialStore: this.credentialStore,
-      makeConnectionId: makeSourceId,
-    });
-
-    this.shadow = this.attachShadow({ mode: 'open' });
-    this.renderShell();
-    this.cacheDom();
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) {
-      return;
-    }
-    if (
-      name === 'show-header'
-      || name === 'show-connections-action'
-      || name === 'show-manage-account-action'
-      || name === 'show-more-action'
-    ) {
-      this.applyHeaderActionPresentation();
-      return;
-    }
-    if (name === 'data-oc-app-mode' || name === 'data-shell-embed' || name === 'data-workbench-embed') {
-      this.applyConnectionEntryPresentation();
-      this.renderConnectionsFallbackNotice();
-    }
-  }
-
-  connectedCallback() {
-    this.toggleAttribute('data-mobile-shell', this.isMobileShellRuntime());
-    this.bindEvents();
-    this.setStatus('No connections yet.', 'neutral');
-    this.refreshWorkingStatus();
-    this.setConnectionStatus('No connections yet.', 'neutral');
-    this.renderCapabilities(this.providerFactories.example.getCapabilities());
-    this.dom.addConnectionPanel?.setLocalFolderSupport(this.localFolderPickerSupported);
-    this.renderProviderCatalog();
-    this.setSelectedProvider('example');
-    this.renderSourcesList();
-    this.renderSourceFilter();
-    this.renderAssets();
-    this.renderEditor();
-    this.renderWorkspaceContext();
-    this.renderSourceContext();
-    this.applyHeaderActionPresentation();
-    this.applyConnectionEntryPresentation();
-    this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
-    this.setLocalDraftControlsEnabled(false);
-    this.initializeLocalDraftState();
-    this.syncResponsivePanels();
-    this._handleWindowResize = () => this.syncResponsivePanels();
-    window.addEventListener('resize', this._handleWindowResize);
-    this.initializePlatformFileDrops();
-  }
-
-  disconnectedCallback() {
-    if (this._handleWindowResize) {
-      window.removeEventListener('resize', this._handleWindowResize);
-      this._handleWindowResize = null;
-    }
-    if (this._platformDropCleanup) {
-      this._platformDropCleanup();
-      this._platformDropCleanup = null;
-    }
-    this._platformDropReady = null;
-  }
-
-  renderShell() {
-    renderShell(this.shadow);
-  }
-
-  cacheDom() {
-    this.dom = cacheDomElements(this.shadow);
-    initializeDomDefaults(this);
-  }
-
-  bindEvents() {
-    bindDomEvents(this);
-  }
-
-  openDialog(dialog) {
-    if (!dialog) {
-      return;
-    }
-
-    if (dialog.open) {
-      return;
-    }
-
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      return;
-    }
-
-    dialog.setAttribute('open', 'open');
-  }
-
-  closeDialog(dialog) {
-    if (!dialog) {
-      return;
-    }
-
-    if (!dialog.open) {
-      return;
-    }
-
-    if (dialog === this.dom?.connectionsDialog) {
-      this.showConnectionsListView();
-      this.clearPendingSourceRepair();
-      this.dom.addConnectionPanel?.resetFlow?.();
-    }
-
-    if (typeof dialog.close === 'function') {
-      dialog.close();
-      return;
-    }
-
-    dialog.removeAttribute('open');
-  }
-
-  setConnectionsDialogHeader(title = 'Connections') {
-    const normalizedTitle = String(title || '').trim() || 'Connections';
-    if (this.dom?.connectionsDialog) {
-      this.dom.connectionsDialog.setAttribute('aria-label', normalizedTitle);
-    }
-    if (this.dom?.connectionsDialogTitle) {
-      this.dom.connectionsDialogTitle.textContent = normalizedTitle;
-    }
-  }
-
-  showConnectionsListView() {
-    this.state.connectionsDialogView = 'list';
-    this.renderConnectionsListPanel();
-    this.dom?.connectionsListPanel?.classList.remove('is-hidden');
-    this.dom?.addConnectionPanel?.classList.add('is-hidden');
-    this.setConnectionsDialogHeader(this.shouldPreferAccountConnectionsHandoff() ? 'Connections (fallback)' : 'Connections');
-  }
-
-  showAddConnectionView() {
-    this.state.connectionsDialogView = 'add';
-    this.dom?.connectionsListPanel?.classList.add('is-hidden');
-    this.dom?.addConnectionPanel?.classList.remove('is-hidden');
-    this.setConnectionsDialogHeader(this.shouldPreferAccountConnectionsHandoff() ? 'Connections (fallback)' : 'Connections');
-  }
-
-  openConnectionsDialog() {
-    this.renderConnectionsFallbackNotice();
-    this.showConnectionsListView();
-    this.openDialog(this.dom.connectionsDialog);
-  }
-
-  openManageConnections(options = {}) {
-    // Compatibility seam: prefer account handoff in embedded/shell mode, keep local manager dialog fallback.
-    if (this.shouldPreferAccountConnectionsHandoff()) {
-      const didNavigate = this.requestAccountConnectionsNavigation(options);
-      if (didNavigate) {
-        return;
-      }
-    }
-
-    const delegate = typeof this.onManageConnections === 'function' ? this.onManageConnections : null;
-    if (delegate) {
-      const handled = delegate(options);
-      if (handled) {
-        return;
-      }
-    }
-    this.openConnectionsDialog();
-  }
-
-  shouldPreferAccountConnectionsHandoff() {
-    return this.isEmbeddedRuntime();
-  }
-
-  isEmbeddedRuntime() {
-    const runtimeMode = this.dataset?.ocAppMode || this.getAttribute('data-oc-app-mode');
-    if (runtimeMode === APP_RUNTIME_MODES.EMBEDDED) {
-      return true;
-    }
-    return this.hasAttribute('data-shell-embed') || this.hasAttribute('data-workbench-embed');
-  }
-
-  connectionEntryLabelForRuntime() {
-    return this.shouldPreferAccountConnectionsHandoff() ? 'Manage connections in Account' : 'Connections';
-  }
-
-  browserConnectionActionLabel() {
-    return this.shouldPreferAccountConnectionsHandoff() ? 'Manage in Account' : 'Add connection';
-  }
-
-  parseBooleanAttribute(name, fallback = false) {
-    if (!this.hasAttribute(name)) {
-      return fallback;
-    }
-    const raw = this.getAttribute(name);
-    if (raw == null || raw === '') {
-      return true;
-    }
-    return !['false', '0', 'no', 'off'].includes(String(raw).trim().toLowerCase());
-  }
-
-  get showHeader() {
-    return this.parseBooleanAttribute('show-header', false);
-  }
-
-  set showHeader(value) {
-    this.toggleAttribute('show-header', Boolean(value));
-  }
-
-  get showConnectionsAction() {
-    if (this.hasAttribute('show-manage-account-action')) {
-      return this.parseBooleanAttribute('show-manage-account-action', false);
-    }
-    return this.parseBooleanAttribute('show-connections-action', false);
-  }
-
-  set showConnectionsAction(value) {
-    this.toggleAttribute('show-connections-action', Boolean(value));
-  }
-
-  get showMoreAction() {
-    return this.parseBooleanAttribute('show-more-action', false);
-  }
-
-  set showMoreAction(value) {
-    this.toggleAttribute('show-more-action', Boolean(value));
-  }
-
-  applyHeaderActionPresentation() {
-    const showHeaderActions = this.showHeader;
-    const showConnectionsAction = showHeaderActions && this.showConnectionsAction;
-    const showMoreAction = showHeaderActions && this.showMoreAction;
-    if (this.dom.managerHeader) {
-      this.dom.managerHeader.hidden = !showHeaderActions;
-      this.dom.managerHeader.setActionsVisibility?.({
-        showHeaderActions,
-        showConnectionsAction,
-        showMoreAction,
-      });
-    }
-    const headerState = {
-      showHeaderActions: false,
-      showConnectionsAction: false,
-      showMoreAction: false,
-    };
-    this.dom.collectionBrowser?.update?.(headerState);
-    this.dom.mobileFlow?.setBrowserState?.(headerState);
-  }
-
-  applyConnectionEntryPresentation() {
-    const connectionActionLabel = this.connectionEntryLabelForRuntime();
-    this.dom.managerHeader?.setConnectionEntryLabel?.(connectionActionLabel);
-    this.dom.collectionBrowser?.update?.({ connectionActionLabel });
-    this.dom.mobileFlow?.setBrowserState?.({ connectionActionLabel });
-  }
-
-  renderConnectionsFallbackNotice() {
-    if (!this.dom?.connectionsFallbackNote) {
-      return;
-    }
-    const compatibilityMode = this.shouldPreferAccountConnectionsHandoff();
-    this.dom.connectionsFallbackNote.hidden = !compatibilityMode;
-    if (compatibilityMode) {
-      this.dom.connectionsFallbackNote.textContent = 'Account is the primary place to manage connections. This local dialog is a compatibility fallback.';
-      this.setConnectionsDialogHeader('Connections (fallback)');
-      return;
-    }
-    this.dom.connectionsFallbackNote.textContent = '';
-    this.setConnectionsDialogHeader('Connections');
-  }
-
-  requestAccountConnectionsNavigation(options = {}) {
-    const detail = {
-      sourceAppId: 'collection-manager',
-      targetAppId: 'collection-account',
-      targetSection: 'connections',
-      intent: String(options.intent || 'list'),
-      source: String(options.source || ''),
-      sourceId: String(options.sourceId || ''),
-      mode: String(options.mode || ''),
-    };
-    const navigateEvent = new CustomEvent(APP_LIFECYCLE_EVENTS.NAVIGATE, {
-      detail,
-      bubbles: true,
-      composed: true,
-      cancelable: true,
-    });
-    // Returns true when shell/host claims navigation via preventDefault().
-    return this.dispatchEvent(navigateEvent) === false;
-  }
-
-  openAddHostDialog() {
-    this.clearPendingSourceRepair();
-    this.dom.addConnectionPanel?.resetFlow?.();
-    this.showAddConnectionView();
-    this.openDialog(this.dom.connectionsDialog);
-  }
-
-  openCredentialRepairDialog(sourceId) {
-    const source = this.prepareSourceRepair(sourceId, 'credentials');
-    if (!source || !['github', 's3'].includes(source.providerId)) {
-      return;
-    }
-    this.inspectSource(source.id);
-    this.dom.addConnectionPanel?.openRepairCredentials?.(source.providerId);
-    this.showAddConnectionView();
-    this.openDialog(this.dom.connectionsDialog);
-  }
-
-  isMobileViewport() {
-    if (this.isMobileShellRuntime()) {
-      return true;
-    }
-    return typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches;
-  }
-
-  isMobileShellRuntime() {
-    return getPlatformType() === PLATFORM_TYPES.CAPACITOR;
-  }
-
-  openMobileDetail() {
-    this.state.mobileView = 'detail';
-    this.syncResponsivePanels();
-  }
-
-  closeMobileDetail() {
-    this.state.mobileView = 'browse';
-    this.syncResponsivePanels();
-  }
-
-  syncResponsivePanels() {
-    if (!this.dom?.metadataEditor || !this.dom?.paneLayout) {
-      return;
-    }
-
-    // Desktop keeps the split-pane inspector. Mobile uses a separate browse/detail flow.
-    const inspectorPlacement = this.normalizeInspectorPlacement(this.state.inspectorPlacement);
-    this.state.inspectorPlacement = inspectorPlacement;
-    this.dom.paneLayout.inspectorPlacement = inspectorPlacement;
-    this.dom.metadataEditor.setMobileOpen(false);
-    this.dom.metadataEditor.setPresentation?.('inspector');
-    this.dom.mobileFlow?.setMobileView(this.state.mobileView);
-  }
-
-  normalizeInspectorPlacement(placement) {
-    return placement === 'bottom' || placement === 'hidden' || placement === 'right' ? placement : 'right';
-  }
-
-  setInspectorPlacement(placement = 'right') {
-    this.state.inspectorPlacement = this.normalizeInspectorPlacement(placement);
-    this.syncResponsivePanels();
-  }
-
-  applyInspectorModeForViewMode(mode) {
-    void mode;
-    // Intentionally no-op: inspector placement is a shell-level concern.
-  }
-
-  renderProviderCatalog() {
-    this.dom.addConnectionPanel?.setProviderCatalog(this.providerCatalog);
-  }
-
-  setSelectedProvider(providerId) {
-    return setSelectedProvider(this, providerId);
-  }
-
-  setStatus(text, tone = 'neutral') {
-    const statusText = String(text || '').trim() || 'Ready';
-    const statusTone = tone || 'neutral';
-    this.dom.collectionBrowser?.update?.({ statusText, statusTone });
-    this.dom.mobileFlow?.setBrowserState?.({ statusText, statusTone });
-  }
-
-  setWorkingStateFlags(patch = {}) {
-    Object.assign(this.state, patch || {});
-    this.refreshWorkingStatus();
-  }
-
-  markDirty() {
-    this.setWorkingStateFlags({
-      hasUnsavedChanges: true,
-      lastSaveTarget: '',
-      publishError: '',
-    });
-  }
-
-  markSavedToSource() {
-    this.setWorkingStateFlags({
-      hasUnsavedChanges: false,
-      lastSaveTarget: 'source',
-      publishError: '',
-    });
-  }
-
-  markSavedToDraft() {
-    this.setWorkingStateFlags({
-      hasUnsavedChanges: false,
-      hasLocalDraft: true,
-      lastSaveTarget: 'draft',
-      publishError: '',
-    });
-  }
-
-  refreshWorkingStatus() {
-    const workingStatus = computeWorkingStatus(this.state);
-    const publishAction = this.getPublishActionState();
-    this.dom.collectionBrowser?.setPublishActionState?.(publishAction);
-    this.dom.mobileFlow?.setPublishActionState?.(publishAction);
-    this.dom.collectionBrowser?.setWorkingStatus?.(workingStatus);
-    this.dom.mobileFlow?.setWorkingStatus?.(workingStatus);
-  }
-
-  setConnectionStatus(text, tone = false) {
-    const resolvedTone = typeof tone === 'boolean' ? (tone ? 'ok' : 'warn') : tone;
-    this.dom.addConnectionPanel?.setConnectionStatus(text, resolvedTone);
-  }
-
-  setLocalDraftStatus(text, tone = 'neutral') {
-    const colors = {
-      neutral: '#64748b',
-      ok: '#166534',
-      warn: '#9a3412',
-    };
-    this.state.opfsStatus = text;
-    if (this.dom?.localDraftStatus) {
-      this.dom.localDraftStatus.textContent = text;
-      this.dom.localDraftStatus.style.color = colors[tone] || colors.neutral;
-    }
-  }
-
-  setLocalDraftControlsEnabled(enabled) {
-    const disabled = !enabled;
-    if (this.dom?.saveLocalDraftBtn) {
-      this.dom.saveLocalDraftBtn.disabled = disabled;
-      this.dom.restoreLocalDraftBtn.disabled = disabled;
-      this.dom.discardLocalDraftBtn.disabled = disabled;
-    }
-  }
-
-  draftCollectionId() {
-    return (
-      this.dom.collectionId.value.trim() ||
-      MANAGER_CONFIG.defaultCollectionMeta.id ||
-      'collection-draft'
-    );
-  }
-
-  draftFilePath(collectionId = this.draftCollectionId()) {
-    return `${COLLECTIONS_DIR_PATH}/${collectionId}.json`;
-  }
-
-  sourceFilePath(sourceId) {
-    return `${SOURCES_DIR_PATH}/${sourceId}.json`;
-  }
-
-  setDropTargetState(active) {
-    this.state.isDropTargetActive = Boolean(active);
-    this.dom.collectionBrowser?.setDropTargetActive(this.state.isDropTargetActive);
-  }
-
-  canAcceptPlatformFileDrops() {
-    return this.isConnected && !this.hidden;
-  }
-
-  async initializePlatformFileDrops() {
-    if (this._platformDropCleanup || this._platformDropReady) {
-      return this._platformDropReady;
-    }
-
-    this._platformDropReady = subscribeToManagerFileDrops(async (event) => {
-      if (!this.canAcceptPlatformFileDrops()) {
-        return;
-      }
-
-      const type = event?.type || '';
-      if (type === 'enter' || type === 'over') {
-        this.setDropTargetState(true);
-        return;
-      }
-      if (type === 'leave') {
-        this.setDropTargetState(false);
-        return;
-      }
-      if (type === 'drop') {
-        this.setDropTargetState(false);
-        const files = Array.isArray(event?.files) ? event.files : [];
-        if (files.length > 0) {
-          await this.ingestImageFiles(files);
-        }
-      }
-    }).then((cleanup) => {
-      this._platformDropCleanup = typeof cleanup === 'function' ? cleanup : null;
-      return this._platformDropCleanup;
-    }).catch((error) => {
-      console.warn('[open-collections-manager] Failed to initialize platform file drops.', error);
-      return null;
-    });
-
-    return this._platformDropReady;
-  }
-
-  isSupportedImageFile(file) {
-    if (!file) {
-      return false;
-    }
-    const mime = (file.type || '').toLowerCase();
-    if (mime.startsWith('image/jpeg') || mime.startsWith('image/png') || mime.startsWith('image/webp') || mime.startsWith('image/gif')) {
-      return true;
-    }
-    return /\.(jpe?g|png|webp|gif)$/i.test(file.name || '');
-  }
-
-  toWorkspaceItemId(sourceId, itemId) {
-    return toWorkspaceItemId(sourceId, itemId);
-  }
-
-  slugifySegment(value, fallback = 'item') {
-    return slugifySegmentUtil(value, fallback);
-  }
-
-  hostNameFromPath(path, fallback = 'Local host') {
-    return hostNameFromPathUtil(path, fallback);
-  }
-
-  normalizeCollectionRootPath(rootPath, fallbackId = '') {
-    return normalizeCollectionRootPathUtil(rootPath, fallbackId);
-  }
-
-  joinCollectionRootPath(collectionRootPath, relativePath = '') {
-    return joinCollectionRootPathUtil(
-      collectionRootPath,
-      relativePath,
-      this.state.selectedCollectionId || 'collection',
-    );
-  }
-
-  activeCollectionRootPath() {
-    return activeCollectionRootPath(this);
-  }
-
-  renderWorkspaceContext() {
-    return renderWorkspaceContext(this);
-  }
-
-  readableTitleFromFilename(name, fallbackId) {
-    const base = String(name || '').replace(/\.[^.]+$/, '');
-    const cleaned = base.replace(/[_-]+/g, ' ').trim();
-    return cleaned || fallbackId;
-  }
-
-  openNewCollectionDialog() {
-    return openNewCollectionDialog(this);
-  }
-
-  setCollectionMetaFields(meta = {}) {
-    return setCollectionMetaFields(this, meta);
-  }
-
-  collectionIdExists(collectionId) {
-    return CollectionService.collectionIdExists(this, collectionId);
-  }
-
-  ensureUniqueCollectionId(baseId) {
-    return CollectionService.ensureUniqueCollectionId(this, baseId);
-  }
-
-  buildInitialCollectionManifest(meta) {
-    return CollectionService.buildInitialCollectionManifest(this, meta);
-  }
-
-  async createNewCollectionDraft() {
-    return CollectionService.createNewCollectionDraft(this);
-  }
-
-  extensionFromName(name = '', fallback = '.jpg') {
-    const match = String(name).toLowerCase().match(/\.[a-z0-9]+$/);
-    return match ? match[0] : fallback;
-  }
-
-  uniqueDraftItemId(base, sourceId, collectionId) {
-    const existing = new Set(
-      this.state.assets
-        .filter((item) => item.sourceId === sourceId && item.collectionId === collectionId)
-        .map((item) => item.id),
-    );
-    if (!existing.has(base)) {
-      return base;
-    }
-    let index = 2;
-    while (existing.has(`${base}-${index}`)) {
-      index += 1;
-    }
-    return `${base}-${index}`;
-  }
-
-  getActiveIngestionSource() {
-    if (!this.state.sources.length) {
-      this.setStatus('Connect a writable storage source before adding images.', 'warn');
-      return null;
-    }
-
-    if (this.state.activeSourceFilter === 'all') {
-      this.setStatus('Select a specific storage source before adding images.', 'warn');
-      return null;
-    }
-
-    const source = this.getSourceById(this.state.activeSourceFilter);
-    if (!source) {
-      this.setStatus('Selected storage source was not found.', 'warn');
-      return null;
-    }
-
-    if (source.providerId !== 'github' && source.providerId !== 'local') {
-      this.setStatus('Image upload is currently available for GitHub and local folder connections.', 'warn');
-      return null;
-    }
-
-    if (source.providerId === 'github' && (source.needsReconnect || source.needsCredentials)) {
-      this.setStatus('Reconnect the selected GitHub source before adding local draft assets.', 'warn');
-      return null;
-    }
-
-    if (source.providerId === 'local') {
-      if (source.needsReconnect || !source.provider) {
-        this.setStatus('Reconnect the selected local connection before adding images.', 'warn');
-        return null;
-      }
-      if (!source.capabilities?.canSaveMetadata) {
-        this.setStatus('Selected local connection is read-only. Reconnect with a writable folder.', 'warn');
-        return null;
-      }
-    }
-
-    return source;
-  }
-
-  ensureCollectionForSource(source) {
-    return ensureCollectionForSource(this, source);
-  }
-
-  collectionLabelFor(source, collectionId) {
-    return collectionLabelFor(source, collectionId);
-  }
-
-  collectionAssetPath(workspaceId, kind = 'original', extension = '.jpg') {
-    return `${DRAFT_ASSETS_DIR_PATH}/${workspaceId}/${kind}${extension}`;
-  }
-
-  registerObjectUrl(url) {
-    if (url) {
-      this.objectUrls.add(url);
-    }
-  }
-
-  async generateThumbnailBlob(file) {
-    return AssetService.generateThumbnailBlob(this, file);
-  }
-
-  async rememberLocalAssetFiles(item, originalBlob, thumbnailBlob) {
-    return AssetService.rememberLocalAssetFiles(this, item, originalBlob, thumbnailBlob);
-  }
-
-  async loadLocalAssetBlob(item, kind = 'original') {
-    return AssetService.loadLocalAssetBlob(this, item, kind);
-  }
-
-  async rehydrateLocalDraftAssetUrls() {
-    return AssetService.rehydrateLocalDraftAssetUrls(this);
-  }
-
-  async cleanupRemovedItemArtifacts(item) {
-    return AssetService.cleanupRemovedItemArtifacts(this, item);
-  }
-
-  async hydrateLocalSourceAssetPreviews(sourceId) {
-    return AssetService.hydrateLocalSourceAssetPreviews(this, sourceId);
-  }
-
-  refreshSourceCollectionsAndCounts(sourceId) {
-    return refreshSourceCollectionsAndCounts(this, sourceId);
-  }
-
-  async ingestImageFiles(files) {
-    return AssetService.ingestImageFiles(this, files);
-  }
-
-  async createEmptyDraftItem() {
-    return AssetService.createEmptyDraftItem(this);
-  }
-
-  async attachUploadedMediaToItem(itemId, file) {
-    return AssetService.attachUploadedMediaToItem(this, itemId, file);
-  }
-
-  async attachReferencedMediaToItem(itemId, url) {
-    return AssetService.attachReferencedMediaToItem(this, itemId, url);
-  }
-
-  renderCapabilities(capabilitiesOrProvider) {
-    const capabilities =
-      typeof capabilitiesOrProvider?.getCapabilities === 'function'
-        ? capabilitiesOrProvider.getCapabilities()
-        : capabilitiesOrProvider || {};
-    this.dom.addConnectionPanel?.setCapabilities(capabilities);
-  }
-
-  getSourceById(sourceId) {
-    return this.state.sources.find((entry) => entry.id === sourceId) || null;
-  }
-
-  clearPendingSourceRepair() {
-    this.pendingSourceRepair = null;
-  }
-
-  prepareSourceRepair(sourceId, mode = 'reconnect') {
-    const source = this.getSourceById(sourceId);
-    if (!source) {
-      return null;
-    }
-    this.pendingSourceRepair = { sourceId, mode };
-    return source;
-  }
-
-  sourceHasAccessibleContent(source) {
-    if (!source) {
-      return false;
-    }
-    const hasAssets = this.state.assets.some((item) => item.sourceId === source.id);
-    return sourceHasAccessibleItems(source) || hasAssets;
-  }
-
-  isExampleSource(source) {
-    return isExampleProviderSource(source);
-  }
-
-  isBrowserRuntime() {
-    const platformType = getPlatformType();
-    return platformType === PLATFORM_TYPES.BROWSER || platformType === PLATFORM_TYPES.CAPACITOR;
-  }
-
-  sortSourcesForDisplay(sources = []) {
-    if (!Array.isArray(sources) || sources.length <= 1) {
-      return Array.isArray(sources) ? [...sources] : [];
-    }
-
-    const exampleSources = [];
-    const otherSources = [];
-    for (const source of sources) {
-      if (this.isExampleSource(source)) {
-        exampleSources.push(source);
-      } else {
-        otherSources.push(source);
-      }
-    }
-    return [...exampleSources, ...otherSources];
-  }
-
-  getExampleSource() {
-    return this.state.sources.find((source) => this.isExampleSource(source)) || null;
-  }
-
-  activatePreferredBrowserStartupSource() {
-    if (!this.isBrowserRuntime()) {
-      return false;
-    }
-
-    const exampleSource = this.getExampleSource();
-    if (!exampleSource) {
-      return false;
-    }
-
-    this.activateSource(exampleSource);
-    return true;
-  }
-
-  sourceRepairGuidance(source) {
-    if (!source) {
-      return '';
-    }
-    if (this.isExampleSource(source)) {
-      return 'Browse example collections. Connect your own source to refresh or publish.';
-    }
-    const hasAccessibleContent = this.sourceHasAccessibleContent(source);
-    if (source.providerId === 'local' && source.needsReconnect) {
-      return hasAccessibleContent
-        ? 'Folder access must be re-selected to refresh or publish. Previously loaded content remains available locally.'
-        : 'Folder access must be re-selected. Publish remains blocked until reconnect succeeds.';
-    }
-    if (source.needsCredentials) {
-      return 'Missing credentials. Update credentials to reconnect and unblock publish.';
-    }
-    if (source.needsReconnect) {
-      return hasAccessibleContent
-        ? 'Previously loaded content remains available locally. Reconnect to refresh or publish.'
-        : 'Reconnect this connection before publish is available.';
-    }
-    if (!source.capabilities?.canPublish) {
-      return 'This connection stays available for browsing, but publishing is unavailable.';
-    }
-    return '';
-  }
-
-  getVisibleAssets() {
-    return getVisibleAssets(this);
-  }
-
-  renderSourceFilter() {
-    const previous = this.state.activeSourceFilter || 'all';
-    const options = [{ value: 'all', label: 'All connections' }];
-    for (const source of this.state.sources) {
-      options.push({
-        value: source.id,
-        label: source.displayLabel || source.label || source.providerLabel || 'Source',
-      });
-    }
-    const stillExists = previous === 'all' || this.state.sources.some((entry) => entry.id === previous);
-    this.state.activeSourceFilter = stillExists ? previous : 'all';
-    this.dom.collectionBrowser.setSourceOptions(options, this.state.activeSourceFilter);
-    this.renderCollectionFilter();
-  }
-
-  renderCollectionFilter() {
-    return renderCollectionFilter(this);
-  }
-
-  formatSourceBadge(item) {
-    const display = (item.sourceDisplayLabel || '').trim();
-    if (display) {
-      return display;
-    }
-    const providerName = this.providerCatalog.find((entry) => entry.id === item.providerId)?.label || item.providerId || '';
-    return providerName || 'Source';
-  }
-
-  renderSourcesList() {
-    this.renderConnectionsListPanel();
-  }
-
-  renderConnectionsListPanel() {
-    const uniqueSources = this.uniqueSourcesForManageHosts(this.state.sources);
-    this.dom.connectionsListPanel?.setSources(uniqueSources);
-    this.dom.connectionsListPanel?.setActiveSourceId(this.state.activeSourceFilter || 'all');
-  }
-
-  collectCurrentProviderConfig(providerId) {
-    return collectCurrentProviderConfig(this, providerId);
-  }
-
-  async pickLocalFolder() {
-    if (!this.localFolderPickerSupported) {
-      this.dom.addConnectionPanel?.setLocalFolderStatus('Local folder requires a supported browser or the desktop app.', 'warn');
-      this.setStatus('Local folder is unavailable in this browser. Use the desktop app, GitHub, or S3.', 'warn');
-      return false;
-    }
-    try {
-      const handle = await pickLocalHostDirectory();
-      const folderName = (handle?.name || '').trim() || 'Selected folder';
-      const folderPath = String(handle?.path || '').trim();
-      this.selectedLocalDirectoryHandle = handle || null;
-      this.dom.addConnectionPanel?.setConfigValues({
-        localFolderName: folderName,
-        localPathInput: folderPath || folderName,
-      });
-      this.dom.addConnectionPanel?.setLocalFolderStatus(`Selected folder: ${folderPath || folderName}`, 'ok');
-      this.setStatus(`Selected local folder: ${folderPath || folderName}`, 'ok');
-      return true;
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        this.dom.addConnectionPanel?.setLocalFolderStatus('Folder selection cancelled.', 'neutral');
-        return false;
-      }
-      this.dom.addConnectionPanel?.setLocalFolderStatus(`Folder selection failed: ${error.message}`, 'warn');
-      this.setStatus(`Folder selection failed: ${error.message}`, 'warn');
-      return false;
-    }
-  }
-
-  sourceDisplayLabelFor(providerId, config, fallbackLabel) {
-    return sourceDisplayLabelFor(this, providerId, config, fallbackLabel);
-  }
-
-  sourceDetailLabelFor(providerId, config, fallbackLabel) {
-    return sourceDetailLabelFor(this, providerId, config, fallbackLabel);
-  }
-
-  publishDestinationDetail(source, collectionRootPath = '') {
-    if (!source) {
-      return '';
-    }
-
-    if (source.providerId === 'github') {
-      const owner = (source.config?.owner || '').trim() || 'owner';
-      const repo = (source.config?.repo || '').trim() || 'repo';
-      const branch = (source.config?.branch || 'main').trim() || 'main';
-      const basePath = (source.config?.path || '').trim();
-      const root = collectionRootPath || '';
-      const fullPath = [basePath, root].filter(Boolean).join('/').replace(/\/+/g, '/').replace(/^\/+/, '') || '/';
-      return `GitHub ${owner}/${repo} @ ${branch}:${fullPath}`;
-    }
-
-    if (source.providerId === 's3') {
-      const bucket = (source.config?.bucket || '').trim() || 'bucket';
-      const basePath = (source.config?.basePath || '').trim();
-      const root = collectionRootPath || '';
-      const prefix = [basePath, root].filter(Boolean).join('/').replace(/\/+/g, '/').replace(/^\/+/, '');
-      return prefix ? `S3 s3://${bucket}/${prefix}` : `S3 s3://${bucket}`;
-    }
-
-    if (source.providerId === 'local' || source.providerId === 'example') {
-      const root = (collectionRootPath || '').replace(/^\/+/, '');
-      return root ? `Local path ${root}` : 'Local connection';
-    }
-
-    return source.detailLabel || source.displayLabel || source.providerLabel || 'Active connection';
-  }
-
-  activeHostStateLabel(source) {
-    if (!source) {
-      return 'Disconnected';
-    }
-    return getSourceStatus(source).label;
-  }
-
-  sanitizeSourceConfig(providerId, config = {}) {
-    return sanitizeSourceConfig(this, providerId, config);
-  }
-
-  toPersistedSource(source) {
-    return toPersistedSource(this, source);
-  }
-
-  currentWorkspaceSnapshot() {
-    return currentWorkspaceSnapshot(this);
-  }
-
-  buildLocalDraftPayload() {
-    return buildLocalDraftPayload(this);
-  }
-
-  async persistSourcesToOpfs(payload) {
-    return DraftService.persistSourcesToOpfs(this, payload);
-  }
-
-  async persistWorkspaceToOpfs(extra = {}) {
-    return DraftService.persistWorkspaceToOpfs(this, extra);
-  }
-
-  async loadRememberedSourcesFromOpfs() {
-    return DraftService.loadRememberedSourcesFromOpfs(this);
-  }
-
-  applyWorkspaceSnapshot(snapshot = {}) {
-    return applyWorkspaceSnapshot(this, snapshot);
-  }
-
-  saveSourcesToStorage() {
-    return saveSourcesToStorage(this);
-  }
-
-  async restoreRememberedSources() {
-    return restoreRememberedSources(this);
-  }
-
-  async initializeLocalDraftState() {
-    return initializeLocalDraftState(this);
-  }
-
-  async saveLocalDraft() {
-    return saveLocalDraft(this);
-  }
-
-  applyLocalDraftPayload(payload) {
-    return applyLocalDraftPayload(this, payload);
-  }
-
-  async restoreLocalDraft(options = {}) {
-    return restoreLocalDraft(this, options);
-  }
-
-  async discardLocalDraft() {
-    return discardLocalDraft(this);
-  }
-
-  normalizeSourceAssets(source, rawItems) {
-    return (rawItems || []).map((item) => {
-      const sourceAssetId = item.id;
-      const media = normalizeMediaRef(item.media);
-      const mediaPath = String(media?.url || '').trim();
-      const fileName = mediaPath
-        ? mediaPath.replace(/\\/g, '/').split('/').filter(Boolean).pop() || mediaPath
-        : '';
-      return {
-        ...item,
-        media,
-        fileName: item.fileName || fileName,
-        workspaceId: toWorkspaceItemId(source.id, sourceAssetId),
-        sourceAssetId,
-        sourceId: source.id,
-        sourceLabel: source.label,
-        sourceDisplayLabel: source.displayLabel || source.label,
-        providerId: source.providerId,
-        collectionId: item.collectionId || null,
-        collectionLabel: item.collectionLabel || '',
-        collectionRootPath: item.collectionRootPath || '',
-      };
-    });
-  }
-
-  buildCollectionsForSource(source, normalizedAssets) {
-    const grouped = new Map();
-    for (const item of normalizedAssets) {
-      const collectionId = (item.collectionId || '').trim();
-      const collectionLabel = (item.collectionLabel || '').trim();
-      if (!collectionId) {
-        continue;
-      }
-      if (!grouped.has(collectionId)) {
-        grouped.set(collectionId, {
-          id: collectionId,
-          title: collectionLabel || collectionId,
-          rootPath: this.normalizeCollectionRootPath(item.collectionRootPath || `${collectionId}/`, collectionId),
-        });
-      }
-    }
-
-    if (grouped.size > 0) {
-      return Array.from(grouped.values());
-    }
-
-    const fallbackId = `${source.id}::default-collection`;
-    return [
-      {
-        id: fallbackId,
-        title: source.displayLabel || source.providerLabel || 'Default collection',
-        rootPath: this.normalizeCollectionRootPath(`${fallbackId}/`, fallbackId),
-      },
-    ];
-  }
-
-  normalizeCollectionsFromProvider(entries = []) {
-    if (!Array.isArray(entries)) {
-      return [];
-    }
-    return entries
-      .filter((entry) => entry && typeof entry === 'object' && entry.id)
-      .map((entry) => ({
-        id: String(entry.id),
-        title: entry.title || String(entry.id),
-        description: entry.description || '',
-        license: entry.license || '',
-        publisher: entry.publisher || '',
-        language: entry.language || '',
-        rootPath: this.normalizeCollectionRootPath(entry.rootPath || `${entry.id}/`, entry.id),
-        path: entry.path || '',
-        collectionJsonPath: entry.collectionJsonPath || '',
-        updatedAt: entry.updatedAt || '',
-      }));
-  }
-
-  mergeSourceAssets(sourceId, nextItems) {
-    const withoutSource = this.state.assets.filter((item) => item.sourceId !== sourceId);
-    this.state.assets = [...withoutSource, ...nextItems];
-  }
-
-  openViewer(itemId) {
-    return openViewer(this, itemId);
-  }
-
-  closeViewer() {
-    return closeViewer(this);
-  }
-
-  renderViewer() {
-    return renderViewer(this);
-  }
-
-  renderSourceContext() {
-    const activeSourceLabel = this.activeSourceLabel();
-    const workspaceContextText = this.workflowContextText();
-    this.dom.managerHeader?.setHostLabel?.(activeSourceLabel);
-    this.dom.collectionBrowser?.update?.({ activeSourceLabel, workspaceContextText });
-    this.dom.mobileFlow?.setBrowserState?.({ activeSourceLabel, workspaceContextText });
-    this.applyConnectionEntryPresentation();
-    this.refreshWorkingStatus();
-  }
-
-  sourceIdentityKey(source) {
-    if (!source || typeof source !== 'object') {
-      return '';
-    }
-    const providerId = source.providerId || 'unknown';
-    const config = this.sanitizeSourceConfig(providerId, source.config || {});
-    const hasConfig = Object.keys(config).length > 0;
-    return hasConfig
-      ? `${providerId}:${JSON.stringify(config)}`
-      : `${providerId}:${source.id || source.displayLabel || source.label || ''}`;
-  }
-
-  uniqueSourcesForManageHosts(sources = []) {
-    const result = [];
-    const seen = new Set();
-    for (const source of sources) {
-      const key = this.sourceIdentityKey(source);
-      if (seen.has(key)) {
-        continue;
-      }
-      seen.add(key);
-      result.push(source);
-    }
-    return result;
-  }
-
-  activateSource(source) {
-    this.state.activeSourceFilter = source.id;
-    this.state.currentLevel = 'collections';
-    this.state.openedCollectionId = null;
-    this.state.selectedCollectionId = source.selectedCollectionId || 'all';
-    this.state.selectedCollectionIds = [];
-    this.state.selectedItemId = null;
-    this.state.selectedItemIds = [];
-    this.syncMetadataModeFromState();
-    this.closeMobileDetail();
-    this.renderSourceFilter();
-    this.renderSourceContext();
-    this.renderAssets();
-    this.renderEditor();
-    this.refreshWorkingStatus();
-  }
-
-  findSelectedCollectionMeta() {
-    return findSelectedCollectionMeta(this);
-  }
-
-  openCollectionView(collectionId) {
-    return CollectionService.openCollectionView(this, collectionId);
-  }
-
-  leaveCollectionView() {
-    return CollectionService.leaveCollectionView(this);
-  }
-
-  async saveSelectedCollectionMetadata(patch = null) {
-    return CollectionService.saveSelectedCollectionMetadata(this, patch || this.dom.metadataEditor.getCollectionPatch());
-  }
-
-  renderAssets() {
-    return renderAssets(this);
-  }
-
-  selectItem(itemId) {
-    return selectItem(this, itemId);
-  }
-
-  getSelectedItemIds() {
-    return getSelectedItemIds(this);
-  }
-
-  getSelectedCollectionIds() {
-    return getSelectedCollectionIds(this);
-  }
-
-  getVisibleCollections() {
-    return getVisibleCollections(this);
-  }
-
-  isItemSelected(itemId) {
-    return isItemSelected(this, itemId);
-  }
-
-  repairCollectionSelectionState() {
-    return repairCollectionSelectionState(this);
-  }
-
-  repairSelectionState() {
-    return repairSelectionState(this);
-  }
-
-  toggleCollectionSelection(collectionId, selected = null) {
-    return toggleCollectionSelection(this, collectionId, selected);
-  }
-
-  toggleItemSelection(itemId, selected = null) {
-    return toggleItemSelection(this, itemId, selected);
-  }
-
-  clearCollectionSelection() {
-    return clearCollectionSelection(this);
-  }
-
-  clearItemSelection() {
-    return clearItemSelection(this);
-  }
-
-  findSelectedItem() {
-    return findSelectedItem(this);
-  }
-
-  resolveMetadataMode() {
-    return resolveMetadataMode(this);
-  }
-
-  syncMetadataModeFromState() {
-    return syncMetadataModeFromState(this);
-  }
-
-  renderMetadataMode(mode) {
-    return renderMetadataMode(this, mode);
-  }
-
-  setBrowserViewMode(level, mode) {
-    return setBrowserViewMode(this, level, mode);
-  }
-
-  renderEditor() {
-    return renderEditor(this);
-  }
-
-  collectEditorPatch() {
-    const selected = this.findSelectedItem();
-    return selected
-      ? this.buildItemPatchFromEditor(this.dom.metadataEditor.getItemPatch(), selected)
-      : this.dom.metadataEditor.getItemPatch();
-  }
-
-  confirmDeleteItems(items) {
-    const count = Array.isArray(items) ? items.length : 0;
-    if (count === 0) {
-      return false;
-    }
-    const heading = count === 1
-      ? 'Remove this item from the collection?'
-      : `Remove ${count} selected items from this collection?`;
-    const body = count === 1
-      ? 'This removes the item from the collection. It does not delete the original media file.'
-      : 'This removes them from the collection. It does not delete the original media files.';
-    return window.confirm(`${heading}\n\n${body}`);
-  }
-
-  canDeleteCollection(collectionId) {
-    if (!collectionId || collectionId === 'all') {
-      return false;
-    }
-    if (this.state.activeSourceFilter !== 'all') {
-      const source = this.getSourceById(this.state.activeSourceFilter);
-      const inActiveSource = (source?.collections || []).some((entry) => entry.id === collectionId);
-      if (!inActiveSource) {
-        return false;
-      }
-      if (source?.provider && typeof source.provider.deleteCollection === 'function' && source.capabilities?.canSaveMetadata) {
-        return true;
-      }
-      return this.state.localDraftCollections.some((entry) => entry.id === collectionId);
-    }
-    return this.state.localDraftCollections.some((entry) => entry.id === collectionId);
-  }
-
-  getDeletableSelectedCollectionIds() {
-    return this.getSelectedCollectionIds().filter((collectionId) => this.canDeleteCollection(collectionId));
-  }
-
-  repairFocusAfterDeletion(removedIds = []) {
-    const removed = new Set((Array.isArray(removedIds) ? removedIds : []).filter(Boolean));
-    this.state.selectedItemIds = this.getSelectedItemIds().filter((workspaceId) => !removed.has(workspaceId));
-
-    if (this.state.viewerItemId && removed.has(this.state.viewerItemId)) {
-      this.closeViewer();
-    }
-
-    if (!this.state.selectedItemId || !removed.has(this.state.selectedItemId)) {
-      this.repairSelectionState();
-      return;
-    }
-
-    const fallback = this.getVisibleAssets().find((item) => {
-      if (this.state.currentLevel === 'items' && this.state.openedCollectionId) {
-        return item.collectionId === this.state.openedCollectionId && !removed.has(item.workspaceId);
-      }
-      return !removed.has(item.workspaceId);
-    });
-    this.state.selectedItemId = fallback?.workspaceId || null;
-    this.repairSelectionState();
-  }
-
-  async deleteItemsFromState(items = []) {
-    for (const item of items) {
-      await this.cleanupRemovedItemArtifacts(item);
-    }
-    const removedIds = new Set(items.map((item) => item.workspaceId));
-    this.state.assets = this.state.assets.filter((item) => !removedIds.has(item.workspaceId));
-    return [...removedIds];
-  }
-
-  async deleteSelectedItems() {
-    const selectedIds = this.getSelectedItemIds();
-    const items = this.state.assets.filter((item) => selectedIds.includes(item.workspaceId));
-    return this.deleteItems(items, { mode: 'bulk' });
-  }
-
-  async deleteSelectedCollections() {
-    const selectedIds = this.getSelectedCollectionIds();
-    const deletableCollectionIds = selectedIds.filter((collectionId) => this.canDeleteCollection(collectionId));
-    if (deletableCollectionIds.length === 0) {
-      return false;
-    }
-
-    const confirmed = window.confirm(
-      deletableCollectionIds.length === 1
-        ? 'Delete this selected collection? This also removes its items from the draft.'
-        : `Delete ${deletableCollectionIds.length} selected collections? This also removes their items from the draft.`,
-    );
-    if (!confirmed) {
-      return false;
-    }
-
-    const removedSet = new Set();
-    try {
-      for (const collectionId of deletableCollectionIds) {
-        if (this.state.activeSourceFilter !== 'all') {
-          const source = this.getSourceById(this.state.activeSourceFilter);
-          const inActiveSource = (source?.collections || []).some((entry) => entry.id === collectionId);
-          if (inActiveSource && source?.provider && typeof source.provider.deleteCollection === 'function' && source.capabilities?.canSaveMetadata) {
-            await source.provider.deleteCollection(collectionId);
-          }
-        }
-        removedSet.add(collectionId);
-      }
-    } catch (error) {
-      this.setStatus(`Delete failed: ${error.message}`, 'warn');
-      return false;
-    }
-
-    this.state.localDraftCollections = this.state.localDraftCollections.filter((entry) => !removedSet.has(entry.id));
-    this.state.assets = this.state.assets.filter((item) => !removedSet.has(item.collectionId));
-    for (const source of this.state.sources) {
-      source.collections = (source.collections || []).filter((entry) => !removedSet.has(entry.id));
-      if (removedSet.has(source.selectedCollectionId)) {
-        source.selectedCollectionId = source.collections[0]?.id || null;
-      }
-    }
-
-    this.state.selectedCollectionIds = this.getSelectedCollectionIds().filter((id) => !removedSet.has(id));
-    if (removedSet.has(this.state.selectedCollectionId)) {
-      this.state.selectedCollectionId = 'all';
-    }
-    if (removedSet.has(this.state.openedCollectionId)) {
-      this.state.currentLevel = 'collections';
-      this.state.openedCollectionId = null;
-      this.state.selectedItemId = null;
-      this.state.selectedItemIds = [];
-      this.closeMobileDetail();
-    } else {
-      this.state.selectedItemIds = this.getSelectedItemIds().filter((workspaceId) => {
-        const item = this.state.assets.find((entry) => entry.workspaceId === workspaceId);
-        return Boolean(item);
-      });
-    }
-    if (this.state.selectedItemId) {
-      const selectedItemStillExists = this.state.assets.some((item) => item.workspaceId === this.state.selectedItemId);
-      if (!selectedItemStillExists) {
-        this.state.selectedItemId = null;
-      }
-    }
-
-    this.repairCollectionSelectionState();
-    this.repairSelectionState();
-    this.syncMetadataModeFromState();
-    this.renderSourcesList();
-    this.renderSourceFilter();
-    this.renderCollectionFilter();
-    this.renderAssets();
-    this.renderEditor();
-    this.refreshWorkingStatus();
-
-    if (this.state.opfsAvailable) {
-      await this.saveLocalDraft();
-    }
-    this.saveSourcesToStorage();
-    this.markDirty();
-    this.setStatus(
-      deletableCollectionIds.length === 1
-        ? 'Deleted 1 collection.'
-        : `Deleted ${deletableCollectionIds.length} collections.`,
-      'ok',
-    );
-    return true;
-  }
-
-  async deleteItem(workspaceId) {
-    const item = this.state.assets.find((entry) => entry.workspaceId === workspaceId);
-    if (!item) {
-      this.setStatus('Select an item to remove.', 'warn');
-      return false;
-    }
-    return this.deleteItems([item], { mode: 'single' });
-  }
-
-  async deleteItems(items = [], options = {}) {
-    const candidates = Array.from(
-      new Map((Array.isArray(items) ? items : []).filter(Boolean).map((item) => [item.workspaceId, item])).values(),
-    );
-    if (candidates.length === 0) {
-      this.setStatus('Select one or more items to remove.', 'warn');
-      return false;
-    }
-
-    if (!this.confirmDeleteItems(candidates)) {
-      return false;
-    }
-
-    const grouped = new Map();
-    for (const item of candidates) {
-      const key = `${item.sourceId}::${item.collectionId || ''}`;
-      if (!grouped.has(key)) {
-        grouped.set(key, []);
-      }
-      grouped.get(key).push(item);
-    }
-
-    const removedIds = [];
-    let removedCount = 0;
-    let removedLocalDraftItems = false;
-    let removedPersistedItems = false;
-
-    for (const [, groupItems] of grouped.entries()) {
-      const sample = groupItems[0];
-      const source = this.getSourceById(sample.sourceId);
-      const allLocalDraftItems = groupItems.every((item) => item.isLocalDraftAsset);
-
-      if (allLocalDraftItems) {
-        const deletedIds = await this.deleteItemsFromState(groupItems);
-        removedIds.push(...deletedIds);
-        removedCount += deletedIds.length;
-        removedLocalDraftItems = true;
-        if (source?.id) {
-          this.refreshSourceCollectionsAndCounts(source.id);
-        }
-        continue;
-      }
-
-      if (!source?.provider || typeof source.provider.removeItemsFromCollection !== 'function' || !source.capabilities?.canSaveMetadata) {
-        const sourceLabel = source?.displayLabel || source?.label || 'this source';
-        this.setStatus(`Remove failed: ${sourceLabel} does not currently support safe collection removal.`, 'warn');
-        return false;
-      }
-
-      this.setStatus(`Removing ${groupItems.length} item(s) from the collection...`, 'neutral');
-      await source.provider.removeItemsFromCollection(
-        sample.collectionId,
-        groupItems.map((item) => item.sourceAssetId),
-      );
-      const deletedIds = await this.deleteItemsFromState(groupItems);
-      removedIds.push(...deletedIds);
-      removedCount += deletedIds.length;
-      removedPersistedItems = true;
-      this.refreshSourceCollectionsAndCounts(source.id);
-    }
-
-    this.repairFocusAfterDeletion(removedIds);
-    this.renderSourcesList();
-    this.renderSourceFilter();
-    this.renderCollectionFilter();
-    this.renderAssets();
-    this.renderEditor();
-    this.refreshWorkingStatus();
-
-    if (this.state.opfsAvailable) {
-      if (candidates.some((item) => item.isLocalDraftAsset)) {
-        await this.saveLocalDraft();
-      } else {
-        await this.persistWorkspaceToOpfs();
-      }
-    }
-    this.saveSourcesToStorage();
-
-    const actionLabel = options.mode === 'single' ? 'Removed item from the collection.' : `Removed ${removedCount} item(s) from the collection.`;
-    this.setStatus(actionLabel, 'ok');
-    if (removedPersistedItems) {
-      this.markSavedToSource();
-    } else if (removedLocalDraftItems && this.state.opfsAvailable) {
-      this.markSavedToDraft();
-    } else {
-      this.markDirty();
-    }
-    return true;
-  }
-
-  async updateItem(id, patch, options = {}) {
-    const current = this.state.assets.find((item) => item.workspaceId === id);
-    if (!current) {
-      this.setStatus(`Could not find item ${id}`, 'warn');
-      return;
-    }
-
-    const source = this.getSourceById(current.sourceId);
-    const canSave = Boolean(source?.capabilities?.canSaveMetadata) && !current.isLocalDraftAsset;
-
-    if (canSave && source?.provider) {
-      try {
-        this.setStatus('Saving metadata...', 'neutral');
-        const updated = await source.provider.saveMetadata(current.sourceAssetId, patch);
-        if (!updated) {
-          this.setStatus(`Save failed: provider returned no updated item for ${current.id}`, 'warn');
-          return;
-        }
-
-        const next = {
-          ...updated,
-          workspaceId: current.workspaceId,
-          sourceAssetId: updated.id || current.sourceAssetId,
-          sourceId: current.sourceId,
-          sourceLabel: current.sourceLabel,
-          sourceDisplayLabel: current.sourceDisplayLabel,
-          providerId: current.providerId,
-        };
-        this.state.assets = this.state.assets.map((item) => (item.workspaceId === id ? next : item));
-        this.setStatus(
-          source?.providerId === 'github' ? 'Metadata saved to GitHub.' : 'Metadata saved.',
-          'ok',
-        );
-        this.markSavedToSource();
-      } catch (error) {
-        this.state.assets = this.state.assets.map((item) => {
-          if (item.workspaceId !== id) {
-            return item;
-          }
-          return {
-            ...item,
-            ...patch,
-            media: {
-              ...(item.media || {}),
-              ...(patch.media || {}),
-            },
-          };
-        });
-        this.setStatus(`Save failed: ${error.message}. Local edits were kept.`, 'warn');
-        this.markDirty();
-      }
-    } else {
-      this.state.assets = this.state.assets.map((item) => {
-        if (item.workspaceId !== id) {
-          return item;
-        }
-        return {
-          ...item,
-          ...patch,
-          media: {
-            ...(item.media || {}),
-            ...(patch.media || {}),
-          },
-        };
-      });
-      this.setStatus('Source is read-only. Changes are local to this workspace session.', 'warn');
-      this.markDirty();
-    }
-
-    if (options.explicitSave && !canSave) {
-      if (current.isLocalDraftAsset) {
-        this.setStatus('Local draft metadata saved. Publish to upload this asset.', 'ok');
-        this.markDirty();
-      } else {
-        this.setStatus('Selected item source is read-only. Changes are local only.', 'warn');
-      }
-    }
-
-    this.renderAssets();
-    this.renderEditor();
-    this.refreshWorkingStatus();
-  }
-
-  async connectCurrentProvider(options = {}) {
-    return connectCurrentProvider(this, options);
-  }
-
-  inspectSource(sourceId) {
-    return inspectSource(this, sourceId);
-  }
-
-  async refreshSource(sourceId, options = {}) {
-    return refreshSource(this, sourceId, options);
-  }
-
-  removeSource(sourceId) {
-    return removeSource(this, sourceId);
-  }
-
-  currentCollectionMeta() {
-    return currentCollectionMeta(this);
-  }
-
-  findCollectionMetaById(collectionId, sourceId = '') {
-    const normalizedId = String(collectionId || '').trim();
-    if (!normalizedId || normalizedId === 'all') {
-      return null;
-    }
-
-    const localDraftCollection = this.state.localDraftCollections.find((entry) => entry.id === normalizedId) || null;
-
-    if (sourceId) {
-      const source = this.getSourceById(sourceId);
-      const sourceCollection = source?.collections?.find((entry) => entry.id === normalizedId);
-      if (sourceCollection) {
-        return localDraftCollection ? { ...sourceCollection, ...localDraftCollection } : sourceCollection;
-      }
-    }
-
-    for (const source of this.state.sources) {
-      const sourceCollection = (source.collections || []).find((entry) => entry.id === normalizedId);
-      if (sourceCollection) {
-        return localDraftCollection ? { ...sourceCollection, ...localDraftCollection } : sourceCollection;
-      }
-    }
-
-    return localDraftCollection;
-  }
-
-  resolveItemMetadata(item) {
-    const collection = this.findCollectionMetaById(item?.collectionId, item?.sourceId) || {};
-    return resolveItemMetadata(item, collection);
-  }
-
-  resolveItemForDisplay(item) {
-    const resolved = this.resolveItemMetadata(item);
-    return {
-      ...item,
-      description: resolved.description || '',
-      license: resolved.license || '',
-      attribution: resolved.attribution || '',
-      language: resolved.language || '',
-      metadataResolution: resolved.metadataResolution || {},
-      overrides: item?.overrides && typeof item.overrides === 'object' ? { ...item.overrides } : {},
-    };
-  }
-
-  deriveItemEditorState(item) {
-    const collection = this.findCollectionMetaById(item?.collectionId, item?.sourceId) || {};
-    return deriveItemEditorState(item, collection);
-  }
-
-  buildItemPatchFromEditor(editorState, previousItem) {
-    const collection = this.findCollectionMetaById(previousItem?.collectionId, previousItem?.sourceId) || {};
-    return getItemOverridePatch(editorState, collection, previousItem);
-  }
-
-  toManifestItem(item) {
-    return ManifestService.toManifestItem(this, item);
-  }
-
-  buildManifestFromState() {
-    return ManifestService.buildManifestFromState(this);
-  }
-
-  async generateManifest(options = {}) {
-    return ManifestService.generateManifest(this, options);
-  }
-
-  resolvePublishSource() {
-    if (!this.state.sources.length) {
-      return null;
-    }
-    if (this.state.activeSourceFilter === 'all') {
-      return null;
-    }
-    return this.getSourceById(this.state.activeSourceFilter);
-  }
-
-  resolvePublishCollectionId() {
-    if (this.state.currentLevel === 'items' && this.state.openedCollectionId) {
-      return this.state.openedCollectionId;
-    }
-    const selectedCollectionId = this.state.selectedCollectionId || 'all';
-    return selectedCollectionId === 'all' ? '' : selectedCollectionId;
-  }
-
-  getPublishActionState() {
-    const collectionId = this.resolvePublishCollectionId();
-    const source = this.resolvePublishSource();
-    const visible = this.state.currentLevel === 'items' || Boolean(collectionId);
-
-    if (!visible) {
-      return {
-        label: 'Publish collection',
-        visible: false,
-        disabled: true,
-        reason: 'Select a collection to publish.',
-      };
-    }
-
-    if (this.state.publishInProgress) {
-      return {
-        label: 'Publish collection',
-        visible: true,
-        disabled: true,
-        reason: 'Publishing is already in progress.',
-      };
-    }
-
-    if (!collectionId) {
-      return {
-        label: 'Publish collection',
-        visible: true,
-        disabled: true,
-        reason: 'Open or select a collection to publish.',
-      };
-    }
-
-    if (!source) {
-      return {
-        label: 'Publish collection',
-        visible: true,
-        disabled: true,
-        reason: 'Select a single active connection to publish this collection.',
-      };
-    }
-
-    if (!source.capabilities?.canPublish) {
-      let reason = 'The active connection does not currently support publishing.';
-      if (source.needsCredentials) {
-        reason = 'Reconnect this connection and provide credentials before publishing.';
-      } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
-        reason = 'Reconnect or validate this connection before publishing.';
-      }
-      return {
-        label: 'Publish collection',
-        visible: true,
-        disabled: true,
-        reason,
-      };
-    }
-
-    if (!source.provider || typeof source.provider.publishCollection !== 'function') {
-      return {
-        label: 'Publish collection',
-        visible: true,
-        disabled: true,
-        reason: 'This connection is connected, but upload publishing is not available yet.',
-      };
-    }
-
-    return {
-      label: 'Publish collection',
-      visible: true,
-      disabled: false,
-      reason: '',
-    };
-  }
-
-  async publishActiveSourceDraft() {
-    const source = this.resolvePublishSource();
-    if (!source) {
-      this.setStatus('Select a single source in the viewport filter before publishing.', 'warn');
-      return;
-    }
-
-    if (!source.capabilities?.canPublish) {
-      if (source.needsCredentials) {
-        this.setStatus('Publish blocked: this connection is missing credentials. Reconnect and re-enter credentials.', 'warn');
-      } else if (source.needsReconnect || source.capabilities?.requiresCredentials) {
-        this.setStatus('Publish blocked: this connection needs reconnect/validation before publishing.', 'warn');
-      } else {
-        this.setStatus('Publish blocked: this connection does not currently support publish uploads.', 'warn');
-      }
-      return;
-    }
-
-    if (!source.provider || typeof source.provider.publishCollection !== 'function') {
-      this.setStatus('This source does not support upload publishing yet.', 'warn');
-      return;
-    }
-    const collectionId = this.resolvePublishCollectionId();
-    if (!collectionId) {
-      this.setStatus('Select one collection before publishing.', 'warn');
-      return;
-    }
-    if (this.state.selectedCollectionId !== collectionId) {
-      this.state.selectedCollectionId = collectionId;
-    }
-
-    const manifest = await this.generateManifest({ silent: true });
-    if (!manifest) {
-      return;
-    }
-    const collectionRootPath = this.activeCollectionRootPath() || this.normalizeCollectionRootPath(`${manifest.id}/`, manifest.id);
-
-    const pending = this.state.assets.filter(
-      (item) =>
-        item.sourceId === source.id &&
-        item.collectionId === collectionId &&
-        item.isLocalDraftAsset &&
-        normalizeMediaRef(item.media).mode === MEDIA_MODES.managed &&
-        item.include !== false &&
-        item.draftUploadStatus !== 'uploaded',
-    );
-
-    if (pending.length === 0) {
-      this.setStatus('No pending local assets. Publishing manifest only...', 'neutral');
-    } else {
-      this.setStatus(`Publishing ${pending.length} asset(s) to the active connection...`, 'neutral');
-    }
-    this.setWorkingStateFlags({ publishInProgress: true, publishError: '', lastPublishResult: null });
-
-    this.state.assets = this.state.assets.map((item) => {
-      if (!pending.some((entry) => entry.workspaceId === item.workspaceId)) {
-        return item;
-      }
-      return {
-        ...item,
-        draftUploadStatus: 'uploading',
-        uploadError: '',
-      };
-    });
-    this.renderAssets();
-    this.renderEditor();
-
-    const uploads = [];
-    let failedPreparationCount = 0;
-    for (const item of pending) {
-      // Referenced media stays as a link in the manifest and is not prepared for upload.
-      const original = await this.loadLocalAssetBlob(item, 'original');
-      if (!original) {
-        failedPreparationCount += 1;
-        this.state.assets = this.state.assets.map((entry) =>
-          entry.workspaceId === item.workspaceId
-            ? { ...entry, draftUploadStatus: 'failed', uploadError: 'Original file missing from local draft storage.' }
-            : entry,
-        );
-        continue;
-      }
-
-      uploads.push({
-        path: this.joinCollectionRootPath(collectionRootPath, item.media?.url || ''),
-        blob: original,
-        message: `Upload ${item.id} original via Open Collections Manager`,
-      });
-
-      const thumb = await this.loadLocalAssetBlob(item, 'thumbnail');
-      if (thumb && item.thumbnailRepoPath) {
-        uploads.push({
-          path: this.joinCollectionRootPath(collectionRootPath, item.thumbnailRepoPath),
-          blob: thumb,
-          message: `Upload ${item.id} thumbnail via Open Collections Manager`,
-        });
-      }
-    }
-
-    if (failedPreparationCount > 0) {
-      this.renderAssets();
-      this.renderEditor();
-      this.setStatus(`${failedPreparationCount} asset(s) failed local draft preparation. Fix and retry publish.`, 'warn');
-      this.setWorkingStateFlags({ publishInProgress: false, publishError: 'Local draft preparation failed.' });
-      return;
-    }
-
-    try {
-      await source.provider.publishCollection({
-        manifest,
-        uploads,
-        collectionRootPath,
-        commitMessage: `Publish collection ${manifest.id} via Open Collections Manager`,
-      });
-
-      this.state.assets = this.state.assets.map((item) => {
-        if (item.sourceId !== source.id || !item.isLocalDraftAsset) {
-          return item;
-        }
-        const nextMediaRelativePath = item.media?.url || '';
-        const nextThumbRelativePath = item.thumbnailRepoPath || item.media?.thumbnailUrl || '';
-        return {
-          ...item,
-          media: {
-            ...normalizeMediaRef(item.media),
-            url: nextMediaRelativePath,
-            thumbnailUrl: nextThumbRelativePath,
-          },
-          draftUploadStatus: 'uploaded',
-          isLocalDraftAsset: false,
-          uploadError: '',
-        };
-      });
-
-      const destinationDetail = this.publishDestinationDetail(source, collectionRootPath);
-      const publishSummary = {
-        ok: true,
-        hostId: source.id,
-        hostLabel: source.displayLabel || source.label || source.providerLabel || 'Host',
-        providerId: source.providerId,
-        destination: destinationDetail,
-        detail: `Published ${manifest.id} to ${destinationDetail}`,
-        at: new Date().toISOString(),
-      };
-      source.status = publishSummary.detail;
-      source.lastPublishResult = publishSummary;
-      this.state.manifest = manifest;
-      this.dom.manifestPreview.textContent = JSON.stringify(manifest, null, 2);
-      this.refreshSourceCollectionsAndCounts(source.id);
-      this.renderSourcesList();
-      this.renderSourceFilter();
-      this.renderCollectionFilter();
-      this.state.currentLevel = 'collections';
-      this.state.openedCollectionId = null;
-      this.state.selectedItemId = null;
-      this.state.selectedItemIds = [];
-      this.syncMetadataModeFromState();
-      this.closeMobileDetail();
-      this.renderSourceContext();
-      this.renderAssets();
-      this.renderEditor();
-
-      if (this.state.opfsAvailable) {
-        await this.saveLocalDraft();
-      }
-      this.saveSourcesToStorage();
-      this.setStatus(`Publish complete via ${publishSummary.hostLabel}. Destination: ${publishSummary.destination}.`, 'ok');
-      this.setWorkingStateFlags({
-        publishInProgress: false,
-        publishError: '',
-        lastPublishResult: publishSummary,
-        hasUnsavedChanges: false,
-        lastSaveTarget: 'source',
-      });
-    } catch (error) {
-      this.state.assets = this.state.assets.map((item) => {
-        if (item.sourceId !== source.id || item.draftUploadStatus !== 'uploading') {
-          return item;
-        }
-        return {
-          ...item,
-          draftUploadStatus: 'failed',
-          uploadError: error.message,
-        };
-      });
-      this.renderAssets();
-      this.renderEditor();
-      const destinationDetail = this.publishDestinationDetail(source, collectionRootPath);
-      const failureSummary = {
-        ok: false,
-        hostId: source.id,
-        hostLabel: source.displayLabel || source.label || source.providerLabel || 'Host',
-        providerId: source.providerId,
-        destination: destinationDetail,
-        detail: `Publish to ${destinationDetail} failed: ${error.message || 'Unknown error.'}`,
-        at: new Date().toISOString(),
-      };
-      source.status = failureSummary.detail;
-      source.lastPublishResult = failureSummary;
-      this.saveSourcesToStorage();
-      this.setStatus(failureSummary.detail, 'warn');
-      this.setWorkingStateFlags({ publishInProgress: false, publishError: error.message || 'Publish failed.', lastPublishResult: failureSummary });
-    }
-  }
-
-  async copyManifestToClipboard() {
-    return ManifestService.copyManifestToClipboard(this);
-  }
-
-  downloadManifest() {
-    return ManifestService.downloadManifest(this);
-  }
-
-  activeSourceLabel() {
-    const source = this.getSourceById(this.state.activeSourceFilter);
-    return source
-      ? (source.displayLabel || source.label || source.providerLabel || 'Connection')
-      : 'Select connection';
-  }
-
-  workflowContextText() {
-    const sourceLabel = this.activeSourceLabel() || 'none';
-    const collectionId = this.state.selectedCollectionId && this.state.selectedCollectionId !== 'all'
-      ? this.state.selectedCollectionId
-      : 'none';
-    const rootPath = collectionId !== 'none' ? this.activeCollectionRootPath() : 'n/a';
-    return `Connection: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
-  }
+	static get observedAttributes() {
+		return [
+			"show-header",
+			"show-connections-action",
+			"show-manage-account-action",
+			"show-more-action",
+			"data-oc-app-mode",
+			"data-shell-embed",
+			"data-workbench-embed",
+		];
+	}
+
+	constructor() {
+		super();
+
+		// State buckets: workspace persistence, provider/source connectivity, active collection, selection, and UI mode.
+		this.state = createInitialState();
+
+		this.opfsStorage = createOpfsStorage();
+		this.credentialStore = createCredentialStore();
+		this._autosaveTimer = null;
+		this._platformDropCleanup = null;
+		this._platformDropReady = null;
+		this.localAssetBlobs = new Map();
+		this.objectUrls = new Set();
+		this.selectedLocalDirectoryHandle = null;
+		this.pendingSourceRepair = null;
+		this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
+
+		this.providerFactories = createDefaultConnectionProviderFactories();
+		this.providers = createDefaultConnectionProviders();
+		this.providerCatalog = createDefaultConnectionProviderCatalog(
+			this.providerFactories,
+		);
+		this.connectionsRuntime = createConnectionsRuntime({
+			defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
+			storageKey: SOURCES_STORAGE_KEY,
+			providers: this.providers,
+			providerFactories: this.providerFactories,
+			providerCatalog: this.providerCatalog,
+			credentialStore: this.credentialStore,
+			makeConnectionId: makeSourceId,
+		});
+
+		this.shadow = this.attachShadow({ mode: "open" });
+		this.renderShell();
+		this.cacheDom();
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue === newValue) {
+			return;
+		}
+		if (
+			name === "show-header" ||
+			name === "show-connections-action" ||
+			name === "show-manage-account-action" ||
+			name === "show-more-action"
+		) {
+			this.applyHeaderActionPresentation();
+			return;
+		}
+		if (
+			name === "data-oc-app-mode" ||
+			name === "data-shell-embed" ||
+			name === "data-workbench-embed"
+		) {
+			this.applyConnectionEntryPresentation();
+			this.renderConnectionsFallbackNotice();
+		}
+	}
+
+	connectedCallback() {
+		this.toggleAttribute("data-mobile-shell", this.isMobileShellRuntime());
+		this.bindEvents();
+		this.setStatus("No connections yet.", "neutral");
+		this.refreshWorkingStatus();
+		this.setConnectionStatus("No connections yet.", "neutral");
+		this.renderCapabilities(
+			this.providerFactories.example.getCapabilities(),
+		);
+		this.dom.addConnectionPanel?.setLocalFolderSupport(
+			this.localFolderPickerSupported,
+		);
+		this.renderProviderCatalog();
+		this.setSelectedProvider("example");
+		this.renderSourcesList();
+		this.renderSourceFilter();
+		this.renderAssets();
+		this.renderEditor();
+		this.renderWorkspaceContext();
+		this.renderSourceContext();
+		this.applyHeaderActionPresentation();
+		this.applyConnectionEntryPresentation();
+		this.setLocalDraftStatus("Checking local draft storage...", "neutral");
+		this.setLocalDraftControlsEnabled(false);
+		this.initializeLocalDraftState();
+		this.syncResponsivePanels();
+		this._handleWindowResize = () => this.syncResponsivePanels();
+		window.addEventListener("resize", this._handleWindowResize);
+		this.initializePlatformFileDrops();
+	}
+
+	disconnectedCallback() {
+		if (this._handleWindowResize) {
+			window.removeEventListener("resize", this._handleWindowResize);
+			this._handleWindowResize = null;
+		}
+		if (this._platformDropCleanup) {
+			this._platformDropCleanup();
+			this._platformDropCleanup = null;
+		}
+		this._platformDropReady = null;
+	}
+
+	renderShell() {
+		renderShell(this.shadow);
+	}
+
+	cacheDom() {
+		this.dom = cacheDomElements(this.shadow);
+		initializeDomDefaults(this);
+	}
+
+	bindEvents() {
+		bindDomEvents(this);
+	}
+
+	openDialog(dialog) {
+		if (!dialog) {
+			return;
+		}
+
+		if (dialog.open) {
+			return;
+		}
+
+		if (typeof dialog.showModal === "function") {
+			dialog.showModal();
+			return;
+		}
+
+		dialog.setAttribute("open", "open");
+	}
+
+	closeDialog(dialog) {
+		if (!dialog) {
+			return;
+		}
+
+		if (!dialog.open) {
+			return;
+		}
+
+		if (dialog === this.dom?.connectionsDialog) {
+			this.showConnectionsListView();
+			this.clearPendingSourceRepair();
+			this.dom.addConnectionPanel?.resetFlow?.();
+		}
+
+		if (typeof dialog.close === "function") {
+			dialog.close();
+			return;
+		}
+
+		dialog.removeAttribute("open");
+	}
+
+	setConnectionsDialogHeader(title = "Connections") {
+		const normalizedTitle = String(title || "").trim() || "Connections";
+		if (this.dom?.connectionsDialog) {
+			this.dom.connectionsDialog.setAttribute(
+				"aria-label",
+				normalizedTitle,
+			);
+		}
+		if (this.dom?.connectionsDialogTitle) {
+			this.dom.connectionsDialogTitle.textContent = normalizedTitle;
+		}
+	}
+
+	showConnectionsListView() {
+		this.state.connectionsDialogView = "list";
+		this.renderConnectionsListPanel();
+		this.dom?.connectionsListPanel?.classList.remove("is-hidden");
+		this.dom?.addConnectionPanel?.classList.add("is-hidden");
+		this.setConnectionsDialogHeader(
+			this.shouldPreferAccountConnectionsHandoff()
+				? "Connections (fallback)"
+				: "Connections",
+		);
+	}
+
+	showAddConnectionView() {
+		this.state.connectionsDialogView = "add";
+		this.dom?.connectionsListPanel?.classList.add("is-hidden");
+		this.dom?.addConnectionPanel?.classList.remove("is-hidden");
+		this.setConnectionsDialogHeader(
+			this.shouldPreferAccountConnectionsHandoff()
+				? "Connections (fallback)"
+				: "Connections",
+		);
+	}
+
+	openConnectionsDialog() {
+		this.renderConnectionsFallbackNotice();
+		this.showConnectionsListView();
+		this.openDialog(this.dom.connectionsDialog);
+	}
+
+	openManageConnections(options = {}) {
+		// Compatibility seam: prefer account handoff in embedded/shell mode, keep local manager dialog fallback.
+		if (this.shouldPreferAccountConnectionsHandoff()) {
+			const didNavigate =
+				this.requestAccountConnectionsNavigation(options);
+			if (didNavigate) {
+				return;
+			}
+		}
+
+		const delegate =
+			typeof this.onManageConnections === "function"
+				? this.onManageConnections
+				: null;
+		if (delegate) {
+			const handled = delegate(options);
+			if (handled) {
+				return;
+			}
+		}
+		this.openConnectionsDialog();
+	}
+
+	shouldPreferAccountConnectionsHandoff() {
+		return this.isEmbeddedRuntime();
+	}
+
+	isEmbeddedRuntime() {
+		const runtimeMode =
+			this.dataset?.ocAppMode || this.getAttribute("data-oc-app-mode");
+		if (runtimeMode === APP_RUNTIME_MODES.EMBEDDED) {
+			return true;
+		}
+		return (
+			this.hasAttribute("data-shell-embed") ||
+			this.hasAttribute("data-workbench-embed")
+		);
+	}
+
+	connectionEntryLabelForRuntime() {
+		return this.shouldPreferAccountConnectionsHandoff()
+			? "Manage connections in Account"
+			: "Connections";
+	}
+
+	browserConnectionActionLabel() {
+		return this.shouldPreferAccountConnectionsHandoff()
+			? "Manage in Account"
+			: "Add connection";
+	}
+
+	parseBooleanAttribute(name, fallback = false) {
+		if (!this.hasAttribute(name)) {
+			return fallback;
+		}
+		const raw = this.getAttribute(name);
+		if (raw == null || raw === "") {
+			return true;
+		}
+		return !["false", "0", "no", "off"].includes(
+			String(raw).trim().toLowerCase(),
+		);
+	}
+
+	get showHeader() {
+		return this.parseBooleanAttribute("show-header", false);
+	}
+
+	set showHeader(value) {
+		this.toggleAttribute("show-header", Boolean(value));
+	}
+
+	get showConnectionsAction() {
+		if (this.hasAttribute("show-manage-account-action")) {
+			return this.parseBooleanAttribute(
+				"show-manage-account-action",
+				false,
+			);
+		}
+		return this.parseBooleanAttribute("show-connections-action", false);
+	}
+
+	set showConnectionsAction(value) {
+		this.toggleAttribute("show-connections-action", Boolean(value));
+	}
+
+	get showMoreAction() {
+		return this.parseBooleanAttribute("show-more-action", false);
+	}
+
+	set showMoreAction(value) {
+		this.toggleAttribute("show-more-action", Boolean(value));
+	}
+
+	applyHeaderActionPresentation() {
+		const showHeaderActions = this.showHeader;
+		const showConnectionsAction =
+			showHeaderActions && this.showConnectionsAction;
+		const showMoreAction = showHeaderActions && this.showMoreAction;
+		if (this.dom.managerHeader) {
+			this.dom.managerHeader.hidden = !showHeaderActions;
+			this.dom.managerHeader.setActionsVisibility?.({
+				showHeaderActions,
+				showConnectionsAction,
+				showMoreAction,
+			});
+		}
+		const headerState = {
+			showHeaderActions: false,
+			showConnectionsAction: false,
+			showMoreAction: false,
+		};
+		this.dom.collectionBrowser?.update?.(headerState);
+		this.dom.mobileFlow?.setBrowserState?.(headerState);
+	}
+
+	applyConnectionEntryPresentation() {
+		const connectionActionLabel = this.connectionEntryLabelForRuntime();
+		this.dom.managerHeader?.setConnectionEntryLabel?.(
+			connectionActionLabel,
+		);
+		this.dom.collectionBrowser?.update?.({ connectionActionLabel });
+		this.dom.mobileFlow?.setBrowserState?.({ connectionActionLabel });
+	}
+
+	renderConnectionsFallbackNotice() {
+		if (!this.dom?.connectionsFallbackNote) {
+			return;
+		}
+		const compatibilityMode = this.shouldPreferAccountConnectionsHandoff();
+		this.dom.connectionsFallbackNote.hidden = !compatibilityMode;
+		if (compatibilityMode) {
+			this.dom.connectionsFallbackNote.textContent =
+				"Account is the primary place to manage connections. This local dialog is a compatibility fallback.";
+			this.setConnectionsDialogHeader("Connections (fallback)");
+			return;
+		}
+		this.dom.connectionsFallbackNote.textContent = "";
+		this.setConnectionsDialogHeader("Connections");
+	}
+
+	requestAccountConnectionsNavigation(options = {}) {
+		const detail = {
+			sourceAppId: "collection-manager",
+			targetAppId: "collection-account",
+			targetSection: "connections",
+			intent: String(options.intent || "list"),
+			source: String(options.source || ""),
+			sourceId: String(options.sourceId || ""),
+			mode: String(options.mode || ""),
+		};
+		const navigateEvent = new CustomEvent(APP_LIFECYCLE_EVENTS.NAVIGATE, {
+			detail,
+			bubbles: true,
+			composed: true,
+			cancelable: true,
+		});
+		// Returns true when shell/host claims navigation via preventDefault().
+		return this.dispatchEvent(navigateEvent) === false;
+	}
+
+	openAddHostDialog() {
+		this.clearPendingSourceRepair();
+		this.dom.addConnectionPanel?.resetFlow?.();
+		this.showAddConnectionView();
+		this.openDialog(this.dom.connectionsDialog);
+	}
+
+	openCredentialRepairDialog(sourceId) {
+		const source = this.prepareSourceRepair(sourceId, "credentials");
+		if (!source || !["github", "s3"].includes(source.providerId)) {
+			return;
+		}
+		this.inspectSource(source.id);
+		this.dom.addConnectionPanel?.openRepairCredentials?.(source.providerId);
+		this.showAddConnectionView();
+		this.openDialog(this.dom.connectionsDialog);
+	}
+
+	isMobileViewport() {
+		if (this.isMobileShellRuntime()) {
+			return true;
+		}
+		return (
+			typeof window !== "undefined" &&
+			window.matchMedia("(max-width: 760px)").matches
+		);
+	}
+
+	isMobileShellRuntime() {
+		return getPlatformType() === PLATFORM_TYPES.CAPACITOR;
+	}
+
+	openMobileDetail() {
+		this.state.mobileView = "detail";
+		this.syncResponsivePanels();
+	}
+
+	closeMobileDetail() {
+		this.state.mobileView = "browse";
+		this.syncResponsivePanels();
+	}
+
+	syncResponsivePanels() {
+		if (!this.dom?.metadataEditor || !this.dom?.paneLayout) {
+			return;
+		}
+
+		// Desktop keeps the split-pane inspector. Mobile uses a separate browse/detail flow.
+		const inspectorPlacement = this.normalizeInspectorPlacement(
+			this.state.inspectorPlacement,
+		);
+		this.state.inspectorPlacement = inspectorPlacement;
+		this.dom.paneLayout.inspectorPlacement = inspectorPlacement;
+		this.dom.metadataEditor.setMobileOpen(false);
+		this.dom.metadataEditor.setPresentation?.("inspector");
+		this.dom.mobileFlow?.setMobileView(this.state.mobileView);
+	}
+
+	normalizeInspectorPlacement(placement) {
+		return placement === "bottom" ||
+			placement === "hidden" ||
+			placement === "right"
+			? placement
+			: "right";
+	}
+
+	setInspectorPlacement(placement = "right") {
+		this.state.inspectorPlacement =
+			this.normalizeInspectorPlacement(placement);
+		this.syncResponsivePanels();
+	}
+
+	applyInspectorModeForViewMode(mode) {
+		void mode;
+		// Intentionally no-op: inspector placement is a shell-level concern.
+	}
+
+	renderProviderCatalog() {
+		this.dom.addConnectionPanel?.setProviderCatalog(this.providerCatalog);
+	}
+
+	setSelectedProvider(providerId) {
+		return setSelectedProvider(this, providerId);
+	}
+
+	setStatus(text, tone = "neutral") {
+		const statusText = String(text || "").trim() || "Ready";
+		const statusTone = tone || "neutral";
+		this.dom.collectionBrowser?.update?.({ statusText, statusTone });
+		this.dom.mobileFlow?.setBrowserState?.({ statusText, statusTone });
+	}
+
+	setWorkingStateFlags(patch = {}) {
+		Object.assign(this.state, patch || {});
+		this.refreshWorkingStatus();
+	}
+
+	markDirty() {
+		this.setWorkingStateFlags({
+			hasUnsavedChanges: true,
+			lastSaveTarget: "",
+			publishError: "",
+		});
+	}
+
+	markSavedToSource() {
+		this.setWorkingStateFlags({
+			hasUnsavedChanges: false,
+			lastSaveTarget: "source",
+			publishError: "",
+		});
+	}
+
+	markSavedToDraft() {
+		this.setWorkingStateFlags({
+			hasUnsavedChanges: false,
+			hasLocalDraft: true,
+			lastSaveTarget: "draft",
+			publishError: "",
+		});
+	}
+
+	refreshWorkingStatus() {
+		const workingStatus = computeWorkingStatus(this.state);
+		const publishAction = this.getPublishActionState();
+		this.dom.collectionBrowser?.setPublishActionState?.(publishAction);
+		this.dom.mobileFlow?.setPublishActionState?.(publishAction);
+		this.dom.collectionBrowser?.setWorkingStatus?.(workingStatus);
+		this.dom.mobileFlow?.setWorkingStatus?.(workingStatus);
+	}
+
+	setConnectionStatus(text, tone = false) {
+		const resolvedTone =
+			typeof tone === "boolean" ? (tone ? "ok" : "warn") : tone;
+		this.dom.addConnectionPanel?.setConnectionStatus(text, resolvedTone);
+	}
+
+	setLocalDraftStatus(text, tone = "neutral") {
+		const colors = {
+			neutral: "#64748b",
+			ok: "#166534",
+			warn: "#9a3412",
+		};
+		this.state.opfsStatus = text;
+		if (this.dom?.localDraftStatus) {
+			this.dom.localDraftStatus.textContent = text;
+			this.dom.localDraftStatus.style.color =
+				colors[tone] || colors.neutral;
+		}
+	}
+
+	setLocalDraftControlsEnabled(enabled) {
+		const disabled = !enabled;
+		if (this.dom?.saveLocalDraftBtn) {
+			this.dom.saveLocalDraftBtn.disabled = disabled;
+			this.dom.restoreLocalDraftBtn.disabled = disabled;
+			this.dom.discardLocalDraftBtn.disabled = disabled;
+		}
+	}
+
+	draftCollectionId() {
+		return (
+			this.dom.collectionId.value.trim() ||
+			MANAGER_CONFIG.defaultCollectionMeta.id ||
+			"collection-draft"
+		);
+	}
+
+	draftFilePath(collectionId = this.draftCollectionId()) {
+		return `${COLLECTIONS_DIR_PATH}/${collectionId}.json`;
+	}
+
+	sourceFilePath(sourceId) {
+		return `${SOURCES_DIR_PATH}/${sourceId}.json`;
+	}
+
+	setDropTargetState(active) {
+		this.state.isDropTargetActive = Boolean(active);
+		this.dom.collectionBrowser?.setDropTargetActive(
+			this.state.isDropTargetActive,
+		);
+	}
+
+	canAcceptPlatformFileDrops() {
+		return this.isConnected && !this.hidden;
+	}
+
+	async initializePlatformFileDrops() {
+		if (this._platformDropCleanup || this._platformDropReady) {
+			return this._platformDropReady;
+		}
+
+		this._platformDropReady = subscribeToManagerFileDrops(async (event) => {
+			if (!this.canAcceptPlatformFileDrops()) {
+				return;
+			}
+
+			const type = event?.type || "";
+			if (type === "enter" || type === "over") {
+				this.setDropTargetState(true);
+				return;
+			}
+			if (type === "leave") {
+				this.setDropTargetState(false);
+				return;
+			}
+			if (type === "drop") {
+				this.setDropTargetState(false);
+				const files = Array.isArray(event?.files) ? event.files : [];
+				if (files.length > 0) {
+					await this.ingestImageFiles(files);
+				}
+			}
+		})
+			.then((cleanup) => {
+				this._platformDropCleanup =
+					typeof cleanup === "function" ? cleanup : null;
+				return this._platformDropCleanup;
+			})
+			.catch((error) => {
+				console.warn(
+					"[open-collections-manager] Failed to initialize platform file drops.",
+					error,
+				);
+				return null;
+			});
+
+		return this._platformDropReady;
+	}
+
+	isSupportedImageFile(file) {
+		if (!file) {
+			return false;
+		}
+		const mime = (file.type || "").toLowerCase();
+		if (
+			mime.startsWith("image/jpeg") ||
+			mime.startsWith("image/png") ||
+			mime.startsWith("image/webp") ||
+			mime.startsWith("image/gif")
+		) {
+			return true;
+		}
+		return /\.(jpe?g|png|webp|gif)$/i.test(file.name || "");
+	}
+
+	toWorkspaceItemId(sourceId, itemId) {
+		return toWorkspaceItemId(sourceId, itemId);
+	}
+
+	slugifySegment(value, fallback = "item") {
+		return slugifySegmentUtil(value, fallback);
+	}
+
+	hostNameFromPath(path, fallback = "Local host") {
+		return hostNameFromPathUtil(path, fallback);
+	}
+
+	normalizeCollectionRootPath(rootPath, fallbackId = "") {
+		return normalizeCollectionRootPathUtil(rootPath, fallbackId);
+	}
+
+	joinCollectionRootPath(collectionRootPath, relativePath = "") {
+		return joinCollectionRootPathUtil(
+			collectionRootPath,
+			relativePath,
+			this.state.selectedCollectionId || "collection",
+		);
+	}
+
+	activeCollectionRootPath() {
+		return activeCollectionRootPath(this);
+	}
+
+	renderWorkspaceContext() {
+		return renderWorkspaceContext(this);
+	}
+
+	readableTitleFromFilename(name, fallbackId) {
+		const base = String(name || "").replace(/\.[^.]+$/, "");
+		const cleaned = base.replace(/[_-]+/g, " ").trim();
+		return cleaned || fallbackId;
+	}
+
+	openNewCollectionDialog() {
+		return openNewCollectionDialog(this);
+	}
+
+	setCollectionMetaFields(meta = {}) {
+		return setCollectionMetaFields(this, meta);
+	}
+
+	collectionIdExists(collectionId) {
+		return CollectionService.collectionIdExists(this, collectionId);
+	}
+
+	ensureUniqueCollectionId(baseId) {
+		return CollectionService.ensureUniqueCollectionId(this, baseId);
+	}
+
+	buildInitialCollectionManifest(meta) {
+		return CollectionService.buildInitialCollectionManifest(this, meta);
+	}
+
+	async createNewCollectionDraft() {
+		return CollectionService.createNewCollectionDraft(this);
+	}
+
+	extensionFromName(name = "", fallback = ".jpg") {
+		const match = String(name)
+			.toLowerCase()
+			.match(/\.[a-z0-9]+$/);
+		return match ? match[0] : fallback;
+	}
+
+	uniqueDraftItemId(base, sourceId, collectionId) {
+		const existing = new Set(
+			this.state.assets
+				.filter(
+					(item) =>
+						item.sourceId === sourceId &&
+						item.collectionId === collectionId,
+				)
+				.map((item) => item.id),
+		);
+		if (!existing.has(base)) {
+			return base;
+		}
+		let index = 2;
+		while (existing.has(`${base}-${index}`)) {
+			index += 1;
+		}
+		return `${base}-${index}`;
+	}
+
+	getActiveIngestionSource() {
+		if (!this.state.sources.length) {
+			this.setStatus(
+				"Connect a writable storage source before adding images.",
+				"warn",
+			);
+			return null;
+		}
+
+		if (this.state.activeSourceFilter === "all") {
+			this.setStatus(
+				"Select a specific storage source before adding images.",
+				"warn",
+			);
+			return null;
+		}
+
+		const source = this.getSourceById(this.state.activeSourceFilter);
+		if (!source) {
+			this.setStatus("Selected storage source was not found.", "warn");
+			return null;
+		}
+
+		if (source.providerId !== "github" && source.providerId !== "local") {
+			this.setStatus(
+				"Image upload is currently available for GitHub and local folder connections.",
+				"warn",
+			);
+			return null;
+		}
+
+		if (
+			source.providerId === "github" &&
+			(source.needsReconnect || source.needsCredentials)
+		) {
+			this.setStatus(
+				"Reconnect the selected GitHub source before adding local draft assets.",
+				"warn",
+			);
+			return null;
+		}
+
+		if (source.providerId === "local") {
+			if (source.needsReconnect || !source.provider) {
+				this.setStatus(
+					"Reconnect the selected local connection before adding images.",
+					"warn",
+				);
+				return null;
+			}
+			if (!source.capabilities?.canSaveMetadata) {
+				this.setStatus(
+					"Selected local connection is read-only. Reconnect with a writable folder.",
+					"warn",
+				);
+				return null;
+			}
+		}
+
+		return source;
+	}
+
+	ensureCollectionForSource(source) {
+		return ensureCollectionForSource(this, source);
+	}
+
+	collectionLabelFor(source, collectionId) {
+		return collectionLabelFor(source, collectionId);
+	}
+
+	collectionAssetPath(workspaceId, kind = "original", extension = ".jpg") {
+		return `${DRAFT_ASSETS_DIR_PATH}/${workspaceId}/${kind}${extension}`;
+	}
+
+	registerObjectUrl(url) {
+		if (url) {
+			this.objectUrls.add(url);
+		}
+	}
+
+	async generateThumbnailBlob(file) {
+		return AssetService.generateThumbnailBlob(this, file);
+	}
+
+	async rememberLocalAssetFiles(item, originalBlob, thumbnailBlob) {
+		return AssetService.rememberLocalAssetFiles(
+			this,
+			item,
+			originalBlob,
+			thumbnailBlob,
+		);
+	}
+
+	async loadLocalAssetBlob(item, kind = "original") {
+		return AssetService.loadLocalAssetBlob(this, item, kind);
+	}
+
+	async rehydrateLocalDraftAssetUrls() {
+		return AssetService.rehydrateLocalDraftAssetUrls(this);
+	}
+
+	async cleanupRemovedItemArtifacts(item) {
+		return AssetService.cleanupRemovedItemArtifacts(this, item);
+	}
+
+	async hydrateLocalSourceAssetPreviews(sourceId) {
+		return AssetService.hydrateLocalSourceAssetPreviews(this, sourceId);
+	}
+
+	refreshSourceCollectionsAndCounts(sourceId) {
+		return refreshSourceCollectionsAndCounts(this, sourceId);
+	}
+
+	async ingestImageFiles(files) {
+		return AssetService.ingestImageFiles(this, files);
+	}
+
+	async createEmptyDraftItem() {
+		return AssetService.createEmptyDraftItem(this);
+	}
+
+	async attachUploadedMediaToItem(itemId, file) {
+		return AssetService.attachUploadedMediaToItem(this, itemId, file);
+	}
+
+	async attachReferencedMediaToItem(itemId, url) {
+		return AssetService.attachReferencedMediaToItem(this, itemId, url);
+	}
+
+	renderCapabilities(capabilitiesOrProvider) {
+		const capabilities =
+			typeof capabilitiesOrProvider?.getCapabilities === "function"
+				? capabilitiesOrProvider.getCapabilities()
+				: capabilitiesOrProvider || {};
+		this.dom.addConnectionPanel?.setCapabilities(capabilities);
+	}
+
+	getSourceById(sourceId) {
+		return (
+			this.state.sources.find((entry) => entry.id === sourceId) || null
+		);
+	}
+
+	clearPendingSourceRepair() {
+		this.pendingSourceRepair = null;
+	}
+
+	prepareSourceRepair(sourceId, mode = "reconnect") {
+		const source = this.getSourceById(sourceId);
+		if (!source) {
+			return null;
+		}
+		this.pendingSourceRepair = { sourceId, mode };
+		return source;
+	}
+
+	sourceHasAccessibleContent(source) {
+		if (!source) {
+			return false;
+		}
+		const hasAssets = this.state.assets.some(
+			(item) => item.sourceId === source.id,
+		);
+		return sourceHasAccessibleItems(source) || hasAssets;
+	}
+
+	isExampleSource(source) {
+		return isExampleProviderSource(source);
+	}
+
+	isBrowserRuntime() {
+		const platformType = getPlatformType();
+		return (
+			platformType === PLATFORM_TYPES.BROWSER ||
+			platformType === PLATFORM_TYPES.CAPACITOR
+		);
+	}
+
+	sortSourcesForDisplay(sources = []) {
+		if (!Array.isArray(sources) || sources.length <= 1) {
+			return Array.isArray(sources) ? [...sources] : [];
+		}
+
+		const exampleSources = [];
+		const otherSources = [];
+		for (const source of sources) {
+			if (this.isExampleSource(source)) {
+				exampleSources.push(source);
+			} else {
+				otherSources.push(source);
+			}
+		}
+		return [...exampleSources, ...otherSources];
+	}
+
+	getExampleSource() {
+		return (
+			this.state.sources.find((source) => this.isExampleSource(source)) ||
+			null
+		);
+	}
+
+	activatePreferredBrowserStartupSource() {
+		if (!this.isBrowserRuntime()) {
+			return false;
+		}
+
+		const exampleSource = this.getExampleSource();
+		if (!exampleSource) {
+			return false;
+		}
+
+		this.activateSource(exampleSource);
+		return true;
+	}
+
+	sourceRepairGuidance(source) {
+		if (!source) {
+			return "";
+		}
+		if (this.isExampleSource(source)) {
+			return "Browse example collections. Connect your own source to refresh or publish.";
+		}
+		const hasAccessibleContent = this.sourceHasAccessibleContent(source);
+		if (source.providerId === "local" && source.needsReconnect) {
+			return hasAccessibleContent
+				? "Folder access must be re-selected to refresh or publish. Previously loaded content remains available locally."
+				: "Folder access must be re-selected. Publish remains blocked until reconnect succeeds.";
+		}
+		if (source.needsCredentials) {
+			return "Missing credentials. Update credentials to reconnect and unblock publish.";
+		}
+		if (source.needsReconnect) {
+			return hasAccessibleContent
+				? "Previously loaded content remains available locally. Reconnect to refresh or publish."
+				: "Reconnect this connection before publish is available.";
+		}
+		if (!source.capabilities?.canPublish) {
+			return "This connection stays available for browsing, but publishing is unavailable.";
+		}
+		return "";
+	}
+
+	getVisibleAssets() {
+		return getVisibleAssets(this);
+	}
+
+	renderSourceFilter() {
+		const previous = this.state.activeSourceFilter || "all";
+		const options = [{ value: "all", label: "All connections" }];
+		for (const source of this.state.sources) {
+			options.push({
+				value: source.id,
+				label:
+					source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					"Source",
+			});
+		}
+		const stillExists =
+			previous === "all" ||
+			this.state.sources.some((entry) => entry.id === previous);
+		this.state.activeSourceFilter = stillExists ? previous : "all";
+		this.dom.collectionBrowser.setSourceOptions(
+			options,
+			this.state.activeSourceFilter,
+		);
+		this.renderCollectionFilter();
+	}
+
+	renderCollectionFilter() {
+		return renderCollectionFilter(this);
+	}
+
+	formatSourceBadge(item) {
+		const display = (item.sourceDisplayLabel || "").trim();
+		if (display) {
+			return display;
+		}
+		const providerName =
+			this.providerCatalog.find((entry) => entry.id === item.providerId)
+				?.label ||
+			item.providerId ||
+			"";
+		return providerName || "Source";
+	}
+
+	renderSourcesList() {
+		this.renderConnectionsListPanel();
+	}
+
+	renderConnectionsListPanel() {
+		const uniqueSources = this.uniqueSourcesForManageHosts(
+			this.state.sources,
+		);
+		this.dom.connectionsListPanel?.setSources(uniqueSources);
+		this.dom.connectionsListPanel?.setActiveSourceId(
+			this.state.activeSourceFilter || "all",
+		);
+	}
+
+	collectCurrentProviderConfig(providerId) {
+		return collectCurrentProviderConfig(this, providerId);
+	}
+
+	async pickLocalFolder() {
+		if (!this.localFolderPickerSupported) {
+			this.dom.addConnectionPanel?.setLocalFolderStatus(
+				"Local folder requires a supported browser or the desktop app.",
+				"warn",
+			);
+			this.setStatus(
+				"Local folder is unavailable in this browser. Use the desktop app, GitHub, or S3.",
+				"warn",
+			);
+			return false;
+		}
+		try {
+			const handle = await pickLocalHostDirectory();
+			const folderName = (handle?.name || "").trim() || "Selected folder";
+			const folderPath = String(handle?.path || "").trim();
+			this.selectedLocalDirectoryHandle = handle || null;
+			this.dom.addConnectionPanel?.setConfigValues({
+				localFolderName: folderName,
+				localPathInput: folderPath || folderName,
+			});
+			this.dom.addConnectionPanel?.setLocalFolderStatus(
+				`Selected folder: ${folderPath || folderName}`,
+				"ok",
+			);
+			this.setStatus(
+				`Selected local folder: ${folderPath || folderName}`,
+				"ok",
+			);
+			return true;
+		} catch (error) {
+			if (error?.name === "AbortError") {
+				this.dom.addConnectionPanel?.setLocalFolderStatus(
+					"Folder selection cancelled.",
+					"neutral",
+				);
+				return false;
+			}
+			this.dom.addConnectionPanel?.setLocalFolderStatus(
+				`Folder selection failed: ${error.message}`,
+				"warn",
+			);
+			this.setStatus(`Folder selection failed: ${error.message}`, "warn");
+			return false;
+		}
+	}
+
+	sourceDisplayLabelFor(providerId, config, fallbackLabel) {
+		return sourceDisplayLabelFor(this, providerId, config, fallbackLabel);
+	}
+
+	sourceDetailLabelFor(providerId, config, fallbackLabel) {
+		return sourceDetailLabelFor(this, providerId, config, fallbackLabel);
+	}
+
+	publishDestinationDetail(source, collectionRootPath = "") {
+		if (!source) {
+			return "";
+		}
+
+		if (source.providerId === "github") {
+			const owner = (source.config?.owner || "").trim() || "owner";
+			const repo = (source.config?.repo || "").trim() || "repo";
+			const branch = (source.config?.branch || "main").trim() || "main";
+			const basePath = (source.config?.path || "").trim();
+			const root = collectionRootPath || "";
+			const fullPath =
+				[basePath, root]
+					.filter(Boolean)
+					.join("/")
+					.replace(/\/+/g, "/")
+					.replace(/^\/+/, "") || "/";
+			return `GitHub ${owner}/${repo} @ ${branch}:${fullPath}`;
+		}
+
+		if (source.providerId === "s3") {
+			const bucket = (source.config?.bucket || "").trim() || "bucket";
+			const basePath = (source.config?.basePath || "").trim();
+			const root = collectionRootPath || "";
+			const prefix = [basePath, root]
+				.filter(Boolean)
+				.join("/")
+				.replace(/\/+/g, "/")
+				.replace(/^\/+/, "");
+			return prefix ? `S3 s3://${bucket}/${prefix}` : `S3 s3://${bucket}`;
+		}
+
+		if (source.providerId === "local" || source.providerId === "example") {
+			const root = (collectionRootPath || "").replace(/^\/+/, "");
+			return root ? `Local path ${root}` : "Local connection";
+		}
+
+		return (
+			source.detailLabel ||
+			source.displayLabel ||
+			source.providerLabel ||
+			"Active connection"
+		);
+	}
+
+	activeHostStateLabel(source) {
+		if (!source) {
+			return "Disconnected";
+		}
+		return getSourceStatus(source).label;
+	}
+
+	sanitizeSourceConfig(providerId, config = {}) {
+		return sanitizeSourceConfig(this, providerId, config);
+	}
+
+	toPersistedSource(source) {
+		return toPersistedSource(this, source);
+	}
+
+	currentWorkspaceSnapshot() {
+		return currentWorkspaceSnapshot(this);
+	}
+
+	buildLocalDraftPayload() {
+		return buildLocalDraftPayload(this);
+	}
+
+	async persistSourcesToOpfs(payload) {
+		return DraftService.persistSourcesToOpfs(this, payload);
+	}
+
+	async persistWorkspaceToOpfs(extra = {}) {
+		return DraftService.persistWorkspaceToOpfs(this, extra);
+	}
+
+	async loadRememberedSourcesFromOpfs() {
+		return DraftService.loadRememberedSourcesFromOpfs(this);
+	}
+
+	applyWorkspaceSnapshot(snapshot = {}) {
+		return applyWorkspaceSnapshot(this, snapshot);
+	}
+
+	saveSourcesToStorage() {
+		return saveSourcesToStorage(this);
+	}
+
+	async restoreRememberedSources() {
+		return restoreRememberedSources(this);
+	}
+
+	async initializeLocalDraftState() {
+		return initializeLocalDraftState(this);
+	}
+
+	async saveLocalDraft() {
+		return saveLocalDraft(this);
+	}
+
+	applyLocalDraftPayload(payload) {
+		return applyLocalDraftPayload(this, payload);
+	}
+
+	async restoreLocalDraft(options = {}) {
+		return restoreLocalDraft(this, options);
+	}
+
+	async discardLocalDraft() {
+		return discardLocalDraft(this);
+	}
+
+	normalizeSourceAssets(source, rawItems) {
+		return (rawItems || []).map((item) => {
+			const sourceAssetId = item.id;
+			const media = normalizeMediaRef(item.media);
+			const mediaPath = String(media?.url || "").trim();
+			const fileName = mediaPath
+				? mediaPath
+						.replace(/\\/g, "/")
+						.split("/")
+						.filter(Boolean)
+						.pop() || mediaPath
+				: "";
+			return {
+				...item,
+				media,
+				fileName: item.fileName || fileName,
+				workspaceId: toWorkspaceItemId(source.id, sourceAssetId),
+				sourceAssetId,
+				sourceId: source.id,
+				sourceLabel: source.label,
+				sourceDisplayLabel: source.displayLabel || source.label,
+				providerId: source.providerId,
+				collectionId: item.collectionId || null,
+				collectionLabel: item.collectionLabel || "",
+				collectionRootPath: item.collectionRootPath || "",
+			};
+		});
+	}
+
+	buildCollectionsForSource(source, normalizedAssets) {
+		const grouped = new Map();
+		for (const item of normalizedAssets) {
+			const collectionId = (item.collectionId || "").trim();
+			const collectionLabel = (item.collectionLabel || "").trim();
+			if (!collectionId) {
+				continue;
+			}
+			if (!grouped.has(collectionId)) {
+				grouped.set(collectionId, {
+					id: collectionId,
+					title: collectionLabel || collectionId,
+					rootPath: this.normalizeCollectionRootPath(
+						item.collectionRootPath || `${collectionId}/`,
+						collectionId,
+					),
+				});
+			}
+		}
+
+		if (grouped.size > 0) {
+			return Array.from(grouped.values());
+		}
+
+		const fallbackId = `${source.id}::default-collection`;
+		return [
+			{
+				id: fallbackId,
+				title:
+					source.displayLabel ||
+					source.providerLabel ||
+					"Default collection",
+				rootPath: this.normalizeCollectionRootPath(
+					`${fallbackId}/`,
+					fallbackId,
+				),
+			},
+		];
+	}
+
+	normalizeCollectionsFromProvider(entries = []) {
+		if (!Array.isArray(entries)) {
+			return [];
+		}
+		return entries
+			.filter((entry) => entry && typeof entry === "object" && entry.id)
+			.map((entry) => ({
+				id: String(entry.id),
+				title: entry.title || String(entry.id),
+				description: entry.description || "",
+				license: entry.license || "",
+				publisher: entry.publisher || "",
+				language: entry.language || "",
+				rootPath: this.normalizeCollectionRootPath(
+					entry.rootPath || `${entry.id}/`,
+					entry.id,
+				),
+				path: entry.path || "",
+				collectionJsonPath: entry.collectionJsonPath || "",
+				updatedAt: entry.updatedAt || "",
+			}));
+	}
+
+	mergeSourceAssets(sourceId, nextItems) {
+		const withoutSource = this.state.assets.filter(
+			(item) => item.sourceId !== sourceId,
+		);
+		this.state.assets = [...withoutSource, ...nextItems];
+	}
+
+	openViewer(itemId) {
+		return openViewer(this, itemId);
+	}
+
+	closeViewer() {
+		return closeViewer(this);
+	}
+
+	renderViewer() {
+		return renderViewer(this);
+	}
+
+	renderSourceContext() {
+		const activeSourceLabel = this.activeSourceLabel();
+		const workspaceContextText = this.workflowContextText();
+		this.dom.managerHeader?.setHostLabel?.(activeSourceLabel);
+		this.dom.collectionBrowser?.update?.({
+			activeSourceLabel,
+			workspaceContextText,
+		});
+		this.dom.mobileFlow?.setBrowserState?.({
+			activeSourceLabel,
+			workspaceContextText,
+		});
+		this.applyConnectionEntryPresentation();
+		this.refreshWorkingStatus();
+	}
+
+	sourceIdentityKey(source) {
+		if (!source || typeof source !== "object") {
+			return "";
+		}
+		const providerId = source.providerId || "unknown";
+		const config = this.sanitizeSourceConfig(
+			providerId,
+			source.config || {},
+		);
+		const hasConfig = Object.keys(config).length > 0;
+		return hasConfig
+			? `${providerId}:${JSON.stringify(config)}`
+			: `${providerId}:${source.id || source.displayLabel || source.label || ""}`;
+	}
+
+	uniqueSourcesForManageHosts(sources = []) {
+		const result = [];
+		const seen = new Set();
+		for (const source of sources) {
+			const key = this.sourceIdentityKey(source);
+			if (seen.has(key)) {
+				continue;
+			}
+			seen.add(key);
+			result.push(source);
+		}
+		return result;
+	}
+
+	activateSource(source) {
+		this.state.activeSourceFilter = source.id;
+		this.state.currentLevel = "collections";
+		this.state.openedCollectionId = null;
+		this.state.selectedCollectionId = source.selectedCollectionId || "all";
+		this.state.selectedCollectionIds = [];
+		this.state.selectedItemId = null;
+		this.state.selectedItemIds = [];
+		this.syncMetadataModeFromState();
+		this.closeMobileDetail();
+		this.renderSourceFilter();
+		this.renderSourceContext();
+		this.renderAssets();
+		this.renderEditor();
+		this.refreshWorkingStatus();
+	}
+
+	findSelectedCollectionMeta() {
+		return findSelectedCollectionMeta(this);
+	}
+
+	openCollectionView(collectionId) {
+		return CollectionService.openCollectionView(this, collectionId);
+	}
+
+	leaveCollectionView() {
+		return CollectionService.leaveCollectionView(this);
+	}
+
+	async saveSelectedCollectionMetadata(patch = null) {
+		return CollectionService.saveSelectedCollectionMetadata(
+			this,
+			patch || this.dom.metadataEditor.getCollectionPatch(),
+		);
+	}
+
+	renderAssets() {
+		return renderAssets(this);
+	}
+
+	selectItem(itemId) {
+		return selectItem(this, itemId);
+	}
+
+	getSelectedItemIds() {
+		return getSelectedItemIds(this);
+	}
+
+	getSelectedCollectionIds() {
+		return getSelectedCollectionIds(this);
+	}
+
+	getVisibleCollections() {
+		return getVisibleCollections(this);
+	}
+
+	isItemSelected(itemId) {
+		return isItemSelected(this, itemId);
+	}
+
+	repairCollectionSelectionState() {
+		return repairCollectionSelectionState(this);
+	}
+
+	repairSelectionState() {
+		return repairSelectionState(this);
+	}
+
+	toggleCollectionSelection(collectionId, selected = null) {
+		return toggleCollectionSelection(this, collectionId, selected);
+	}
+
+	toggleItemSelection(itemId, selected = null) {
+		return toggleItemSelection(this, itemId, selected);
+	}
+
+	clearCollectionSelection() {
+		return clearCollectionSelection(this);
+	}
+
+	clearItemSelection() {
+		return clearItemSelection(this);
+	}
+
+	findSelectedItem() {
+		return findSelectedItem(this);
+	}
+
+	resolveMetadataMode() {
+		return resolveMetadataMode(this);
+	}
+
+	syncMetadataModeFromState() {
+		return syncMetadataModeFromState(this);
+	}
+
+	renderMetadataMode(mode) {
+		return renderMetadataMode(this, mode);
+	}
+
+	setBrowserViewMode(level, mode) {
+		return setBrowserViewMode(this, level, mode);
+	}
+
+	renderEditor() {
+		return renderEditor(this);
+	}
+
+	collectEditorPatch() {
+		const selected = this.findSelectedItem();
+		return selected
+			? this.buildItemPatchFromEditor(
+					this.dom.metadataEditor.getItemPatch(),
+					selected,
+				)
+			: this.dom.metadataEditor.getItemPatch();
+	}
+
+	confirmDeleteItems(items) {
+		const count = Array.isArray(items) ? items.length : 0;
+		if (count === 0) {
+			return false;
+		}
+		const heading =
+			count === 1
+				? "Remove this item from the collection?"
+				: `Remove ${count} selected items from this collection?`;
+		const body =
+			count === 1
+				? "This removes the item from the collection. It does not delete the original media file."
+				: "This removes them from the collection. It does not delete the original media files.";
+		return window.confirm(`${heading}\n\n${body}`);
+	}
+
+	canDeleteCollection(collectionId) {
+		if (!collectionId || collectionId === "all") {
+			return false;
+		}
+		if (this.state.activeSourceFilter !== "all") {
+			const source = this.getSourceById(this.state.activeSourceFilter);
+			const inActiveSource = (source?.collections || []).some(
+				(entry) => entry.id === collectionId,
+			);
+			if (!inActiveSource) {
+				return false;
+			}
+			if (
+				source?.provider &&
+				typeof source.provider.deleteCollection === "function" &&
+				source.capabilities?.canSaveMetadata
+			) {
+				return true;
+			}
+			return this.state.localDraftCollections.some(
+				(entry) => entry.id === collectionId,
+			);
+		}
+		return this.state.localDraftCollections.some(
+			(entry) => entry.id === collectionId,
+		);
+	}
+
+	getDeletableSelectedCollectionIds() {
+		return this.getSelectedCollectionIds().filter((collectionId) =>
+			this.canDeleteCollection(collectionId),
+		);
+	}
+
+	repairFocusAfterDeletion(removedIds = []) {
+		const removed = new Set(
+			(Array.isArray(removedIds) ? removedIds : []).filter(Boolean),
+		);
+		this.state.selectedItemIds = this.getSelectedItemIds().filter(
+			(workspaceId) => !removed.has(workspaceId),
+		);
+
+		if (this.state.viewerItemId && removed.has(this.state.viewerItemId)) {
+			this.closeViewer();
+		}
+
+		if (
+			!this.state.selectedItemId ||
+			!removed.has(this.state.selectedItemId)
+		) {
+			this.repairSelectionState();
+			return;
+		}
+
+		const fallback = this.getVisibleAssets().find((item) => {
+			if (
+				this.state.currentLevel === "items" &&
+				this.state.openedCollectionId
+			) {
+				return (
+					item.collectionId === this.state.openedCollectionId &&
+					!removed.has(item.workspaceId)
+				);
+			}
+			return !removed.has(item.workspaceId);
+		});
+		this.state.selectedItemId = fallback?.workspaceId || null;
+		this.repairSelectionState();
+	}
+
+	async deleteItemsFromState(items = []) {
+		for (const item of items) {
+			await this.cleanupRemovedItemArtifacts(item);
+		}
+		const removedIds = new Set(items.map((item) => item.workspaceId));
+		this.state.assets = this.state.assets.filter(
+			(item) => !removedIds.has(item.workspaceId),
+		);
+		return [...removedIds];
+	}
+
+	async deleteSelectedItems() {
+		const selectedIds = this.getSelectedItemIds();
+		const items = this.state.assets.filter((item) =>
+			selectedIds.includes(item.workspaceId),
+		);
+		return this.deleteItems(items, { mode: "bulk" });
+	}
+
+	async deleteSelectedCollections() {
+		const selectedIds = this.getSelectedCollectionIds();
+		const deletableCollectionIds = selectedIds.filter((collectionId) =>
+			this.canDeleteCollection(collectionId),
+		);
+		if (deletableCollectionIds.length === 0) {
+			return false;
+		}
+
+		const confirmed = window.confirm(
+			deletableCollectionIds.length === 1
+				? "Delete this selected collection? This also removes its items from the draft."
+				: `Delete ${deletableCollectionIds.length} selected collections? This also removes their items from the draft.`,
+		);
+		if (!confirmed) {
+			return false;
+		}
+
+		const removedSet = new Set();
+		try {
+			for (const collectionId of deletableCollectionIds) {
+				if (this.state.activeSourceFilter !== "all") {
+					const source = this.getSourceById(
+						this.state.activeSourceFilter,
+					);
+					const inActiveSource = (source?.collections || []).some(
+						(entry) => entry.id === collectionId,
+					);
+					if (
+						inActiveSource &&
+						source?.provider &&
+						typeof source.provider.deleteCollection ===
+							"function" &&
+						source.capabilities?.canSaveMetadata
+					) {
+						await source.provider.deleteCollection(collectionId);
+					}
+				}
+				removedSet.add(collectionId);
+			}
+		} catch (error) {
+			this.setStatus(`Delete failed: ${error.message}`, "warn");
+			return false;
+		}
+
+		this.state.localDraftCollections =
+			this.state.localDraftCollections.filter(
+				(entry) => !removedSet.has(entry.id),
+			);
+		this.state.assets = this.state.assets.filter(
+			(item) => !removedSet.has(item.collectionId),
+		);
+		for (const source of this.state.sources) {
+			source.collections = (source.collections || []).filter(
+				(entry) => !removedSet.has(entry.id),
+			);
+			if (removedSet.has(source.selectedCollectionId)) {
+				source.selectedCollectionId = source.collections[0]?.id || null;
+			}
+		}
+
+		this.state.selectedCollectionIds =
+			this.getSelectedCollectionIds().filter((id) => !removedSet.has(id));
+		if (removedSet.has(this.state.selectedCollectionId)) {
+			this.state.selectedCollectionId = "all";
+		}
+		if (removedSet.has(this.state.openedCollectionId)) {
+			this.state.currentLevel = "collections";
+			this.state.openedCollectionId = null;
+			this.state.selectedItemId = null;
+			this.state.selectedItemIds = [];
+			this.closeMobileDetail();
+		} else {
+			this.state.selectedItemIds = this.getSelectedItemIds().filter(
+				(workspaceId) => {
+					const item = this.state.assets.find(
+						(entry) => entry.workspaceId === workspaceId,
+					);
+					return Boolean(item);
+				},
+			);
+		}
+		if (this.state.selectedItemId) {
+			const selectedItemStillExists = this.state.assets.some(
+				(item) => item.workspaceId === this.state.selectedItemId,
+			);
+			if (!selectedItemStillExists) {
+				this.state.selectedItemId = null;
+			}
+		}
+
+		this.repairCollectionSelectionState();
+		this.repairSelectionState();
+		this.syncMetadataModeFromState();
+		this.renderSourcesList();
+		this.renderSourceFilter();
+		this.renderCollectionFilter();
+		this.renderAssets();
+		this.renderEditor();
+		this.refreshWorkingStatus();
+
+		if (this.state.opfsAvailable) {
+			await this.saveLocalDraft();
+		}
+		this.saveSourcesToStorage();
+		this.markDirty();
+		this.setStatus(
+			deletableCollectionIds.length === 1
+				? "Deleted 1 collection."
+				: `Deleted ${deletableCollectionIds.length} collections.`,
+			"ok",
+		);
+		return true;
+	}
+
+	async deleteItem(workspaceId) {
+		const item = this.state.assets.find(
+			(entry) => entry.workspaceId === workspaceId,
+		);
+		if (!item) {
+			this.setStatus("Select an item to remove.", "warn");
+			return false;
+		}
+		return this.deleteItems([item], { mode: "single" });
+	}
+
+	async deleteItems(items = [], options = {}) {
+		const candidates = Array.from(
+			new Map(
+				(Array.isArray(items) ? items : [])
+					.filter(Boolean)
+					.map((item) => [item.workspaceId, item]),
+			).values(),
+		);
+		if (candidates.length === 0) {
+			this.setStatus("Select one or more items to remove.", "warn");
+			return false;
+		}
+
+		if (!this.confirmDeleteItems(candidates)) {
+			return false;
+		}
+
+		const grouped = new Map();
+		for (const item of candidates) {
+			const key = `${item.sourceId}::${item.collectionId || ""}`;
+			if (!grouped.has(key)) {
+				grouped.set(key, []);
+			}
+			grouped.get(key).push(item);
+		}
+
+		const removedIds = [];
+		let removedCount = 0;
+		let removedLocalDraftItems = false;
+		let removedPersistedItems = false;
+
+		for (const [, groupItems] of grouped.entries()) {
+			const sample = groupItems[0];
+			const source = this.getSourceById(sample.sourceId);
+			const allLocalDraftItems = groupItems.every(
+				(item) => item.isLocalDraftAsset,
+			);
+
+			if (allLocalDraftItems) {
+				const deletedIds = await this.deleteItemsFromState(groupItems);
+				removedIds.push(...deletedIds);
+				removedCount += deletedIds.length;
+				removedLocalDraftItems = true;
+				if (source?.id) {
+					this.refreshSourceCollectionsAndCounts(source.id);
+				}
+				continue;
+			}
+
+			if (
+				!source?.provider ||
+				typeof source.provider.removeItemsFromCollection !==
+					"function" ||
+				!source.capabilities?.canSaveMetadata
+			) {
+				const sourceLabel =
+					source?.displayLabel || source?.label || "this source";
+				this.setStatus(
+					`Remove failed: ${sourceLabel} does not currently support safe collection removal.`,
+					"warn",
+				);
+				return false;
+			}
+
+			this.setStatus(
+				`Removing ${groupItems.length} item(s) from the collection...`,
+				"neutral",
+			);
+			await source.provider.removeItemsFromCollection(
+				sample.collectionId,
+				groupItems.map((item) => item.sourceAssetId),
+			);
+			const deletedIds = await this.deleteItemsFromState(groupItems);
+			removedIds.push(...deletedIds);
+			removedCount += deletedIds.length;
+			removedPersistedItems = true;
+			this.refreshSourceCollectionsAndCounts(source.id);
+		}
+
+		this.repairFocusAfterDeletion(removedIds);
+		this.renderSourcesList();
+		this.renderSourceFilter();
+		this.renderCollectionFilter();
+		this.renderAssets();
+		this.renderEditor();
+		this.refreshWorkingStatus();
+
+		if (this.state.opfsAvailable) {
+			if (candidates.some((item) => item.isLocalDraftAsset)) {
+				await this.saveLocalDraft();
+			} else {
+				await this.persistWorkspaceToOpfs();
+			}
+		}
+		this.saveSourcesToStorage();
+
+		const actionLabel =
+			options.mode === "single"
+				? "Removed item from the collection."
+				: `Removed ${removedCount} item(s) from the collection.`;
+		this.setStatus(actionLabel, "ok");
+		if (removedPersistedItems) {
+			this.markSavedToSource();
+		} else if (removedLocalDraftItems && this.state.opfsAvailable) {
+			this.markSavedToDraft();
+		} else {
+			this.markDirty();
+		}
+		return true;
+	}
+
+	async updateItem(id, patch, options = {}) {
+		const current = this.state.assets.find(
+			(item) => item.workspaceId === id,
+		);
+		if (!current) {
+			this.setStatus(`Could not find item ${id}`, "warn");
+			return;
+		}
+
+		const source = this.getSourceById(current.sourceId);
+		const canSave =
+			Boolean(source?.capabilities?.canSaveMetadata) &&
+			!current.isLocalDraftAsset;
+
+		if (canSave && source?.provider) {
+			try {
+				this.setStatus("Saving metadata...", "neutral");
+				const updated = await source.provider.saveMetadata(
+					current.sourceAssetId,
+					patch,
+				);
+				if (!updated) {
+					this.setStatus(
+						`Save failed: provider returned no updated item for ${current.id}`,
+						"warn",
+					);
+					return;
+				}
+
+				const next = {
+					...updated,
+					workspaceId: current.workspaceId,
+					sourceAssetId: updated.id || current.sourceAssetId,
+					sourceId: current.sourceId,
+					sourceLabel: current.sourceLabel,
+					sourceDisplayLabel: current.sourceDisplayLabel,
+					providerId: current.providerId,
+				};
+				this.state.assets = this.state.assets.map((item) =>
+					item.workspaceId === id ? next : item,
+				);
+				this.setStatus(
+					source?.providerId === "github"
+						? "Metadata saved to GitHub."
+						: "Metadata saved.",
+					"ok",
+				);
+				this.markSavedToSource();
+			} catch (error) {
+				this.state.assets = this.state.assets.map((item) => {
+					if (item.workspaceId !== id) {
+						return item;
+					}
+					return {
+						...item,
+						...patch,
+						media: {
+							...(item.media || {}),
+							...(patch.media || {}),
+						},
+					};
+				});
+				this.setStatus(
+					`Save failed: ${error.message}. Local edits were kept.`,
+					"warn",
+				);
+				this.markDirty();
+			}
+		} else {
+			this.state.assets = this.state.assets.map((item) => {
+				if (item.workspaceId !== id) {
+					return item;
+				}
+				return {
+					...item,
+					...patch,
+					media: {
+						...(item.media || {}),
+						...(patch.media || {}),
+					},
+				};
+			});
+			this.setStatus(
+				"Source is read-only. Changes are local to this workspace session.",
+				"warn",
+			);
+			this.markDirty();
+		}
+
+		if (options.explicitSave && !canSave) {
+			if (current.isLocalDraftAsset) {
+				this.setStatus(
+					"Local draft metadata saved. Publish to upload this asset.",
+					"ok",
+				);
+				this.markDirty();
+			} else {
+				this.setStatus(
+					"Selected item source is read-only. Changes are local only.",
+					"warn",
+				);
+			}
+		}
+
+		this.renderAssets();
+		this.renderEditor();
+		this.refreshWorkingStatus();
+	}
+
+	async connectCurrentProvider(options = {}) {
+		return connectCurrentProvider(this, options);
+	}
+
+	inspectSource(sourceId) {
+		return inspectSource(this, sourceId);
+	}
+
+	async refreshSource(sourceId, options = {}) {
+		return refreshSource(this, sourceId, options);
+	}
+
+	removeSource(sourceId) {
+		return removeSource(this, sourceId);
+	}
+
+	currentCollectionMeta() {
+		return currentCollectionMeta(this);
+	}
+
+	findCollectionMetaById(collectionId, sourceId = "") {
+		const normalizedId = String(collectionId || "").trim();
+		if (!normalizedId || normalizedId === "all") {
+			return null;
+		}
+
+		const localDraftCollection =
+			this.state.localDraftCollections.find(
+				(entry) => entry.id === normalizedId,
+			) || null;
+
+		if (sourceId) {
+			const source = this.getSourceById(sourceId);
+			const sourceCollection = source?.collections?.find(
+				(entry) => entry.id === normalizedId,
+			);
+			if (sourceCollection) {
+				return localDraftCollection
+					? { ...sourceCollection, ...localDraftCollection }
+					: sourceCollection;
+			}
+		}
+
+		for (const source of this.state.sources) {
+			const sourceCollection = (source.collections || []).find(
+				(entry) => entry.id === normalizedId,
+			);
+			if (sourceCollection) {
+				return localDraftCollection
+					? { ...sourceCollection, ...localDraftCollection }
+					: sourceCollection;
+			}
+		}
+
+		return localDraftCollection;
+	}
+
+	resolveItemMetadata(item) {
+		const collection =
+			this.findCollectionMetaById(item?.collectionId, item?.sourceId) ||
+			{};
+		return resolveItemMetadata(item, collection);
+	}
+
+	resolveItemForDisplay(item) {
+		const resolved = this.resolveItemMetadata(item);
+		return {
+			...item,
+			description: resolved.description || "",
+			license: resolved.license || "",
+			attribution: resolved.attribution || "",
+			language: resolved.language || "",
+			metadataResolution: resolved.metadataResolution || {},
+			overrides:
+				item?.overrides && typeof item.overrides === "object"
+					? { ...item.overrides }
+					: {},
+		};
+	}
+
+	deriveItemEditorState(item) {
+		const collection =
+			this.findCollectionMetaById(item?.collectionId, item?.sourceId) ||
+			{};
+		return deriveItemEditorState(item, collection);
+	}
+
+	buildItemPatchFromEditor(editorState, previousItem) {
+		const collection =
+			this.findCollectionMetaById(
+				previousItem?.collectionId,
+				previousItem?.sourceId,
+			) || {};
+		return getItemOverridePatch(editorState, collection, previousItem);
+	}
+
+	toManifestItem(item) {
+		return ManifestService.toManifestItem(this, item);
+	}
+
+	buildManifestFromState() {
+		return ManifestService.buildManifestFromState(this);
+	}
+
+	async generateManifest(options = {}) {
+		return ManifestService.generateManifest(this, options);
+	}
+
+	resolvePublishSource() {
+		if (!this.state.sources.length) {
+			return null;
+		}
+		if (this.state.activeSourceFilter === "all") {
+			return null;
+		}
+		return this.getSourceById(this.state.activeSourceFilter);
+	}
+
+	resolvePublishCollectionId() {
+		if (
+			this.state.currentLevel === "items" &&
+			this.state.openedCollectionId
+		) {
+			return this.state.openedCollectionId;
+		}
+		const selectedCollectionId = this.state.selectedCollectionId || "all";
+		return selectedCollectionId === "all" ? "" : selectedCollectionId;
+	}
+
+	getPublishActionState() {
+		const collectionId = this.resolvePublishCollectionId();
+		const source = this.resolvePublishSource();
+		const visible =
+			this.state.currentLevel === "items" || Boolean(collectionId);
+
+		if (!visible) {
+			return {
+				label: "Publish collection",
+				visible: false,
+				disabled: true,
+				reason: "Select a collection to publish.",
+			};
+		}
+
+		if (this.state.publishInProgress) {
+			return {
+				label: "Publish collection",
+				visible: true,
+				disabled: true,
+				reason: "Publishing is already in progress.",
+			};
+		}
+
+		if (!collectionId) {
+			return {
+				label: "Publish collection",
+				visible: true,
+				disabled: true,
+				reason: "Open or select a collection to publish.",
+			};
+		}
+
+		if (!source) {
+			return {
+				label: "Publish collection",
+				visible: true,
+				disabled: true,
+				reason: "Select a single active connection to publish this collection.",
+			};
+		}
+
+		if (!source.capabilities?.canPublish) {
+			let reason =
+				"The active connection does not currently support publishing.";
+			if (source.needsCredentials) {
+				reason =
+					"Reconnect this connection and provide credentials before publishing.";
+			} else if (
+				source.needsReconnect ||
+				source.capabilities?.requiresCredentials
+			) {
+				reason =
+					"Reconnect or validate this connection before publishing.";
+			}
+			return {
+				label: "Publish collection",
+				visible: true,
+				disabled: true,
+				reason,
+			};
+		}
+
+		if (
+			!source.provider ||
+			typeof source.provider.publishCollection !== "function"
+		) {
+			return {
+				label: "Publish collection",
+				visible: true,
+				disabled: true,
+				reason: "This connection is connected, but upload publishing is not available yet.",
+			};
+		}
+
+		return {
+			label: "Publish collection",
+			visible: true,
+			disabled: false,
+			reason: "",
+		};
+	}
+
+	async publishActiveSourceDraft() {
+		const source = this.resolvePublishSource();
+		if (!source) {
+			this.setStatus(
+				"Select a single source in the viewport filter before publishing.",
+				"warn",
+			);
+			return;
+		}
+
+		if (!source.capabilities?.canPublish) {
+			if (source.needsCredentials) {
+				this.setStatus(
+					"Publish blocked: this connection is missing credentials. Reconnect and re-enter credentials.",
+					"warn",
+				);
+			} else if (
+				source.needsReconnect ||
+				source.capabilities?.requiresCredentials
+			) {
+				this.setStatus(
+					"Publish blocked: this connection needs reconnect/validation before publishing.",
+					"warn",
+				);
+			} else {
+				this.setStatus(
+					"Publish blocked: this connection does not currently support publish uploads.",
+					"warn",
+				);
+			}
+			return;
+		}
+
+		if (
+			!source.provider ||
+			typeof source.provider.publishCollection !== "function"
+		) {
+			this.setStatus(
+				"This source does not support upload publishing yet.",
+				"warn",
+			);
+			return;
+		}
+		const collectionId = this.resolvePublishCollectionId();
+		if (!collectionId) {
+			this.setStatus("Select one collection before publishing.", "warn");
+			return;
+		}
+		if (this.state.selectedCollectionId !== collectionId) {
+			this.state.selectedCollectionId = collectionId;
+		}
+
+		const manifest = await this.generateManifest({ silent: true });
+		if (!manifest) {
+			return;
+		}
+		const collectionRootPath =
+			this.activeCollectionRootPath() ||
+			this.normalizeCollectionRootPath(`${manifest.id}/`, manifest.id);
+
+		const pending = this.state.assets.filter(
+			(item) =>
+				item.sourceId === source.id &&
+				item.collectionId === collectionId &&
+				item.isLocalDraftAsset &&
+				normalizeMediaRef(item.media).mode === MEDIA_MODES.managed &&
+				item.include !== false &&
+				item.draftUploadStatus !== "uploaded",
+		);
+
+		if (pending.length === 0) {
+			this.setStatus(
+				"No pending local assets. Publishing manifest only...",
+				"neutral",
+			);
+		} else {
+			this.setStatus(
+				`Publishing ${pending.length} asset(s) to the active connection...`,
+				"neutral",
+			);
+		}
+		this.setWorkingStateFlags({
+			publishInProgress: true,
+			publishError: "",
+			lastPublishResult: null,
+		});
+
+		this.state.assets = this.state.assets.map((item) => {
+			if (
+				!pending.some((entry) => entry.workspaceId === item.workspaceId)
+			) {
+				return item;
+			}
+			return {
+				...item,
+				draftUploadStatus: "uploading",
+				uploadError: "",
+			};
+		});
+		this.renderAssets();
+		this.renderEditor();
+
+		const uploads = [];
+		let failedPreparationCount = 0;
+		for (const item of pending) {
+			// Referenced media stays as a link in the manifest and is not prepared for upload.
+			const original = await this.loadLocalAssetBlob(item, "original");
+			if (!original) {
+				failedPreparationCount += 1;
+				this.state.assets = this.state.assets.map((entry) =>
+					entry.workspaceId === item.workspaceId
+						? {
+								...entry,
+								draftUploadStatus: "failed",
+								uploadError:
+									"Original file missing from local draft storage.",
+							}
+						: entry,
+				);
+				continue;
+			}
+
+			uploads.push({
+				path: this.joinCollectionRootPath(
+					collectionRootPath,
+					item.media?.url || "",
+				),
+				blob: original,
+				message: `Upload ${item.id} original via Open Collections Manager`,
+			});
+
+			const thumb = await this.loadLocalAssetBlob(item, "thumbnail");
+			if (thumb && item.thumbnailRepoPath) {
+				uploads.push({
+					path: this.joinCollectionRootPath(
+						collectionRootPath,
+						item.thumbnailRepoPath,
+					),
+					blob: thumb,
+					message: `Upload ${item.id} thumbnail via Open Collections Manager`,
+				});
+			}
+		}
+
+		if (failedPreparationCount > 0) {
+			this.renderAssets();
+			this.renderEditor();
+			this.setStatus(
+				`${failedPreparationCount} asset(s) failed local draft preparation. Fix and retry publish.`,
+				"warn",
+			);
+			this.setWorkingStateFlags({
+				publishInProgress: false,
+				publishError: "Local draft preparation failed.",
+			});
+			return;
+		}
+
+		try {
+			await source.provider.publishCollection({
+				manifest,
+				uploads,
+				collectionRootPath,
+				commitMessage: `Publish collection ${manifest.id} via Open Collections Manager`,
+			});
+
+			this.state.assets = this.state.assets.map((item) => {
+				if (item.sourceId !== source.id || !item.isLocalDraftAsset) {
+					return item;
+				}
+				const nextMediaRelativePath = item.media?.url || "";
+				const nextThumbRelativePath =
+					item.thumbnailRepoPath || item.media?.thumbnailUrl || "";
+				return {
+					...item,
+					media: {
+						...normalizeMediaRef(item.media),
+						url: nextMediaRelativePath,
+						thumbnailUrl: nextThumbRelativePath,
+					},
+					draftUploadStatus: "uploaded",
+					isLocalDraftAsset: false,
+					uploadError: "",
+				};
+			});
+
+			const destinationDetail = this.publishDestinationDetail(
+				source,
+				collectionRootPath,
+			);
+			const publishSummary = {
+				ok: true,
+				hostId: source.id,
+				hostLabel:
+					source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					"Host",
+				providerId: source.providerId,
+				destination: destinationDetail,
+				detail: `Published ${manifest.id} to ${destinationDetail}`,
+				at: new Date().toISOString(),
+			};
+			source.status = publishSummary.detail;
+			source.lastPublishResult = publishSummary;
+			this.state.manifest = manifest;
+			this.dom.manifestPreview.textContent = JSON.stringify(
+				manifest,
+				null,
+				2,
+			);
+			this.refreshSourceCollectionsAndCounts(source.id);
+			this.renderSourcesList();
+			this.renderSourceFilter();
+			this.renderCollectionFilter();
+			this.state.currentLevel = "collections";
+			this.state.openedCollectionId = null;
+			this.state.selectedItemId = null;
+			this.state.selectedItemIds = [];
+			this.syncMetadataModeFromState();
+			this.closeMobileDetail();
+			this.renderSourceContext();
+			this.renderAssets();
+			this.renderEditor();
+
+			if (this.state.opfsAvailable) {
+				await this.saveLocalDraft();
+			}
+			this.saveSourcesToStorage();
+			this.setStatus(
+				`Publish complete via ${publishSummary.hostLabel}. Destination: ${publishSummary.destination}.`,
+				"ok",
+			);
+			this.setWorkingStateFlags({
+				publishInProgress: false,
+				publishError: "",
+				lastPublishResult: publishSummary,
+				hasUnsavedChanges: false,
+				lastSaveTarget: "source",
+			});
+		} catch (error) {
+			this.state.assets = this.state.assets.map((item) => {
+				if (
+					item.sourceId !== source.id ||
+					item.draftUploadStatus !== "uploading"
+				) {
+					return item;
+				}
+				return {
+					...item,
+					draftUploadStatus: "failed",
+					uploadError: error.message,
+				};
+			});
+			this.renderAssets();
+			this.renderEditor();
+			const destinationDetail = this.publishDestinationDetail(
+				source,
+				collectionRootPath,
+			);
+			const failureSummary = {
+				ok: false,
+				hostId: source.id,
+				hostLabel:
+					source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					"Host",
+				providerId: source.providerId,
+				destination: destinationDetail,
+				detail: `Publish to ${destinationDetail} failed: ${error.message || "Unknown error."}`,
+				at: new Date().toISOString(),
+			};
+			source.status = failureSummary.detail;
+			source.lastPublishResult = failureSummary;
+			this.saveSourcesToStorage();
+			this.setStatus(failureSummary.detail, "warn");
+			this.setWorkingStateFlags({
+				publishInProgress: false,
+				publishError: error.message || "Publish failed.",
+				lastPublishResult: failureSummary,
+			});
+		}
+	}
+
+	async copyManifestToClipboard() {
+		return ManifestService.copyManifestToClipboard(this);
+	}
+
+	downloadManifest() {
+		return ManifestService.downloadManifest(this);
+	}
+
+	activeSourceLabel() {
+		const source = this.getSourceById(this.state.activeSourceFilter);
+		return source
+			? source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					"Connection"
+			: "Select connection";
+	}
+
+	workflowContextText() {
+		const sourceLabel = this.activeSourceLabel() || "none";
+		const collectionId =
+			this.state.selectedCollectionId &&
+			this.state.selectedCollectionId !== "all"
+				? this.state.selectedCollectionId
+				: "none";
+		const rootPath =
+			collectionId !== "none" ? this.activeCollectionRootPath() : "n/a";
+		return `Connection: ${sourceLabel} | Collection: ${collectionId} | Root: ${rootPath}`;
+	}
 }
 
-if (!customElements.get('open-collections-manager')) {
-  customElements.define('open-collections-manager', OpenCollectionsManagerElement);
+if (!customElements.get("open-collections-manager")) {
+	customElements.define(
+		"open-collections-manager",
+		OpenCollectionsManagerElement,
+	);
 }

@@ -1,202 +1,224 @@
 class OpenBrowserManifestControlsElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.model = {
-      currentManifestUrl: '',
-      recentManifestUrls: [],
-      statusText: 'Load a collection manifest to browse.',
-      statusTone: 'neutral',
-      recentOpen: false,
-    };
-    this.closeRecentTimer = null;
-  }
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.model = {
+			currentManifestUrl: "",
+			recentManifestUrls: [],
+			statusText: "Load a collection manifest to browse.",
+			statusTone: "neutral",
+			recentOpen: false,
+		};
+		this.closeRecentTimer = null;
+	}
 
-  connectedCallback() {
-    this.render();
-    this.bindEvents();
-    this.applyView();
-  }
+	connectedCallback() {
+		this.render();
+		this.bindEvents();
+		this.applyView();
+	}
 
-  disconnectedCallback() {
-    if (this.closeRecentTimer) {
-      window.clearTimeout(this.closeRecentTimer);
-      this.closeRecentTimer = null;
-    }
-  }
+	disconnectedCallback() {
+		if (this.closeRecentTimer) {
+			window.clearTimeout(this.closeRecentTimer);
+			this.closeRecentTimer = null;
+		}
+	}
 
-  bindEvents() {
-    const loadBtn = this.shadowRoot.getElementById('loadBtn');
-    const input = this.shadowRoot.getElementById('manifestUrlInput');
-    const recentToggleBtn = this.shadowRoot.getElementById('recentToggleBtn');
-    const clearRecentBtn = this.shadowRoot.getElementById('clearRecentBtn');
-    const recentList = this.shadowRoot.getElementById('recentList');
+	bindEvents() {
+		const loadBtn = this.shadowRoot.getElementById("loadBtn");
+		const input = this.shadowRoot.getElementById("manifestUrlInput");
+		const recentToggleBtn =
+			this.shadowRoot.getElementById("recentToggleBtn");
+		const clearRecentBtn = this.shadowRoot.getElementById("clearRecentBtn");
+		const recentList = this.shadowRoot.getElementById("recentList");
 
-    loadBtn?.addEventListener('click', () => {
-      this.dispatch('manifest-load', { manifestUrl: this.currentInputValue() });
-    });
+		loadBtn?.addEventListener("click", () => {
+			this.dispatch("manifest-load", {
+				manifestUrl: this.currentInputValue(),
+			});
+		});
 
-    input?.addEventListener('input', (event) => {
-      this.dispatch('manifest-input-change', { manifestUrl: event.target?.value || '' });
-      if (this.model.recentManifestUrls.length > 0) {
-        this.setRecentOpen(true);
-      }
-    });
+		input?.addEventListener("input", (event) => {
+			this.dispatch("manifest-input-change", {
+				manifestUrl: event.target?.value || "",
+			});
+			if (this.model.recentManifestUrls.length > 0) {
+				this.setRecentOpen(true);
+			}
+		});
 
-    input?.addEventListener('focus', () => {
-      if (this.model.recentManifestUrls.length > 0) {
-        this.setRecentOpen(true);
-      }
-    });
+		input?.addEventListener("focus", () => {
+			if (this.model.recentManifestUrls.length > 0) {
+				this.setRecentOpen(true);
+			}
+		});
 
-    input?.addEventListener('click', () => {
-      if (this.model.recentManifestUrls.length > 0) {
-        this.setRecentOpen(true);
-      }
-    });
+		input?.addEventListener("click", () => {
+			if (this.model.recentManifestUrls.length > 0) {
+				this.setRecentOpen(true);
+			}
+		});
 
-    input?.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        this.dispatch('manifest-load', { manifestUrl: this.currentInputValue() });
-        this.setRecentOpen(false);
-        return;
-      }
+		input?.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				this.dispatch("manifest-load", {
+					manifestUrl: this.currentInputValue(),
+				});
+				this.setRecentOpen(false);
+				return;
+			}
 
-      if (event.key === 'Escape') {
-        this.setRecentOpen(false);
-        return;
-      }
+			if (event.key === "Escape") {
+				this.setRecentOpen(false);
+				return;
+			}
 
-      if (event.key === 'ArrowDown' && this.model.recentManifestUrls.length > 0) {
-        event.preventDefault();
-        this.setRecentOpen(true);
-        this.focusFirstRecentItem();
-      }
-    });
+			if (
+				event.key === "ArrowDown" &&
+				this.model.recentManifestUrls.length > 0
+			) {
+				event.preventDefault();
+				this.setRecentOpen(true);
+				this.focusFirstRecentItem();
+			}
+		});
 
-    recentToggleBtn?.addEventListener('click', () => {
-      this.setRecentOpen(!this.model.recentOpen);
-      if (this.model.recentOpen) {
-        this.focusFirstRecentItem();
-      }
-    });
+		recentToggleBtn?.addEventListener("click", () => {
+			this.setRecentOpen(!this.model.recentOpen);
+			if (this.model.recentOpen) {
+				this.focusFirstRecentItem();
+			}
+		});
 
-    clearRecentBtn?.addEventListener('click', () => {
-      this.dispatch('clear-recent-manifests');
-      this.setRecentOpen(false);
-    });
+		clearRecentBtn?.addEventListener("click", () => {
+			this.dispatch("clear-recent-manifests");
+			this.setRecentOpen(false);
+		});
 
-    recentList?.addEventListener('click', (event) => {
-      const button = event.target?.closest('.recent-link');
-      const manifestUrl = button?.dataset?.manifestUrl || '';
-      if (!manifestUrl) {
-        return;
-      }
-      this.pickRecentManifestUrl(manifestUrl);
-    });
+		recentList?.addEventListener("click", (event) => {
+			const button = event.target?.closest(".recent-link");
+			const manifestUrl = button?.dataset?.manifestUrl || "";
+			if (!manifestUrl) {
+				return;
+			}
+			this.pickRecentManifestUrl(manifestUrl);
+		});
 
-    this.shadowRoot.addEventListener('focusout', () => {
-      this.queueCloseRecentPanel();
-    });
-  }
+		this.shadowRoot.addEventListener("focusout", () => {
+			this.queueCloseRecentPanel();
+		});
+	}
 
-  dispatch(name, detail = {}) {
-    this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
-  }
+	dispatch(name, detail = {}) {
+		this.dispatchEvent(
+			new CustomEvent(name, { detail, bubbles: true, composed: true }),
+		);
+	}
 
-  currentInputValue() {
-    return this.shadowRoot.getElementById('manifestUrlInput')?.value || '';
-  }
+	currentInputValue() {
+		return this.shadowRoot.getElementById("manifestUrlInput")?.value || "";
+	}
 
-  focusFirstRecentItem() {
-    const firstRecentButton = this.shadowRoot.querySelector('.recent-link');
-    firstRecentButton?.focus();
-  }
+	focusFirstRecentItem() {
+		const firstRecentButton = this.shadowRoot.querySelector(".recent-link");
+		firstRecentButton?.focus();
+	}
 
-  queueCloseRecentPanel() {
-    if (this.closeRecentTimer) {
-      window.clearTimeout(this.closeRecentTimer);
-    }
+	queueCloseRecentPanel() {
+		if (this.closeRecentTimer) {
+			window.clearTimeout(this.closeRecentTimer);
+		}
 
-    this.closeRecentTimer = window.setTimeout(() => {
-      const root = this.shadowRoot;
-      const controlsRoot = root?.getElementById('controlsRoot');
-      const activeElement = root?.activeElement;
-      if (controlsRoot && activeElement && controlsRoot.contains(activeElement)) {
-        return;
-      }
-      this.setRecentOpen(false);
-    }, 0);
-  }
+		this.closeRecentTimer = window.setTimeout(() => {
+			const root = this.shadowRoot;
+			const controlsRoot = root?.getElementById("controlsRoot");
+			const activeElement = root?.activeElement;
+			if (
+				controlsRoot &&
+				activeElement &&
+				controlsRoot.contains(activeElement)
+			) {
+				return;
+			}
+			this.setRecentOpen(false);
+		}, 0);
+	}
 
-  pickRecentManifestUrl(manifestUrl) {
-    const input = this.shadowRoot.getElementById('manifestUrlInput');
-    if (!input) {
-      return;
-    }
+	pickRecentManifestUrl(manifestUrl) {
+		const input = this.shadowRoot.getElementById("manifestUrlInput");
+		if (!input) {
+			return;
+		}
 
-    input.value = manifestUrl;
-    this.dispatch('manifest-input-change', { manifestUrl });
-    this.dispatch('recent-manifest-picked', { manifestUrl });
-    this.dispatch('manifest-load', { manifestUrl });
-    this.setRecentOpen(false);
-  }
+		input.value = manifestUrl;
+		this.dispatch("manifest-input-change", { manifestUrl });
+		this.dispatch("recent-manifest-picked", { manifestUrl });
+		this.dispatch("manifest-load", { manifestUrl });
+		this.setRecentOpen(false);
+	}
 
-  setRecentOpen(open) {
-    const hasRecent = this.model.recentManifestUrls.length > 0;
-    this.model.recentOpen = Boolean(open) && hasRecent;
+	setRecentOpen(open) {
+		const hasRecent = this.model.recentManifestUrls.length > 0;
+		this.model.recentOpen = Boolean(open) && hasRecent;
 
-    const recentPanel = this.shadowRoot.getElementById('recentPanel');
-    const toggleBtn = this.shadowRoot.getElementById('recentToggleBtn');
-    if (recentPanel) {
-      recentPanel.hidden = !this.model.recentOpen;
-    }
-    if (toggleBtn) {
-      toggleBtn.setAttribute('aria-expanded', this.model.recentOpen ? 'true' : 'false');
-    }
-  }
+		const recentPanel = this.shadowRoot.getElementById("recentPanel");
+		const toggleBtn = this.shadowRoot.getElementById("recentToggleBtn");
+		if (recentPanel) {
+			recentPanel.hidden = !this.model.recentOpen;
+		}
+		if (toggleBtn) {
+			toggleBtn.setAttribute(
+				"aria-expanded",
+				this.model.recentOpen ? "true" : "false",
+			);
+		}
+	}
 
-  update(data = {}) {
-    this.model = { ...this.model, ...data };
-    this.applyView();
-    this.setRecentOpen(this.model.recentOpen);
-  }
+	update(data = {}) {
+		this.model = { ...this.model, ...data };
+		this.applyView();
+		this.setRecentOpen(this.model.recentOpen);
+	}
 
-  applyView() {
-    const input = this.shadowRoot.getElementById('manifestUrlInput');
-    const recentList = this.shadowRoot.getElementById('recentList');
-    const toggleBtn = this.shadowRoot.getElementById('recentToggleBtn');
-    const clearBtn = this.shadowRoot.getElementById('clearRecentBtn');
-    if (!input || !recentList || !toggleBtn || !clearBtn) {
-      return;
-    }
+	applyView() {
+		const input = this.shadowRoot.getElementById("manifestUrlInput");
+		const recentList = this.shadowRoot.getElementById("recentList");
+		const toggleBtn = this.shadowRoot.getElementById("recentToggleBtn");
+		const clearBtn = this.shadowRoot.getElementById("clearRecentBtn");
+		if (!input || !recentList || !toggleBtn || !clearBtn) {
+			return;
+		}
 
-    input.value = this.model.currentManifestUrl || '';
+		input.value = this.model.currentManifestUrl || "";
 
-    const recentUrls = Array.isArray(this.model.recentManifestUrls) ? this.model.recentManifestUrls : [];
-    toggleBtn.disabled = recentUrls.length === 0;
-    toggleBtn.textContent = recentUrls.length > 0 ? `Recent (${recentUrls.length})` : 'Recent';
-    clearBtn.disabled = recentUrls.length === 0;
+		const recentUrls = Array.isArray(this.model.recentManifestUrls)
+			? this.model.recentManifestUrls
+			: [];
+		toggleBtn.disabled = recentUrls.length === 0;
+		toggleBtn.textContent =
+			recentUrls.length > 0 ? `Recent (${recentUrls.length})` : "Recent";
+		clearBtn.disabled = recentUrls.length === 0;
 
-    recentList.innerHTML = '';
-    for (const url of recentUrls) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'recent-link';
-      button.dataset.manifestUrl = url;
-      button.textContent = url;
-      button.title = url;
-      recentList.appendChild(button);
-    }
+		recentList.innerHTML = "";
+		for (const url of recentUrls) {
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = "recent-link";
+			button.dataset.manifestUrl = url;
+			button.textContent = url;
+			button.title = url;
+			recentList.appendChild(button);
+		}
 
-    if (recentUrls.length === 0) {
-      this.setRecentOpen(false);
-    }
-  }
+		if (recentUrls.length === 0) {
+			this.setRecentOpen(false);
+		}
+	}
 
-  render() {
-    this.shadowRoot.innerHTML = `
+	render() {
+		this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: block;
@@ -384,11 +406,14 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         </div>
       </div>
     `;
-  }
+	}
 }
 
-if (!customElements.get('open-browser-manifest-controls')) {
-  customElements.define('open-browser-manifest-controls', OpenBrowserManifestControlsElement);
+if (!customElements.get("open-browser-manifest-controls")) {
+	customElements.define(
+		"open-browser-manifest-controls",
+		OpenBrowserManifestControlsElement,
+	);
 }
 
 export { OpenBrowserManifestControlsElement };

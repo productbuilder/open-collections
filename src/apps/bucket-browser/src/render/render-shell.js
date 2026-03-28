@@ -1,7 +1,7 @@
-import { appShellStyles } from '../css/app-shell.css.js';
+import { appShellStyles } from "../css/app-shell.css.js";
 
 export function renderShell(shadowRoot) {
-  shadowRoot.innerHTML = `
+	shadowRoot.innerHTML = `
     <style>${appShellStyles}</style>
     <div class="app-shell">
       <pb-workspace-toolbar id="workspaceToolbar"></pb-workspace-toolbar>

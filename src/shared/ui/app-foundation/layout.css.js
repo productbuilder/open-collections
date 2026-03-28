@@ -1,4 +1,4 @@
-import { appFoundationTokenStyles } from './tokens.css.js';
+import { appFoundationTokenStyles } from "./tokens.css.js";
 
 export const appFoundationLayoutStyles = `
   ${appFoundationTokenStyles}
@@ -20,23 +20,23 @@ export const appFoundationLayoutStyles = `
   }
 
   .oc-app-bar {
+    display:flex;
+    align-items:center;
     padding: var(--oc-space-4) var(--oc-space-4) var(--oc-space-3);
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-default);
     background: var(--oc-bg-surface);
   }
 
   .oc-app-nav {
-    display: grid;
+    display: flex;
     gap: var(--oc-space-2);
     padding: var(--oc-space-3) var(--oc-space-4);
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-default);
     background: var(--oc-bg-surface);
   }
 
   .oc-app-viewport {
     min-height: 0;
     overflow: auto;
-    padding: var(--oc-space-4);
+    <!-- padding: var(--oc-space-4); -->
   }
 
   .oc-page {
@@ -97,6 +97,11 @@ export const appFoundationLayoutStyles = `
     .oc-app-viewport {
       padding: var(--oc-space-3) var(--oc-space-3) calc(var(--oc-space-3) + var(--oc-layout-safe-bottom));
     }
+
+  .oc-app-nav {
+    display: grid;
+
+  }
 
     .oc-page {
       gap: var(--oc-space-3);

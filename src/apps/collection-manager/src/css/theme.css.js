@@ -1,4 +1,4 @@
-import { rawTokenStyles } from './tokens.css.js';
+import { rawTokenStyles } from "./tokens.css.js";
 
 export const themeTokenStyles = `
   ${rawTokenStyles}

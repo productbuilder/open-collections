@@ -1,5 +1,5 @@
-import { backButtonStyles } from '../components/back-button.js';
-import { primitiveStyles } from './primitives.css.js';
+import { backButtonStyles } from "../../../../shared/components/back-button.js";
+import { primitiveStyles } from "./primitives.css.js";
 
 export const sourceManagerStyles = `
   ${primitiveStyles}

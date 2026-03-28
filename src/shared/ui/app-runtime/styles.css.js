@@ -1,4 +1,4 @@
-import { appFoundationTokenStyles } from '../app-foundation/tokens.css.js';
+import { appFoundationTokenStyles } from "../app-foundation/tokens.css.js";
 
 export const appRuntimeStyles = `
   ${appFoundationTokenStyles}

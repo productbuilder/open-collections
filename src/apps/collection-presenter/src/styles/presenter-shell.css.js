@@ -1,4 +1,4 @@
-import { appFoundationLayoutStyles } from '../../../../shared/ui/app-foundation/layout.css.js';
+import { appFoundationLayoutStyles } from "../../../../shared/ui/app-foundation/layout.css.js";
 
 export const presenterShellStyles = `
   ${appFoundationLayoutStyles}

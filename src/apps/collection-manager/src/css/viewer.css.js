@@ -1,4 +1,4 @@
-import { primitiveStyles } from './primitives.css.js';
+import { primitiveStyles } from "./primitives.css.js";
 
 export const viewerStyles = `
   ${primitiveStyles}

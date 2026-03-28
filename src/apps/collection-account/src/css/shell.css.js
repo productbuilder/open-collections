@@ -1,4 +1,4 @@
-import { appFoundationLayoutStyles } from '../../../../shared/ui/app-foundation/layout.css.js';
+import { appFoundationLayoutStyles } from "../../../../shared/ui/app-foundation/layout.css.js";
 
 export const accountShellStyles = `
   ${appFoundationLayoutStyles}
@@ -10,6 +10,7 @@ export const accountShellStyles = `
 
   .account-shell {
     max-width: var(--oc-layout-content-max);
+    padding:1rem;
   }
 
   .account-title {

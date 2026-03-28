@@ -1,8 +1,8 @@
-import { shellStyles } from '../css/shell.css.js';
-import { renderCloseIcon } from '../components/icons.js';
+import { shellStyles } from "../css/shell.css.js";
+import { renderCloseIcon } from "../../../../shared/components/icons.js";
 
 export function renderShell(shadowRoot) {
-  shadowRoot.innerHTML = `
+	shadowRoot.innerHTML = `
     <style>${shellStyles}</style>
 
     <div class="app-shell">

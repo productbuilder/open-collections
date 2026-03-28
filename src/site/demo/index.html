@@ -6,45 +6,72 @@
 		<title>Collection Manager Embed Demo | Open Collections</title>
 		<link rel="stylesheet" href="../../index.css" />
 		<link rel="stylesheet" href="./index.css" />
-			<script type="module" src="../shared/site-shell-components.js"></script>
+		<script type="module" src="../shared/site-shell-components.js"></script>
 	</head>
 	<body>
-		<open-collections-site-header base-path="../../" active-page="tools"></open-collections-site-header>
+		<open-collections-site-header
+			base-path="../../"
+			active-page="tools"
+		></open-collections-site-header>
 
 		<main>
-			<p class="breadcrumbs"><a href="../../">Home</a> / <a href="../tools/">Tools</a> / Collection Manager Demo</p>
+			<p class="breadcrumbs">
+				<a href="../../">Home</a> / <a href="../tools/">Tools</a> /
+				Collection Manager Demo
+			</p>
 			<header>
 				<h1>Collection Manager embed demo</h1>
 				<p>
 					This page mounts the Collection Manager component
-					(<code>&lt;open-collections-manager&gt;</code>) directly. Open
-					<code>Sources</code> in the component header and connect using
-					<code>/src/collections/single-collection/collection.json</code>.
+					(<code>&lt;open-collections-manager&gt;</code>) directly.
+					Open
+					<code>Sources</code> in the component header and connect
+					using
+					<code
+						>/src/collections/single-collection/collection.json</code
+					>.
 				</p>
 			</header>
 
 			<section>
 				<h2>Embedded Collection Manager</h2>
 				<div class="consumer-toolbar">
-					<a href="/src/collections/single-collection/collection.json" target="_blank" rel="noopener">Open example dataset</a>
+					<a
+						href="/src/collections/single-collection/collection.json"
+						target="_blank"
+						rel="noopener"
+						>Open example dataset</a
+					>
 					<a href="../tools/">Back to Tools</a>
-					<a href="/src/apps/collection-manager/" target="_blank" rel="noopener">Open Collection Manager app</a>
-					<a href="/src/apps/collection-browser/" target="_blank" rel="noopener">Open Collection Browser app</a>
+					<a
+						href="/src/apps/collection-manager/"
+						target="_blank"
+						rel="noopener"
+						>Open Collection Manager app</a
+					>
+					<a
+						href="/src/apps/collection-browser/"
+						target="_blank"
+						rel="noopener"
+						>Open Collection Browser app</a
+					>
 				</div>
 				<div class="demo-shell">
-					<p class="demo-caption">Provider and manifest controls are dialog-based in the component header.</p>
+					<p class="demo-caption">
+						Provider and manifest controls are dialog-based in the
+						component header.
+					</p>
 					<open-collections-manager></open-collections-manager>
 				</div>
 			</section>
 		</main>
-		<script type="module" src="/src/apps/collection-manager/src/index.js?v=20260322-mobile-header"></script>
+		<script
+			type="module"
+			src="/src/apps/collection-manager/src/index.js?v=20260322-mobile-header"
+		></script>
 
-		<open-collections-site-footer base-path="../../"></open-collections-site-footer>
+		<open-collections-site-footer
+			base-path="../../"
+		></open-collections-site-footer>
 	</body>
 </html>
-
-
-
-
-
-

@@ -30,9 +30,14 @@ export function renderPresenterHomeView() {
 	const sectionsMarkup = PRESENTER_PLACEHOLDER_SECTIONS.map(
 		(section) => `
     <article class="oc-surface presenter-placeholder-card" aria-label="${section.title} placeholder">
-      <h2 class="presenter-placeholder-title">${section.title}</h2>
-      <p class="oc-muted">${section.description}</p>
-      <p class="oc-empty-state">Scaffold only. Presenter modules will replace this card in a later step.</p>
+      <open-collections-section-header
+        title="${section.title}"
+        description="${section.description}"
+      ></open-collections-section-header>
+      <open-collections-empty-state
+        compact
+        message="Scaffold only. Presenter modules will replace this card in a later step."
+      ></open-collections-empty-state>
     </article>
   `,
 	).join("");
@@ -40,11 +45,12 @@ export function renderPresenterHomeView() {
 	return `
     <main class="oc-app-viewport" aria-labelledby="presenterTitle">
       <section class="oc-page oc-page-intro" aria-labelledby="presenterTitle">
-        <h1 class="presenter-title" id="presenterTitle">Collection Presenter</h1>
-        <p class="oc-muted">
-          Collection Presenter is the future presentation surface for turning curated collections into
-          audience-ready experiences inside the shared app shell.
-        </p>
+        <open-collections-section-header
+          id="presenterTitle"
+          heading-level="1"
+          title="Collection Presenter"
+          description="Collection Presenter is the future presentation surface for turning curated collections into audience-ready experiences inside the shared app shell."
+        ></open-collections-section-header>
       </section>
 
       <section class="oc-page presenter-placeholder-grid" aria-label="Presenter capability scaffolds">

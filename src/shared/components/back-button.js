@@ -38,10 +38,12 @@ export function renderBackButton({
 	className = "back-btn",
 	label = "Back",
 	hidden = false,
+	slot = "",
 } = {}) {
 	const hiddenClass = hidden ? " is-hidden" : "";
+	const slotAttr = slot ? ` slot="${slot}"` : "";
 	return `
-    <button class="${className}${hiddenClass}" id="${id}" type="button" aria-label="${label}">
+    <button class="${className}${hiddenClass}" id="${id}" type="button" aria-label="${label}"${slotAttr}>
       <svg class="icon icon-back" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z" />
       </svg>

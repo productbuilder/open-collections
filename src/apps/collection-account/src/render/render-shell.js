@@ -27,15 +27,14 @@ export function renderShell(shadowRoot) {
 			</section>
 
 			<section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
-				<header class="account-subpage-header">
+				<open-collections-section-header title="Connections" heading-level="2" id="connectionsHeading">
 					${renderBackButton({
 						id: "accountBackBtn",
 						label: "Back to account",
 						className: "back-btn",
+						slot: "leading",
 					})}
-					
-					<h2 class="connections-heading" id="connectionsHeading">Connections</h2>
-				</header>
+				</open-collections-section-header>
 
 				<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
 				<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
@@ -47,19 +46,19 @@ export function renderShell(shadowRoot) {
 			</section>
 
 			<section class="oc-surface account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
-				<header class="account-subpage-header">
+				<open-collections-section-header title="User settings" heading-level="2" id="settingsHeading">
 					${renderBackButton({
 						id: "settingsBackBtn",
 						label: "Back to account",
 						className: "back-btn",
+						slot: "leading",
 					})}
-					<h2 class="connections-heading" id="settingsHeading">User settings</h2>
-				</header>
+				</open-collections-section-header>
 				<p class="account-description">This area will host user and account preferences as the account app grows.</p>
-				<div class="settings-placeholder">
-				<p class="settings-placeholder-title">Settings coming soon</p>
-				<p class="settings-placeholder-copy">Future account preferences and profile-level configuration will be managed here.</p>
-				</div>
+				<open-collections-empty-state
+					title="Settings coming soon"
+					message="Future account preferences and profile-level configuration will be managed here."
+				></open-collections-empty-state>
 			</section>
 		</main>
 	`;

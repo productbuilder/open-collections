@@ -13,6 +13,9 @@ This folder holds the first small shared panel layer for the app-shell family.
   - Mid-level section panel for scaffold/placeholder states that composes:
     - `open-collections-section-panel`
     - `open-collections-empty-state`
+- `open-collections-panel-chrome`
+  - Mid-level presentational panel chrome for title/subtitle/status + toolbar + content.
+  - Emits `panel-back` when optional back button is enabled (`show-back="true"`).
 
 ## Why these first
 

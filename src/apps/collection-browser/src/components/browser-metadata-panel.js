@@ -1,4 +1,6 @@
 import { BaseElement } from "../../../../shared/ui/app-foundation/base-element.js";
+import "../../../../shared/ui/panels/index.js";
+import "../../../../shared/ui/primitives/empty-state.js";
 import { metadataStyles } from "../css/metadata.css.js";
 
 class OpenBrowserMetadataPanelElement extends BaseElement {
@@ -45,16 +47,10 @@ class OpenBrowserMetadataPanelElement extends BaseElement {
 	renderTemplate() {
 		return `
       <aside class="metadata-panel" aria-label="Metadata panel">
-        <div class="panel-header">
-          <div class="header-meta">
-            <h2 id="panelTitle" class="panel-title">Metadata</h2>
-            <p id="panelContext" class="panel-context">Read-only details for the selected item.</p>
-          </div>
-          <div class="header-actions">
-            <button id="closeBtn" class="btn close-btn" type="button">Close</button>
-          </div>
-        </div>
-        <div id="panelBody" class="panel-body"></div>
+        <open-collections-section-panel id="metadataSection" title="Metadata" description="Read-only details for the selected item." heading-level="2" surface>
+          <button id="closeBtn" class="btn close-btn" type="button" slot="actions">Close</button>
+          <div id="panelBody" class="panel-body"></div>
+        </open-collections-section-panel>
       </aside>
     `;
 	}
@@ -90,24 +86,22 @@ class OpenBrowserMetadataPanelElement extends BaseElement {
 	}
 
 	applyView() {
-		const title = this.shadowRoot.getElementById("panelTitle");
-		const context = this.shadowRoot.getElementById("panelContext");
+		const section = this.shadowRoot.getElementById("metadataSection");
 		const body = this.shadowRoot.getElementById("panelBody");
-		if (!title || !context || !body) {
+		if (!section || !body) {
 			return;
 		}
 
-		title.textContent = this.model.title || "Metadata";
-		context.textContent = this.model.contextText || "";
+		section.setAttribute("title", this.model.title || "Metadata");
+		section.setAttribute("description", this.model.contextText || "");
 		body.innerHTML = "";
 
 		if (
 			!Array.isArray(this.model.fields) ||
 			this.model.fields.length === 0
 		) {
-			const empty = document.createElement("div");
-			empty.className = "empty";
-			empty.textContent = this.model.emptyText || "Nothing selected.";
+			const empty = document.createElement("open-collections-empty-state");
+			empty.setAttribute("message", this.model.emptyText || "Nothing selected.");
 			body.appendChild(empty);
 			return;
 		}

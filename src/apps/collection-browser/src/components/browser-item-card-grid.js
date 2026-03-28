@@ -1,4 +1,5 @@
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
+import "../../../../shared/ui/primitives/empty-state.js";
 
 class OpenBrowserItemCardGridElement extends HTMLElement {
 	constructor() {
@@ -40,7 +41,13 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 	render() {
 		const items = Array.isArray(this.model.items) ? this.model.items : [];
 		if (items.length === 0) {
-			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">No items loaded.</div>`;
+			this.shadowRoot.innerHTML = `
+				<style>${browserRendererStyles}</style>
+				<open-collections-empty-state
+					title="No items loaded"
+					message="Load a manifest to browse collection items."
+				></open-collections-empty-state>
+			`;
 			return;
 		}
 

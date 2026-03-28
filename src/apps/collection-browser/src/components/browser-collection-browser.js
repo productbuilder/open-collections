@@ -1,6 +1,5 @@
 ﻿import { browserStyles } from "../css/browser.css.js";
-import "../../../collection-manager/src/components/panel-shell.js";
-import "../../../collection-manager/src/components/pane-layout.js";
+import "../../../../shared/ui/panels/index.js";
 import "./browser-item-card-grid.js";
 
 class OpenBrowserCollectionBrowserElement extends HTMLElement {
@@ -10,8 +9,6 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.model = {
 			viewportTitle: "Collection items",
 			viewportSubtitle: "Load a collection to browse its items.",
-			shellTitle: "Collection browser",
-			shellSubtitle: "Load a manifest to browse a single collection.",
 			items: [],
 			selectedItemId: null,
 		};
@@ -25,7 +22,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	update(data = {}) {
 		this.model = { ...this.model, ...data };
-		if (!this.shadowRoot?.getElementById("panelShell")) {
+		if (!this.shadowRoot?.getElementById("viewportPanel")) {
 			return;
 		}
 		this.renderFrame();
@@ -33,21 +30,16 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	}
 
 	renderFrame() {
-		const panelShell = this.shadowRoot.getElementById("panelShell");
+		const sectionPanel = this.shadowRoot.getElementById("viewportPanel");
 		const title = this.shadowRoot.getElementById("viewportTitle");
 		const subtitle = this.shadowRoot.getElementById("viewportSubtitle");
-		if (!panelShell || !title || !subtitle) {
+		if (!sectionPanel || !title || !subtitle) {
 			return;
 		}
 
-		panelShell.setAttribute(
+		sectionPanel.setAttribute(
 			"title",
-			this.model.shellTitle || "Collection browser",
-		);
-		panelShell.setAttribute(
-			"subtitle",
-			this.model.shellSubtitle ||
-				"Load a manifest to browse a single collection.",
+			this.model.viewportTitle || "Collection items",
 		);
 		title.textContent = this.model.viewportTitle || "Collection items";
 		subtitle.textContent = this.model.viewportSubtitle || "";
@@ -71,19 +63,27 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
-        <open-panel-shell id="panelShell" title="Collection browser" subtitle="Load a manifest to browse a single collection." show-back="false">
-          <slot name="toolbar" slot="toolbar"></slot>
-          <open-pane-layout id="paneLayout" inspector-placement="right">
-            <section class="viewport-region" slot="main">
+        <open-collections-section-panel
+          id="viewportPanel"
+          title="Collection items"
+          description="Load a collection to browse its items."
+          heading-level="2"
+          surface
+        >
+          <slot name="toolbar" slot="actions"></slot>
+          <section class="viewport-layout">
+            <section class="viewport-region">
               <div class="viewport-summary">
-                <h2 id="viewportTitle" class="viewport-title">Collection items</h2>
+                <h3 id="viewportTitle" class="viewport-title">Collection items</h3>
                 <p id="viewportSubtitle" class="viewport-subtitle">Load a collection to browse its items.</p>
               </div>
               <div id="browserHost" class="browser-host"></div>
             </section>
-            <slot name="inspector" slot="inspector"></slot>
-          </open-pane-layout>
-        </open-panel-shell>
+            <aside class="viewport-inspector">
+              <slot class="inspector-slot" name="inspector"></slot>
+            </aside>
+          </section>
+        </open-collections-section-panel>
       </section>
     `;
 	}

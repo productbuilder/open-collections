@@ -42,4 +42,19 @@ Open Collections Manager is the writable collection-management app.
 - Publishing remains separate from OPFS and uses storage providers.
 - Secrets (PATs, OAuth tokens, passwords) are never persisted in OPFS.
 
+## Component header/action visibility
+
+`open-collections-manager` now keeps auxiliary header actions hidden by default so embedded usage stays content-focused.
+
+- `show-header` – enables the manager header action group.
+- `show-connections-action` – shows the connection/manage-connections header action (requires `show-header`).
+- `show-more-action` – shows the more/workflow menu header action (requires `show-header`).
+
+All three are optional boolean attributes/properties. Defaults are `false`, so connection + more actions are not shown unless explicitly enabled.
+
+Example standalone usage with both actions visible:
+
+```html
+<open-collections-manager show-header show-connections-action show-more-action></open-collections-manager>
+```
 

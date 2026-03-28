@@ -101,6 +101,17 @@ const SOURCES_DIR_PATH = 'sources';
 const DRAFT_ASSETS_DIR_PATH = 'draft-assets';
 
 class OpenCollectionsManagerElement extends HTMLElement {
+  static get observedAttributes() {
+    return [
+      'show-header',
+      'show-connections-action',
+      'show-more-action',
+      'data-oc-app-mode',
+      'data-shell-embed',
+      'data-workbench-embed',
+    ];
+  }
+
   constructor() {
     super();
 
@@ -136,6 +147,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.cacheDom();
   }
 
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) {
+      return;
+    }
+    if (name === 'show-header' || name === 'show-connections-action' || name === 'show-more-action') {
+      this.applyHeaderActionPresentation();
+      return;
+    }
+    if (name === 'data-oc-app-mode' || name === 'data-shell-embed' || name === 'data-workbench-embed') {
+      this.applyConnectionEntryPresentation();
+      this.renderConnectionsFallbackNotice();
+    }
+  }
+
   connectedCallback() {
     this.toggleAttribute('data-mobile-shell', this.isMobileShellRuntime());
     this.bindEvents();
@@ -152,6 +177,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
     this.renderEditor();
     this.renderWorkspaceContext();
     this.renderSourceContext();
+    this.applyHeaderActionPresentation();
     this.applyConnectionEntryPresentation();
     this.setLocalDraftStatus('Checking local draft storage...', 'neutral');
     this.setLocalDraftControlsEnabled(false);
@@ -295,6 +321,54 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
   browserConnectionActionLabel() {
     return this.shouldPreferAccountConnectionsHandoff() ? 'Manage in Account' : 'Add connection';
+  }
+
+  parseBooleanAttribute(name, fallback = false) {
+    if (!this.hasAttribute(name)) {
+      return fallback;
+    }
+    const raw = this.getAttribute(name);
+    if (raw == null || raw === '') {
+      return true;
+    }
+    return !['false', '0', 'no', 'off'].includes(String(raw).trim().toLowerCase());
+  }
+
+  get showHeader() {
+    return this.parseBooleanAttribute('show-header', false);
+  }
+
+  set showHeader(value) {
+    this.toggleAttribute('show-header', Boolean(value));
+  }
+
+  get showConnectionsAction() {
+    return this.parseBooleanAttribute('show-connections-action', false);
+  }
+
+  set showConnectionsAction(value) {
+    this.toggleAttribute('show-connections-action', Boolean(value));
+  }
+
+  get showMoreAction() {
+    return this.parseBooleanAttribute('show-more-action', false);
+  }
+
+  set showMoreAction(value) {
+    this.toggleAttribute('show-more-action', Boolean(value));
+  }
+
+  applyHeaderActionPresentation() {
+    const showHeaderActions = this.showHeader;
+    const showConnectionsAction = showHeaderActions && this.showConnectionsAction;
+    const showMoreAction = showHeaderActions && this.showMoreAction;
+    const headerState = {
+      showHeaderActions,
+      showConnectionsAction,
+      showMoreAction,
+    };
+    this.dom.collectionBrowser?.update?.(headerState);
+    this.dom.mobileFlow?.setBrowserState?.(headerState);
   }
 
   applyConnectionEntryPresentation() {

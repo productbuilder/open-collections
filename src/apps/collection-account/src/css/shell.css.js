@@ -1,4 +1,5 @@
 import { appFoundationLayoutStyles } from "../../../../shared/ui/app-foundation/layout.css.js";
+import { backButtonStyles } from "../../../../shared/components/back-button.js";
 
 export const accountShellStyles = `
   ${appFoundationLayoutStyles}
@@ -90,31 +91,8 @@ export const accountShellStyles = `
     gap: 0.5rem;
   }
 
-  .account-back-button {
-    border: 1px solid var(--oc-border-subtle);
-    background: var(--oc-surface-base);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-sm);
-    width: 2rem;
-    height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font: inherit;
-    font-size: 1rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .account-back-button:hover {
-    border-color: var(--oc-border-strong);
-    background: var(--oc-surface-elevated);
-  }
-
-  .account-back-icon {
-    font-size: 1.1rem;
-    color: var(--oc-text-muted);
-  }
+  /* Reuse shared back button styling for account subpage navigation. */
+  ${backButtonStyles}
 
   .connections-body {
     display: grid;

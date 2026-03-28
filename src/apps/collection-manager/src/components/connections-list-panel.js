@@ -21,6 +21,22 @@ const styles = `
     align-content: start;
   }
 
+  .panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .panel-empty {
+    margin: 0;
+    color: #64748b;
+  }
+
+  .source-list {
+    display: grid;
+    gap: 0.55rem;
+  }
+
   .empty {
     border-radius: 8px;
   }
@@ -236,15 +252,9 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
           : source.config?.path || 'Local connection');
   }
 
-  renderAddCard() {
+  renderAddButton() {
     return `
-      <article class="source-card source-card-add" data-action="open-add" tabindex="0" role="button" aria-label="Add connection">
-        <div class="source-card-header">
-          <div class="source-card-heading">
-            <p class="source-card-title">Add connection</p>
-          </div>
-        </div>
-      </article>
+      <button class="btn btn-primary" type="button" data-action="open-add">Add connection</button>
     `;
   }
 
@@ -296,14 +306,18 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 
   render() {
     const sourceCards = this.model.sources.map((source) => this.renderSourceCard(source)).join('');
-    const emptyState = this.model.sources.length ? '' : '<div class="empty">No connections added yet.</div>';
+    const emptyState = this.model.sources.length ? '<p class="panel-empty">Select a connection card to inspect details.</p>' : '<p class="panel-empty empty">No connections added yet.</p>';
 
     this.shadowRoot.innerHTML = `
       <style>${styles}</style>
       <div class="panel">
-        ${this.renderAddCard()}
+        <div class="panel-actions">
+          ${this.renderAddButton()}
+        </div>
         ${emptyState}
-        ${sourceCards}
+        <div class="source-list">
+          ${sourceCards}
+        </div>
       </div>
     `;
 
@@ -315,13 +329,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
     root.querySelector('[data-action="open-add"]')?.addEventListener('click', () => {
       this.dispatch('open-add-connection');
     });
-    root.querySelector('[data-action="open-add"]')?.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        this.dispatch('open-add-connection');
-      }
-    });
-
     root.querySelectorAll('[data-action="select"]').forEach((card) => {
       const sourceId = card.getAttribute('data-source-id') || '';
       const activate = () => {

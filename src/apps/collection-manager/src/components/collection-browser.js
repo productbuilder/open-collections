@@ -46,6 +46,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       workspaceContextText: '',
       statusText: 'No connections yet.',
       statusTone: 'neutral',
+      showHeaderActions: false,
+      showConnectionsAction: false,
+      showMoreAction: false,
     };
   }
 
@@ -285,6 +288,16 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       publishBtn.removeAttribute('title');
       publishBtn.setAttribute('aria-label', publishBtn.textContent);
     }
+    const showHeaderActions = this.model.showHeaderActions !== false;
+    const showConnectionsAction = showHeaderActions && this.model.showConnectionsAction !== false;
+    const showMoreAction = showHeaderActions && this.model.showMoreAction !== false;
+
+    manageConnectionsBtn.hidden = !showConnectionsAction;
+    const workflowMenuBtn = this.shadowRoot.getElementById('openWorkflowMenuBtn');
+    if (workflowMenuBtn) {
+      workflowMenuBtn.hidden = !showMoreAction;
+    }
+
     manageConnectionsBtn.textContent = this.model.connectionActionLabel || 'Manage connections';
     manageConnectionsBtn.title = this.model.activeSourceLabel || 'Select connection';
     manageConnectionsBtn.setAttribute('aria-label', `${manageConnectionsBtn.textContent}. Active: ${this.model.activeSourceLabel || 'none'}`);

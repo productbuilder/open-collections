@@ -163,7 +163,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		this.shadowRoot
 			.getElementById("openStorageOptionsBtn")
 			?.addEventListener("click", () => {
-				this.dispatch("open-storage-options");
+				this.openStorageOptionsDialog();
 			});
 
 		this.shadowRoot
@@ -586,6 +586,33 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		dialog.removeAttribute("open");
 	}
 
+	openStorageOptionsDialog() {
+		const dialog = this.shadowRoot?.getElementById("storageOptionsDialog");
+		if (!dialog) {
+			return;
+		}
+		if (dialog.open) {
+			return;
+		}
+		if (typeof dialog.showModal === "function") {
+			dialog.showModal();
+			return;
+		}
+		dialog.setAttribute("open", "open");
+	}
+
+	closeStorageOptionsDialog() {
+		const dialog = this.shadowRoot?.getElementById("storageOptionsDialog");
+		if (!dialog || !dialog.open) {
+			return;
+		}
+		if (typeof dialog.close === "function") {
+			dialog.close();
+			return;
+		}
+		dialog.removeAttribute("open");
+	}
+
 	render() {
 		this.shadowRoot.innerHTML = `
       <style>
@@ -601,6 +628,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           flex-wrap: nowrap;
           justify-content: flex-start;
           gap: 0.5rem;
+          margin-bottom: 0.35rem;
         }
 
         .remote-flow-title {
@@ -629,6 +657,10 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
         .connection-type-row .provider-card-info {
           position: static;
+        }
+
+        .remote-flow-intro {
+          margin: 0 0 0.45rem;
         }
       </style>
       <div class="source-manager">
@@ -679,6 +711,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
                 ${renderInfoIcon()}
               </button>
             </div>
+            <p class="config-section-title remote-flow-intro">Choose a remote connection type</p>
             <p id="remoteFlowBreadcrumb" class="panel-subtext is-hidden"></p>
             <div id="remoteSubtypeCatalog" class="provider-list is-hidden">
               <button class="provider-card" type="button" data-remote-subtype="git">
@@ -759,11 +792,43 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           </div>
         </div>
       </dialog>
+
+      <dialog id="storageOptionsDialog" class="support-dialog" aria-label="Storage options guidance">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 class="dialog-title">Storage options</h2>
+            <button class="icon-btn" id="closeStorageOptionsBtn" type="button" aria-label="Close storage options dialog">
+              ${renderCloseIcon()}
+            </button>
+          </div>
+          <div class="dialog-body">
+            <p class="panel-subtext">Recommended options for open hosting:</p>
+            <ul class="storage-list">
+              <li><strong>GitHub</strong> for open manifests and transparent version history.</li>
+              <li><strong>Cloudflare Pages / R2</strong> for static/browser delivery of JSON and media.</li>
+              <li><strong>S3-compatible storage</strong> for durable institutional publishing workflows.</li>
+            </ul>
+            <div class="dialog-actions">
+              <button class="btn" id="closeStorageOptionsBtnSecondary" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+      </dialog>
     `;
 		this.shadowRoot
 			.getElementById("closeLocalFolderInfoBtnSecondary")
 			?.addEventListener("click", () => {
 				this.closeLocalFolderInfoDialog();
+			});
+		this.shadowRoot
+			.getElementById("closeStorageOptionsBtn")
+			?.addEventListener("click", () => {
+				this.closeStorageOptionsDialog();
+			});
+		this.shadowRoot
+			.getElementById("closeStorageOptionsBtnSecondary")
+			?.addEventListener("click", () => {
+				this.closeStorageOptionsDialog();
 			});
 		this.renderLocalFolderCardState();
 	}

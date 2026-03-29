@@ -62,26 +62,21 @@ export const viewToggleStyles = `
   }
 
   .icon {
-    font-family: 'Material Icons';
-    font-size: 1.15rem;
-    line-height: 1;
-    font-style: normal;
-    font-weight: 400;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: 'liga';
+    width: 1.15rem;
+    height: 1.15rem;
+    display: block;
     opacity: 0.78;
   }
 
+  .icon :where(path, rect, line, circle) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .option.is-active .icon {
-    font-weight: 700;
     opacity: 1;
   }
 

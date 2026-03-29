@@ -117,23 +117,6 @@ export const browserStyles = `
     overscroll-behavior: contain;
   }
 
-  .workflow-status {
-    margin: 0;
-    padding: 0.45rem 0.6rem;
-    font-size: 0.82rem;
-    color: var(--oc-text-secondary);
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-muted);
-    background: var(--oc-surface-subtle);
-  }
-
-  .workflow-status[data-tone="ok"] {
-    color: #166534;
-  }
-
-  .workflow-status[data-tone="warn"] {
-    color: #9a3412;
-  }
-
   .browser-host {
     display: flex;
     flex: 1 1 auto;
@@ -239,9 +222,5 @@ export const browserStyles = `
       padding: 0;
     }
 
-    .workflow-status {
-      padding: 0.4rem 0.5rem;
-      font-size: 0.78rem;
-    }
   }
 `;

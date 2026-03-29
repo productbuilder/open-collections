@@ -276,8 +276,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		const publishBtn = this.shadowRoot.getElementById(
 			"publishCollectionBtn",
 		);
-		const workflowStatusLine =
-			this.shadowRoot.getElementById("workflowStatusLine");
 		if (
 			!panelShell ||
 			!addBtn ||
@@ -285,8 +283,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!selectionStatus ||
 			!deleteSelectedBtn ||
 			!clearSelectionBtn ||
-			!publishBtn ||
-			!workflowStatusLine
+			!publishBtn
 		) {
 			return;
 		}
@@ -347,9 +344,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			publishBtn.removeAttribute("title");
 			publishBtn.setAttribute("aria-label", publishBtn.textContent);
 		}
-		const statusTone = this.model.statusTone || "neutral";
-		workflowStatusLine.dataset.tone = statusTone;
-		workflowStatusLine.textContent = this.model.statusText || "Ready";
 		const overlay = this.shadowRoot.getElementById("assetDropOverlay");
 		if (overlay) {
 			overlay.hidden = !this.model.desktopFileDropEnabled;
@@ -476,7 +470,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
             <button class="btn" id="addImagesBtn" type="button">Add item</button>
           </div>
           <div id="assetWrap" class="asset-wrap">
-            <p id="workflowStatusLine" class="workflow-status" data-tone="neutral">No connections yet.</p>
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
             <div id="browserHost" class="browser-host"></div>
           </div>

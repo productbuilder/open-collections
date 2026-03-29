@@ -157,6 +157,10 @@ export const browserRendererStyles = `
     flex: 1;
   }
 
+  .row-table td .btn + .btn {
+    margin-left: 0.35rem;
+  }
+
   .empty {
     border-radius: var(--oc-radius-control);
   }

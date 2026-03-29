@@ -49,6 +49,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			onboarding: {
 				visible: false,
 			},
+			availableConnections: [],
 			connectionActionLabel: "Add connection",
 			activeSourceLabel: "Select connection",
 			workspaceContextText: "",
@@ -445,6 +446,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				collections: this.model.collections,
 				selectedCollectionId: this.model.selectedCollectionId,
 				selectedCollectionIds: this.model.selectedCollectionIds,
+				availableConnections: this.model.availableConnections,
 			});
 		} else {
 			renderer.update({

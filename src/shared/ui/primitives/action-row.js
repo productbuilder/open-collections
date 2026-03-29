@@ -177,12 +177,16 @@ class OpenCollectionsActionRowElement extends HTMLElement {
         :host {
           display: block;
           width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .row-shell {
           display: flex;
           align-items: stretch;
           width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
           border: 1px solid var(--oc-border-subtle);
           border-radius: var(--oc-radius-md);
           background: var(--oc-bg-surface);
@@ -190,8 +194,9 @@ class OpenCollectionsActionRowElement extends HTMLElement {
         }
 
         :host([variant='placeholder']) .row-shell {
-          border-style: dashed;
-          border-color: color-mix(in srgb, var(--oc-border-subtle) 85%, #94a3b8 15%);
+          border-width: 2px;
+          border-style: dotted;
+          border-color: color-mix(in srgb, var(--oc-border-strong, #64748b) 72%, #475569 28%);
           background: color-mix(in srgb, var(--oc-bg-surface) 96%, #f8fafc 4%);
         }
 
@@ -203,6 +208,7 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           width: 100%;
           min-width: 0;
           min-height: 4.1rem;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -245,6 +251,7 @@ class OpenCollectionsActionRowElement extends HTMLElement {
         .row-content {
           min-width: 0;
           display: grid;
+          grid-template-columns: minmax(0, 1fr);
           gap: 0.2rem;
           flex: 1;
         }
@@ -270,11 +277,9 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 
         .row-subline {
           min-width: 0;
-          flex: 1;
+          width: 100%;
           min-height: 1rem;
-          display: inline-flex;
-          align-items: center;
-          gap: var(--oc-space-2);
+          display: block;
           overflow: hidden;
         }
 

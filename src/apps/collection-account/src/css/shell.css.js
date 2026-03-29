@@ -123,7 +123,7 @@ export const accountShellStyles = `
   }
 
   .connections-explainer {
-    margin-bottom: var(--oc-space-2);
+    margin-bottom: var(--oc-space-3);
   }
 
   .status-note[data-tone='ok'] {

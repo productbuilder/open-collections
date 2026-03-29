@@ -56,6 +56,16 @@ export function renderLinkIcon(className = "icon icon-link") {
   `;
 }
 
+export function renderBackupIcon(className = "icon icon-backup") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M19.35 10.04A7.49 7.49 0 0 0 5 12a5 5 0 0 0 .31 9.99H19a4 4 0 0 0 .35-7.95z" />
+      <path d="M12 9v6" />
+      <path d="m9.5 11.5 2.5-2.5 2.5 2.5" />
+    </svg>
+  `;
+}
+
 
 export function renderFolderIcon(className = "icon icon-folder") {
 	return `

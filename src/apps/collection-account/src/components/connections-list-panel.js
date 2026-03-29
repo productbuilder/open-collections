@@ -27,6 +27,7 @@ const styles = `
   .source-list {
     display: grid;
     gap: 0.55rem;
+    min-width: 0;
   }
 
   .empty {
@@ -146,6 +147,7 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
         data-source-id="${source.id}"
         title="${escapeHtml(label)}"
         subtitle="${escapeHtml(this.locationLabel(source))}"
+        secondary-position="title"
         aria-label="Inspect connection ${escapeHtml(label)}">
         <span slot="leading" aria-hidden="true">${this.connectionIcon(source)}</span>
         <span slot="secondary" class="source-status${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>

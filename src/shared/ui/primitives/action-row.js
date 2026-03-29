@@ -11,7 +11,15 @@ function escapeHtml(value) {
 
 class OpenCollectionsActionRowElement extends HTMLElement {
 	static get observedAttributes() {
-		return ["title", "subtitle", "arrow", "disabled", "type", "variant"];
+		return [
+			"title",
+			"subtitle",
+			"arrow",
+			"disabled",
+			"type",
+			"variant",
+			"secondary-position",
+		];
 	}
 
 	constructor() {
@@ -103,7 +111,8 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 			"slot[name='secondary']",
 		);
 		const subtitleSlot = this.shadowRoot?.getElementById("subtitleSecondarySlot");
-		if (!secondarySlot || !subtitleSlot) {
+		const titleSlot = this.shadowRoot?.getElementById("titleSecondarySlot");
+		if (!secondarySlot || !subtitleSlot || !titleSlot) {
 			return;
 		}
 		const hasSecondary = secondarySlot
@@ -114,7 +123,18 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 				}
 				return node.nodeType === Node.ELEMENT_NODE;
 			});
-		subtitleSlot.hidden = !hasSecondary;
+		if (!hasSecondary) {
+			titleSlot.hidden = true;
+			subtitleSlot.hidden = true;
+			return;
+		}
+		if (this.secondaryPosition === "title") {
+			titleSlot.hidden = false;
+			subtitleSlot.hidden = true;
+			return;
+		}
+		titleSlot.hidden = true;
+		subtitleSlot.hidden = false;
 	}
 
 	get disabled() {
@@ -133,11 +153,18 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 		return this.getAttribute("arrow") !== "off";
 	}
 
+	get secondaryPosition() {
+		return this.getAttribute("secondary-position") === "title"
+			? "title"
+			: "subtitle";
+	}
+
 	render() {
 		const title = escapeHtml(this.getAttribute("title") || "");
 		const subtitle = escapeHtml(this.getAttribute("subtitle") || "");
 		const buttonType = this.getAttribute("type") || "button";
 		const disabledAttr = this.disabled ? " disabled" : "";
+		const showSecondaryInTitle = this.secondaryPosition === "title";
 		const arrowMarkup = this.showArrow
 			? `<span class="row-trailing" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>`
 			: "";
@@ -174,6 +201,7 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 
         .row-button {
           width: 100%;
+          min-width: 0;
           min-height: 4.1rem;
           display: flex;
           align-items: center;
@@ -221,24 +249,45 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           flex: 1;
         }
 
+        .row-title-line {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: var(--oc-space-2);
+          overflow: hidden;
+        }
+
         .row-title {
+          min-width: 0;
+          flex: 1;
           text-align: left;
           font-weight: 600;
           line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .row-subline {
+          min-width: 0;
+          flex: 1;
           min-height: 1rem;
           display: inline-flex;
           align-items: center;
           gap: var(--oc-space-2);
+          overflow: hidden;
         }
 
         .row-subtitle {
+          min-width: 0;
+          display: block;
           color: var(--oc-text-muted);
           font-size: 0.82rem;
           line-height: 1.3;
           font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .row-trailing {
@@ -259,6 +308,8 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          min-width: 0;
+          flex-shrink: 0;
         }
 
         .secondary-slot[hidden] {
@@ -269,10 +320,13 @@ class OpenCollectionsActionRowElement extends HTMLElement {
         <button class="row-button" id="rowButton" type="${escapeHtml(buttonType)}"${disabledAttr}>
           <span class="row-leading" aria-hidden="true"><slot name="leading"></slot></span>
           <span class="row-content">
-            <span class="row-title">${title}</span>
+            <span class="row-title-line">
+              <span class="row-title">${title}</span>
+              <span class="secondary-slot" id="titleSecondarySlot"${showSecondaryInTitle ? "" : " hidden"}><slot name="secondary"></slot></span>
+            </span>
             <span class="row-subline">
               ${subtitleMarkup}
-              <span class="secondary-slot" id="subtitleSecondarySlot" hidden><slot name="secondary"></slot></span>
+              <span class="secondary-slot" id="subtitleSecondarySlot"${showSecondaryInTitle ? " hidden" : ""}><slot name="secondary"></slot></span>
             </span>
           </span>
           ${arrowMarkup}

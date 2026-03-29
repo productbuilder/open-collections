@@ -8,6 +8,7 @@ class OpenCollectionRowListElement extends HTMLElement {
 			collections: [],
 			selectedCollectionId: null,
 			selectedCollectionIds: [],
+			availableConnections: [],
 		};
 	}
 
@@ -50,7 +51,14 @@ class OpenCollectionRowListElement extends HTMLElement {
         <td>${collection.title || collection.id}</td>
         <td>${collection.id}</td>
         <td><span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span></td>
-        <td><button type="button" class="btn" data-open-id="${collection.id}">Open</button></td>
+        <td>
+          <button type="button" class="btn" data-open-id="${collection.id}">Open</button>
+          ${
+					collection.assignmentState === "unassigned"
+						? `<button type="button" class="btn btn-primary" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>Assign</button>`
+						: ""
+				}
+        </td>
       </tr>
     `,
 			)
@@ -95,6 +103,16 @@ class OpenCollectionRowListElement extends HTMLElement {
 					event.stopPropagation();
 					this.dispatch("collection-open", {
 						collectionId: button.getAttribute("data-open-id"),
+					});
+				});
+			});
+		this.shadowRoot
+			.querySelectorAll("button[data-assign-id]")
+			.forEach((button) => {
+				button.addEventListener("click", (event) => {
+					event.stopPropagation();
+					this.dispatch("collection-assign-connection", {
+						collectionId: button.getAttribute("data-assign-id"),
 					});
 				});
 			});

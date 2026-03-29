@@ -2132,6 +2132,127 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		return inferred;
 	}
 
+	getAssignableConnections() {
+		return (this.state.sources || []).filter(
+			(source) => source && source.enabled !== false,
+		);
+	}
+
+	chooseConnectionForAssignment(collection, availableConnections = []) {
+		if (!availableConnections.length) {
+			return null;
+		}
+		if (availableConnections.length === 1) {
+			return availableConnections[0];
+		}
+		const choiceList = availableConnections
+			.map(
+				(source, index) =>
+					`${index + 1}. ${
+						source.displayLabel ||
+						source.label ||
+						source.providerLabel ||
+						source.id
+					}`,
+			)
+			.join("\n");
+		const promptValue = window.prompt(
+			`Assign "${collection.title || collection.id}" to a connection:\n${choiceList}\n\nEnter the number of the connection to use.`,
+			"1",
+		);
+		if (promptValue == null) {
+			return null;
+		}
+		const selectedIndex = Number.parseInt(promptValue, 10) - 1;
+		if (
+			Number.isNaN(selectedIndex) ||
+			selectedIndex < 0 ||
+			selectedIndex >= availableConnections.length
+		) {
+			this.setStatus("Assignment canceled: invalid connection choice.", "warn");
+			return null;
+		}
+		return availableConnections[selectedIndex];
+	}
+
+	async assignUnassignedDraftCollection(collectionId) {
+		const normalizedCollectionId = String(collectionId || "").trim();
+		if (!normalizedCollectionId || normalizedCollectionId === "all") {
+			return;
+		}
+		const collection = this.findCollectionMetaById(normalizedCollectionId);
+		if (!collection) {
+			this.setStatus("Could not find the selected collection draft.", "warn");
+			return;
+		}
+		if (this.resolveCollectionConnectionId(normalizedCollectionId)) {
+			return;
+		}
+		const availableConnections = this.getAssignableConnections();
+		if (!availableConnections.length) {
+			this.setStatus(
+				"No available connections to assign. Manage connections in Account first.",
+				"warn",
+			);
+			return;
+		}
+		const selectedSource = this.chooseConnectionForAssignment(
+			collection,
+			availableConnections,
+		);
+		if (!selectedSource) {
+			return;
+		}
+		const connectionId = selectedSource.id;
+		this.state.localDraftCollections = (this.state.localDraftCollections || []).map(
+			(entry) =>
+				entry.id === normalizedCollectionId
+					? { ...entry, connectionId }
+					: entry,
+		);
+		const sourceCollectionEntry = {
+			id: normalizedCollectionId,
+			title: collection.title || normalizedCollectionId,
+			description: collection.description || "",
+			license: collection.license || "",
+			publisher: collection.publisher || "",
+			language: collection.language || "",
+			connectionId,
+			rootPath: this.normalizeCollectionRootPath(
+				collection.rootPath || `${normalizedCollectionId}/`,
+				normalizedCollectionId,
+			),
+		};
+		selectedSource.collections = (selectedSource.collections || []).some(
+			(entry) => entry.id === normalizedCollectionId,
+		)
+			? (selectedSource.collections || []).map((entry) =>
+					entry.id === normalizedCollectionId
+						? { ...entry, ...sourceCollectionEntry }
+						: entry,
+				)
+			: [...(selectedSource.collections || []), sourceCollectionEntry];
+		this.renderSourceFilter();
+		this.renderCollectionFilter();
+		this.renderAssets();
+		this.renderEditor();
+		this.refreshWorkingStatus();
+		this.saveSourcesToStorage();
+		if (this.state.opfsAvailable) {
+			await this.saveLocalDraft();
+		}
+		this.setStatus(
+			`Assigned draft "${collection.title || normalizedCollectionId}" to ${
+				selectedSource.displayLabel ||
+				selectedSource.label ||
+				selectedSource.providerLabel ||
+				connectionId
+			}.`,
+			"ok",
+		);
+		this.markDirty();
+	}
+
 	resolveItemMetadata(item) {
 		const collection =
 			this.findCollectionMetaById(item?.collectionId, item?.sourceId) ||

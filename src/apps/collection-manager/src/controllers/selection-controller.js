@@ -297,6 +297,16 @@ export function renderAssets(app) {
 
 	if (app.state.currentLevel === "collections") {
 		const collections = app.getVisibleCollections();
+		const availableConnections = (app.state.sources || [])
+			.filter((source) => source && source.enabled !== false)
+			.map((source) => ({
+				id: source.id,
+				label:
+					source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					source.id,
+			}));
 
 		const browserState = {
 			currentLevel: "collections",
@@ -315,6 +325,7 @@ export function renderAssets(app) {
 				visible:
 					app.state.sources.length === 0 && collections.length === 0,
 			},
+			availableConnections,
 			connectionActionLabel: app.browserConnectionActionLabel(),
 		};
 		app.dom.collectionBrowser.update(browserState);

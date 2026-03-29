@@ -92,7 +92,7 @@ function withAssignmentDisplay(app, collection) {
 			...collection,
 			connectionId: resolvedConnectionId,
 			assignmentState: "assigned",
-			assignmentLabel: `Assigned: ${assignedConnectionLabel(
+			assignmentLabel: `Assigned to ${assignedConnectionLabel(
 				app,
 				resolvedConnectionId,
 			)}`,

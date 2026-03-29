@@ -10,7 +10,10 @@ import {
 	getPlatformType,
 	PLATFORM_TYPES,
 } from "../../../../shared/platform/index.js";
-import { renderTrashIcon } from "../../../../shared/components/icons.js";
+import {
+	renderDeselectIcon,
+	renderTrashIcon,
+} from "../../../../shared/components/icons.js";
 
 class OpenCollectionsBrowserElement extends HTMLElement {
 	constructor() {
@@ -367,6 +370,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			clearSelectionBtn.hidden = !showSelectionToolbar;
 			selectionStatus.textContent = `${selectedItemCount} selected`;
 			deleteSelectedBtn.textContent = "Delete selected";
+			clearSelectionBtn.textContent = "Clear selection";
 			deleteSelectedBtn.disabled = false;
 			return;
 		}
@@ -381,8 +385,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			"aria-label",
 			"Delete selected collections",
 		);
+		deleteSelectedBtn.setAttribute("title", "Delete selected collections");
 		deleteSelectedBtn.disabled = deletableSelectedCollectionCount === 0;
 		clearSelectionBtn.hidden = selectedCollectionCount === 0;
+		clearSelectionBtn.innerHTML = renderDeselectIcon(
+			"icon icon-deselect clear-selection-icon",
+		);
+		clearSelectionBtn.setAttribute("aria-label", "Clear selected collections");
+		clearSelectionBtn.setAttribute("title", "Clear selected collections");
 	}
 
 	renderBody() {
@@ -459,7 +469,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
             <button class="icon-btn delete-action-btn" id="deleteSelectedBtn" type="button" hidden aria-label="Delete selected collections"></button>
             <span id="selectionStatus" class="selection-status" hidden>#0</span>
-            <button class="btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
+			<button class="btn clear-selection-btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
           </div>
           <div class="viewport-actions viewport-toolbar-actions" slot="toolbar-actions">
             <button class="btn" id="addImagesBtn" type="button">Add item</button>

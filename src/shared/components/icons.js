@@ -88,3 +88,13 @@ export function renderViewListIcon(className = "icon icon-view-list") {
     </svg>
   `;
 }
+
+export function renderDeselectIcon(className = "icon icon-deselect") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8.5 12.5 11 15l5-6" />
+      <path d="M6 6l12 12" />
+    </svg>
+  `;
+}

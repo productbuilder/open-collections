@@ -94,15 +94,35 @@ function isReconnectEligibleRememberedSource(
 		return false;
 	}
 
+	const isLocalReconnectable = () => {
+		const handle = source.config?.localDirectoryHandle;
+		return Boolean(
+			handle &&
+				typeof handle === "object" &&
+				handle.kind === "directory" &&
+				(String(handle.path || "").trim() ||
+					String(source.config?.localDirectoryName || "").trim()),
+		);
+	};
+
 	if (
 		platformType === PLATFORM_TYPES.BROWSER ||
 		platformType === PLATFORM_TYPES.CAPACITOR
 	) {
-		return source.providerId === "example";
+		if (source.providerId === "example") {
+			return true;
+		}
+		if (source.providerId === "github" || source.providerId === "s3") {
+			return !source.needsCredentials;
+		}
+		if (source.providerId === "local") {
+			return isLocalReconnectable();
+		}
+		return false;
 	}
 
 	if (source.providerId === "local") {
-		return Boolean(source.config?.localDirectoryHandle);
+		return isLocalReconnectable();
 	}
 
 	if (source.providerId === "github" || source.providerId === "s3") {

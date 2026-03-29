@@ -56,18 +56,18 @@ function renderShell(shadowRoot) {
 			</section>
 
 			<section class="account-section-content is-hidden" id="connectionsSection" aria-labelledby="connectionsHeading">
-				<open-collections-section-panel
-					title="Connections"
-					heading-level="2"
-					id="connectionsHeading"
-				>
-					${renderBackButton({
-						id: "accountBackBtn",
-						label: "Back to account",
-						className: "back-btn",
-						slot: "leading",
-					})}
-					<div id="connectionsOverviewView">
+				<div id="connectionsOverviewView">
+					<open-collections-section-panel
+						title="Connections"
+						heading-level="2"
+						id="connectionsHeading"
+					>
+						${renderBackButton({
+							id: "accountBackBtn",
+							label: "Back to account",
+							className: "back-btn",
+							slot: "leading",
+						})}
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
 
 						<div class="connections-body">
@@ -81,9 +81,11 @@ function renderShell(shadowRoot) {
 							</button>
 							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						</div>
-					</div>
-					<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
-				</open-collections-section-panel>
+					</open-collections-section-panel>
+				</div>
+				<div id="connectionsAddView" class="is-hidden">
+					<open-collections-add-connection-panel id="addConnectionPanel"></open-collections-add-connection-panel>
+				</div>
 			</section>
 
 			<section class="account-section-content is-hidden" id="settingsSection" aria-labelledby="settingsHeading">
@@ -214,6 +216,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				this.shadow.getElementById("connectionsSection"),
 			connectionsOverviewView:
 				this.shadow.getElementById("connectionsOverviewView"),
+			connectionsAddView:
+				this.shadow.getElementById("connectionsAddView"),
 			settingsSection: this.shadow.getElementById("settingsSection"),
 			connectionsListPanel: this.shadow.getElementById(
 				"connectionsListPanel",
@@ -410,7 +414,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			"is-hidden",
 			nextView !== "list",
 		);
-		this.dom.addConnectionPanel?.classList.toggle(
+		this.dom.connectionsAddView?.classList.toggle(
 			"is-hidden",
 			nextView !== "add",
 		);

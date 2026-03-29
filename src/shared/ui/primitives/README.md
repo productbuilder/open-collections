@@ -8,6 +8,8 @@ This folder holds the first modest set of app-shell family shared primitives.
   - Low-level section/page heading row with optional leading/actions slots.
 - `open-collections-empty-state`
   - Low-level empty/placeholder callout with optional title and message.
+- `open-collections-action-row`
+  - Reusable full-width navigation/action row with leading icon, title/subtitle, optional trailing arrow, and optional secondary trailing slot control.
 
 ## Why these first
 

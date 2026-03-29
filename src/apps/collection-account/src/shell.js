@@ -10,14 +10,12 @@ import {
 	makeConnectionId,
 	uniqueConnectionsForDisplay,
 } from "../../../shared/account/index.js";
-import {
-	renderArrowIcon,
-	renderBackButton,
-} from "../../../shared/components/back-button.js";
+import { renderBackButton } from "../../../shared/components/back-button.js";
 import {
 	renderDriveFolderUploadIcon,
 	renderProfileIcon,
 } from "../../../shared/components/icons.js";
+import "../../../shared/ui/primitives/action-row.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
@@ -34,23 +32,21 @@ function renderShell(shadowRoot) {
 
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 
-				<button type="button" class="account-entry-button" data-account-entry="connections">
-					<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
-					<span class="account-entry-content">
-						<span class="account-entry-label">Connections</span>
-						<span class="account-entry-subtitle">Manage local and remote folders for your collections.</span>
-					</span>
-					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-				</button>
+				<open-collections-action-row
+					data-account-entry="connections"
+					title="Connections"
+					subtitle="Manage local and remote folders for your collections."
+				>
+					<span slot="leading">${renderDriveFolderUploadIcon()}</span>
+				</open-collections-action-row>
 
-				<button type="button" class="account-entry-button" data-account-entry="settings">
-					<span class="account-entry-leading-icon" aria-hidden="true">${renderProfileIcon()}</span>
-					<span class="account-entry-content">
-						<span class="account-entry-label">Profile</span>
-						<span class="account-entry-subtitle">Update personal and account profile preferences.</span>
-					</span>
-					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-				</button>
+				<open-collections-action-row
+					data-account-entry="settings"
+					title="Profile"
+					subtitle="Update personal and account profile preferences."
+				>
+					<span slot="leading">${renderProfileIcon()}</span>
+				</open-collections-action-row>
 				
 			</section>
 
@@ -70,14 +66,13 @@ function renderShell(shadowRoot) {
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
 
 						<div class="connections-body">
-							<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">
-								<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
-								<span class="account-entry-content">
-									<span class="account-entry-label">Add connection</span>
-									<span class="account-entry-subtitle">Connect a local or remote source.</span>
-								</span>
-								<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-							</button>
+							<open-collections-action-row
+								id="connectionsAddBtn"
+								title="Add connection"
+								subtitle="Connect a local or remote source."
+							>
+								<span slot="leading">${renderDriveFolderUploadIcon()}</span>
+							</open-collections-action-row>
 							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						</div>
 					</open-collections-section-panel>

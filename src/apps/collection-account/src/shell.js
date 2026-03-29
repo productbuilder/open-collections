@@ -70,7 +70,8 @@ function renderShell(shadowRoot) {
 						<div class="connections-body">
 							<open-collections-action-row
 								id="connectionsAddBtn"
-								title="Add connection"
+								variant="placeholder"
+								title="Add new connection"
 								subtitle="Connect a local or remote source."
 							>
 								<span slot="leading">${renderCreateNewFolderIcon()}</span>

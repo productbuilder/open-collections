@@ -4,6 +4,7 @@ import {
 } from "../../../shared/platform/host-directory.js";
 import { MANAGER_CONFIG } from "../../collection-manager/src/config.js";
 import {
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 	createConnectionsRuntime,
 	createCredentialStore,
 	makeConnectionId,
@@ -21,8 +22,6 @@ import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "./css/shell.css.js";
-
-const ACCOUNT_SOURCES_STORAGE_KEY = "open_collections_account_sources_v1";
 
 function renderShell(shadowRoot) {
 	shadowRoot.innerHTML = `
@@ -133,7 +132,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.credentialStore = createCredentialStore();
 		this.connectionsRuntime = createConnectionsRuntime({
 			defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
-			storageKey: ACCOUNT_SOURCES_STORAGE_KEY,
+			storageKey: CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 			credentialStore: this.credentialStore,
 			makeConnectionId,
 		});

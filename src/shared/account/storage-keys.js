@@ -1,0 +1,2 @@
+export const CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY =
+	"open_collections_account_sources_v1";

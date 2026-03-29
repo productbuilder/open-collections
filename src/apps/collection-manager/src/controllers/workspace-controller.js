@@ -10,10 +10,25 @@ import {
 	persistLocalStateStringSoon,
 	readLocalStorageString,
 } from "../../../../shared/platform/mobile-persistence.js";
+import { CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY } from "../../../../shared/account/index.js";
 
-export const SOURCES_STORAGE_KEY = "timemap_manager_sources_v1";
+const LEGACY_MANAGER_SOURCES_STORAGE_KEY = "timemap_manager_sources_v1";
+export const SOURCES_STORAGE_KEY =
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY;
 const WORKSPACE_SELECTION_STORAGE_KEY =
 	"timemap_manager_workspace_selection_v1";
+
+function readRememberedSourcesFromStorageKey(storageKey) {
+	if (!storageKey) {
+		return [];
+	}
+	try {
+		const parsed = JSON.parse(readLocalStorageString(storageKey, "[]"));
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (_error) {
+		return [];
+	}
+}
 
 function normalizeLocalDraftCollectionEntry(app, entry = {}) {
 	return {
@@ -360,6 +375,7 @@ export async function restoreRememberedSources(app) {
 
 	await mirrorNativePreferencesToLocalStorage([
 		SOURCES_STORAGE_KEY,
+		LEGACY_MANAGER_SOURCES_STORAGE_KEY,
 		WORKSPACE_SELECTION_STORAGE_KEY,
 	]);
 
@@ -375,6 +391,17 @@ export async function restoreRememberedSources(app) {
 		Array.isArray(remembered) && remembered.length > 0;
 	if (!usingOpfsRemembered) {
 		remembered = app.connectionsRuntime.restoreRememberedSources();
+		if (
+			(!Array.isArray(remembered) || remembered.length === 0) &&
+			SOURCES_STORAGE_KEY !== LEGACY_MANAGER_SOURCES_STORAGE_KEY
+		) {
+			remembered = readRememberedSourcesFromStorageKey(
+				LEGACY_MANAGER_SOURCES_STORAGE_KEY,
+			);
+			if (Array.isArray(remembered) && remembered.length > 0) {
+				app.connectionsRuntime.persistSources(remembered);
+			}
+		}
 	}
 
 	const restored = [];

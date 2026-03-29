@@ -72,6 +72,17 @@ export const accountShellStyles = `
     gap: 0.75rem;
   }
 
+  #connectionsAddBtn {
+    border: 2px dotted color-mix(in srgb, var(--oc-border-strong) 60%, #60a5fa 40%);
+    border-radius: calc(var(--oc-radius-md) + 2px);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--oc-bg-surface) 90%, #eff6ff 10%) 0%,
+      var(--oc-bg-surface) 100%
+    );
+    --oc-border-subtle: transparent;
+  }
+
   @media (max-width: 47.99rem) {
     :host(:not([data-app-presentation-embedded])) .account-shell {
       padding:

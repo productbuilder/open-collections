@@ -675,6 +675,7 @@ export function createLocalProvider() {
 					rootDirectoryHandle = nextDirectoryHandle;
 					rootDirectoryLabel =
 						sourceLabel || nextDirectoryHandle.name || "Local host";
+					const directoryPath = String(nextDirectoryHandle.path || "").trim();
 					collections = await loadCollectionsFromFilesystem();
 					rebuildIndex();
 					connected = true;
@@ -684,7 +685,8 @@ export function createLocalProvider() {
 						ok: true,
 						message: `Connected to local host ${rootDirectoryLabel}.`,
 						sourceDisplayLabel: rootDirectoryLabel,
-						sourceDetailLabel: `${rootDirectoryLabel} (host root)`,
+						sourceDetailLabel:
+							directoryPath || `${rootDirectoryLabel} (host root)`,
 						capabilities,
 						collections: collections.map((collection) =>
 							toCollectionSummary(collection),

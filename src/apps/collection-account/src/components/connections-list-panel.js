@@ -68,27 +68,23 @@ const styles = `
     outline-offset: 2px;
   }
 
-  .source-card.is-active-source {
-    border-color: #0f6cc6;
-    box-shadow: 0 0 0 1px #66a6e8 inset;
-    background: #f5faff;
-  }
-
   .source-card-add {
-    border-style: dashed;
+    border-style: dotted;
+    border-width: 2px;
+    border-color: #93c5fd;
     background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
   }
 
   .source-card-add:hover {
-    border-color: #60a5fa;
+    border-color: #3b82f6;
     background: #f8fbff;
   }
 
   .source-card-header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.6rem;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
   }
 
   .source-card-heading {
@@ -101,8 +97,8 @@ const styles = `
   }
 
   .source-card-leading {
-    width: 2.35rem;
-    height: 2.35rem;
+    width: 2.1rem;
+    height: 2.1rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -111,8 +107,8 @@ const styles = `
   }
 
   .source-card-leading .icon {
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 1.95rem;
+    height: 1.95rem;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
@@ -293,7 +289,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 	}
 
 	renderSourceCard(source) {
-		const isActive = this.model.activeSourceId === source.id;
 		const label =
 			source.displayLabel ||
 			source.label ||
@@ -327,13 +322,12 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		const availabilityLabel = isEnabled ? "Active" : "Inactive";
 		return `
       <article
-        class="source-card${isActive ? " is-active-source" : ""}"
+        class="source-card"
         data-action="select"
         data-source-id="${source.id}"
         tabindex="0"
         role="button"
-        aria-pressed="${String(isActive)}"
-        aria-label="${isActive ? "Active" : "Select"} connection ${escapeHtml(label)}">
+        aria-label="Inspect connection ${escapeHtml(label)}">
         <div class="source-card-header">
           <span class="source-card-leading" aria-hidden="true">${this.connectionIcon(source)}</span>
           <div class="source-card-content">

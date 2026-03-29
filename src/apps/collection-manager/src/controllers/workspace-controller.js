@@ -94,14 +94,14 @@ function isReconnectEligibleRememberedSource(
 		return false;
 	}
 
-	const isLocalReconnectable = () => {
+	const isSessionUsableLocalDirectoryHandle = () => {
 		const handle = source.config?.localDirectoryHandle;
 		return Boolean(
 			handle &&
 				typeof handle === "object" &&
 				handle.kind === "directory" &&
-				(String(handle.path || "").trim() ||
-					String(source.config?.localDirectoryName || "").trim()),
+				typeof handle.queryPermission === "function" &&
+				typeof handle.requestPermission === "function",
 		);
 	};
 
@@ -116,13 +116,13 @@ function isReconnectEligibleRememberedSource(
 			return !source.needsCredentials;
 		}
 		if (source.providerId === "local") {
-			return isLocalReconnectable();
+			return isSessionUsableLocalDirectoryHandle();
 		}
 		return false;
 	}
 
 	if (source.providerId === "local") {
-		return isLocalReconnectable();
+		return isSessionUsableLocalDirectoryHandle();
 	}
 
 	if (source.providerId === "github" || source.providerId === "s3") {
@@ -425,6 +425,14 @@ export async function restoreRememberedSources(app) {
 	const isWebLikeRuntime =
 		platformType === PLATFORM_TYPES.BROWSER ||
 		platformType === PLATFORM_TYPES.CAPACITOR;
+	const isSessionUsableLocalDirectoryHandle = (handle) =>
+		Boolean(
+			handle &&
+				typeof handle === "object" &&
+				handle.kind === "directory" &&
+				typeof handle.queryPermission === "function" &&
+				typeof handle.requestPermission === "function",
+		);
 	const isFilesystemLikePath = (value) =>
 		/^[a-z]:[\\/]/i.test(value) ||
 		value.startsWith("\\\\") ||
@@ -535,7 +543,7 @@ export async function restoreRememberedSources(app) {
 			).trim();
 			const revived = revivePlatformHandle(
 				rawHandle ||
-					(fallbackPath
+					(!isWebLikeRuntime && fallbackPath
 						? {
 								kind: "directory",
 								path: fallbackPath,
@@ -556,6 +564,18 @@ export async function restoreRememberedSources(app) {
 					path:
 						source.config?.path ||
 						String(revived.path || fallbackPath).trim(),
+				};
+			}
+			const hasSessionUsableHandle = isSessionUsableLocalDirectoryHandle(
+				source.config?.localDirectoryHandle,
+			);
+			source.needsReconnect = isWebLikeRuntime
+				? !hasSessionUsableHandle
+				: source.needsReconnect !== false;
+			if (isWebLikeRuntime && !hasSessionUsableHandle) {
+				source.config = {
+					...source.config,
+					localDirectoryHandle: null,
 				};
 			}
 		}
@@ -637,13 +657,13 @@ export async function restoreRememberedSources(app) {
 		) {
 			source.status = isTauriDesktop
 				? "Remembered local host. Restoring folder access from desktop workspace state."
-				: "Remembered local host. Attempting reconnect with stored folder handle.";
+				: "Remembered local host. Folder access is available for this browser session.";
 		} else if (
 			source.providerId === "local" &&
 			source.config?.localDirectoryName
 		) {
 			source.status =
-				"Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.";
+				"Remembered local host. Reconnect needed: re-select the folder in this browser session.";
 		}
 
 		restored.push(source);
@@ -668,7 +688,11 @@ export async function restoreRememberedSources(app) {
 		app.state.sources.find(
 			(source) =>
 				source.providerId === "local" &&
-				source.config?.localDirectoryHandle,
+				source.config?.localDirectoryHandle &&
+				(!isWebLikeRuntime ||
+					isSessionUsableLocalDirectoryHandle(
+						source.config.localDirectoryHandle,
+					)),
 		)?.config?.localDirectoryHandle || null;
 	app.selectedLocalDirectoryHandle = firstLocalHandle;
 	app.state.assets = [];

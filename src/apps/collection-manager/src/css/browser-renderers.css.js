@@ -136,6 +136,18 @@ export const browserRendererStyles = `
     background: var(--oc-bg-subtle);
   }
 
+  .badge-assignment.is-assigned {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #166534;
+  }
+
+  .badge-assignment.is-unassigned {
+    border-color: #fdba74;
+    background: #fff7ed;
+    color: #9a3412;
+  }
+
   .card-actions {
     display: flex;
     gap: 0.45rem;

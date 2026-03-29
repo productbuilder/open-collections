@@ -63,6 +63,49 @@ function collectAllAvailableCollections(app) {
 	return [...byId.values()];
 }
 
+function assignedConnectionLabel(app, connectionId = "") {
+	const normalizedConnectionId = String(connectionId || "").trim();
+	if (!normalizedConnectionId) {
+		return "";
+	}
+	const source = app.getSourceById(normalizedConnectionId);
+	if (!source) {
+		return normalizedConnectionId;
+	}
+	return (
+		source.displayLabel ||
+		source.label ||
+		source.providerLabel ||
+		normalizedConnectionId
+	);
+}
+
+function withAssignmentDisplay(app, collection) {
+	if (!collection || typeof collection !== "object") {
+		return collection;
+	}
+	const explicitConnectionId = String(collection.connectionId || "").trim();
+	const fallbackSourceId = String(collection.sourceId || "").trim();
+	const resolvedConnectionId = explicitConnectionId || fallbackSourceId;
+	if (resolvedConnectionId) {
+		return {
+			...collection,
+			connectionId: resolvedConnectionId,
+			assignmentState: "assigned",
+			assignmentLabel: `Assigned: ${assignedConnectionLabel(
+				app,
+				resolvedConnectionId,
+			)}`,
+		};
+	}
+	return {
+		...collection,
+		connectionId: null,
+		assignmentState: "unassigned",
+		assignmentLabel: "Unassigned draft",
+	};
+}
+
 export function getVisibleAssets(app) {
 	let visible = app.state.assets;
 	if (app.state.activeSourceFilter !== "all") {
@@ -87,9 +130,14 @@ export function getSelectedItemIds(app) {
 export function getVisibleCollections(app) {
 	if (app.state.activeSourceFilter !== "all") {
 		const source = app.getSourceById(app.state.activeSourceFilter);
-		return Array.isArray(source?.collections) ? source.collections : [];
+		const collections = Array.isArray(source?.collections)
+			? source.collections
+			: [];
+		return collections.map((collection) => withAssignmentDisplay(app, collection));
 	}
-	return collectAllAvailableCollections(app);
+	return collectAllAvailableCollections(app).map((collection) =>
+		withAssignmentDisplay(app, collection),
+	);
 }
 
 export function getSelectedCollectionIds(app) {

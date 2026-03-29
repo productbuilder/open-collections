@@ -115,7 +115,7 @@ export function sourceDisplayLabelFor(providerId, config, fallbackLabel) {
 		return (config.repo || "").trim() || "GitHub";
 	}
 	if (providerId === "example") {
-		return "Built-in examples";
+		return "Example collections";
 	}
 	if (providerId === "s3") {
 		return (config.bucket || "").trim() || "S3-compatible storage";

@@ -72,11 +72,6 @@ export const accountShellStyles = `
     gap: 0.75rem;
   }
 
-  #connectionsAddBtn {
-    border: 1px solid var(--oc-border-subtle);
-    border-radius: var(--oc-radius-md);
-    background: var(--oc-bg-surface);
-  }
 
   @media (max-width: 47.99rem) {
     :host(:not([data-app-presentation-embedded])) .account-shell {

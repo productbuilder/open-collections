@@ -11,7 +11,7 @@ function escapeHtml(value) {
 
 class OpenCollectionsActionRowElement extends HTMLElement {
 	static get observedAttributes() {
-		return ["title", "subtitle", "arrow", "disabled", "type"];
+		return ["title", "subtitle", "arrow", "disabled", "type", "variant"];
 	}
 
 	constructor() {
@@ -160,6 +160,12 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           border-radius: var(--oc-radius-md);
           background: var(--oc-bg-surface);
           transition: border-color 120ms ease, background-color 120ms ease;
+        }
+
+        :host([variant='placeholder']) .row-shell {
+          border-style: dashed;
+          border-color: color-mix(in srgb, var(--oc-border-subtle) 85%, #94a3b8 15%);
+          background: color-mix(in srgb, var(--oc-bg-surface) 96%, #f8fafc 4%);
         }
 
         .row-shell:focus-within {

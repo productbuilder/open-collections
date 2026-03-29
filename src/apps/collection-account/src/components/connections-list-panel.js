@@ -2,13 +2,9 @@ import {
 	renderDriveFolderUploadIcon,
 	renderFolderIcon,
 } from "../../../../shared/components/icons.js";
-import { themeTokenStyles } from "../../../collection-manager/src/css/theme.css.js";
-import { primitiveStyles } from "../../../collection-manager/src/css/primitives.css.js";
+import "../../../../shared/ui/primitives/action-row.js";
 
 const styles = `
-  ${themeTokenStyles}
-  ${primitiveStyles}
-
   :host {
     display: block;
   }
@@ -37,6 +33,32 @@ const styles = `
     border-radius: 8px;
   }
 
+  .source-row [slot='secondary'] {
+    margin-left: auto;
+  }
+
+  .source-status {
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .source-status.is-active {
+    color: #166534;
+    border-color: #86efac;
+    background: #f0fdf4;
+  }
+
+  .source-status.is-inactive {
+    color: #64748b;
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
   .starter-helper {
     margin: 0;
     border: 1px dashed #cbd5e1;
@@ -45,106 +67,6 @@ const styles = `
     color: #334155;
     padding: 0.75rem;
     font-size: 0.85rem;
-  }
-
-  .source-card {
-    border: 1px solid #dbe3ec;
-    border-radius: 12px;
-    background: #ffffff;
-    padding: 0.75rem;
-    display: grid;
-    gap: 0.55rem;
-    cursor: pointer;
-    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
-  }
-
-  .source-card:hover {
-    border-color: #bfdbfe;
-  }
-
-  .source-card:focus-visible {
-    outline: 2px solid #60a5fa;
-    outline-offset: 2px;
-  }
-
-  .source-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.35rem;
-  }
-
-  .source-card-heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .source-card-leading {
-    width: 2.1rem;
-    height: 2.1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    color: #64748b;
-  }
-
-  .source-card-leading .icon {
-    width: 1.95rem;
-    height: 1.95rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .source-card-content {
-    min-width: 0;
-    display: grid;
-    gap: 0.2rem;
-  }
-
-  .source-card-title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #0f172a;
-    overflow-wrap: anywhere;
-  }
-
-  .source-card-location {
-    margin: 0;
-    font-size: 0.8rem;
-    color: #64748b;
-    overflow-wrap: anywhere;
-  }
-
-  .pill {
-    padding: 0.1rem 0.4rem;
-    font-size: 0.72rem;
-  }
-
-  .pill.is-active {
-    color: #166534;
-    border-color: #86efac;
-    background: #f0fdf4;
-  }
-
-  .pill.is-inactive {
-    color: #64748b;
-    border-color: #cbd5e1;
-    background: #f8fafc;
-  }
-
-  @media (max-width: 760px) {
-    .source-card {
-      padding: 0.65rem;
-    }
   }
 `;
 
@@ -218,24 +140,16 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		const isEnabled = source.enabled !== false;
 		const availabilityLabel = isEnabled ? "Active" : "Inactive";
 		return `
-      <article
-        class="source-card"
+      <open-collections-action-row
+        class="source-row"
         data-action="select"
         data-source-id="${source.id}"
-        tabindex="0"
-        role="button"
+        title="${escapeHtml(label)}"
+        subtitle="${escapeHtml(this.locationLabel(source))}"
         aria-label="Inspect connection ${escapeHtml(label)}">
-        <div class="source-card-header">
-          <span class="source-card-leading" aria-hidden="true">${this.connectionIcon(source)}</span>
-          <div class="source-card-content">
-            <div class="source-card-heading">
-              <p class="source-card-title">${escapeHtml(label)}</p>
-              <span class="pill${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>
-            </div>
-            <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
-          </div>
-        </div>
-      </article>
+        <span slot="leading" aria-hidden="true">${this.connectionIcon(source)}</span>
+        <span slot="secondary" class="source-status${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>
+      </open-collections-action-row>
     `;
 	}
 
@@ -277,21 +191,13 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 
 	bindEvents() {
 		const root = this.shadowRoot;
-		root.querySelectorAll('[data-action="select"]').forEach((card) => {
-			const sourceId = card.getAttribute("data-source-id") || "";
-			const activate = () => {
-				if (sourceId) {
-					this.dispatch("select-connection", { sourceId });
-				}
-			};
-			card.addEventListener("click", () => {
-				activate();
-			});
-			card.addEventListener("keydown", (event) => {
-				if (event.key === "Enter" || event.key === " ") {
-					event.preventDefault();
-					activate();
-				}
+		root.querySelectorAll('[data-action="select"]').forEach((row) => {
+			const sourceId = row.getAttribute("data-source-id") || "";
+			if (!sourceId) {
+				return;
+			}
+			row.addEventListener("action", () => {
+				this.dispatch("select-connection", { sourceId });
 			});
 		});
 	}

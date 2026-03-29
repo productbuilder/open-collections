@@ -125,15 +125,20 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
-		this.model = { source: null };
+		this.model = { source: null, titleDraft: "" };
 	}
 
 	connectedCallback() {
 		this.render();
 	}
 
-	setSource(source = null) {
+	setSource(source = null, options = {}) {
 		this.model.source = source || null;
+		const label = source
+			? source.displayLabel || source.label || source.providerLabel || "Connection"
+			: "";
+		this.model.titleDraft =
+			typeof options.titleDraft === "string" ? options.titleDraft : label;
 		this.render();
 	}
 
@@ -193,6 +198,7 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
 			source.label ||
 			source.providerLabel ||
 			"Connection";
+		const titleDraft = this.model.titleDraft || label;
 		const isEnabled = source.enabled !== false;
 		const availabilityLabel = isEnabled ? "Active" : "Inactive";
 
@@ -223,13 +229,12 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
       <style>${styles}</style>
       <div class="detail">
         <div class="meta">
-          <div class="field-group">
-            <p class="field-label">Connection title</p>
-            <div class="title-row">
-              <input class="title-input" type="text" data-field="connection-title" value="${escapeHtml(label)}" />
-              <button class="btn btn-primary" type="button" data-action="save-title" data-source-id="${source.id}">Save</button>
-            </div>
-          </div>
+						<div class="field-group">
+							<p class="field-label">Connection title</p>
+							<div class="title-row">
+								<input class="title-input" type="text" data-field="connection-title" data-source-id="${source.id}" value="${escapeHtml(titleDraft)}" />
+							</div>
+						</div>
           <div class="field-group">
             <p class="field-label">Location</p>
             <div class="location-row">
@@ -250,6 +255,20 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
 	}
 
 	bindEvents() {
+		const titleInput = this.shadowRoot.querySelector(
+			'[data-field="connection-title"]',
+		);
+		titleInput?.addEventListener("input", () => {
+			const sourceId = titleInput.getAttribute("data-source-id") || "";
+			if (!sourceId) {
+				return;
+			}
+			this.dispatch("connection-title-draft-changed", {
+				sourceId,
+				title: String(titleInput.value || ""),
+			});
+		});
+
 		this.shadowRoot.querySelectorAll("[data-action]").forEach((control) => {
 			control.addEventListener("click", () => {
 				const action = control.getAttribute("data-action");
@@ -271,13 +290,6 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
 				}
 				if (action === "remove") {
 					this.dispatch("remove-connection", { sourceId });
-				}
-				if (action === "save-title") {
-					const input = this.shadowRoot.querySelector(
-						'[data-field="connection-title"]',
-					);
-					const title = String(input?.value || "").trim();
-					this.dispatch("save-connection-title", { sourceId, title });
 				}
 				if (action === "toggle-example-enabled") {
 					const enabled = Boolean(control.checked);

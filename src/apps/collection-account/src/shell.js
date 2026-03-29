@@ -12,6 +12,7 @@ import {
 } from "../../../shared/account/index.js";
 import { renderBackButton } from "../../../shared/components/back-button.js";
 import {
+	renderCreateNewFolderIcon,
 	renderDriveFolderUploadIcon,
 	renderProfileIcon,
 } from "../../../shared/components/icons.js";
@@ -71,7 +72,7 @@ function renderShell(shadowRoot) {
 								title="Add connection"
 								subtitle="Connect a local or remote source."
 							>
-								<span slot="leading">${renderDriveFolderUploadIcon()}</span>
+								<span slot="leading">${renderCreateNewFolderIcon()}</span>
 							</open-collections-action-row>
 							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						</div>

@@ -1,5 +1,8 @@
-import { getSourceStatus } from "../../../collection-manager/src/state/source-status.js";
-import { renderTrashIcon } from "../../../../shared/components/icons.js";
+import {
+	renderDriveFolderUploadIcon,
+	renderFolderIcon,
+	renderTrashIcon,
+} from "../../../../shared/components/icons.js";
 import { themeTokenStyles } from "../../../collection-manager/src/css/theme.css.js";
 import { primitiveStyles } from "../../../collection-manager/src/css/primitives.css.js";
 
@@ -94,6 +97,33 @@ const styles = `
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
+    flex: 1;
+  }
+
+  .source-card-leading {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: #64748b;
+  }
+
+  .source-card-leading .icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .source-card-content {
+    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
   }
 
   .source-card-title {
@@ -143,20 +173,16 @@ const styles = `
     font-size: 0.72rem;
   }
 
-  .pill.is-ok {
+  .pill.is-active {
     color: #166534;
     border-color: #86efac;
     background: #f0fdf4;
   }
 
-  .pill.is-warn {
-    color: #9a3412;
-    border-color: #fdba74;
-    background: #fff7ed;
-  }
-
-  .source-card-active-pill {
-    align-self: flex-start;
+  .pill.is-inactive {
+    color: #64748b;
+    border-color: #cbd5e1;
+    background: #f8fafc;
   }
 
   .source-card-remove {
@@ -195,15 +221,6 @@ const styles = `
   @media (max-width: 760px) {
     .source-card {
       padding: 0.65rem;
-    }
-
-    .source-card-header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .source-card-active-pill {
-      align-self: flex-start;
     }
 
     .btn {
@@ -253,20 +270,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		);
 	}
 
-	hostState(source) {
-		return getSourceStatus(source);
-	}
-
-	connectionTypeLabel(source) {
-		if (source.providerId === "example") {
-			return "Example";
-		}
-		if (source.providerId === "local") {
-			return "Local";
-		}
-		return "Remote";
-	}
-
 	locationLabel(source) {
 		return (
 			source.detailLabel ||
@@ -283,6 +286,12 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		);
 	}
 
+	connectionIcon(source) {
+		return source.providerId === "local" || source.providerId === "example"
+			? renderFolderIcon()
+			: renderDriveFolderUploadIcon();
+	}
+
 	renderSourceCard(source) {
 		const isActive = this.model.activeSourceId === source.id;
 		const label =
@@ -290,14 +299,12 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			source.label ||
 			source.providerLabel ||
 			"Connection";
-		const collectionCount = source.collections?.length || 0;
-		const status = this.hostState(source);
 		const isEnabled = source.enabled !== false;
 		const primaryAction =
 			!isEnabled
 				? ""
 				: source.providerId === "local" && source.needsReconnect
-				? `<button class="btn btn-primary" type="button" data-action="repair-folder" data-source-id="${source.id}">Re-select folder</button>`
+				? `<button class="btn btn-primary" type="button" data-action="repair-folder" data-source-id="${source.id}">Reconnect</button>`
 				: (source.providerId === "github" ||
 							source.providerId === "s3") &&
 					  source.needsCredentials
@@ -317,11 +324,7 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			? `<label class="example-toggle"><input type="checkbox" data-action="toggle-example-enabled" data-source-id="${source.id}" ${isEnabled ? "checked" : ""} /><span>Show example</span></label>`
 			: "";
 
-		const availabilityLabel = isEnabled
-			? isActive
-				? "Active"
-				: "Available"
-			: "Disabled";
+		const availabilityLabel = isEnabled ? "Active" : "Inactive";
 		return `
       <article
         class="source-card${isActive ? " is-active-source" : ""}"
@@ -332,15 +335,15 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
         aria-pressed="${String(isActive)}"
         aria-label="${isActive ? "Active" : "Select"} connection ${escapeHtml(label)}">
         <div class="source-card-header">
-          <div class="source-card-heading">
-            <p class="source-card-title">${escapeHtml(label)}</p>
-            <span class="pill">${escapeHtml(this.connectionTypeLabel(source))}</span>
-            <span class="pill${status.tone === "ok" ? " is-ok" : status.tone === "warn" ? " is-warn" : ""}">${escapeHtml(status.label)}</span>
-            <span class="pill">${escapeHtml(`${collectionCount} coll.`)}</span>
+          <span class="source-card-leading" aria-hidden="true">${this.connectionIcon(source)}</span>
+          <div class="source-card-content">
+            <div class="source-card-heading">
+              <p class="source-card-title">${escapeHtml(label)}</p>
+              <span class="pill${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>
+            </div>
+            <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
           </div>
-          <span class="pill source-card-active-pill${isActive && isEnabled ? " is-ok" : ""}">${escapeHtml(availabilityLabel)}</span>
         </div>
-        <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
         <div class="source-card-actions">
           ${exampleToggle}
           ${primaryAction}

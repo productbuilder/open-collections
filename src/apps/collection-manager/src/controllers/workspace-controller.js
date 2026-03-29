@@ -86,7 +86,7 @@ function logCredentialRestore(stage, payload = {}) {
 	}
 }
 
-function shouldAutoReconnectRememberedSource(
+function isReconnectEligibleRememberedSource(
 	source,
 	platformType = PLATFORM_TYPES.BROWSER,
 ) {
@@ -111,6 +111,37 @@ function shouldAutoReconnectRememberedSource(
 	}
 
 	return true;
+}
+
+function startBackgroundRememberedSourceRehydrate(
+	app,
+	sources,
+	platformType,
+) {
+	const eligibleSourceIds = (Array.isArray(sources) ? sources : [])
+		.filter((source) =>
+			isReconnectEligibleRememberedSource(source, platformType),
+		)
+		.map((source) => source.id)
+		.filter((sourceId) => typeof sourceId === "string" && sourceId.trim());
+
+	if (eligibleSourceIds.length === 0) {
+		return;
+	}
+
+	void (async () => {
+		for (const sourceId of eligibleSourceIds) {
+			const stillPresent = app.state.sources.some(
+				(source) => source.id === sourceId,
+			);
+			if (!stillPresent) {
+				continue;
+			}
+			await app.refreshSource(sourceId, {
+				backgroundRestore: true,
+			});
+		}
+	})();
 }
 
 export function currentWorkspaceSnapshot(app) {
@@ -651,17 +682,11 @@ export async function restoreRememberedSources(app) {
 	app.renderEditor();
 
 	app.activatePreferredBrowserStartupSource();
-
-	for (const source of app.state.sources) {
-		const shouldAutoRefresh = shouldAutoReconnectRememberedSource(
-			source,
-			platformType,
-		);
-		if (!shouldAutoRefresh) {
-			continue;
-		}
-		await app.refreshSource(source.id);
-	}
+	startBackgroundRememberedSourceRehydrate(
+		app,
+		app.state.sources,
+		platformType,
+	);
 }
 
 export async function initializeLocalDraftState(app) {

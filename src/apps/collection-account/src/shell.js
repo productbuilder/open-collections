@@ -69,7 +69,6 @@ function renderShell(shadowRoot) {
 					})}
 					<div id="connectionsOverviewView">
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
-						<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
 
 						<div class="connections-body">
 							<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">

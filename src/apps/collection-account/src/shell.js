@@ -39,7 +39,7 @@ function renderShell(shadowRoot) {
 					<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
 					<span class="account-entry-content">
 						<span class="account-entry-label">Connections</span>
-						<span class="account-entry-subtitle">Manage source and service connections for your collections.</span>
+						<span class="account-entry-subtitle">Manage local and remote folders for your collections.</span>
 					</span>
 					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
 				</button>

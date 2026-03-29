@@ -2198,13 +2198,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				label: "Publish collection",
 				visible: true,
 				disabled: true,
-				reason: "Select a single active connection to publish this collection.",
+				reason: "Select a single connection in the current source filter to publish this collection.",
 			};
 		}
 
 		if (!source.capabilities?.canPublish) {
 			let reason =
-				"The active connection does not currently support publishing.";
+				"The selected connection does not currently support publishing.";
 			if (source.needsCredentials) {
 				reason =
 					"Reconnect this connection and provide credentials before publishing.";
@@ -2320,7 +2320,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			);
 		} else {
 			this.setStatus(
-				`Publishing ${pending.length} asset(s) to the active connection...`,
+				`Publishing ${pending.length} asset(s) to the selected connection...`,
 				"neutral",
 			);
 		}

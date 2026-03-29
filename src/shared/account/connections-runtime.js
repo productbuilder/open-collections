@@ -572,7 +572,12 @@ export function createConnectionsRuntime(options = {}) {
 				providerResult: result,
 			};
 		},
-		async removeSource({ sourceId, sources = [], activeSourceId = "all" }) {
+		async removeSource({
+			sourceId,
+			sources = [],
+			activeSourceId = "all",
+			selectedSourceFilterId,
+		}) {
 			const source = sources.find((entry) => entry.id === sourceId);
 			if (!source) {
 				return { ok: false, message: "" };
@@ -587,14 +592,18 @@ export function createConnectionsRuntime(options = {}) {
 			const nextSources = sources.filter(
 				(entry) => entry.id !== sourceId,
 			);
+			const currentFilterId = selectedSourceFilterId || activeSourceId;
+			const nextFilterId =
+				currentFilterId === sourceId
+					? nextSources[0]?.id || "all"
+					: currentFilterId;
 			return {
 				ok: true,
 				removedSource: source,
 				sources: nextSources,
-				activeSourceId:
-					activeSourceId === sourceId
-						? nextSources[0]?.id || "all"
-						: activeSourceId,
+				// Keep legacy and clearer filter naming side by side during migration.
+				activeSourceId: nextFilterId,
+				selectedSourceFilterId: nextFilterId,
 			};
 		},
 		setSourceEnabled({
@@ -602,6 +611,7 @@ export function createConnectionsRuntime(options = {}) {
 			enabled,
 			sources = [],
 			activeSourceId = "all",
+			selectedSourceFilterId,
 		}) {
 			const source = sources.find((entry) => entry.id === sourceId);
 			if (!source) {
@@ -618,15 +628,17 @@ export function createConnectionsRuntime(options = {}) {
 			const nextSources = sources.map((entry) =>
 				entry.id === sourceId ? updatedSource : entry,
 			);
-			const nextActiveSourceId =
-				activeSourceId === sourceId && !nextEnabled
+			const currentFilterId = selectedSourceFilterId || activeSourceId;
+			const nextFilterId =
+				currentFilterId === sourceId && !nextEnabled
 					? nextSources.find((entry) => entry.id !== sourceId)?.id || "all"
-					: activeSourceId;
+					: currentFilterId;
 			return {
 				ok: true,
 				source: updatedSource,
 				sources: nextSources,
-				activeSourceId: nextActiveSourceId,
+				activeSourceId: nextFilterId,
+				selectedSourceFilterId: nextFilterId,
 			};
 		},
 		persistSources(sources = []) {

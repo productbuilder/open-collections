@@ -20,7 +20,7 @@ class OpenAppShellElement extends HTMLElement {
 		};
 
 		this.shadow = this.attachShadow({ mode: "open" });
-		this.activeSectionSession = null;
+		this.sectionSessions = new Map();
 		this.toastLayer = null;
 
 		this.render();
@@ -28,11 +28,13 @@ class OpenAppShellElement extends HTMLElement {
 
 	connectedCallback() {
 		this.bindEvents();
-		this.mountActiveSection();
+		this.ensureSectionMounted(this.state.activeSectionKey);
+		this.syncSectionVisibility();
+		this.syncNavCurrentState();
 	}
 
 	disconnectedCallback() {
-		this.unmountActiveSection();
+		this.unmountAllSections();
 		this.destroyToastLayer();
 	}
 
@@ -94,20 +96,30 @@ class OpenAppShellElement extends HTMLElement {
 			return;
 		}
 
-		this.unmountActiveSection();
 		this.state.activeSectionKey = sectionKey;
-		this.render();
-		this.mountActiveSection();
+		this.ensureSectionMounted(sectionKey);
+		this.syncSectionVisibility();
+		this.syncNavCurrentState();
 	}
 
-	mountActiveSection() {
-		const mountTarget = this.shadow.getElementById("shellViewportContent");
+	getSectionMountTarget(sectionKey) {
+		return this.shadow.querySelector(
+			`[data-shell-section-mount="${sectionKey}"]`,
+		);
+	}
+
+	ensureSectionMounted(sectionKey) {
+		if (this.sectionSessions.has(sectionKey)) {
+			return this.sectionSessions.get(sectionKey);
+		}
+
+		const mountTarget = this.getSectionMountTarget(sectionKey);
 		const section =
-			SHELL_SECTION_ADAPTERS[this.state.activeSectionKey] ||
+			SHELL_SECTION_ADAPTERS[sectionKey] ||
 			SHELL_SECTION_ADAPTERS[DEFAULT_SECTION_KEY];
 
 		if (!mountTarget || !section) {
-			return;
+			return null;
 		}
 
 		const runtimeContext = createAppRuntimeContext({
@@ -115,7 +127,7 @@ class OpenAppShellElement extends HTMLElement {
 			mode: APP_RUNTIME_MODES.EMBEDDED,
 			target: mountTarget,
 			config: {
-				sectionKey: this.state.activeSectionKey,
+				sectionKey,
 			},
 			hostCapabilities: this.createHostCapabilities(),
 			onEvent: (type, detail) => {
@@ -127,16 +139,63 @@ class OpenAppShellElement extends HTMLElement {
 			},
 		});
 
-		this.activeSectionSession = section.adapter.mount(runtimeContext);
+		const session = section.adapter.mount(runtimeContext);
+		this.sectionSessions.set(sectionKey, session);
+		return session;
 	}
 
-	unmountActiveSection() {
-		this.activeSectionSession?.unmount?.();
-		this.activeSectionSession = null;
+	syncSectionVisibility() {
+		const activeSectionKey = this.state.activeSectionKey;
+		for (const sectionKey of Object.keys(SHELL_SECTION_ADAPTERS)) {
+			const mountTarget = this.getSectionMountTarget(sectionKey);
+			if (!mountTarget) {
+				continue;
+			}
+			const isActive = sectionKey === activeSectionKey;
+			mountTarget.hidden = !isActive;
+			if (isActive) {
+				mountTarget.removeAttribute("inert");
+			} else {
+				mountTarget.setAttribute("inert", "");
+			}
+		}
+	}
+
+	syncNavCurrentState() {
+		const activeSectionKey = this.state.activeSectionKey;
+		const navButtons = this.shadow.querySelectorAll("button[data-section-key]");
+		for (const button of navButtons) {
+			if (!(button instanceof HTMLElement)) {
+				continue;
+			}
+			if (button.dataset.sectionKey === activeSectionKey) {
+				button.setAttribute("aria-current", "page");
+			} else {
+				button.removeAttribute("aria-current");
+			}
+		}
+	}
+
+	unmountAllSections() {
+		for (const session of this.sectionSessions.values()) {
+			session?.unmount?.();
+		}
+		this.sectionSessions.clear();
 	}
 
 	render() {
 		const activeSectionKey = this.state.activeSectionKey;
+		const sectionMounts = Object.keys(SHELL_SECTION_ADAPTERS)
+			.map(
+				(sectionKey) => `
+					<div
+						data-shell-section-mount="${sectionKey}"
+						class="shell-section-mount"
+						${sectionKey === activeSectionKey ? "" : "hidden inert"}
+					></div>
+				`,
+			)
+			.join("");
 
 		this.shadow.innerHTML = `
       	<style>${appShellStyles}</style>
@@ -146,16 +205,11 @@ class OpenAppShellElement extends HTMLElement {
 			${renderShellHeader(activeSectionKey)}
 			
 			<main class="oc-app-viewport" id="shellViewport" tabindex="-1">
-				<div id="shellViewportContent" class="shell-section-mount"></div>
+				${sectionMounts}
 			</main>
 		</div>
 
     `;
-
-		const activeButton = this.shadow.querySelector(
-			`button[data-section-key="${activeSectionKey}"]`,
-		);
-		activeButton?.setAttribute("aria-current", "page");
 	}
 }
 

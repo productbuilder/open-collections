@@ -34,7 +34,8 @@ export class BaseElement extends HTMLElement {
 			return;
 		}
 		this.shadowRoot.innerHTML = `
-      <style>${this.renderStyles()}</style>
+      <style>:host([hidden]) { display: none !important; }
+${this.renderStyles()}</style>
       ${this.renderTemplate()}
     `;
 		this.afterRender();

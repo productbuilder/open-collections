@@ -8,6 +8,7 @@ import {
 	createConnectionsRuntime,
 	createCredentialStore,
 	makeConnectionId,
+	setSessionConnectionSources,
 	uniqueConnectionsForDisplay,
 } from "../../../shared/account/index.js";
 import { renderBackButton } from "../../../shared/components/back-button.js";
@@ -999,6 +1000,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 	persistSources() {
 		this.connectionsRuntime.persistSources(this.state.sources);
+		setSessionConnectionSources(this.state.sources);
 	}
 
 	restoreRememberedSources() {
@@ -1007,6 +1009,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			return;
 		}
 		this.state.sources = remembered;
+		setSessionConnectionSources(this.state.sources);
 		this.state.activeSourceId = this.state.sources[0]?.id || "all";
 		this.renderConnectionsListPanel();
 		this.setStatus(

@@ -10,7 +10,11 @@ import {
 	persistLocalStateStringSoon,
 	readLocalStorageString,
 } from "../../../../shared/platform/mobile-persistence.js";
-import { CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY } from "../../../../shared/account/index.js";
+import {
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
+	getSessionConnectionSources,
+	setSessionConnectionSources,
+} from "../../../../shared/account/index.js";
 
 const LEGACY_MANAGER_SOURCES_STORAGE_KEY = "timemap_manager_sources_v1";
 export const SOURCES_STORAGE_KEY =
@@ -392,6 +396,7 @@ export function saveSourcesToStorage(app) {
 	const payload = app.state.sources.map((source) =>
 		app.toPersistedSource(source),
 	);
+	setSessionConnectionSources(app.state.sources);
 
 	try {
 		app.connectionsRuntime.persistSources(app.state.sources);
@@ -437,7 +442,11 @@ export async function restoreRememberedSources(app) {
 		/^[a-z]:[\\/]/i.test(value) ||
 		value.startsWith("\\\\") ||
 		value.includes("\\");
-	let remembered = [];
+	const sessionSources = getSessionConnectionSources();
+	let remembered = Array.isArray(sessionSources)
+		? [...sessionSources]
+		: [];
+	const usingSessionSources = remembered.length > 0;
 
 	await mirrorNativePreferencesToLocalStorage([
 		SOURCES_STORAGE_KEY,
@@ -445,7 +454,7 @@ export async function restoreRememberedSources(app) {
 		WORKSPACE_SELECTION_STORAGE_KEY,
 	]);
 
-	if (app.state.opfsAvailable) {
+	if (!usingSessionSources && app.state.opfsAvailable) {
 		try {
 			remembered = await app.loadRememberedSourcesFromOpfs();
 		} catch (error) {
@@ -454,8 +463,10 @@ export async function restoreRememberedSources(app) {
 	}
 
 	const usingOpfsRemembered =
-		Array.isArray(remembered) && remembered.length > 0;
-	if (!usingOpfsRemembered) {
+		!usingSessionSources &&
+		Array.isArray(remembered) &&
+		remembered.length > 0;
+	if (!usingSessionSources && !usingOpfsRemembered) {
 		remembered = app.connectionsRuntime.restoreRememberedSources();
 		if (
 			(!Array.isArray(remembered) || remembered.length === 0) &&
@@ -673,6 +684,8 @@ export async function restoreRememberedSources(app) {
 		return;
 	}
 
+	setSessionConnectionSources(restored);
+
 	let desiredActiveSourceId = "all";
 	try {
 		const stored = JSON.parse(
@@ -711,13 +724,22 @@ export async function restoreRememberedSources(app) {
 	app.syncMetadataModeFromState();
 	app.closeMobileDetail();
 
-	app.setStatus(
-		`Restored ${app.state.sources.length} remembered storage source definitions.`,
-		"neutral",
-	);
+	if (usingSessionSources) {
+		app.setStatus(
+			`Loaded ${app.state.sources.length} in-session connection${app.state.sources.length === 1 ? "" : "s"} from Account.`,
+			"neutral",
+		);
+	} else {
+		app.setStatus(
+			`Restored ${app.state.sources.length} remembered storage source definitions.`,
+			"neutral",
+		);
+	}
 	app.refreshWorkingStatus();
 	app.setConnectionStatus(
-		"Remembered storage sources loaded. Refresh to reconnect.",
+		usingSessionSources
+			? "In-session connections loaded."
+			: "Remembered storage sources loaded. Refresh to reconnect.",
 		"neutral",
 	);
 	app.renderSourcesList();

@@ -121,6 +121,7 @@ import {
 	createDefaultConnectionProviderCatalog,
 	createDefaultConnectionProviderFactories,
 	createDefaultConnectionProviders,
+	subscribeSessionConnectionSources,
 } from "../../../shared/account/index.js";
 const COLLECTIONS_DIR_PATH = "collections";
 const SOURCES_DIR_PATH = "sources";
@@ -154,6 +155,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.objectUrls = new Set();
 		this.selectedLocalDirectoryHandle = null;
 		this.pendingSourceRepair = null;
+		this._unsubscribeSessionConnectionSources = null;
+		this._isApplyingSessionSources = false;
 		this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
 
 		this.providerFactories = createDefaultConnectionProviderFactories();
@@ -228,6 +231,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this._handleWindowResize = () => this.syncResponsivePanels();
 		window.addEventListener("resize", this._handleWindowResize);
 		this.initializePlatformFileDrops();
+		this._unsubscribeSessionConnectionSources =
+			subscribeSessionConnectionSources((sources) => {
+				this.handleSessionConnectionSourcesChanged(sources);
+			});
 	}
 
 	disconnectedCallback() {
@@ -240,6 +247,76 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			this._platformDropCleanup = null;
 		}
 		this._platformDropReady = null;
+		if (typeof this._unsubscribeSessionConnectionSources === "function") {
+			this._unsubscribeSessionConnectionSources();
+		}
+		this._unsubscribeSessionConnectionSources = null;
+	}
+
+	handleSessionConnectionSourcesChanged(sources = []) {
+		if (this._isApplyingSessionSources || !Array.isArray(sources)) {
+			return;
+		}
+		const incomingById = new Map();
+		for (const source of sources) {
+			const sourceId = String(source?.id || "").trim();
+			if (!sourceId) {
+				continue;
+			}
+			incomingById.set(sourceId, source);
+		}
+		const currentSourceIds = new Set(this.state.sources.map((entry) => entry.id));
+		const addedSourceIds = [];
+		for (const sourceId of incomingById.keys()) {
+			if (!currentSourceIds.has(sourceId)) {
+				addedSourceIds.push(sourceId);
+			}
+		}
+		this._isApplyingSessionSources = true;
+		try {
+			const existingById = new Map(
+				this.state.sources.map((entry) => [entry.id, entry]),
+			);
+			const nextSources = Array.from(incomingById.values()).map((source) => {
+				const existing = existingById.get(source.id);
+				const hasIncomingCollections = Array.isArray(source.collections);
+				return {
+					...(existing || {}),
+					...source,
+					collections: hasIncomingCollections
+						? source.collections
+						: existing?.collections || [],
+					selectedCollectionId:
+						source.selectedCollectionId ??
+						existing?.selectedCollectionId ??
+						null,
+				};
+			});
+			const validSourceIds = new Set(nextSources.map((entry) => entry.id));
+			this.state.sources = this.sortSourcesForDisplay(nextSources);
+			this.state.assets = this.state.assets.filter((entry) =>
+				validSourceIds.has(entry.sourceId),
+			);
+			const nextActiveSourceFilter = this.state.activeSourceFilter || "all";
+			if (
+				nextActiveSourceFilter !== "all" &&
+				!validSourceIds.has(nextActiveSourceFilter)
+			) {
+				this.state.activeSourceFilter = "all";
+			}
+			this.renderSourcesList();
+			this.renderSourceFilter();
+			this.renderAssets();
+			this.renderEditor();
+			this.refreshWorkingStatus();
+		} finally {
+			this._isApplyingSessionSources = false;
+		}
+		for (const sourceId of addedSourceIds) {
+			void this.refreshSource(sourceId, {
+				backgroundRestore: true,
+			});
+		}
 	}
 
 	renderShell() {

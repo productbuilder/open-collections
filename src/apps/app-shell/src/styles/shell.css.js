@@ -121,6 +121,10 @@ export const appShellStyles = `
   display: flex;
 }
 
+.shell-section-mount[hidden] {
+  display: none !important;
+}
+
 .shell-section-mount > * {
   flex: 1 1 auto;
   min-height: 0;

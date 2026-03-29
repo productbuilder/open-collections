@@ -67,18 +67,18 @@ function renderShell(shadowRoot) {
 						className: "back-btn",
 						slot: "leading",
 					})}
-					<button
-						type="button"
-						id="connectionsAddBtn"
-						class="account-header-action-btn"
-						slot="actions"
-					>
-						Add connection
-					</button>
 					<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
 					<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
 
 					<div class="connections-body">
+						<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">
+							<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
+							<span class="account-entry-content">
+								<span class="account-entry-label">Add connection</span>
+								<span class="account-entry-subtitle">Connect a local or remote source.</span>
+							</span>
+							<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
+						</button>
 						<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
 					</div>

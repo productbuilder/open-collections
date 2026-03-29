@@ -624,12 +624,17 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
 	render() {
 		this.shadowRoot.innerHTML = `
-      <style>${sourceManagerStyles}</style>
+      <style>
+        ${sourceManagerStyles}
+
+        .add-connection-header {
+          align-items: center;
+          flex-wrap: nowrap;
+        }
+      </style>
       <div class="source-manager">
-        <div class="dialog-actions">
+        <div class="dialog-actions add-connection-header">
           ${renderBackButton({ id: "backToConnectionsBtn" })}
-        </div>
-        <div class="root-actions-heading">
           <h3 class="root-actions-title">Add connection</h3>
         </div>
         <div class="provider-layout single-column">

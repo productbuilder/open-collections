@@ -465,9 +465,9 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 	}
 
 	renderRemoteFlow() {
+		const rootHeader = this.shadowRoot?.getElementById("rootHeader");
 		const rootActions = this.shadowRoot?.getElementById("rootActions");
 		const remoteFlow = this.shadowRoot?.getElementById("remoteFlow");
-		const backBtn = this.shadowRoot?.getElementById("remoteBackBtn");
 		const breadcrumb = this.shadowRoot?.getElementById(
 			"remoteFlowBreadcrumb",
 		);
@@ -479,9 +479,9 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		);
 		const configPanel = this.shadowRoot?.getElementById("providerConfig");
 		if (
+			!rootHeader ||
 			!rootActions ||
 			!remoteFlow ||
-			!backBtn ||
 			!breadcrumb ||
 			!subtypePanel ||
 			!providerPanel ||
@@ -493,38 +493,10 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		const inRoot =
 			this.model.addHostLevel === "root" &&
 			this.model.flowMode !== "repair";
+		rootHeader.classList.toggle("is-hidden", !inRoot);
 		rootActions.classList.toggle("is-hidden", !inRoot);
 		remoteFlow.classList.toggle("is-hidden", inRoot);
-		backBtn.classList.toggle("is-hidden", inRoot);
-
-		if (inRoot) {
-			breadcrumb.textContent = "";
-			return;
-		}
-
-		const subtitleByType = {
-			git: "Remote / Git repository / Provider",
-			s3: "Remote / Object storage / Provider",
-			domain: "Remote / Custom domain",
-		};
-		if (this.model.addHostLevel === "remote-subtypes") {
-			breadcrumb.textContent = "Remote";
-		} else if (
-			this.model.addHostLevel === "remote-config" &&
-			this.model.remoteSubtype === "git"
-		) {
-			breadcrumb.textContent =
-				"Remote / Git repository / GitHub configuration";
-		} else if (
-			this.model.addHostLevel === "remote-config" &&
-			this.model.remoteSubtype === "s3"
-		) {
-			breadcrumb.textContent =
-				"Remote / Object storage / S3-compatible configuration";
-		} else {
-			breadcrumb.textContent =
-				subtitleByType[this.model.remoteSubtype] || "Remote";
-		}
+		breadcrumb.textContent = "";
 
 		const showingSubtypes = this.model.addHostLevel === "remote-subtypes";
 		const showingProviders = this.model.addHostLevel === "remote-providers";
@@ -624,6 +596,28 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           flex-wrap: nowrap;
         }
 
+        .remote-flow-header {
+          align-items: center;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          gap: 0.5rem;
+        }
+
+        .remote-flow-title {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .remote-flow-info {
+          margin-left: auto;
+          width: 1.8rem;
+          min-height: 1.8rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .connection-type-row {
           width: 100%;
         }
@@ -638,7 +632,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
         }
       </style>
       <div class="source-manager">
-        <div class="dialog-actions add-connection-header">
+        <div id="rootHeader" class="dialog-actions add-connection-header">
           ${renderBackButton({ id: "backToConnectionsBtn" })}
           <h3 class="root-actions-title">Add connection</h3>
         </div>
@@ -678,11 +672,14 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           </div>
 
           <div id="remoteFlow" class="is-hidden">
-            <div class="dialog-actions">
+            <div class="dialog-actions remote-flow-header">
               ${renderBackButton({ id: "remoteBackBtn" })}
-              <button class="btn" id="openStorageOptionsBtn" type="button">Storage options</button>
+              <h3 class="remote-flow-title">Add remote connection</h3>
+              <button class="icon-btn remote-flow-info" id="openStorageOptionsBtn" type="button" aria-label="Storage options details">
+                ${renderInfoIcon()}
+              </button>
             </div>
-            <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>
+            <p id="remoteFlowBreadcrumb" class="panel-subtext is-hidden"></p>
             <div id="remoteSubtypeCatalog" class="provider-list is-hidden">
               <button class="provider-card" type="button" data-remote-subtype="git">
                 <div class="provider-card-label-row"><strong>Git repository</strong></div>

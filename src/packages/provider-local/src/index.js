@@ -506,6 +506,20 @@ export function createLocalProvider() {
 		return loaded;
 	}
 
+	async function ensureCollectionsIndexInitialized() {
+		const existingIndex = await readJsonFileIfExists(
+			rootDirectoryHandle,
+			"collections.json",
+		);
+		if (existingIndex !== null) {
+			return { created: false };
+		}
+		await writeJsonFile(rootDirectoryHandle, "collections.json", {
+			collections: [],
+		});
+		return { created: true };
+	}
+
 	function extensionForFileName(name = "", fallback = ".jpg") {
 		const match = String(name)
 			.toLowerCase()
@@ -676,6 +690,7 @@ export function createLocalProvider() {
 					rootDirectoryLabel =
 						sourceLabel || nextDirectoryHandle.name || "Local host";
 					const directoryPath = String(nextDirectoryHandle.path || "").trim();
+					const initialization = await ensureCollectionsIndexInitialized();
 					collections = await loadCollectionsFromFilesystem();
 					rebuildIndex();
 					connected = true;
@@ -688,6 +703,7 @@ export function createLocalProvider() {
 						sourceDetailLabel:
 							directoryPath || `${rootDirectoryLabel} (host root)`,
 						capabilities,
+						initialization,
 						collections: collections.map((collection) =>
 							toCollectionSummary(collection),
 						),

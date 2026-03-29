@@ -70,6 +70,11 @@ export async function createNewCollectionDraft(manager) {
 		license: manager.dom.newCollectionLicense.value.trim(),
 		publisher: manager.dom.newCollectionPublisher.value.trim(),
 		language: manager.dom.newCollectionLanguage.value.trim(),
+		// Incremental model seam: drafts may be intentionally unassigned.
+		connectionId:
+			manager.state.activeSourceFilter !== "all"
+				? manager.state.activeSourceFilter
+				: null,
 		rootPath: manager.normalizeCollectionRootPath(`${slug}/`, slug),
 	};
 
@@ -132,6 +137,7 @@ export async function createNewCollectionDraft(manager) {
 				license: nextMeta.license,
 				publisher: nextMeta.publisher,
 				language: nextMeta.language,
+				connectionId: activeSource.id,
 				rootPath: nextMeta.rootPath,
 			};
 			const exists = (activeSource.collections || []).some(
@@ -160,6 +166,7 @@ export async function createNewCollectionDraft(manager) {
 						license: nextMeta.license,
 						publisher: nextMeta.publisher,
 						language: nextMeta.language,
+						connectionId: activeSource.id,
 						rootPath: nextMeta.rootPath,
 					},
 				];
@@ -214,6 +221,7 @@ export async function createNewCollectionDraft(manager) {
 				license: meta.license,
 				publisher: meta.publisher,
 				language: meta.language,
+				connectionId: meta.connectionId,
 				rootPath: meta.rootPath,
 			},
 		];
@@ -235,6 +243,7 @@ export async function createNewCollectionDraft(manager) {
 						license: meta.license,
 						publisher: meta.publisher,
 						language: meta.language,
+						connectionId: source.id,
 						rootPath: meta.rootPath,
 					},
 				];

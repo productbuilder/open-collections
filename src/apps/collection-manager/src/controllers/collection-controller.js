@@ -99,6 +99,7 @@ export function ensureCollectionForSource(app, source) {
 				{
 					id: preferred,
 					title: localEntry?.title || preferred,
+					connectionId: source.id,
 					rootPath: app.normalizeCollectionRootPath(
 						localEntry?.rootPath || `${preferred}/`,
 						preferred,
@@ -128,6 +129,7 @@ export function ensureCollectionForSource(app, source) {
 		{
 			id: fallback,
 			title: source.displayLabel || source.label || "Default collection",
+			connectionId: source.id,
 		},
 	];
 	source.selectedCollectionId = fallback;

@@ -13,6 +13,14 @@ function mergeCollectionEntry(entry, sourceId = "") {
 			typeof entry.sourceId === "string" && entry.sourceId.trim()
 				? entry.sourceId
 				: sourceId || "",
+		// Incremental assignment seam:
+		// - explicit collection-level connectionId when available
+		// - legacy fallback to sourceId for source-derived collections
+		// - null for intentionally unassigned local drafts
+		connectionId:
+			typeof entry.connectionId === "string"
+				? entry.connectionId.trim() || null
+				: sourceId || null,
 	};
 }
 

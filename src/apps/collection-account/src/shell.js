@@ -67,21 +67,23 @@ function renderShell(shadowRoot) {
 						className: "back-btn",
 						slot: "leading",
 					})}
-					<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
-					<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
+					<div id="connectionsOverviewView">
+						<p class="account-description">Set up and maintain source connections for browsing, editing, and publishing collections.</p>
+						<p class="status-note" id="accountStatus" data-tone="neutral">No connections yet.</p>
 
-					<div class="connections-body">
-						<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">
-							<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
-							<span class="account-entry-content">
-								<span class="account-entry-label">Add connection</span>
-								<span class="account-entry-subtitle">Connect a local or remote source.</span>
-							</span>
-							<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-						</button>
-						<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
-						<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
+						<div class="connections-body">
+							<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">
+								<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
+								<span class="account-entry-content">
+									<span class="account-entry-label">Add connection</span>
+									<span class="account-entry-subtitle">Connect a local or remote source.</span>
+								</span>
+								<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
+							</button>
+							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
+						</div>
 					</div>
+					<open-collections-add-connection-panel id="addConnectionPanel" class="is-hidden"></open-collections-add-connection-panel>
 				</open-collections-section-panel>
 			</section>
 
@@ -211,6 +213,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			connectionsAddBtn: this.shadow.getElementById("connectionsAddBtn"),
 			connectionsSection:
 				this.shadow.getElementById("connectionsSection"),
+			connectionsOverviewView:
+				this.shadow.getElementById("connectionsOverviewView"),
 			settingsSection: this.shadow.getElementById("settingsSection"),
 			connectionsListPanel: this.shadow.getElementById(
 				"connectionsListPanel",
@@ -365,9 +369,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			? pageId
 			: "root";
 		if (nextPage !== "connections") {
-			this.state.view = "list";
-			this.dom.connectionsListPanel?.classList.remove("is-hidden");
-			this.dom.addConnectionPanel?.classList.add("is-hidden");
+			this.setConnectionsViewState("list");
 		}
 		this.state.activePage = nextPage;
 
@@ -386,10 +388,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	showConnectionsListView() {
-		this.state.view = "list";
 		this.setActivePage("connections");
-		this.dom.connectionsListPanel?.classList.remove("is-hidden");
-		this.dom.addConnectionPanel?.classList.add("is-hidden");
+		this.setConnectionsViewState("list");
 		this.renderConnectionsListPanel();
 	}
 
@@ -400,10 +400,21 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	showAddConnectionView() {
-		this.state.view = "add";
 		this.setActivePage("connections");
-		this.dom.connectionsListPanel?.classList.add("is-hidden");
-		this.dom.addConnectionPanel?.classList.remove("is-hidden");
+		this.setConnectionsViewState("add");
+	}
+
+	setConnectionsViewState(view) {
+		const nextView = view === "add" ? "add" : "list";
+		this.state.view = nextView;
+		this.dom.connectionsOverviewView?.classList.toggle(
+			"is-hidden",
+			nextView !== "list",
+		);
+		this.dom.addConnectionPanel?.classList.toggle(
+			"is-hidden",
+			nextView !== "add",
+		);
 	}
 
 	openCredentialRepairView(sourceId) {

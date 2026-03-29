@@ -47,7 +47,10 @@ class OpenCollectionCardGridElement extends HTMLElement {
             <span>Select</span>
           </label>
           <p class="card-title">${collection.title || collection.id}</p>
-          <div class="badge-row"><span class="badge">${collection.id}</span></div>
+          <div class="badge-row">
+            <span class="badge">${collection.id}</span>
+            <span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span>
+          </div>
           <div class="card-actions"><button type="button" class="btn" data-open-id="${collection.id}">Open</button></div>
         </article>
       `,

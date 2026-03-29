@@ -49,6 +49,7 @@ class OpenCollectionRowListElement extends HTMLElement {
         </td>
         <td>${collection.title || collection.id}</td>
         <td>${collection.id}</td>
+        <td><span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span></td>
         <td><button type="button" class="btn" data-open-id="${collection.id}">Open</button></td>
       </tr>
     `,
@@ -59,7 +60,7 @@ class OpenCollectionRowListElement extends HTMLElement {
       <style>${browserRendererStyles}</style>
       <div class="row-table-wrap">
         <table class="row-table" aria-label="Collections list">
-          <thead><tr><th>Select</th><th>Title</th><th>ID</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Select</th><th>Title</th><th>ID</th><th>Connection</th><th>Actions</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>

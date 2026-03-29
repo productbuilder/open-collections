@@ -566,7 +566,11 @@ export async function removeSource(app, sourceId) {
 		app.clearPendingSourceRepair();
 	}
 	app.state.sources = app.sortSourcesForDisplay(result.sources);
-	app.state.activeSourceFilter = result.activeSourceId;
+	const wasFilteringRemovedSource =
+		(app.state.activeSourceFilter || "all") === sourceId;
+	app.state.activeSourceFilter = wasFilteringRemovedSource
+		? "all"
+		: result.activeSourceId;
 	app.state.assets = app.state.assets.filter(
 		(entry) => entry.sourceId !== sourceId,
 	);

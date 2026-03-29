@@ -140,34 +140,18 @@ export const accountShellStyles = `
   /* Reuse shared back button styling for account subpage navigation. */
   ${backButtonStyles}
 
-  .account-header-action-btn {
-    margin-inline-start: auto;
-    min-height: 2rem;
+  .account-entry-button-action-row {
+    min-height: 3.7rem;
+  }
+
+  .account-entry-button-action-row .account-entry-leading-icon {
+    width: 2rem;
     height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #0f6cc6;
-    background: #0f6cc6;
-    color: #ffffff;
-    border-radius: 8px;
-    padding: 0 0.75rem;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    line-height: 1;
-    cursor: pointer;
-    white-space: nowrap;
   }
 
-  .account-header-action-btn:hover {
-    background: #0d5eae;
-    border-color: #0d5eae;
-  }
-
-  .account-header-action-btn:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
+  .account-entry-button-action-row .account-entry-leading-icon .icon {
+    width: 1.85rem;
+    height: 1.85rem;
   }
 
   .connections-body {

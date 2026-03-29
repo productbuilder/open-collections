@@ -19,6 +19,7 @@ import {
 import "../../../shared/ui/primitives/action-row.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
+import "./components/connection-detail-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "./css/shell.css.js";
 
@@ -80,6 +81,21 @@ function renderShell(shadowRoot) {
 				</div>
 				<div id="connectionsAddView" class="is-hidden">
 					<open-collections-add-connection-panel id="addConnectionPanel"></open-collections-add-connection-panel>
+				</div>
+				<div id="connectionsDetailView" class="is-hidden">
+					<open-collections-section-panel
+						title="Connection"
+						heading-level="2"
+						id="connectionDetailHeading"
+					>
+						${renderBackButton({
+							id: "connectionDetailBackBtn",
+							label: "Back to connections",
+							className: "back-btn",
+							slot: "leading",
+						})}
+						<open-collections-connection-detail-panel id="connectionDetailPanel"></open-collections-connection-detail-panel>
+					</open-collections-section-panel>
 				</div>
 			</section>
 
@@ -208,9 +224,17 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				this.shadow.getElementById("connectionsOverviewView"),
 			connectionsAddView:
 				this.shadow.getElementById("connectionsAddView"),
+			connectionsDetailView:
+				this.shadow.getElementById("connectionsDetailView"),
 			settingsSection: this.shadow.getElementById("settingsSection"),
 			connectionsListPanel: this.shadow.getElementById(
 				"connectionsListPanel",
+			),
+			connectionDetailPanel: this.shadow.getElementById(
+				"connectionDetailPanel",
+			),
+			connectionDetailBackBtn: this.shadow.getElementById(
+				"connectionDetailBackBtn",
 			),
 			addConnectionPanel:
 				this.shadow.getElementById("addConnectionPanel"),
@@ -234,6 +258,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.backButtons?.forEach((button) => {
 			button.addEventListener("click", () => this.setActivePage("root"));
 		});
+		this.dom.connectionDetailBackBtn?.addEventListener("click", () => {
+			this.showConnectionsListView();
+		});
 		this.dom.connectionsAddBtn?.addEventListener("click", () => {
 			this.openAddConnectionView();
 		});
@@ -246,6 +273,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 					return;
 				}
 				this.state.activeSourceId = source.id;
+				this.setConnectionsViewState("detail");
+				this.renderConnectionDetailPanel();
 				this.renderConnectionsListPanel();
 				this.setStatus(
 					`Selected connection ${source.displayLabel || source.providerLabel || source.id}.`,
@@ -253,7 +282,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				);
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"refresh-connection",
 			async (event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -262,7 +291,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				}
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"repair-connection",
 			async (event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -291,7 +320,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				await this.refreshSource(sourceId);
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"remove-connection",
 			(event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -300,7 +329,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				}
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"toggle-example-connection",
 			(event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -386,6 +415,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.setActivePage("connections");
 		this.setConnectionsViewState("list");
 		this.renderConnectionsListPanel();
+		this.renderConnectionDetailPanel();
 	}
 
 	openAddConnectionView() {
@@ -400,7 +430,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	setConnectionsViewState(view) {
-		const nextView = view === "add" ? "add" : "list";
+		const nextView =
+			view === "add" ? "add" : view === "detail" ? "detail" : "list";
 		this.state.view = nextView;
 		this.dom.connectionsOverviewView?.classList.toggle(
 			"is-hidden",
@@ -409,6 +440,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionsAddView?.classList.toggle(
 			"is-hidden",
 			nextView !== "add",
+		);
+		this.dom.connectionsDetailView?.classList.toggle(
+			"is-hidden",
+			nextView !== "detail",
 		);
 	}
 
@@ -474,6 +509,12 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionsListPanel?.setActiveSourceId(
 			this.state.activeSourceId || "all",
 		);
+		this.renderConnectionDetailPanel();
+	}
+
+	renderConnectionDetailPanel() {
+		const source = this.getSourceById(this.state.activeSourceId);
+		this.dom.connectionDetailPanel?.setSource(source);
 	}
 
 	async ensureStarterExampleConnection() {
@@ -729,6 +770,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	async removeSource(sourceId) {
+		const removedWhileInspecting =
+			this.state.view === "detail" && this.state.activeSourceId === sourceId;
 		const result = await this.connectionsRuntime.removeSource({
 			sourceId,
 			sources: this.state.sources,
@@ -748,6 +791,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 		this.persistSources();
 		this.renderConnectionsListPanel();
+		if (removedWhileInspecting) {
+			this.showConnectionsListView();
+		}
 		if (this.state.sources.length === 0) {
 			await this.ensureStarterExampleConnection();
 		} else {

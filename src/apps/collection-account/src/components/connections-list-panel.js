@@ -1,7 +1,6 @@
 import {
 	renderDriveFolderUploadIcon,
 	renderFolderIcon,
-	renderTrashIcon,
 } from "../../../../shared/components/icons.js";
 import { themeTokenStyles } from "../../../collection-manager/src/css/theme.css.js";
 import { primitiveStyles } from "../../../collection-manager/src/css/primitives.css.js";
@@ -68,18 +67,6 @@ const styles = `
     outline-offset: 2px;
   }
 
-  .source-card-add {
-    border-style: dotted;
-    border-width: 2px;
-    border-color: #93c5fd;
-    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-  }
-
-  .source-card-add:hover {
-    border-color: #3b82f6;
-    background: #f8fbff;
-  }
-
   .source-card-header {
     display: flex;
     align-items: center;
@@ -137,33 +124,6 @@ const styles = `
     overflow-wrap: anywhere;
   }
 
-  .source-card-actions {
-    display: flex;
-    gap: 0.45rem;
-    flex-wrap: wrap;
-  }
-
-  .source-card-actions .btn {
-    min-width: 0;
-  }
-
-  .btn {
-    min-height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .btn-primary {
-    background: #0f6cc6;
-    color: #ffffff;
-    border-color: #0f6cc6;
-  }
-
-  .btn-primary:hover {
-    background: #0d5eae;
-  }
-
   .pill {
     padding: 0.1rem 0.4rem;
     font-size: 0.72rem;
@@ -181,48 +141,9 @@ const styles = `
     background: #f8fafc;
   }
 
-  .source-card-remove {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .example-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.78rem;
-    color: #334155;
-  }
-
-  .example-toggle input {
-    margin: 0;
-  }
-
-  .icon {
-    width: 0.95rem;
-    height: 0.95rem;
-    display: inline-flex;
-    flex: 0 0 auto;
-  }
-
-  .icon-trash {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.35;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
   @media (max-width: 760px) {
     .source-card {
       padding: 0.65rem;
-    }
-
-    .btn {
-      padding: 0.3rem 0.52rem;
-      font-size: 0.77rem;
-      border-radius: 7px;
     }
   }
 `;
@@ -295,30 +216,6 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			source.providerLabel ||
 			"Connection";
 		const isEnabled = source.enabled !== false;
-		const primaryAction =
-			!isEnabled
-				? ""
-				: source.providerId === "local" && source.needsReconnect
-				? `<button class="btn btn-primary" type="button" data-action="repair-folder" data-source-id="${source.id}">Reconnect</button>`
-				: (source.providerId === "github" ||
-							source.providerId === "s3") &&
-					  source.needsCredentials
-					? `<button class="btn btn-primary" type="button" data-action="repair-credentials" data-source-id="${source.id}">Update credentials</button>`
-					: source.needsReconnect
-						? `<button class="btn btn-primary" type="button" data-action="repair-reconnect" data-source-id="${source.id}">Reconnect</button>`
-						: !this.isExampleReadOnly(source)
-							? `<button class="btn" type="button" data-action="refresh" data-source-id="${source.id}">Refresh</button>`
-							: "";
-
-		const showRemove = this.canRemoveSource(source);
-		const showExampleToggle = this.shouldShowExampleToggle(source);
-		const removeButton = showRemove
-			? `<button class="btn source-card-remove" type="button" data-action="remove" data-source-id="${source.id}">${renderTrashIcon()}<span>Remove</span></button>`
-			: "";
-		const exampleToggle = showExampleToggle
-			? `<label class="example-toggle"><input type="checkbox" data-action="toggle-example-enabled" data-source-id="${source.id}" ${isEnabled ? "checked" : ""} /><span>Show example</span></label>`
-			: "";
-
 		const availabilityLabel = isEnabled ? "Active" : "Inactive";
 		return `
       <article
@@ -338,36 +235,12 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
             <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
           </div>
         </div>
-        <div class="source-card-actions">
-          ${exampleToggle}
-          ${primaryAction}
-          ${removeButton}
-        </div>
       </article>
     `;
 	}
 
-	isExampleReadOnly(source) {
-		return (
-			source.providerId === "example" &&
-			!source.capabilities?.canPublish &&
-			!source.capabilities?.canSaveMetadata
-		);
-	}
-
 	hasUserOwnedStorageConnection(source) {
 		return source.providerId !== "example";
-	}
-
-	shouldShowExampleToggle(source) {
-		return source.providerId === "example" && source.isBuiltIn !== false;
-	}
-
-	canRemoveSource(source) {
-		if (source.isBuiltIn || source.isRemovable === false) {
-			return false;
-		}
-		return true;
 	}
 
 	render() {
@@ -381,7 +254,7 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			.map((source) => this.renderSourceCard(source))
 			.join("");
 		const emptyState = this.model.sources.length
-			? '<p class="panel-empty">Select a connection card to inspect details.</p>'
+			? ""
 			: '<p class="panel-empty empty">No connections added yet.</p>';
 		const starterHelper =
 			hasStarterExample && !hasUserOwnedConnections
@@ -411,59 +284,13 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 					this.dispatch("select-connection", { sourceId });
 				}
 			};
-			card.addEventListener("click", (event) => {
-				if (
-					event.target.closest('[data-action]:not([data-action="select"])')
-				) {
-					return;
-				}
+			card.addEventListener("click", () => {
 				activate();
 			});
 			card.addEventListener("keydown", (event) => {
 				if (event.key === "Enter" || event.key === " ") {
 					event.preventDefault();
 					activate();
-				}
-			});
-		});
-
-		root.querySelectorAll("[data-action]").forEach((control) => {
-			control.addEventListener("click", () => {
-				const action = control.getAttribute("data-action");
-				const sourceId = control.getAttribute("data-source-id") || "";
-				if (!sourceId) {
-					return;
-				}
-				if (action === "refresh") {
-					this.dispatch("refresh-connection", { sourceId });
-				}
-				if (action === "repair-folder") {
-					this.dispatch("repair-connection", {
-						sourceId,
-						mode: "folder",
-					});
-				}
-				if (action === "repair-credentials") {
-					this.dispatch("repair-connection", {
-						sourceId,
-						mode: "credentials",
-					});
-				}
-				if (action === "repair-reconnect") {
-					this.dispatch("repair-connection", {
-						sourceId,
-						mode: "reconnect",
-					});
-				}
-				if (action === "remove") {
-					this.dispatch("remove-connection", { sourceId });
-				}
-				if (action === "toggle-example-enabled") {
-					const enabled = Boolean(control.checked);
-					this.dispatch("toggle-example-connection", {
-						sourceId,
-						enabled,
-					});
 				}
 			});
 		});

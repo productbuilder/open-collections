@@ -31,6 +31,12 @@ function readRememberedSourcesFromStorageKey(storageKey) {
 }
 
 function normalizeLocalDraftCollectionEntry(app, entry = {}) {
+	const normalizedConnectionId =
+		typeof entry.connectionId === "string"
+			? entry.connectionId.trim() || null
+			: entry.connectionId == null
+				? null
+				: String(entry.connectionId || "").trim() || null;
 	return {
 		id: String(entry.id || ""),
 		title: entry.title || String(entry.id || ""),
@@ -38,6 +44,7 @@ function normalizeLocalDraftCollectionEntry(app, entry = {}) {
 		license: entry.license || "",
 		publisher: entry.publisher || "",
 		language: entry.language || "",
+		connectionId: normalizedConnectionId,
 		rootPath: app.normalizeCollectionRootPath(
 			entry.rootPath || `${entry.id}/`,
 			entry.id,

@@ -242,22 +242,29 @@ export async function connectCurrentProvider(app, options = {}) {
 		const collections =
 			providerCollections ||
 			app.buildCollectionsForSource(source, normalized);
-		const defaultCollectionId = collections[0]?.id || null;
+		const assignmentAwareCollections = collections.map((entry) => ({
+			...entry,
+			connectionId:
+				typeof entry.connectionId === "string"
+					? entry.connectionId.trim() || source.id
+					: source.id,
+		}));
+		const defaultCollectionId = assignmentAwareCollections[0]?.id || null;
 		const normalizedWithCollections = normalized.map((item) => ({
 			...item,
 			collectionId: item.collectionId || defaultCollectionId,
 			collectionLabel:
 				item.collectionLabel ||
-				collections.find(
+				assignmentAwareCollections.find(
 					(entry) =>
 						entry.id === (item.collectionId || defaultCollectionId),
 				)?.title ||
 				"",
 		}));
-		source.collections = collections;
+		source.collections = assignmentAwareCollections;
 		const preferredCollectionId =
 			targetSource?.selectedCollectionId &&
-			collections.some(
+			assignmentAwareCollections.some(
 				(entry) => entry.id === targetSource.selectedCollectionId,
 			)
 				? targetSource.selectedCollectionId
@@ -453,22 +460,29 @@ export async function refreshSource(app, sourceId, options = {}) {
 		const collections =
 			providerCollections ||
 			app.buildCollectionsForSource(updatedSource, normalized);
-		const defaultCollectionId = collections[0]?.id || null;
+		const assignmentAwareCollections = collections.map((entry) => ({
+			...entry,
+			connectionId:
+				typeof entry.connectionId === "string"
+					? entry.connectionId.trim() || updatedSource.id
+					: updatedSource.id,
+		}));
+		const defaultCollectionId = assignmentAwareCollections[0]?.id || null;
 		const normalizedWithCollections = normalized.map((item) => ({
 			...item,
 			collectionId: item.collectionId || defaultCollectionId,
 			collectionLabel:
 				item.collectionLabel ||
-				collections.find(
+				assignmentAwareCollections.find(
 					(entry) =>
 						entry.id === (item.collectionId || defaultCollectionId),
 				)?.title ||
 				"",
 		}));
-		updatedSource.collections = collections;
+		updatedSource.collections = assignmentAwareCollections;
 		updatedSource.selectedCollectionId =
 			updatedSource.selectedCollectionId &&
-			collections.some(
+			assignmentAwareCollections.some(
 				(entry) => entry.id === updatedSource.selectedCollectionId,
 			)
 				? updatedSource.selectedCollectionId

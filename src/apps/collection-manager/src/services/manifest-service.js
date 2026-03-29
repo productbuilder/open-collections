@@ -67,10 +67,19 @@ export function buildManifestFromState(manager) {
 	const collectionMeta = manager.currentCollectionMeta();
 	const selectedSourceId = manager.state.activeSourceFilter || "all";
 	const selectedCollectionId = manager.state.selectedCollectionId || "all";
+	const assignedConnectionId =
+		selectedCollectionId === "all"
+			? ""
+			: manager.resolveCollectionConnectionId(selectedCollectionId);
 	const excludedByPublishRules = { count: 0 };
 	const includedItems = manager.state.assets
 		.filter((item) =>
-			selectedSourceId === "all"
+			assignedConnectionId ? item.sourceId === assignedConnectionId : true,
+		)
+		.filter((item) =>
+			assignedConnectionId
+				? true
+				: selectedSourceId === "all"
 				? true
 				: item.sourceId === selectedSourceId,
 		)

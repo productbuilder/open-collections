@@ -1347,6 +1347,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				grouped.set(collectionId, {
 					id: collectionId,
 					title: collectionLabel || collectionId,
+					connectionId: source.id,
 					rootPath: this.normalizeCollectionRootPath(
 						item.collectionRootPath || `${collectionId}/`,
 						collectionId,
@@ -1367,6 +1368,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 					source.displayLabel ||
 					source.providerLabel ||
 					"Default collection",
+				connectionId: source.id,
 				rootPath: this.normalizeCollectionRootPath(
 					`${fallbackId}/`,
 					fallbackId,
@@ -1388,6 +1390,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				license: entry.license || "",
 				publisher: entry.publisher || "",
 				language: entry.language || "",
+				connectionId:
+					typeof entry.connectionId === "string"
+						? entry.connectionId.trim() || null
+						: null,
 				rootPath: this.normalizeCollectionRootPath(
 					entry.rootPath || `${entry.id}/`,
 					entry.id,
@@ -2061,16 +2067,22 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			this.state.localDraftCollections.find(
 				(entry) => entry.id === normalizedId,
 			) || null;
+		const normalizedSourceId = String(sourceId || "").trim();
 
-		if (sourceId) {
-			const source = this.getSourceById(sourceId);
+		if (normalizedSourceId) {
+			const source = this.getSourceById(normalizedSourceId);
 			const sourceCollection = source?.collections?.find(
 				(entry) => entry.id === normalizedId,
 			);
 			if (sourceCollection) {
-				return localDraftCollection
-					? { ...sourceCollection, ...localDraftCollection }
-					: sourceCollection;
+				return {
+					...sourceCollection,
+					...(localDraftCollection || {}),
+					connectionId:
+						typeof localDraftCollection?.connectionId === "string"
+							? localDraftCollection.connectionId
+							: normalizedSourceId,
+				};
 			}
 		}
 
@@ -2079,13 +2091,45 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				(entry) => entry.id === normalizedId,
 			);
 			if (sourceCollection) {
-				return localDraftCollection
-					? { ...sourceCollection, ...localDraftCollection }
-					: sourceCollection;
+				return {
+					...sourceCollection,
+					...(localDraftCollection || {}),
+					connectionId:
+						typeof localDraftCollection?.connectionId === "string"
+							? localDraftCollection.connectionId
+							: source.id,
+				};
 			}
 		}
 
-		return localDraftCollection;
+		if (!localDraftCollection) {
+			return null;
+		}
+		return {
+			...localDraftCollection,
+			connectionId:
+				typeof localDraftCollection.connectionId === "string"
+					? localDraftCollection.connectionId
+					: null,
+		};
+	}
+
+	resolveCollectionConnectionId(collectionId) {
+		const normalizedId = String(collectionId || "").trim();
+		if (!normalizedId || normalizedId === "all") {
+			return "";
+		}
+		const meta = this.findCollectionMetaById(normalizedId);
+		if (!meta) {
+			return "";
+		}
+		const explicit = String(meta.connectionId || "").trim();
+		if (explicit) {
+			return explicit;
+		}
+		// Compatibility bridge for older collection metadata without explicit assignment.
+		const inferred = String(meta.sourceId || "").trim();
+		return inferred;
 	}
 
 	resolveItemMetadata(item) {
@@ -2143,6 +2187,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		if (!this.state.sources.length) {
 			return null;
 		}
+		const collectionId = this.resolvePublishCollectionId();
+		const assignedConnectionId =
+			this.resolveCollectionConnectionId(collectionId);
+		if (assignedConnectionId) {
+			return this.getSourceById(assignedConnectionId);
+		}
 		if (this.state.activeSourceFilter === "all") {
 			return null;
 		}
@@ -2194,11 +2244,16 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		}
 
 		if (!source) {
+			const assignedConnectionId = this.resolveCollectionConnectionId(
+				collectionId,
+			);
 			return {
 				label: "Publish collection",
 				visible: true,
 				disabled: true,
-				reason: "Select a single connection in the current source filter to publish this collection.",
+				reason: assignedConnectionId
+					? "The assigned connection for this collection is not currently available."
+					: "Assign this collection to a connection before publishing.",
 			};
 		}
 
@@ -2247,7 +2302,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const source = this.resolvePublishSource();
 		if (!source) {
 			this.setStatus(
-				"Select a single source in the viewport filter before publishing.",
+				"Publish blocked: assign this collection to an available connection before publishing.",
 				"warn",
 			);
 			return;

@@ -14,7 +14,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		this.attachShadow({ mode: "open" });
 		this.model = {
 			providerCatalog: [],
-			selectedProviderId: "example",
+			selectedProviderId: "local",
 			addHostLevel: "root",
 			remoteSubtype: "",
 			flowMode: "add",
@@ -68,17 +68,6 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 					this.resetFlow();
 				}
 				this.dispatch("back-to-connections");
-			});
-
-		this.shadowRoot
-			.getElementById("addExampleConnectionBtn")
-			?.addEventListener("click", () => {
-				this.model.flowMode = "add";
-				this.model.repairProviderId = "";
-				this.model.addHostLevel = "root";
-				this.model.remoteSubtype = "";
-				this.model.selectedProviderId = "example";
-				this.dispatch("add-example-connection");
 			});
 
 		this.shadowRoot
@@ -209,7 +198,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 	}
 
 	setSelectedProvider(providerId) {
-		this.model.selectedProviderId = providerId || "example";
+		this.model.selectedProviderId = providerId || "local";
 		if (this.isReady()) {
 			this.renderProviderVisibility();
 		}
@@ -643,10 +632,6 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
               <p class="config-section-title">Choose a connection type</p>
             </div>
             <div class="provider-list">
-              <button class="provider-card" id="addExampleConnectionBtn" type="button">
-                <div class="provider-card-label-row"><strong>Example</strong></div>
-                <span class="panel-subtext">Connect instantly to the built-in example collections.</span>
-              </button>
               <div class="provider-card-wrap">
                 <button class="provider-card provider-card-has-info" id="addLocalFolderConnectionBtn" type="button">
                   <div class="provider-card-label-row"><strong>Local folder</strong></div>

@@ -35,6 +35,16 @@ const styles = `
     border-radius: 8px;
   }
 
+  .starter-helper {
+    margin: 0;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #334155;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
   .source-card {
     border: 1px solid #dbe3ec;
     border-radius: 12px;
@@ -318,13 +328,27 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 		);
 	}
 
+	hasUserOwnedStorageConnection(source) {
+		return source.providerId !== "example";
+	}
+
 	render() {
+		const hasStarterExample = this.model.sources.some(
+			(source) => source.providerId === "example",
+		);
+		const hasUserOwnedConnections = this.model.sources.some((source) =>
+			this.hasUserOwnedStorageConnection(source),
+		);
 		const sourceCards = this.model.sources
 			.map((source) => this.renderSourceCard(source))
 			.join("");
 		const emptyState = this.model.sources.length
 			? '<p class="panel-empty">Select a connection card to inspect details.</p>'
 			: '<p class="panel-empty empty">No connections added yet.</p>';
+		const starterHelper =
+			hasStarterExample && !hasUserOwnedConnections
+				? '<p class="starter-helper">Add a local folder or remote connection to use your own storage.</p>'
+				: "";
 
 		this.shadowRoot.innerHTML = `
       <style>${styles}</style>
@@ -333,6 +357,7 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
         <div class="source-list">
           ${sourceCards}
         </div>
+        ${starterHelper}
       </div>
     `;
 

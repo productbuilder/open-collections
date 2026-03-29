@@ -43,7 +43,12 @@ class OpenCollectionRowListElement extends HTMLElement {
 
 		const rows = collections
 			.map(
-				(collection) => `
+				(collection) => {
+					const isUnassigned = collection.assignmentState === "unassigned";
+					const assignmentActionLabel = isUnassigned
+						? "Assign connection"
+						: "Reassign connection";
+					return `
       <tr class="${this.model.selectedCollectionId === collection.id ? "is-focused" : ""} ${selectedIds.has(collection.id) ? "is-selected" : ""}" data-id="${collection.id}">
         <td>
           <input type="checkbox" aria-label="Select ${collection.title || collection.id}" data-select-id="${collection.id}" ${selectedIds.has(collection.id) ? "checked" : ""} />
@@ -53,10 +58,11 @@ class OpenCollectionRowListElement extends HTMLElement {
         <td><span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span></td>
         <td>
           <button type="button" class="btn" data-open-id="${collection.id}">Open</button>
-          <button type="button" class="btn ${collection.assignmentState === "unassigned" ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${collection.assignmentState === "unassigned" ? "Assign" : "Change connection"}</button>
+          <button type="button" class="btn ${isUnassigned ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${assignmentActionLabel}</button>
         </td>
       </tr>
-    `,
+    `;
+				},
 			)
 			.join("");
 

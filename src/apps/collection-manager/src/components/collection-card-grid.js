@@ -41,7 +41,12 @@ class OpenCollectionCardGridElement extends HTMLElement {
 				? '<div class="empty">No collections yet. Add a collection to begin.</div>'
 				: collections
 						.map(
-							(collection) => `
+							(collection) => {
+								const isUnassigned = collection.assignmentState === "unassigned";
+								const assignmentActionLabel = isUnassigned
+									? "Assign connection"
+									: "Reassign connection";
+								return `
         <article class="asset-card ${this.model.selectedCollectionId === collection.id ? "is-focused" : ""} ${selectedIds.has(collection.id) ? "is-selected" : ""}" data-id="${collection.id}">
           <label class="selection-toggle" data-select-wrap="true" aria-label="Select ${collection.title || collection.id}">
             <input type="checkbox" data-select-id="${collection.id}" ${selectedIds.has(collection.id) ? "checked" : ""} />
@@ -53,9 +58,10 @@ class OpenCollectionCardGridElement extends HTMLElement {
             <span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span>
           </div>
           <div class="card-actions"><button type="button" class="btn" data-open-id="${collection.id}">Open</button></div>
-          <div class="card-actions"><button type="button" class="btn ${collection.assignmentState === "unassigned" ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${collection.assignmentState === "unassigned" ? "Assign connection" : "Change connection"}</button></div>
+          <div class="card-actions"><button type="button" class="btn ${isUnassigned ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${assignmentActionLabel}</button></div>
         </article>
-      `,
+	      `;
+							},
 						)
 						.join("");
 

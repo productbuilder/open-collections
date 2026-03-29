@@ -2162,7 +2162,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			!selectableConnections.length
 		) {
 			this.setStatus(
-				"No alternative available connection found for reassignment.",
+				"No other available connection found for reassignment.",
 				"warn",
 			);
 			return null;
@@ -2185,7 +2185,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			)
 			.join("\n");
 		const promptValue = window.prompt(
-			`${actionLabel} "${collection.title || collection.id}" connection:\n${choiceList}\n\nEnter the number of the connection to use.`,
+			`${actionLabel} connection for "${collection.title || collection.id}":\n${choiceList}\n\nEnter the number of the connection to use.`,
 			"1",
 		);
 		if (promptValue == null) {
@@ -2197,7 +2197,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			selectedIndex < 0 ||
 			selectedIndex >= selectableConnections.length
 		) {
-			this.setStatus("Assignment canceled: invalid connection choice.", "warn");
+			this.setStatus(
+				"Assignment canceled: choose a listed connection number.",
+				"warn",
+			);
 			return null;
 		}
 		return selectableConnections[selectedIndex];
@@ -2219,7 +2222,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const availableConnections = this.getAssignableConnections();
 		if (!availableConnections.length) {
 			this.setStatus(
-				"No available connections to assign. Manage connections in Account first.",
+				"No available connections. Add or reconnect one in Account first.",
 				"warn",
 			);
 			return;
@@ -2228,7 +2231,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			collection,
 			availableConnections,
 			{
-				actionLabel: isAssigned ? "Change" : "Assign",
+				actionLabel: isAssigned ? "Reassign" : "Assign",
 				currentConnectionId,
 				requireAlternative: isAssigned,
 			},
@@ -2427,7 +2430,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				visible: true,
 				disabled: true,
 				reason: assignedConnectionId
-					? "The assigned connection for this collection is not currently available."
+					? "This collection’s assigned connection is not currently available."
 					: "Assign this collection to a connection before publishing.",
 			};
 		}

@@ -1,6 +1,9 @@
 export function createConnectionsContext(initialState = {}) {
 	let state = {
+		// Legacy compatibility field. Prefer selectedConnectionFilterId for
+		// view-filter semantics (not a single global active connection gate).
 		activeConnectionId: "all",
+		selectedConnectionFilterId: "all",
 		connections: [],
 		...initialState,
 	};
@@ -29,9 +32,22 @@ export function createConnectionsContext(initialState = {}) {
 			emit();
 		},
 		setActiveConnection(connectionId) {
+			const nextConnectionId = String(connectionId || "all");
 			state = {
 				...state,
-				activeConnectionId: String(connectionId || "all"),
+				// Keep both fields in sync while activeConnectionId is still used by
+				// older call sites.
+				activeConnectionId: nextConnectionId,
+				selectedConnectionFilterId: nextConnectionId,
+			};
+			emit();
+		},
+		setConnectionFilter(connectionId) {
+			const nextConnectionId = String(connectionId || "all");
+			state = {
+				...state,
+				selectedConnectionFilterId: nextConnectionId,
+				activeConnectionId: nextConnectionId,
 			};
 			emit();
 		},

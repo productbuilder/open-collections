@@ -6,6 +6,7 @@
 		selectedItemIds: [],
 		viewerItemId: null,
 		selectedProviderId: "example",
+		// View-filter selection only; does not imply one global active connection.
 		activeSourceFilter: "all",
 		selectedCollectionId: "all",
 		selectedCollectionIds: [],

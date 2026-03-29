@@ -82,7 +82,7 @@ export function computeWorkingStatus(state) {
 		return {
 			id: "publishing",
 			label: "Publishing",
-			detail: "Publishing draft changes to the active connection.",
+			detail: "Publishing draft changes to the selected connection filter target.",
 			tone: "neutral",
 		};
 	}
@@ -103,7 +103,7 @@ export function computeWorkingStatus(state) {
 		return {
 			id: "credentials-missing",
 			label: sourceStatus.label,
-			detail: "The active connection needs updated credentials before you can refresh or publish.",
+			detail: "The selected connection needs updated credentials before you can refresh or publish.",
 			tone: sourceStatus.tone,
 		};
 	}
@@ -126,7 +126,7 @@ export function computeWorkingStatus(state) {
 			label: sourceStatus.label,
 			detail: hasAccessibleContent
 				? "Previously loaded collections remain available locally. Reconnect to refresh from the connection or publish."
-				: "The active connection is remembered but disconnected. Reconnect to load content or publish.",
+				: "The selected connection is remembered but disconnected. Reconnect to load content or publish.",
 			tone: sourceStatus.tone,
 		};
 	}
@@ -174,7 +174,7 @@ export function computeWorkingStatus(state) {
 		return {
 			id: "published",
 			label: "Published",
-			detail: "Latest changes are saved to the active connection.",
+			detail: "Latest changes are saved to the selected connection.",
 			tone: "ok",
 		};
 	}

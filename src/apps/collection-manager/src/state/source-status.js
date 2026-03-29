@@ -22,6 +22,14 @@ export function getSourceStatus(source) {
 		};
 	}
 
+	if (source.enabled === false) {
+		return {
+			label: "Disabled",
+			detail: "This connection is turned off. Enable it to use it again.",
+			tone: "warn",
+		};
+	}
+
 	if (isExampleSource(source)) {
 		return {
 			label: "Example",

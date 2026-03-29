@@ -235,6 +235,10 @@ export function uniqueConnectionsForDisplay(sources = [], defaultManifestPath) {
 }
 
 export function toPersistedConnection(source, defaultManifestPath) {
+	const isBuiltInExample =
+		source.providerId === "example" && source.isBuiltIn !== false;
+	const isEnabled =
+		typeof source.enabled === "boolean" ? source.enabled : true;
 	return {
 		id: source.id,
 		providerId: source.providerId,
@@ -253,6 +257,12 @@ export function toPersistedConnection(source, defaultManifestPath) {
 		status: source.status || "",
 		needsReconnect: Boolean(source.needsReconnect),
 		needsCredentials: Boolean(source.needsCredentials),
+		enabled: isEnabled,
+		isBuiltIn: Boolean(source.isBuiltIn),
+		isRemovable:
+			typeof source.isRemovable === "boolean"
+				? source.isRemovable
+				: !isBuiltInExample,
 	};
 }
 
@@ -407,6 +417,9 @@ export function createConnectionsRuntime(options = {}) {
 				provider,
 				needsReconnect: false,
 				needsCredentials: false,
+				enabled: true,
+				isBuiltIn: providerId === "example",
+				isRemovable: providerId !== "example",
 			};
 
 			const duplicate = !pendingRepairSource
@@ -564,6 +577,12 @@ export function createConnectionsRuntime(options = {}) {
 			if (!source) {
 				return { ok: false, message: "" };
 			}
+			if (source.isBuiltIn || source.isRemovable === false) {
+				return {
+					ok: false,
+					message: "Built-in connections cannot be removed.",
+				};
+			}
 			await credentialStore?.deleteSourceSecret(source).catch(() => {});
 			const nextSources = sources.filter(
 				(entry) => entry.id !== sourceId,
@@ -576,6 +595,38 @@ export function createConnectionsRuntime(options = {}) {
 					activeSourceId === sourceId
 						? nextSources[0]?.id || "all"
 						: activeSourceId,
+			};
+		},
+		setSourceEnabled({
+			sourceId,
+			enabled,
+			sources = [],
+			activeSourceId = "all",
+		}) {
+			const source = sources.find((entry) => entry.id === sourceId);
+			if (!source) {
+				return { ok: false, message: "Connection not found." };
+			}
+			const nextEnabled = Boolean(enabled);
+			const updatedSource = {
+				...source,
+				enabled: nextEnabled,
+				status: nextEnabled
+					? source.status || "Connected"
+					: "Disabled by user.",
+			};
+			const nextSources = sources.map((entry) =>
+				entry.id === sourceId ? updatedSource : entry,
+			);
+			const nextActiveSourceId =
+				activeSourceId === sourceId && !nextEnabled
+					? nextSources.find((entry) => entry.id !== sourceId)?.id || "all"
+					: activeSourceId;
+			return {
+				ok: true,
+				source: updatedSource,
+				sources: nextSources,
+				activeSourceId: nextActiveSourceId,
 			};
 		},
 		persistSources(sources = []) {
@@ -635,6 +686,18 @@ export function createConnectionsRuntime(options = {}) {
 					needsReconnect: true,
 					needsCredentials: Boolean(entry.needsCredentials),
 					provider: null,
+						enabled:
+							typeof entry.enabled === "boolean"
+								? entry.enabled
+								: true,
+					isBuiltIn:
+						typeof entry.isBuiltIn === "boolean"
+							? entry.isBuiltIn
+							: entry.providerId === "example",
+					isRemovable:
+						typeof entry.isRemovable === "boolean"
+							? entry.isRemovable
+							: entry.providerId !== "example",
 				}));
 		},
 	};

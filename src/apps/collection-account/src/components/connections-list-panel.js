@@ -165,6 +165,18 @@ const styles = `
     gap: 0.35rem;
   }
 
+  .example-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: #334155;
+  }
+
+  .example-toggle input {
+    margin: 0;
+  }
+
   .icon {
     width: 0.95rem;
     height: 0.95rem;
@@ -280,8 +292,11 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			"Connection";
 		const collectionCount = source.collections?.length || 0;
 		const status = this.hostState(source);
+		const isEnabled = source.enabled !== false;
 		const primaryAction =
-			source.providerId === "local" && source.needsReconnect
+			!isEnabled
+				? ""
+				: source.providerId === "local" && source.needsReconnect
 				? `<button class="btn btn-primary" type="button" data-action="repair-folder" data-source-id="${source.id}">Re-select folder</button>`
 				: (source.providerId === "github" ||
 							source.providerId === "s3") &&
@@ -293,6 +308,20 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 							? `<button class="btn" type="button" data-action="refresh" data-source-id="${source.id}">Refresh</button>`
 							: "";
 
+		const showRemove = this.canRemoveSource(source);
+		const showExampleToggle = this.shouldShowExampleToggle(source);
+		const removeButton = showRemove
+			? `<button class="btn source-card-remove" type="button" data-action="remove" data-source-id="${source.id}">${renderTrashIcon()}<span>Remove</span></button>`
+			: "";
+		const exampleToggle = showExampleToggle
+			? `<label class="example-toggle"><input type="checkbox" data-action="toggle-example-enabled" data-source-id="${source.id}" ${isEnabled ? "checked" : ""} /><span>Show example</span></label>`
+			: "";
+
+		const availabilityLabel = isEnabled
+			? isActive
+				? "Active"
+				: "Available"
+			: "Disabled";
 		return `
       <article
         class="source-card${isActive ? " is-active-source" : ""}"
@@ -309,12 +338,13 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
             <span class="pill${status.tone === "ok" ? " is-ok" : status.tone === "warn" ? " is-warn" : ""}">${escapeHtml(status.label)}</span>
             <span class="pill">${escapeHtml(`${collectionCount} coll.`)}</span>
           </div>
-          <span class="pill source-card-active-pill${isActive ? " is-ok" : ""}">${escapeHtml(isActive ? "Active" : "Available")}</span>
+          <span class="pill source-card-active-pill${isActive && isEnabled ? " is-ok" : ""}">${escapeHtml(availabilityLabel)}</span>
         </div>
         <p class="source-card-location">${escapeHtml(this.locationLabel(source))}</p>
         <div class="source-card-actions">
+          ${exampleToggle}
           ${primaryAction}
-          <button class="btn source-card-remove" type="button" data-action="remove" data-source-id="${source.id}">${renderTrashIcon()}<span>Remove</span></button>
+          ${removeButton}
         </div>
       </article>
     `;
@@ -330,6 +360,17 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 
 	hasUserOwnedStorageConnection(source) {
 		return source.providerId !== "example";
+	}
+
+	shouldShowExampleToggle(source) {
+		return source.providerId === "example" && source.isBuiltIn !== false;
+	}
+
+	canRemoveSource(source) {
+		if (source.isBuiltIn || source.isRemovable === false) {
+			return false;
+		}
+		return true;
 	}
 
 	render() {
@@ -374,7 +415,9 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 				}
 			};
 			card.addEventListener("click", (event) => {
-				if (event.target.closest("button")) {
+				if (
+					event.target.closest('[data-action]:not([data-action="select"])')
+				) {
 					return;
 				}
 				activate();
@@ -387,10 +430,10 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 			});
 		});
 
-		root.querySelectorAll("button[data-action]").forEach((button) => {
-			button.addEventListener("click", () => {
-				const action = button.getAttribute("data-action");
-				const sourceId = button.getAttribute("data-source-id") || "";
+		root.querySelectorAll("[data-action]").forEach((control) => {
+			control.addEventListener("click", () => {
+				const action = control.getAttribute("data-action");
+				const sourceId = control.getAttribute("data-source-id") || "";
 				if (!sourceId) {
 					return;
 				}
@@ -417,6 +460,13 @@ class OpenCollectionsConnectionsListElement extends HTMLElement {
 				}
 				if (action === "remove") {
 					this.dispatch("remove-connection", { sourceId });
+				}
+				if (action === "toggle-example-enabled") {
+					const enabled = Boolean(control.checked);
+					this.dispatch("toggle-example-connection", {
+						sourceId,
+						enabled,
+					});
 				}
 			});
 		});

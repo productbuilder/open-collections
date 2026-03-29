@@ -2138,14 +2138,42 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		);
 	}
 
-	chooseConnectionForAssignment(collection, availableConnections = []) {
-		if (!availableConnections.length) {
+	chooseConnectionForAssignment(
+		collection,
+		availableConnections = [],
+		options = {},
+	) {
+		const {
+			actionLabel = "Assign",
+			currentConnectionId = "",
+			requireAlternative = false,
+		} = options;
+		const normalizedCurrentConnectionId = String(
+			currentConnectionId || "",
+		).trim();
+		const selectableConnections = requireAlternative
+			? availableConnections.filter(
+					(source) => source.id !== normalizedCurrentConnectionId,
+				)
+			: availableConnections;
+		if (
+			requireAlternative &&
+			normalizedCurrentConnectionId &&
+			!selectableConnections.length
+		) {
+			this.setStatus(
+				"No alternative available connection found for reassignment.",
+				"warn",
+			);
 			return null;
 		}
-		if (availableConnections.length === 1) {
-			return availableConnections[0];
+		if (!selectableConnections.length) {
+			return null;
 		}
-		const choiceList = availableConnections
+		if (selectableConnections.length === 1) {
+			return selectableConnections[0];
+		}
+		const choiceList = selectableConnections
 			.map(
 				(source, index) =>
 					`${index + 1}. ${
@@ -2157,7 +2185,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			)
 			.join("\n");
 		const promptValue = window.prompt(
-			`Assign "${collection.title || collection.id}" to a connection:\n${choiceList}\n\nEnter the number of the connection to use.`,
+			`${actionLabel} "${collection.title || collection.id}" connection:\n${choiceList}\n\nEnter the number of the connection to use.`,
 			"1",
 		);
 		if (promptValue == null) {
@@ -2167,15 +2195,15 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		if (
 			Number.isNaN(selectedIndex) ||
 			selectedIndex < 0 ||
-			selectedIndex >= availableConnections.length
+			selectedIndex >= selectableConnections.length
 		) {
 			this.setStatus("Assignment canceled: invalid connection choice.", "warn");
 			return null;
 		}
-		return availableConnections[selectedIndex];
+		return selectableConnections[selectedIndex];
 	}
 
-	async assignUnassignedDraftCollection(collectionId) {
+	async assignCollectionConnection(collectionId) {
 		const normalizedCollectionId = String(collectionId || "").trim();
 		if (!normalizedCollectionId || normalizedCollectionId === "all") {
 			return;
@@ -2185,9 +2213,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			this.setStatus("Could not find the selected collection draft.", "warn");
 			return;
 		}
-		if (this.resolveCollectionConnectionId(normalizedCollectionId)) {
-			return;
-		}
+		const currentConnectionId =
+			this.resolveCollectionConnectionId(normalizedCollectionId);
+		const isAssigned = Boolean(currentConnectionId);
 		const availableConnections = this.getAssignableConnections();
 		if (!availableConnections.length) {
 			this.setStatus(
@@ -2199,11 +2227,23 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const selectedSource = this.chooseConnectionForAssignment(
 			collection,
 			availableConnections,
+			{
+				actionLabel: isAssigned ? "Change" : "Assign",
+				currentConnectionId,
+				requireAlternative: isAssigned,
+			},
 		);
 		if (!selectedSource) {
 			return;
 		}
 		const connectionId = selectedSource.id;
+		if (isAssigned && connectionId === currentConnectionId) {
+			this.setStatus(
+				"No changes made: collection is already assigned to that connection.",
+				"info",
+			);
+			return;
+		}
 		this.state.localDraftCollections = (this.state.localDraftCollections || []).map(
 			(entry) =>
 				entry.id === normalizedCollectionId
@@ -2226,12 +2266,20 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		selectedSource.collections = (selectedSource.collections || []).some(
 			(entry) => entry.id === normalizedCollectionId,
 		)
-			? (selectedSource.collections || []).map((entry) =>
-					entry.id === normalizedCollectionId
-						? { ...entry, ...sourceCollectionEntry }
-						: entry,
-				)
+				? (selectedSource.collections || []).map((entry) =>
+						entry.id === normalizedCollectionId
+							? { ...entry, ...sourceCollectionEntry }
+							: entry,
+					)
 			: [...(selectedSource.collections || []), sourceCollectionEntry];
+		if (isAssigned && currentConnectionId !== connectionId) {
+			const previousSource = this.getSourceById(currentConnectionId);
+			if (previousSource) {
+				previousSource.collections = (previousSource.collections || []).filter(
+					(entry) => entry.id !== normalizedCollectionId,
+				);
+			}
+		}
 		this.renderSourceFilter();
 		this.renderCollectionFilter();
 		this.renderAssets();
@@ -2242,7 +2290,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			await this.saveLocalDraft();
 		}
 		this.setStatus(
-			`Assigned draft "${collection.title || normalizedCollectionId}" to ${
+			`${isAssigned ? "Reassigned" : "Assigned"} collection "${
+				collection.title || normalizedCollectionId
+			}" to ${
 				selectedSource.displayLabel ||
 				selectedSource.label ||
 				selectedSource.providerLabel ||
@@ -2251,6 +2301,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			"ok",
 		);
 		this.markDirty();
+	}
+
+	async assignUnassignedDraftCollection(collectionId) {
+		await this.assignCollectionConnection(collectionId);
 	}
 
 	resolveItemMetadata(item) {

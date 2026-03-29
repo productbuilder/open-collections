@@ -14,7 +14,7 @@ import {
 	renderBackButton,
 } from "../../../shared/components/back-button.js";
 import {
-	renderBackupIcon,
+	renderDriveFolderUploadIcon,
 	renderProfileIcon,
 } from "../../../shared/components/icons.js";
 import "./components/connections-list-panel.js";
@@ -36,7 +36,7 @@ function renderShell(shadowRoot) {
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 
 				<button type="button" class="account-entry-button" data-account-entry="connections">
-					<span class="account-entry-leading-icon" aria-hidden="true">${renderBackupIcon()}</span>
+					<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
 					<span class="account-entry-content">
 						<span class="account-entry-label">Connections</span>
 						<span class="account-entry-subtitle">Manage source and service connections for your collections.</span>

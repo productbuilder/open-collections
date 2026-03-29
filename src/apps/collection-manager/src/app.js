@@ -1059,8 +1059,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const hasAccessibleContent = this.sourceHasAccessibleContent(source);
 		if (source.providerId === "local" && source.needsReconnect) {
 			return hasAccessibleContent
-				? "Folder access must be re-selected to refresh or publish. Previously loaded content remains available locally."
-				: "Folder access must be re-selected. Publish remains blocked until reconnect succeeds.";
+				? "Remembered local folder. Re-select it in this browser session to refresh or publish. Previously loaded content remains available locally."
+				: "Remembered local folder. Re-select it in this browser session to reconnect before publish.";
 		}
 		if (source.needsCredentials) {
 			return "Missing credentials. Update credentials to reconnect and unblock publish.";
@@ -2134,7 +2134,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
 	getAssignableConnections() {
 		return (this.state.sources || []).filter(
-			(source) => source && source.enabled !== false,
+			(source) =>
+				source &&
+				source.enabled !== false &&
+				!source.needsReconnect &&
+				!source.needsCredentials &&
+				Boolean(source.provider),
 		);
 	}
 
@@ -2283,6 +2288,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				);
 			}
 		}
+		if (
+			this.state.activeSourceFilter !== "all" &&
+			this.state.activeSourceFilter !== connectionId
+		) {
+			this.state.activeSourceFilter = "all";
+		}
+		this.state.selectedCollectionId = normalizedCollectionId;
 		this.renderSourceFilter();
 		this.renderCollectionFilter();
 		this.renderAssets();

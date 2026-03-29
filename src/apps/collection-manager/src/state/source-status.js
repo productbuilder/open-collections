@@ -47,11 +47,16 @@ export function getSourceStatus(source) {
 	}
 
 	if (source.needsReconnect) {
+		const isLocalBrowserReconnect =
+			source.providerId === "local" &&
+			!source.config?.localDirectoryHandle;
 		return {
 			label: "Disconnected",
-			detail: sourceHasAccessibleContent(source)
-				? "Previously loaded content remains available locally. Reconnect to refresh or publish."
-				: "Reconnect this connection to load content or publish changes.",
+			detail: isLocalBrowserReconnect
+				? "Remembered. Reconnect needed: re-select this folder in the current browser session."
+				: sourceHasAccessibleContent(source)
+					? "Previously loaded content remains available locally. Reconnect to refresh or publish."
+					: "Reconnect this connection to load content or publish changes.",
 			tone: "warn",
 		};
 	}

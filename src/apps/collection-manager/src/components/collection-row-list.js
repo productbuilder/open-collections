@@ -53,11 +53,7 @@ class OpenCollectionRowListElement extends HTMLElement {
         <td><span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span></td>
         <td>
           <button type="button" class="btn" data-open-id="${collection.id}">Open</button>
-          ${
-					collection.assignmentState === "unassigned"
-						? `<button type="button" class="btn btn-primary" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>Assign</button>`
-						: ""
-				}
+          <button type="button" class="btn ${collection.assignmentState === "unassigned" ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${collection.assignmentState === "unassigned" ? "Assign" : "Change connection"}</button>
         </td>
       </tr>
     `,

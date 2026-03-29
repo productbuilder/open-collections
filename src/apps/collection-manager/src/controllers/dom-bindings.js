@@ -273,9 +273,7 @@ export function bindDomEvents(app) {
 			app.refreshWorkingStatus();
 		});
 		target.addEventListener("collection-assign-connection", async (event) => {
-			await app.assignUnassignedDraftCollection(
-				event.detail?.collectionId || "",
-			);
+			await app.assignCollectionConnection(event.detail?.collectionId || "");
 		});
 		target.addEventListener("item-select", (event) => {
 			app.selectItem(event.detail?.workspaceId || "");

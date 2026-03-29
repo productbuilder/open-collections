@@ -53,11 +53,7 @@ class OpenCollectionCardGridElement extends HTMLElement {
             <span class="badge badge-assignment ${collection.assignmentState === "unassigned" ? "is-unassigned" : "is-assigned"}">${collection.assignmentLabel || "Unassigned draft"}</span>
           </div>
           <div class="card-actions"><button type="button" class="btn" data-open-id="${collection.id}">Open</button></div>
-          ${
-					collection.assignmentState === "unassigned"
-						? `<div class="card-actions"><button type="button" class="btn btn-primary" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>Assign connection</button></div>`
-						: ""
-				}
+          <div class="card-actions"><button type="button" class="btn ${collection.assignmentState === "unassigned" ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${this.model.availableConnections.length === 0 ? "disabled" : ""}>${collection.assignmentState === "unassigned" ? "Assign connection" : "Change connection"}</button></div>
         </article>
       `,
 						)

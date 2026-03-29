@@ -122,6 +122,10 @@ export const accountShellStyles = `
     color: var(--oc-text-muted);
   }
 
+  .connections-explainer {
+    margin-bottom: var(--oc-space-2);
+  }
+
   .status-note[data-tone='ok'] {
     color: #166534;
   }

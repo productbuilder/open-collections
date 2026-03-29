@@ -1,3 +1,60 @@
+function mergeCollectionEntry(entry, sourceId = "") {
+	if (!entry || typeof entry !== "object") {
+		return null;
+	}
+	const id = typeof entry.id === "string" ? entry.id.trim() : "";
+	if (!id) {
+		return null;
+	}
+	return {
+		...entry,
+		id,
+		sourceId:
+			typeof entry.sourceId === "string" && entry.sourceId.trim()
+				? entry.sourceId
+				: sourceId || "",
+	};
+}
+
+function collectAllAvailableCollections(app) {
+	const byId = new Map();
+	for (const source of app.state.sources) {
+		for (const collection of source.collections || []) {
+			const normalized = mergeCollectionEntry(collection, source.id);
+			if (!normalized) {
+				continue;
+			}
+			const existing = byId.get(normalized.id);
+			if (!existing) {
+				byId.set(normalized.id, normalized);
+				continue;
+			}
+			byId.set(normalized.id, {
+				...existing,
+				...normalized,
+				sourceId: existing.sourceId || normalized.sourceId,
+			});
+		}
+	}
+	for (const localDraft of app.state.localDraftCollections || []) {
+		const normalized = mergeCollectionEntry(localDraft);
+		if (!normalized) {
+			continue;
+		}
+		const existing = byId.get(normalized.id);
+		if (existing) {
+			byId.set(normalized.id, {
+				...existing,
+				...normalized,
+				sourceId: existing.sourceId || "",
+			});
+			continue;
+		}
+		byId.set(normalized.id, normalized);
+	}
+	return [...byId.values()];
+}
+
 export function getVisibleAssets(app) {
 	let visible = app.state.assets;
 	if (app.state.activeSourceFilter !== "all") {
@@ -24,9 +81,7 @@ export function getVisibleCollections(app) {
 		const source = app.getSourceById(app.state.activeSourceFilter);
 		return Array.isArray(source?.collections) ? source.collections : [];
 	}
-	return Array.isArray(app.state.localDraftCollections)
-		? app.state.localDraftCollections
-		: [];
+	return collectAllAvailableCollections(app);
 }
 
 export function getSelectedCollectionIds(app) {
@@ -185,13 +240,7 @@ export function renderAssets(app) {
 	app.applyInspectorModeForViewMode(activeViewMode);
 
 	if (app.state.currentLevel === "collections") {
-		let collections = [];
-		if (app.state.activeSourceFilter !== "all") {
-			const src = app.getSourceById(app.state.activeSourceFilter);
-			collections = src?.collections || [];
-		} else {
-			collections = app.state.localDraftCollections;
-		}
+		const collections = app.getVisibleCollections();
 
 		const browserState = {
 			currentLevel: "collections",

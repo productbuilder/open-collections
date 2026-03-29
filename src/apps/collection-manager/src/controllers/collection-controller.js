@@ -29,6 +29,15 @@ export function activeCollectionRootPath(app) {
 			collectionId,
 		);
 	}
+	const visibleCollection = app
+		.getVisibleCollections()
+		.find((entry) => entry.id === collectionId);
+	if (visibleCollection?.rootPath) {
+		return app.normalizeCollectionRootPath(
+			visibleCollection.rootPath,
+			collectionId,
+		);
+	}
 	return app.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
 }
 
@@ -176,8 +185,8 @@ export function renderCollectionFilter(app) {
 				collections = [...collections, localEntry];
 			}
 		}
-	} else if (app.state.localDraftCollections.length > 0) {
-		collections = app.state.localDraftCollections;
+	} else {
+		collections = app.getVisibleCollections();
 	}
 
 	for (const collection of collections) {
@@ -208,6 +217,12 @@ export function findSelectedCollectionMeta(app) {
 		const source = app.getSourceById(app.state.activeSourceFilter);
 		const found = source?.collections?.find((entry) => entry.id === id);
 		if (found) return found;
+	}
+	const visible = app
+		.getVisibleCollections()
+		.find((entry) => entry.id === id);
+	if (visible) {
+		return visible;
 	}
 	return (
 		app.state.localDraftCollections.find((entry) => entry.id === id) || null

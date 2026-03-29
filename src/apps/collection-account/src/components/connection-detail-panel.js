@@ -12,19 +12,28 @@ const styles = `
 
   .detail {
     display: grid;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .meta {
     display: grid;
-    gap: 0.35rem;
-    padding: 0.85rem;
-    border: 1px solid #dbe3ec;
-    border-radius: 12px;
-    background: #ffffff;
+    gap: 0.75rem;
   }
 
-  .title-row {
+  .field-group {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .field-label {
+    margin: 0;
+    font-size: 0.76rem;
+    color: #94a3b8;
+    letter-spacing: 0.01em;
+  }
+
+  .title-row,
+  .location-row {
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -39,9 +48,20 @@ const styles = `
 
   .location {
     margin: 0;
-    font-size: 0.85rem;
-    color: #64748b;
+    font-size: 0.92rem;
+    color: #334155;
     overflow-wrap: anywhere;
+  }
+
+  .title-input {
+    width: 100%;
+    max-width: 36rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.94rem;
+    padding: 0.55rem 0.65rem;
   }
 
   .pill {
@@ -203,11 +223,20 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
       <style>${styles}</style>
       <div class="detail">
         <div class="meta">
-          <div class="title-row">
-            <h3 class="title">${escapeHtml(label)}</h3>
-            <span class="pill${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>
+          <div class="field-group">
+            <p class="field-label">Connection title</p>
+            <div class="title-row">
+              <input class="title-input" type="text" data-field="connection-title" value="${escapeHtml(label)}" />
+              <button class="btn btn-primary" type="button" data-action="save-title" data-source-id="${source.id}">Save</button>
+            </div>
           </div>
-          <p class="location">${escapeHtml(this.locationLabel(source))}</p>
+          <div class="field-group">
+            <p class="field-label">Location</p>
+            <div class="location-row">
+              <p class="location">${escapeHtml(this.locationLabel(source))}</p>
+              <span class="pill${isEnabled ? " is-active" : " is-inactive"}">${escapeHtml(availabilityLabel)}</span>
+            </div>
+          </div>
         </div>
         <div class="actions">
           ${exampleToggle}
@@ -242,6 +271,13 @@ class OpenCollectionsConnectionDetailElement extends HTMLElement {
 				}
 				if (action === "remove") {
 					this.dispatch("remove-connection", { sourceId });
+				}
+				if (action === "save-title") {
+					const input = this.shadowRoot.querySelector(
+						'[data-field="connection-title"]',
+					);
+					const title = String(input?.value || "").trim();
+					this.dispatch("save-connection-title", { sourceId, title });
 				}
 				if (action === "toggle-example-enabled") {
 					const enabled = Boolean(control.checked);

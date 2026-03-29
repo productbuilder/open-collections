@@ -641,6 +641,55 @@ export function createConnectionsRuntime(options = {}) {
 				selectedSourceFilterId: nextFilterId,
 			};
 		},
+		async updateSourceSettings({
+			sourceId,
+			sources = [],
+			patch = {},
+		}) {
+			const source = sources.find((entry) => entry.id === sourceId);
+			if (!source) {
+				return { ok: false, message: "Connection not found." };
+			}
+			const nextTitle = String(patch.title || "").trim();
+			if (!nextTitle) {
+				return {
+					ok: false,
+					message: "Connection title cannot be empty.",
+				};
+			}
+
+			if (
+				typeof source.provider?.saveConnectionSettings ===
+				"function"
+			) {
+				const providerSaveResult =
+					await source.provider.saveConnectionSettings({
+					title: nextTitle,
+				});
+				if (providerSaveResult?.ok === false) {
+					return {
+						ok: false,
+						message:
+							providerSaveResult.message ||
+							"Connection settings are read-only.",
+					};
+				}
+			}
+
+			const updatedSource = {
+				...source,
+				displayLabel: nextTitle,
+				label: source.label || nextTitle,
+			};
+			const nextSources = sources.map((entry) =>
+				entry.id === sourceId ? updatedSource : entry,
+			);
+			return {
+				ok: true,
+				source: updatedSource,
+				sources: nextSources,
+			};
+		},
 		persistSources(sources = []) {
 			if (!storageKey || !storage) {
 				return;

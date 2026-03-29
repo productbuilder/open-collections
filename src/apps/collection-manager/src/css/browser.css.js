@@ -74,7 +74,9 @@ export const browserStyles = `
 
   .delete-action-btn {
     color: #b42318;
-    border: var(--oc-border-width-sm) solid transparent;
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-control);
+    background: var(--oc-bg-panel);
   }
 
   .delete-action-btn:hover {
@@ -82,9 +84,33 @@ export const browserStyles = `
     background: rgba(180, 35, 24, 0.1);
   }
 
+  .clear-selection-btn {
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    color: var(--oc-color-slate-600);
+  }
+
+  .clear-selection-btn:hover {
+    background: var(--oc-bg-subtle);
+    color: var(--oc-text-primary);
+  }
+
   .delete-action-btn .delete-icon {
-    width: 1rem;
-    height: 1rem;
+    width: 1.12rem;
+    height: 1.12rem;
+  }
+
+  .clear-selection-btn .clear-selection-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .clear-selection-btn .clear-selection-icon :where(path, rect, line, circle) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .icon {
@@ -214,6 +240,21 @@ export const browserStyles = `
 
     .viewport-actions .btn {
       min-height: 2rem;
+    }
+
+    .delete-action-btn,
+    .clear-selection-btn {
+      width: 2rem;
+      min-width: 2rem;
+      height: 2rem;
+      min-height: 2rem;
+      padding: 0;
+      border-radius: var(--oc-radius-control);
+    }
+
+    .clear-selection-btn {
+      font-size: 0;
+      gap: 0;
     }
 
     .viewport-title-actions > .btn,

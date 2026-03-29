@@ -53,6 +53,19 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 	}
 
 	bindEvents() {
+		const rowButton = this.shadowRoot?.getElementById("rowButton");
+		if (rowButton && this._boundRowButton !== rowButton) {
+			rowButton.addEventListener("click", () => {
+				this.dispatchEvent(
+					new CustomEvent("action", {
+						bubbles: true,
+						composed: true,
+					}),
+				);
+			});
+			this._boundRowButton = rowButton;
+		}
+
 		const secondarySlot = this.shadowRoot?.querySelector("slot[name='secondary']");
 		if (secondarySlot && this._boundSecondarySlot !== secondarySlot) {
 			secondarySlot.addEventListener("click", (event) => {
@@ -106,6 +119,14 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 
 	get disabled() {
 		return this.hasAttribute("disabled");
+	}
+
+	set disabled(value) {
+		if (value) {
+			this.setAttribute("disabled", "");
+			return;
+		}
+		this.removeAttribute("disabled");
 	}
 
 	get showArrow() {

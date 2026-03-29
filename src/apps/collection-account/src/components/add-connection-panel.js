@@ -75,7 +75,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
 		this.shadowRoot
 			.getElementById("addLocalFolderConnectionBtn")
-			?.addEventListener("click", () => {
+			?.addEventListener("action", () => {
 				if (!this.model.supportsLocalFolderPicker) {
 					this.openLocalFolderInfoDialog();
 					return;
@@ -100,7 +100,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
 		this.shadowRoot
 			.getElementById("addRemoteConnectionBtn")
-			?.addEventListener("click", () => {
+			?.addEventListener("action", () => {
 				this.model.flowMode = "add";
 				this.model.repairProviderId = "";
 				this.model.addHostLevel = "remote-subtypes";

@@ -1,4 +1,8 @@
 import { viewToggleStyles } from "../css/view-toggle.css.js";
+import {
+	renderGridViewIcon,
+	renderViewListIcon,
+} from "../../../../shared/components/icons.js";
 
 const MOBILE_BREAKPOINT = "(max-width: 760px)";
 
@@ -63,7 +67,13 @@ class OpenViewToggleElement extends HTMLElement {
 		);
 	}
 
-	renderButton({ icon, label, mode, active = false, mobileOnly = false }) {
+	renderButton({
+		iconMarkup,
+		label,
+		mode,
+		active = false,
+		mobileOnly = false,
+	}) {
 		return `
       <button
         type="button"
@@ -73,7 +83,7 @@ class OpenViewToggleElement extends HTMLElement {
         title="${label}"
         ${active ? 'aria-pressed="true"' : 'aria-pressed="false"'}
       >
-        <span class="material-icons icon" aria-hidden="true">${icon}</span>
+        ${iconMarkup}
       </button>
     `;
 	}
@@ -84,30 +94,30 @@ class OpenViewToggleElement extends HTMLElement {
 
 		const desktopButtons = [
 			this.renderButton({
-				icon: "grid_view",
+				iconMarkup: renderViewListIcon(),
 				label: "Switch to rows view",
 				mode: "rows",
-				active: mode === "cards",
+				active: mode === "rows",
 			}),
 			this.renderButton({
-				icon: "view_list",
+				iconMarkup: renderGridViewIcon(),
 				label: "Switch to cards view",
 				mode: "cards",
-				active: mode === "rows",
+				active: mode === "cards",
 			}),
 		].join("");
 
 		const mobileButton =
 			mode === "cards"
 				? this.renderButton({
-						icon: "view_list",
-						label: "Switch to cards view",
+						iconMarkup: renderViewListIcon(),
+						label: "Switch to rows view",
 						mode: "rows",
 						mobileOnly: true,
 					})
 				: this.renderButton({
-						icon: "grid_view",
-						label: "Switch to rows view",
+						iconMarkup: renderGridViewIcon(),
+						label: "Switch to cards view",
 						mode: "cards",
 						mobileOnly: true,
 					});

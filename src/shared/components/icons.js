@@ -64,3 +64,27 @@ export function renderProfileIcon(className = "icon icon-profile") {
     </svg>
   `;
 }
+
+export function renderGridViewIcon(className = "icon icon-grid-view") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="4" y="4" width="6" height="6" rx="0.8" />
+      <rect x="14" y="4" width="6" height="6" rx="0.8" />
+      <rect x="4" y="14" width="6" height="6" rx="0.8" />
+      <rect x="14" y="14" width="6" height="6" rx="0.8" />
+    </svg>
+  `;
+}
+
+export function renderViewListIcon(className = "icon icon-view-list") {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M8 6h12" />
+      <path d="M8 12h12" />
+      <path d="M8 18h12" />
+      <circle cx="5" cy="6" r="1" />
+      <circle cx="5" cy="12" r="1" />
+      <circle cx="5" cy="18" r="1" />
+    </svg>
+  `;
+}

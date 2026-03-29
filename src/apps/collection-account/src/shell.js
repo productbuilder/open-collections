@@ -122,7 +122,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.state = {
 			sources: [],
 			activeSourceId: "all",
-			selectedProviderId: "example",
+			selectedProviderId: "local",
 			view: "list",
 			activePage: "root",
 		};
@@ -169,16 +169,11 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			this.localFolderPickerSupported,
 		);
 		this.renderProviderCatalog();
-		this.setSelectedProvider("example");
+		this.setSelectedProvider("local");
 		this.setActivePage("root");
 		this.renderConnectionsListPanel();
 		this.restoreRememberedSources();
-		this.setStatus(
-			this.state.sources.length
-				? "Select a connection to inspect or refresh."
-				: "No connections yet.",
-			"neutral",
-		);
+		void this.ensureStarterExampleConnection();
 	}
 
 	isEmbeddedRuntime() {
@@ -335,14 +330,6 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			},
 		);
 		this.dom.addConnectionPanel?.addEventListener(
-			"add-example-connection",
-			async () => {
-				this.clearPendingSourceRepair();
-				this.setSelectedProvider("example");
-				await this.connectCurrentProvider();
-			},
-		);
-		this.dom.addConnectionPanel?.addEventListener(
 			"add-local-folder-connection",
 			async () => {
 				this.clearPendingSourceRepair();
@@ -481,6 +468,47 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionsListPanel?.setSources(unique);
 		this.dom.connectionsListPanel?.setActiveSourceId(
 			this.state.activeSourceId || "all",
+		);
+	}
+
+	async ensureStarterExampleConnection() {
+		const hasStarterExample = this.state.sources.some(
+			(source) => source.providerId === "example",
+		);
+		if (hasStarterExample) {
+			if (this.state.sources.length === 1) {
+				this.setStatus(
+					"Starter example connection is ready. Add a local folder or remote connection to use your own storage.",
+					"neutral",
+				);
+			}
+			return;
+		}
+
+		const config = this.connectionsRuntime.collectProviderConfig(
+			"example",
+			{},
+			this.selectedLocalDirectoryHandle,
+		);
+		const result = await this.connectionsRuntime.connectSource({
+			providerId: "example",
+			config,
+			sources: this.state.sources,
+		});
+		if (!result.ok) {
+			this.setStatus(result.message || "Starter connection failed.", "warn");
+			return;
+		}
+
+		this.state.sources = result.sources;
+		if (this.state.activeSourceId === "all") {
+			this.state.activeSourceId = result.source.id;
+		}
+		this.persistSources();
+		this.renderConnectionsListPanel();
+		this.setStatus(
+			"Starter example connection is ready. Add a local folder or remote connection to use your own storage.",
+			"neutral",
 		);
 	}
 
@@ -705,8 +733,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.persistSources();
 		this.renderConnectionsListPanel();
 		if (this.state.sources.length === 0) {
-			this.setConnectionStatus("No connections yet.", "neutral");
-			this.setStatus("No connections yet.", "neutral");
+			await this.ensureStarterExampleConnection();
 		} else {
 			this.setStatus(
 				`Removed ${result.removedSource.displayLabel || result.removedSource.id}.`,

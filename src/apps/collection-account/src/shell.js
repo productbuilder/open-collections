@@ -305,6 +305,16 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				}
 			},
 		);
+		this.dom.connectionsListPanel?.addEventListener(
+			"toggle-example-connection",
+			(event) => {
+				const sourceId = event.detail?.sourceId || "";
+				const enabled = Boolean(event.detail?.enabled);
+				if (sourceId) {
+					this.toggleExampleConnection(sourceId, enabled);
+				}
+			},
+		);
 
 		this.dom.addConnectionPanel?.addEventListener(
 			"back-to-connections",
@@ -472,15 +482,23 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	async ensureStarterExampleConnection() {
-		const hasStarterExample = this.state.sources.some(
-			(source) => source.providerId === "example",
+		const starterExampleSource = this.state.sources.find(
+			(source) =>
+				source.providerId === "example" && source.isBuiltIn !== false,
 		);
-		if (hasStarterExample) {
+		if (starterExampleSource) {
 			if (this.state.sources.length === 1) {
-				this.setStatus(
-					"Starter example connection is ready. Add a local folder or remote connection to use your own storage.",
-					"neutral",
-				);
+				if (starterExampleSource.enabled === false) {
+					this.setStatus(
+						"Starter example connection is currently hidden. Re-enable it from this card any time.",
+						"neutral",
+					);
+				} else {
+					this.setStatus(
+						"Starter example connection is ready. Add a local folder or remote connection to use your own storage.",
+						"neutral",
+					);
+				}
 			}
 			return;
 		}
@@ -722,6 +740,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			activeSourceId: this.state.activeSourceId,
 		});
 		if (!result.ok) {
+			if (result.message) {
+				this.setStatus(result.message, "warn");
+			}
 			return;
 		}
 		this.state.sources = result.sources;
@@ -740,6 +761,33 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				"ok",
 			);
 		}
+	}
+
+	toggleExampleConnection(sourceId, enabled) {
+		const source = this.getSourceById(sourceId);
+		if (!source || source.providerId !== "example") {
+			return;
+		}
+		const result = this.connectionsRuntime.setSourceEnabled({
+			sourceId,
+			enabled,
+			sources: this.state.sources,
+			activeSourceId: this.state.activeSourceId,
+		});
+		if (!result.ok) {
+			this.setStatus(result.message || "Unable to update connection.", "warn");
+			return;
+		}
+		this.state.sources = result.sources;
+		this.state.activeSourceId = result.activeSourceId;
+		this.persistSources();
+		this.renderConnectionsListPanel();
+		this.setStatus(
+			enabled
+				? "Starter example connection is enabled."
+				: "Starter example connection is hidden. You can enable it again at any time.",
+			"neutral",
+		);
 	}
 
 	persistSources() {

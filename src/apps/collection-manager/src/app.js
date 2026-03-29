@@ -116,12 +116,12 @@ import {
 	APP_RUNTIME_MODES,
 } from "../../../shared/runtime/app-mount-contract.js";
 import {
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 	createConnectionsRuntime,
 	createDefaultConnectionProviderCatalog,
 	createDefaultConnectionProviderFactories,
 	createDefaultConnectionProviders,
 } from "../../../shared/account/index.js";
-import { SOURCES_STORAGE_KEY } from "./controllers/workspace-controller.js";
 const COLLECTIONS_DIR_PATH = "collections";
 const SOURCES_DIR_PATH = "sources";
 const DRAFT_ASSETS_DIR_PATH = "draft-assets";
@@ -163,7 +163,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		);
 		this.connectionsRuntime = createConnectionsRuntime({
 			defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
-			storageKey: SOURCES_STORAGE_KEY,
+			storageKey: CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 			providers: this.providers,
 			providerFactories: this.providerFactories,
 			providerCatalog: this.providerCatalog,

@@ -23,6 +23,7 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 		this.render();
 		this.attachSlotListeners();
 		this.syncSecondaryVisibility();
+		this.bindEvents();
 	}
 
 	attributeChangedCallback() {
@@ -32,23 +33,64 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 		this.render();
 		this.attachSlotListeners();
 		this.syncSecondaryVisibility();
+		this.bindEvents();
 	}
 
 	attachSlotListeners() {
+		const leadingSlot = this.shadowRoot?.querySelector("slot[name='leading']");
+		if (leadingSlot && this._leadingSlot !== leadingSlot) {
+			leadingSlot.addEventListener("slotchange", () =>
+				this.syncLeadingIconStyling(),
+			);
+			this._leadingSlot = leadingSlot;
+		}
+
 		const secondarySlot = this.shadowRoot?.querySelector("slot[name='secondary']");
-		if (!secondarySlot || this._secondarySlot === secondarySlot) {
+		if (secondarySlot && this._secondarySlot !== secondarySlot) {
+			secondarySlot.addEventListener("slotchange", () => this.syncSecondaryVisibility());
+			this._secondarySlot = secondarySlot;
+		}
+	}
+
+	bindEvents() {
+		const secondarySlot = this.shadowRoot?.querySelector("slot[name='secondary']");
+		if (secondarySlot && this._boundSecondarySlot !== secondarySlot) {
+			secondarySlot.addEventListener("click", (event) => {
+				event.stopPropagation();
+			});
+			this._boundSecondarySlot = secondarySlot;
+		}
+	}
+
+	syncLeadingIconStyling() {
+		const leadingSlot = this.shadowRoot?.querySelector("slot[name='leading']");
+		if (!leadingSlot) {
 			return;
 		}
-		secondarySlot.addEventListener("slotchange", () => this.syncSecondaryVisibility());
-		this._secondarySlot = secondarySlot;
+		const assigned = leadingSlot.assignedElements({ flatten: true });
+		for (const node of assigned) {
+			const icon =
+				node.matches?.("svg.icon") ? node : node.querySelector?.("svg.icon");
+			if (!icon) {
+				continue;
+			}
+			icon.style.width = "2.1rem";
+			icon.style.height = "2.1rem";
+			icon.style.fill = "none";
+			icon.style.stroke = "currentColor";
+			icon.style.strokeWidth = "1.8";
+			icon.style.strokeLinecap = "round";
+			icon.style.strokeLinejoin = "round";
+		}
 	}
 
 	syncSecondaryVisibility() {
+		this.syncLeadingIconStyling();
 		const secondarySlot = this.shadowRoot?.querySelector(
 			"slot[name='secondary']",
 		);
-		const secondaryWrap = this.shadowRoot?.getElementById("secondarySlot");
-		if (!secondarySlot || !secondaryWrap) {
+		const subtitleSlot = this.shadowRoot?.getElementById("subtitleSecondarySlot");
+		if (!secondarySlot || !subtitleSlot) {
 			return;
 		}
 		const hasSecondary = secondarySlot
@@ -59,7 +101,7 @@ class OpenCollectionsActionRowElement extends HTMLElement {
 				}
 				return node.nodeType === Node.ELEMENT_NODE;
 			});
-		secondaryWrap.hidden = !hasSecondary;
+		subtitleSlot.hidden = !hasSecondary;
 	}
 
 	get disabled() {
@@ -90,11 +132,17 @@ class OpenCollectionsActionRowElement extends HTMLElement {
         }
 
         .row-shell {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
-          gap: var(--oc-space-2);
-          align-items: center;
+          display: flex;
+          align-items: stretch;
           width: 100%;
+          border: 1px solid var(--oc-border-subtle);
+          border-radius: var(--oc-radius-md);
+          background: var(--oc-bg-surface);
+          transition: border-color 120ms ease, background-color 120ms ease;
+        }
+
+        .row-shell:focus-within {
+          border-color: var(--oc-border-strong);
         }
 
         .row-button {
@@ -104,20 +152,19 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           gap: var(--oc-space-3);
-          border: 1px solid var(--oc-border-subtle);
-          background: var(--oc-bg-surface);
+          border: 0;
+          background: transparent;
           color: var(--oc-text-primary);
           border-radius: var(--oc-radius-md);
           padding: 0.9rem var(--oc-space-4);
           text-align: left;
           font: inherit;
           cursor: pointer;
-          transition: border-color 120ms ease, background-color 120ms ease;
+          transition: background-color 120ms ease;
         }
 
         .row-button:hover {
-          border-color: var(--oc-border-strong);
-          background: var(--oc-bg-surface);
+          background: color-mix(in srgb, var(--oc-bg-surface) 90%, #e2e8f0 10%);
         }
 
         .row-button:focus-visible {
@@ -140,17 +187,6 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           color: var(--oc-text-muted);
         }
 
-        .row-leading ::slotted(.icon),
-        .row-leading .icon {
-          width: 2.1rem;
-          height: 2.1rem;
-          fill: none;
-          stroke: currentColor;
-          stroke-width: 1.8;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-        }
-
         .row-content {
           min-width: 0;
           display: grid;
@@ -162,6 +198,13 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           text-align: left;
           font-weight: 600;
           line-height: 1.2;
+        }
+
+        .row-subline {
+          min-height: 1rem;
+          display: inline-flex;
+          align-items: center;
+          gap: var(--oc-space-2);
         }
 
         .row-subtitle {
@@ -190,17 +233,23 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           align-items: center;
           justify-content: center;
         }
+
+        .secondary-slot[hidden] {
+          display: none;
+        }
       </style>
       <div class="row-shell">
         <button class="row-button" id="rowButton" type="${escapeHtml(buttonType)}"${disabledAttr}>
           <span class="row-leading" aria-hidden="true"><slot name="leading"></slot></span>
           <span class="row-content">
             <span class="row-title">${title}</span>
-            ${subtitleMarkup}
+            <span class="row-subline">
+              ${subtitleMarkup}
+              <span class="secondary-slot" id="subtitleSecondarySlot" hidden><slot name="secondary"></slot></span>
+            </span>
           </span>
           ${arrowMarkup}
         </button>
-        <span class="secondary-slot" id="secondarySlot" hidden><slot name="secondary"></slot></span>
       </div>
     `;
 	}

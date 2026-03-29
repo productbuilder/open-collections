@@ -95,6 +95,16 @@ function renderShell(shadowRoot) {
 							className: "back-btn",
 							slot: "leading",
 						})}
+						<button
+							class="btn btn-primary connection-detail-save-btn"
+							slot="actions"
+							type="button"
+							id="connectionDetailSaveBtn"
+							disabled
+						>
+							Save
+						</button>
+						<p class="status-note detail-save-status" id="connectionDetailSaveStatus">No pending changes.</p>
 						<open-collections-connection-detail-panel id="connectionDetailPanel"></open-collections-connection-detail-panel>
 					</open-collections-section-panel>
 				</div>
@@ -137,6 +147,11 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			selectedProviderId: "local",
 			view: "list",
 			activePage: "root",
+			connectionDetailDraftTitle: "",
+			connectionDetailSavedTitle: "",
+			connectionDetailSaveState: "idle",
+			connectionDetailSaveError: "",
+			connectionDetailStateSourceId: "",
 		};
 
 		this.pendingSourceRepair = null;
@@ -234,6 +249,12 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			connectionDetailPanel: this.shadow.getElementById(
 				"connectionDetailPanel",
 			),
+			connectionDetailSaveBtn: this.shadow.getElementById(
+				"connectionDetailSaveBtn",
+			),
+			connectionDetailSaveStatus: this.shadow.getElementById(
+				"connectionDetailSaveStatus",
+			),
 			connectionDetailBackBtn: this.shadow.getElementById(
 				"connectionDetailBackBtn",
 			),
@@ -262,6 +283,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionDetailBackBtn?.addEventListener("click", () => {
 			this.showConnectionsListView();
 		});
+		this.dom.connectionDetailSaveBtn?.addEventListener("click", async () => {
+			await this.saveConnectionDetailTitle();
+		});
 		this.dom.connectionsAddBtn?.addEventListener("click", () => {
 			this.openAddConnectionView();
 		});
@@ -284,33 +308,20 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			},
 		);
 		this.dom.connectionDetailPanel?.addEventListener(
-			"save-connection-title",
-			async (event) => {
+			"connection-title-draft-changed",
+			(event) => {
 				const sourceId = event.detail?.sourceId || "";
-				const title = event.detail?.title || "";
-				if (!sourceId) {
+				if (!sourceId || sourceId !== this.state.activeSourceId) {
 					return;
 				}
-				const result = await this.connectionsRuntime.updateSourceSettings({
-					sourceId,
-					sources: this.state.sources,
-					patch: { title },
-				});
-				if (!result.ok) {
-					this.setStatus(
-						result.message || "Unable to save connection settings.",
-						"warn",
-					);
-					return;
-				}
-				this.state.sources = result.sources;
-				this.state.activeSourceId = result.source.id;
-				this.persistSources();
-				this.renderConnectionsListPanel();
-				this.setStatus(
-					`Saved connection settings for ${result.source.displayLabel || result.source.id}.`,
-					"ok",
+				this.state.connectionDetailDraftTitle = String(
+					event.detail?.title || "",
 				);
+				this.state.connectionDetailSaveState = this.isConnectionDetailDirty()
+					? "dirty"
+					: "idle";
+				this.state.connectionDetailSaveError = "";
+				this.renderConnectionDetailSaveState();
 			},
 		);
 		this.dom.connectionDetailPanel?.addEventListener(
@@ -518,6 +529,126 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		);
 	}
 
+	getSourceTitle(source) {
+		if (!source) {
+			return "";
+		}
+		return (
+			source.displayLabel || source.label || source.providerLabel || "Connection"
+		);
+	}
+
+	isConnectionDetailDirty() {
+		return (
+			String(this.state.connectionDetailDraftTitle || "").trim() !==
+			String(this.state.connectionDetailSavedTitle || "").trim()
+		);
+	}
+
+	syncConnectionDetailState(source) {
+		if (!source) {
+			this.state.connectionDetailStateSourceId = "";
+			this.state.connectionDetailDraftTitle = "";
+			this.state.connectionDetailSavedTitle = "";
+			this.state.connectionDetailSaveState = "idle";
+			this.state.connectionDetailSaveError = "";
+			return;
+		}
+		if (this.state.connectionDetailStateSourceId === source.id) {
+			return;
+		}
+		const nextTitle = this.getSourceTitle(source);
+		this.state.connectionDetailStateSourceId = source.id;
+		this.state.connectionDetailDraftTitle = nextTitle;
+		this.state.connectionDetailSavedTitle = nextTitle;
+		this.state.connectionDetailSaveState = "idle";
+		this.state.connectionDetailSaveError = "";
+	}
+
+	renderConnectionDetailSaveState() {
+		const saveBtn = this.dom.connectionDetailSaveBtn;
+		const saveStatus = this.dom.connectionDetailSaveStatus;
+		if (!saveBtn || !saveStatus) {
+			return;
+		}
+		const hasSource = Boolean(this.getSourceById(this.state.activeSourceId));
+		const isDirty = this.isConnectionDetailDirty();
+		const state = hasSource
+			? this.state.connectionDetailSaveState
+			: "idle";
+		saveBtn.disabled = !hasSource || !isDirty || state === "saving";
+		saveBtn.textContent = state === "saving" ? "Saving…" : "Save";
+
+		if (!hasSource) {
+			saveStatus.textContent = "";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		if (state === "saving") {
+			saveStatus.textContent = "Saving changes…";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		if (state === "saved") {
+			saveStatus.textContent = "Saved.";
+			saveStatus.dataset.tone = "ok";
+			return;
+		}
+		if (state === "error") {
+			saveStatus.textContent =
+				this.state.connectionDetailSaveError ||
+				"Unable to save connection settings.";
+			saveStatus.dataset.tone = "warn";
+			return;
+		}
+		if (isDirty || state === "dirty") {
+			saveStatus.textContent = "Unsaved changes.";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		saveStatus.textContent = "No pending changes.";
+		saveStatus.dataset.tone = "neutral";
+	}
+
+	async saveConnectionDetailTitle() {
+		const sourceId = this.state.activeSourceId || "";
+		const source = this.getSourceById(sourceId);
+		if (!source || !this.isConnectionDetailDirty()) {
+			this.renderConnectionDetailSaveState();
+			return;
+		}
+		const title = String(this.state.connectionDetailDraftTitle || "").trim();
+		this.state.connectionDetailSaveState = "saving";
+		this.state.connectionDetailSaveError = "";
+		this.renderConnectionDetailSaveState();
+		const result = await this.connectionsRuntime.updateSourceSettings({
+			sourceId,
+			sources: this.state.sources,
+			patch: { title },
+		});
+		if (!result.ok) {
+			this.state.connectionDetailSaveState = "error";
+			this.state.connectionDetailSaveError =
+				result.message || "Unable to save connection settings.";
+			this.renderConnectionDetailSaveState();
+			this.setStatus(this.state.connectionDetailSaveError, "warn");
+			return;
+		}
+		this.state.sources = result.sources;
+		this.state.activeSourceId = result.source.id;
+		const savedTitle = this.getSourceTitle(result.source);
+		this.state.connectionDetailSavedTitle = savedTitle;
+		this.state.connectionDetailDraftTitle = savedTitle;
+		this.state.connectionDetailSaveState = "saved";
+		this.state.connectionDetailSaveError = "";
+		this.persistSources();
+		this.renderConnectionsListPanel();
+		this.setStatus(
+			`Saved connection settings for ${result.source.displayLabel || result.source.id}.`,
+			"ok",
+		);
+	}
+
 	clearPendingSourceRepair() {
 		this.pendingSourceRepair = null;
 	}
@@ -545,7 +676,11 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 	renderConnectionDetailPanel() {
 		const source = this.getSourceById(this.state.activeSourceId);
-		this.dom.connectionDetailPanel?.setSource(source);
+		this.syncConnectionDetailState(source);
+		this.dom.connectionDetailPanel?.setSource(source, {
+			titleDraft: this.state.connectionDetailDraftTitle,
+		});
+		this.renderConnectionDetailSaveState();
 	}
 
 	async ensureStarterExampleConnection() {

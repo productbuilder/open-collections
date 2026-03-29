@@ -72,6 +72,14 @@ export const accountShellStyles = `
     gap: 0.75rem;
   }
 
+  .connection-detail-save-btn[slot='actions'] {
+    margin-left: auto;
+  }
+
+  .detail-save-status {
+    margin-bottom: var(--oc-space-1);
+  }
+
 
   @media (max-width: 47.99rem) {
     :host(:not([data-app-presentation-embedded])) .account-shell {

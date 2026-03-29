@@ -73,14 +73,9 @@ export const accountShellStyles = `
   }
 
   #connectionsAddBtn {
-    border: 2px dotted color-mix(in srgb, var(--oc-border-strong) 60%, #60a5fa 40%);
-    border-radius: calc(var(--oc-radius-md) + 2px);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--oc-bg-surface) 90%, #eff6ff 10%) 0%,
-      var(--oc-bg-surface) 100%
-    );
-    --oc-border-subtle: transparent;
+    border: 1px solid var(--oc-border-subtle);
+    border-radius: var(--oc-radius-md);
+    background: var(--oc-bg-surface);
   }
 
   @media (max-width: 47.99rem) {

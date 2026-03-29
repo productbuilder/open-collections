@@ -257,6 +257,12 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		if (this._isApplyingSessionSources || !Array.isArray(sources)) {
 			return;
 		}
+		const previousActiveSourceFilter =
+			this.state.activeSourceFilter || "all";
+		const previousActiveSource =
+			previousActiveSourceFilter !== "all"
+				? this.getSourceById(previousActiveSourceFilter)
+				: null;
 		const incomingById = new Map();
 		for (const source of sources) {
 			const sourceId = String(source?.id || "").trim();
@@ -303,6 +309,17 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				!validSourceIds.has(nextActiveSourceFilter)
 			) {
 				this.state.activeSourceFilter = "all";
+			}
+			const addedNonExampleSource = addedSourceIds.some((sourceId) => {
+				const source = incomingById.get(sourceId);
+				return source && !this.isExampleSource(source);
+			});
+			if (
+				addedNonExampleSource &&
+				this.isExampleSource(previousActiveSource)
+			) {
+				this.state.activeSourceFilter = "all";
+				this.state.selectedCollectionId = "all";
 			}
 			this.renderSourcesList();
 			this.renderSourceFilter();
@@ -1114,6 +1131,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
 	activatePreferredBrowserStartupSource() {
 		if (!this.isBrowserRuntime()) {
+			return false;
+		}
+
+		const hasNonExampleSource = this.state.sources.some(
+			(source) => !this.isExampleSource(source),
+		);
+		if (hasNonExampleSource) {
 			return false;
 		}
 

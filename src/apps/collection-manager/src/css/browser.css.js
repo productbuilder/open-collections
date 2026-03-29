@@ -72,6 +72,21 @@ export const browserStyles = `
     gap: 0.22rem;
   }
 
+  .delete-action-btn {
+    color: #b42318;
+    border: var(--oc-border-width-sm) solid transparent;
+  }
+
+  .delete-action-btn:hover {
+    color: #912018;
+    background: rgba(180, 35, 24, 0.1);
+  }
+
+  .delete-action-btn .delete-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
   .icon {
     font-family: 'Material Icons';
     font-size: 1.1rem;
@@ -88,16 +103,6 @@ export const browserStyles = `
     text-rendering: optimizeLegibility;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'liga';
-  }
-
-  .btn-danger {
-    border-color: #dc2626;
-    color: var(--oc-color-white);
-    background: #dc2626;
-  }
-
-  .btn-danger:hover {
-    background: #b91c1c;
   }
 
   .is-hidden {

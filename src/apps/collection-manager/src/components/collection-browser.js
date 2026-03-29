@@ -10,6 +10,7 @@ import {
 	getPlatformType,
 	PLATFORM_TYPES,
 } from "../../../../shared/platform/index.js";
+import { renderTrashIcon } from "../../../../shared/components/icons.js";
 
 class OpenCollectionsBrowserElement extends HTMLElement {
 	constructor() {
@@ -295,12 +296,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.model.viewportTitle || "Collections",
 		);
 		if (isCollectionsView) {
-			const contextText = this.model.workspaceContextText || "";
-			if (contextText) {
-				panelShell.setAttribute("subtitle", contextText);
-			} else {
-				panelShell.removeAttribute("subtitle");
-			}
+			panelShell.removeAttribute("subtitle");
 			panelShell.setAttribute("show-back", "false");
 		} else {
 			const subtitle = this.model.assetCountText || "No assets loaded.";
@@ -375,13 +371,12 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			return;
 		}
 
-		const isMobile = this.mediaQueryList?.matches ?? false;
 		selectionStatus.hidden = selectedCollectionCount === 0;
 		selectionStatus.textContent = `#${selectedCollectionCount}`;
 		deleteSelectedBtn.hidden = false;
-		deleteSelectedBtn.innerHTML = isMobile
-			? '<span class="material-icons icon" aria-hidden="true">delete</span>'
-			: "Delete selected";
+		deleteSelectedBtn.innerHTML = renderTrashIcon(
+			"icon icon-trash delete-icon",
+		);
 		deleteSelectedBtn.setAttribute(
 			"aria-label",
 			"Delete selected collections",
@@ -462,7 +457,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
-            <button class="btn btn-danger" id="deleteSelectedBtn" type="button" hidden>Delete selected</button>
+            <button class="icon-btn delete-action-btn" id="deleteSelectedBtn" type="button" hidden aria-label="Delete selected collections"></button>
             <span id="selectionStatus" class="selection-status" hidden>#0</span>
             <button class="btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
           </div>

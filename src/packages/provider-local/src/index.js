@@ -711,6 +711,7 @@ export function createLocalProvider() {
 
 			try {
 				const { json, url } = await fetchJson(sourcePath);
+				const indexTitle = String(json?.title || "").trim();
 
 				if (Array.isArray(json.collections)) {
 					const loadedCollections = [];
@@ -750,7 +751,7 @@ export function createLocalProvider() {
 					return {
 						ok: true,
 						message: `Connected to ${sourcePath}`,
-						sourceDisplayLabel: sourceLabel,
+						sourceDisplayLabel: indexTitle || sourceLabel,
 						sourceDetailLabel: sourcePath,
 						capabilities,
 						collections: collections.map((collection) =>

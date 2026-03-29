@@ -22,6 +22,7 @@ export function createLocalProvider() {
 	let connectionMode = "http";
 	let rootDirectoryHandle = null;
 	let rootDirectoryLabel = "";
+	let rootCollectionsTitle = "";
 	let collections = [];
 	let itemsById = new Map();
 	let itemLocations = new Map();
@@ -204,6 +205,7 @@ export function createLocalProvider() {
 
 	function resetState() {
 		connected = false;
+		rootCollectionsTitle = "";
 		collections = [];
 		itemsById = new Map();
 		itemLocations = new Map();
@@ -512,9 +514,13 @@ export function createLocalProvider() {
 			"collections.json",
 		);
 		if (existingIndex !== null) {
+			rootCollectionsTitle = String(existingIndex?.title || "").trim();
 			return { created: false };
 		}
+		const initialTitle = rootDirectoryLabel || "Local host";
+		rootCollectionsTitle = initialTitle;
 		await writeJsonFile(rootDirectoryHandle, "collections.json", {
+			title: initialTitle,
 			collections: [],
 		});
 		return { created: true };
@@ -582,6 +588,7 @@ export function createLocalProvider() {
 
 	async function writeCollectionsIndex() {
 		const payload = {
+			title: rootCollectionsTitle || rootDirectoryLabel || "Local host",
 			collections: collections.map((collection) => ({
 				id: collection.id,
 				manifest: collection.manifestPath,
@@ -699,7 +706,8 @@ export function createLocalProvider() {
 					return {
 						ok: true,
 						message: `Connected to local host ${rootDirectoryLabel}.`,
-						sourceDisplayLabel: rootDirectoryLabel,
+						sourceDisplayLabel:
+							rootCollectionsTitle || rootDirectoryLabel,
 						sourceDetailLabel:
 							directoryPath || `${rootDirectoryLabel} (host root)`,
 						capabilities,
@@ -728,6 +736,7 @@ export function createLocalProvider() {
 			try {
 				const { json, url } = await fetchJson(sourcePath);
 				const indexTitle = String(json?.title || "").trim();
+				rootCollectionsTitle = indexTitle;
 
 				if (Array.isArray(json.collections)) {
 					const loadedCollections = [];
@@ -1162,6 +1171,23 @@ export function createLocalProvider() {
 
 		getCapabilities() {
 			return capabilities;
+		},
+
+		async saveConnectionSettings(patch = {}) {
+			if (!connected) {
+				throw providerNotConnectedError("local");
+			}
+			if (connectionMode !== "filesystem") {
+				return { ok: false, message: "Connection settings are read-only." };
+			}
+			ensureWritableLocalHost();
+			const nextTitle = String(patch.title || "").trim();
+			if (!nextTitle) {
+				return { ok: false, message: "Connection title cannot be empty." };
+			}
+			rootCollectionsTitle = nextTitle;
+			await writeCollectionsIndex();
+			return { ok: true, title: rootCollectionsTitle };
 		},
 	};
 }

@@ -85,7 +85,7 @@ function renderShell(shadowRoot) {
 				</div>
 				<div id="connectionsDetailView" class="is-hidden">
 					<open-collections-section-panel
-						title="Connection"
+						title="Connection settings"
 						heading-level="2"
 						id="connectionDetailHeading"
 					>
@@ -280,6 +280,36 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				this.setStatus(
 					`Selected connection ${source.displayLabel || source.providerLabel || source.id}.`,
 					"neutral",
+				);
+			},
+		);
+		this.dom.connectionDetailPanel?.addEventListener(
+			"save-connection-title",
+			async (event) => {
+				const sourceId = event.detail?.sourceId || "";
+				const title = event.detail?.title || "";
+				if (!sourceId) {
+					return;
+				}
+				const result = await this.connectionsRuntime.updateSourceSettings({
+					sourceId,
+					sources: this.state.sources,
+					patch: { title },
+				});
+				if (!result.ok) {
+					this.setStatus(
+						result.message || "Unable to save connection settings.",
+						"warn",
+					);
+					return;
+				}
+				this.state.sources = result.sources;
+				this.state.activeSourceId = result.source.id;
+				this.persistSources();
+				this.renderConnectionsListPanel();
+				this.setStatus(
+					`Saved connection settings for ${result.source.displayLabel || result.source.id}.`,
+					"ok",
 				);
 			},
 		);

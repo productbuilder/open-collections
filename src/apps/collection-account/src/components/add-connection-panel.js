@@ -1,7 +1,12 @@
 import { sourceManagerStyles } from "../../../collection-manager/src/css/source-manager.css.js";
-import { renderBackButton } from "../../../../shared/components/back-button.js";
+import {
+	renderArrowIcon,
+	renderBackButton,
+} from "../../../../shared/components/back-button.js";
 import {
 	renderCloseIcon,
+	renderDriveFolderUploadIcon,
+	renderFolderIcon,
 	renderInfoIcon,
 } from "../../../../shared/components/icons.js";
 
@@ -620,6 +625,61 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           align-items: center;
           flex-wrap: nowrap;
         }
+
+        .provider-card-entry {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          gap: 0.65rem;
+          align-items: center;
+        }
+
+        .provider-card-entry .provider-card-label-row {
+          justify-content: flex-start;
+        }
+
+        .provider-card-entry-content {
+          display: grid;
+          gap: 0.2rem;
+          min-width: 0;
+        }
+
+        .provider-card-leading-icon,
+        .provider-card-trailing-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--oc-text-muted);
+        }
+
+        .provider-card-leading-icon .icon,
+        .provider-card-trailing-icon .icon {
+          width: 1rem;
+          height: 1rem;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .provider-card-wrap-with-info {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 0.45rem;
+          align-items: center;
+        }
+
+        .provider-card-wrap-with-info .provider-card {
+          min-width: 0;
+        }
+
+        .provider-card-info-inline {
+          position: static;
+          width: 1.8rem;
+          min-height: 1.8rem;
+          align-self: end;
+          margin-bottom: 0.25rem;
+        }
       </style>
       <div class="source-manager">
         <div class="dialog-actions add-connection-header">
@@ -632,19 +692,27 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
               <p class="config-section-title">Choose a connection type</p>
             </div>
             <div class="provider-list">
-              <div class="provider-card-wrap">
-                <button class="provider-card provider-card-has-info" id="addLocalFolderConnectionBtn" type="button">
-                  <div class="provider-card-label-row"><strong>Local folder</strong></div>
-                  <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
+              <div class="provider-card-wrap provider-card-wrap-with-info">
+                <button class="provider-card provider-card-entry" id="addLocalFolderConnectionBtn" type="button">
+                  <span class="provider-card-leading-icon" aria-hidden="true">${renderFolderIcon()}</span>
+                  <span class="provider-card-entry-content">
+                    <span class="provider-card-label-row"><strong>Local folder</strong></span>
+                    <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
+                  </span>
+                  <span class="provider-card-trailing-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
                 </button>
-                <button class="icon-btn provider-card-info" id="openLocalFolderInfoBtn" type="button" aria-label="Local folder support details">
+                <button class="icon-btn provider-card-info provider-card-info-inline" id="openLocalFolderInfoBtn" type="button" aria-label="Local folder support details">
                   ${renderInfoIcon()}
                 </button>
               </div>
               <p id="localFolderSupportNote" class="panel-subtext provider-card-support-note is-hidden">Requires a supported browser or the desktop app.</p>
-              <button class="provider-card" id="addRemoteConnectionBtn" type="button">
-                <div class="provider-card-label-row"><strong>Remote</strong></div>
-                <span class="panel-subtext">Connect a remote publish target and choose a remote connection type next.</span>
+              <button class="provider-card provider-card-entry" id="addRemoteConnectionBtn" type="button">
+                <span class="provider-card-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
+                <span class="provider-card-entry-content">
+                  <span class="provider-card-label-row"><strong>Remote</strong></span>
+                  <span class="panel-subtext">Connect a remote publish target and choose a remote connection type next.</span>
+                </span>
+                <span class="provider-card-trailing-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
               </button>
             </div>
           </div>
@@ -706,7 +774,6 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           </div>
         </div>
 
-        <p id="connectionStatus" class="panel-subtext">Not connected.</p>
       </div>
 
       <dialog id="localFolderInfoDialog" class="support-dialog" aria-label="Local folder support">

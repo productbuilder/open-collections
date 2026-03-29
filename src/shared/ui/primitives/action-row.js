@@ -290,9 +290,9 @@ class OpenCollectionsActionRowElement extends HTMLElement {
           font-size: 0.82rem;
           line-height: 1.3;
           font-weight: 500;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
 
         .row-trailing {

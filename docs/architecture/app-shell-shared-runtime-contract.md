@@ -129,6 +129,27 @@ To reduce manager-ownership of account/connection foundations:
 - provider-specific integration behavior
 - app-local rendering details and workflow state
 
+### Shell/session lifecycle rule (embedded mode)
+
+During normal section switching inside `app-shell`, treat mounted apps as one continuous shell session:
+
+- Keep section app instances mounted by default and switch visibility/presentation per active section.
+- Do not unmount/remount apps for routine intra-session navigation.
+- Preserve in-memory workflow/live session state across section switches.
+- Reserve unmount/remount for explicit session-boundary events (shell teardown, hard reload, explicit reset).
+
+This rule is about host lifecycle orchestration only; app-specific business logic ownership remains with each embedded app.
+
+### Performance + lazy-loading rule
+
+Shared runtime integrations should assume high-volume datasets and async hydration paths.
+
+- Prefer incremental hydration/loading paths over loading full collection/source state up front.
+- Wire host/app seams so screens can render partial data early and continue filling asynchronously.
+- Keep async loading feedback local to the surface being hydrated (panel/view), using loading UI primitives where appropriate.
+- Avoid host/runtime patterns that force rendering or retaining data that is outside the current user view.
+- Use virtualization/windowing where justified by observed volume/cost, without mandating heavyweight abstractions for all views.
+
 ---
 
 ## 6) Standardized layout/tokens updates

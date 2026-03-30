@@ -4,91 +4,39 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     box-sizing: border-box;
-    padding: 0;
-    color: #111827;
   }
 
   * {
     box-sizing: border-box;
   }
 
-  .viewport-panel {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr);
+  .root {
     height: 100%;
-    min-height: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
-
-  .viewport-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.9rem;
-    min-height: 0;
-    height: 100%;
-  }
-
-  .viewport-layout.is-inspector-open {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-  }
-
-  .browser-host {
-    min-height: 0;
-    height: 100%;
-    display: block;
-    padding: 0;
-  }
-
-  .viewport-inspector {
-    min-height: 0;
-    display: none;
-  }
-
-  .viewport-layout.is-inspector-open .viewport-inspector {
-    display: block;
-  }
-
-  .inspector-slot::slotted(*) {
-    height: 100%;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
   }
 
-  .inspector-toggle {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
-    border-radius: 8px;
-    padding: 0.42rem 0.7rem;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.82rem;
+  .header {
+    padding: 0.75rem 0;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.2;
   }
 
-  .inspector-toggle:hover {
-    border-color: #94a3b8;
-    background: #f8fafc;
+  .scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
   }
 
-  @media (max-width: 760px) {
-    .browser-host {
-      padding: 0;
-      gap: 0.7rem;
-    }
+  oc-grid {
+    display: block;
+  }
 
-    .viewport-layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .viewport-inspector {
-      display: none;
-    }
-
-    .inspector-toggle {
-      display: none;
-    }
+  oc-card-collections,
+  oc-card-collection,
+  oc-card-item {
+    display: block;
   }
 `;

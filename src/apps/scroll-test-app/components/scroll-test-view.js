@@ -1,8 +1,11 @@
+import "../../../shared/ui/primitives/index.js";
+
 class ScrollTestViewElement extends HTMLElement {
 	constructor() {
 		super();
 		this.state = {
 			blockingEnabled: false,
+			cardMode: "simple",
 		};
 		this.shadow = this.attachShadow({ mode: "open" });
 	}
@@ -10,26 +13,36 @@ class ScrollTestViewElement extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.bindEvents();
+		this.updateModeState();
 	}
 
 	bindEvents() {
 		const toggleButton = this.shadow.querySelector('[data-action="toggle-blocking"]');
+		const modeButton = this.shadow.querySelector('[data-action="toggle-mode"]');
 		const scrollContainer = this.shadow.querySelector(".scroll-container");
-		const cards = this.shadow.querySelectorAll(".card");
+		const grid = this.shadow.querySelector(".grid");
 
 		toggleButton?.addEventListener("click", () => {
 			this.state.blockingEnabled = !this.state.blockingEnabled;
 			this.updateBlockingState();
 		});
 
+		modeButton?.addEventListener("click", () => {
+			this.state.cardMode = this.state.cardMode === "simple" ? "oc-card-item" : "simple";
+			this.render();
+			this.bindEvents();
+			this.updateBlockingState();
+			this.updateModeState();
+		});
+
 		scrollContainer?.addEventListener("scroll", () => {
 			console.log("scrolling");
 		});
 
-		cards.forEach((card, index) => {
-			card.addEventListener("click", () => {
-				console.log("card clicked", index);
-			});
+		grid?.addEventListener("click", (event) => {
+			const target = event.target;
+			const tag = target && target.tagName ? target.tagName.toLowerCase() : "unknown";
+			console.log("grid click", { mode: this.state.cardMode, target: tag });
 		});
 	}
 
@@ -46,9 +59,26 @@ class ScrollTestViewElement extends HTMLElement {
 			: "Enable pointer-event test";
 	}
 
+	updateModeState() {
+		const root = this.shadow.querySelector(".root");
+		const modeButton = this.shadow.querySelector('[data-action="toggle-mode"]');
+		if (!root || !modeButton) {
+			return;
+		}
+
+		root.dataset.cardMode = this.state.cardMode;
+		modeButton.textContent =
+			this.state.cardMode === "simple"
+				? "Use oc-card-item cards"
+				: "Use simple div cards";
+	}
+
 	render() {
 		const cardsMarkup = Array.from({ length: 40 }, (_, index) => {
-			return `<div class="card" tabindex="0">Card ${index + 1}</div>`;
+			if (this.state.cardMode === "oc-card-item") {
+				return `<oc-card-item data-id="test-${index + 1}" data-kind="item"></oc-card-item>`;
+			}
+			return `<div class="card">Card ${index + 1}</div>`;
 		}).join("");
 
 		this.shadow.innerHTML = `
@@ -96,7 +126,11 @@ class ScrollTestViewElement extends HTMLElement {
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					cursor: pointer;
+				}
+
+				.grid > oc-card-item {
+					display: block;
+					height: 140px;
 				}
 
 				.toggle-blocking .grid {
@@ -107,10 +141,13 @@ class ScrollTestViewElement extends HTMLElement {
 					pointer-events: auto;
 				}
 			</style>
-			<div class="root">
+			<div class="root" data-card-mode="${this.state.cardMode}">
 				<div class="header">
 					<strong>Scroll Test</strong>
-					<button type="button" data-action="toggle-blocking">Enable pointer-event test</button>
+					<div>
+						<button type="button" data-action="toggle-mode"></button>
+						<button type="button" data-action="toggle-blocking">Enable pointer-event test</button>
+					</div>
 				</div>
 				<div class="scroll-container">
 					<div class="grid">${cardsMarkup}</div>

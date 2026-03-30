@@ -142,6 +142,16 @@ Within one active `app-shell` session, section switching should behave like SPA 
 
 Unmount/remount is still valid for explicit session boundary changes (for example full shell teardown, hard reload, or host-directed reset).
 
+## Desktop scroll behavior rule
+
+For desktop app/work surfaces that act as multi-panel viewing or workflow environments, prefer panel-local or app-local scroll regions over whole-page/document scrolling when that improves stability.
+
+- Keep shell/header/nav chrome visually stable during normal workspace interaction.
+- Avoid page-level scrollbar churn that causes header/nav jump or layout shift.
+- Keep independent panels usable without forcing one global document scroll position.
+
+This is a preference for data/work surfaces, not a blanket rule for every screen. Use normal page scrolling when the screen is simpler and panel-local scrolling does not improve usability.
+
 ## Performance + lazy-loading rule
 
 Performance is a core architectural requirement for this app family, not optional polish.
@@ -153,6 +163,18 @@ Performance is a core architectural requirement for this app family, not optiona
 - Use local loading states for async surfaces (panel/section-level), not only global blocking states.
 - Prefer skeletons or local loading affordances over blank surfaces when that improves continuity.
 - Virtualization/windowing is allowed where justified by measured list size/render cost, but avoid heavyweight abstractions before they are needed.
+
+## Browser vs manager interaction intent
+
+`collection-manager` and `collection-browser` are intentionally different surfaces:
+
+- `collection-manager` is workflow/management-first (collections, assignment, editing, metadata, settings).
+- `collection-browser` is viewing/discovery-first (items/media/presentation and exploration).
+
+As a result:
+
+- Manager views may keep persistent detail/metadata/editor panels when they support active management workflows.
+- Browser views should generally keep metadata/details secondary and reveal them through explicit user action unless a specific browser use case clearly needs always-visible detail.
 
 ## Reuse rule
 

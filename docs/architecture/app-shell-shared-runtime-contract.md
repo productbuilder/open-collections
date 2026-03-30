@@ -140,6 +140,16 @@ During normal section switching inside `app-shell`, treat mounted apps as one co
 
 This rule is about host lifecycle orchestration only; app-specific business logic ownership remains with each embedded app.
 
+### Desktop work-surface scroll guidance
+
+For desktop embedded app/work surfaces that behave like multi-panel workspaces, prefer panel-local or app-local scroll regions over whole-document scrolling when that improves interaction stability.
+
+- Keep shell/header/nav presentation stable while users work inside app surfaces.
+- Avoid page-level scrollbar changes that can produce header/nav jump.
+- Preserve independent panel usability where parallel workflows are expected.
+
+This is guidance for workspace-like surfaces, not a blanket requirement for every embedded screen.
+
 ### Performance + lazy-loading rule
 
 Shared runtime integrations should assume high-volume datasets and async hydration paths.
@@ -149,6 +159,13 @@ Shared runtime integrations should assume high-volume datasets and async hydrati
 - Keep async loading feedback local to the surface being hydrated (panel/view), using loading UI primitives where appropriate.
 - Avoid host/runtime patterns that force rendering or retaining data that is outside the current user view.
 - Use virtualization/windowing where justified by observed volume/cost, without mandating heavyweight abstractions for all views.
+
+### Browser vs manager surface intent
+
+`collection-manager` and `collection-browser` intentionally optimize for different primary tasks.
+
+- Manager is management/workflow-first, so persistent detail/metadata/editor panels are valid when they actively support editing, assignment, and settings tasks.
+- Browser is viewing/discovery-first, so metadata/details should generally remain available but secondary, revealed via explicit action unless a browser use case clearly requires persistent visibility.
 
 ---
 

@@ -115,7 +115,6 @@ class OcCardItemElement extends HTMLElement {
         :host {
           display: block;
           min-height: 0;
-          pointer-events: none;
         }
 
         * {

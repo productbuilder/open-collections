@@ -96,7 +96,6 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
       <style>
         :host {
           display: block;
-          pointer-events: none;
         }
 
         * {

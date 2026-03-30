@@ -43,6 +43,66 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		this.render();
 	}
 
+
+	scrollContainerStyles() {
+		return `
+			:host {
+				display: block;
+				height: 100%;
+				min-height: 0;
+			}
+
+			.browser-scroll-container {
+				height: 100%;
+				min-height: 0;
+				overflow-y: auto;
+				overflow-x: hidden;
+				overscroll-behavior: contain;
+				-webkit-overflow-scrolling: touch;
+				touch-action: pan-y;
+			}
+
+			oc-grid {
+				display: block;
+				min-height: 0;
+			}
+
+			.browse-cell {
+				display: block;
+				min-width: 0;
+			}
+
+			.browse-cell > oc-card-collections,
+			.browse-cell > oc-card-collection,
+			.browse-cell > oc-card-item {
+				display: block;
+			}
+		`;
+	}
+
+	bindScrollDebug() {
+		if (this._scrollContainer && this._boundScrollHandler) {
+			this._scrollContainer.removeEventListener("scroll", this._boundScrollHandler);
+		}
+		const scrollContainer = this.shadowRoot?.getElementById("browserScrollContainer");
+		if (!scrollContainer) {
+			this._scrollContainer = null;
+			this._boundScrollHandler = null;
+			return;
+		}
+		this._scrollContainer = scrollContainer;
+		this._boundScrollHandler = () => {
+			console.log("[browser-scroll-debug] browserScrollContainer");
+		};
+		scrollContainer.addEventListener("scroll", this._boundScrollHandler);
+	}
+
+	disconnectedCallback() {
+		if (this._scrollContainer && this._boundScrollHandler) {
+			this._scrollContainer.removeEventListener("scroll", this._boundScrollHandler);
+		}
+	}
+
 	dispatch(name, detail = {}) {
 		this.dispatchEvent(
 			new CustomEvent(name, { detail, bubbles: true, composed: true }),
@@ -198,11 +258,14 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 	renderLoading() {
 		this.shadowRoot.innerHTML = `
 			<style>${browserRendererStyles}</style>
-			<oc-grid id="browseGrid">
-				${Array.from({ length: 8 })
-					.map(() => '<oc-skeleton-card variant="item"></oc-skeleton-card>')
-					.join("")}
-			</oc-grid>
+			<style>${this.scrollContainerStyles()}</style>
+			<div id="browserScrollContainer" class="browser-scroll-container">
+				<oc-grid id="browseGrid">
+					${Array.from({ length: 8 })
+						.map(() => '<oc-skeleton-card variant="item"></oc-skeleton-card>')
+						.join("")}
+				</oc-grid>
+			</div>
 		`;
 		this.shadowRoot.getElementById("browseGrid")?.update({
 			mode: "grid",
@@ -211,6 +274,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsMobile: 2,
 			gap: "0.62rem",
 		});
+		this.bindScrollDebug();
 	}
 
 	renderEmpty(mode) {
@@ -222,6 +286,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				message="${empty.message}"
 			></open-collections-empty-state>
 		`;
+		this.bindScrollDebug();
 	}
 
 	render() {
@@ -241,29 +306,10 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 
 		this.shadowRoot.innerHTML = `
 			<style>${browserRendererStyles}</style>
-			<style>
-				:host {
-					display: block;
-					min-height: 0;
-				}
-
-				oc-grid {
-					display: block;
-					min-height: 0;
-				}
-
-				.browse-cell {
-					display: block;
-					min-width: 0;
-				}
-
-				.browse-cell > oc-card-collections,
-				.browse-cell > oc-card-collection,
-				.browse-cell > oc-card-item {
-					display: block;
-				}
-			</style>
-			<oc-grid id="browseGrid"></oc-grid>
+			<style>${this.scrollContainerStyles()}</style>
+			<div id="browserScrollContainer" class="browser-scroll-container">
+				<oc-grid id="browseGrid"></oc-grid>
+			</div>
 		`;
 		const grid = this.shadowRoot.getElementById("browseGrid");
 		if (!grid) {
@@ -276,6 +322,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsMobile: 2,
 			gap: "0.62rem",
 		});
+		this.bindScrollDebug();
 		for (const entity of entities) {
 			grid.appendChild(this.buildGridCell(entity));
 		}

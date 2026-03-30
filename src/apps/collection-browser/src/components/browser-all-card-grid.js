@@ -51,7 +51,9 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 
 	render() {
 		const entities = Array.isArray(this.model.entities)
-			? this.model.entities
+			? this.model.entities.filter(
+					(entity) => entity && typeof entity === "object",
+				)
 			: [];
 		if (entities.length === 0) {
 			this.shadowRoot.innerHTML = `
@@ -183,22 +185,23 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 		});
 
 		for (const entity of entities) {
+			const browseKind = String(entity.browseKind || "").trim();
 			const previewImages =
-				entity.browseKind === "item"
+				browseKind === "item"
 					? [entity.previewUrl].filter(Boolean)
 					: Array.isArray(entity.previewImages)
 						? entity.previewImages
 						: [];
 			const actionLabel =
-				entity.browseKind === "source"
+				browseKind === "source"
 					? "Browse source"
-					: entity.browseKind === "collection"
+					: browseKind === "collection"
 						? "Open collection"
 						: "Open item";
-			const isSource = entity.browseKind === "source";
+			const isSource = browseKind === "source";
 			const tagName = isSource
 				? "oc-card-collections"
-				: entity.browseKind === "collection"
+				: browseKind === "collection"
 				? "oc-card-collection"
 				: "oc-card-item";
 			const card = document.createElement(tagName);
@@ -207,7 +210,7 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 				subtitle: entity.subtitle || "",
 				countLabel:
 					entity.countLabel ||
-					(entity.browseKind ? entity.browseKind : ""),
+					(browseKind || ""),
 				previewRows: Array.isArray(entity.previewRows) ? entity.previewRows : [],
 				previewImages,
 				actionLabel,

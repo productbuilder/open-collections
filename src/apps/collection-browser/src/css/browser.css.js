@@ -41,7 +41,7 @@ export const browserStyles = `
     height: 100%;
     display: block;
     overflow: hidden;
-    padding: 1rem 0rem;
+    padding: 0;
   }
 
   .browser-host {
@@ -50,7 +50,7 @@ export const browserStyles = `
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding-right: 0.1rem;
+    padding-right: 0;
     pointer-events:none;
   }
 

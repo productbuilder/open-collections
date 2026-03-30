@@ -126,7 +126,7 @@ class OcCardItemElement extends HTMLElement {
           border: 1px solid #dbe3ec;
           border-radius: 11px;
           background: #ffffff;
-          padding: 0.6rem;
+          padding: 0.55rem;
           text-align: left;
           font: inherit;
           color: inherit;
@@ -158,15 +158,16 @@ class OcCardItemElement extends HTMLElement {
 
         .content {
           display: grid;
-          grid-template-columns: 64px minmax(0, 1fr);
-          gap: 0.55rem;
-          align-items: start;
+          grid-template-rows: auto auto 1fr auto;
+          gap: 0.42rem;
+          align-content: start;
+          min-height: 100%;
         }
 
         .preview {
-          width: 64px;
-          height: 64px;
-          border-radius: 8px;
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          border-radius: 9px;
           overflow: hidden;
           border: 1px solid #dbe3ec;
           background: #f8fafc;
@@ -190,33 +191,35 @@ class OcCardItemElement extends HTMLElement {
         .body {
           min-width: 0;
           display: grid;
-          gap: 0.2rem;
+          gap: 0.24rem;
+          align-content: start;
         }
 
         .title {
           margin: 0;
-          font-size: 0.88rem;
+          font-size: 0.86rem;
           font-weight: 700;
-          line-height: 1.25;
+          line-height: 1.3;
           color: #0f172a;
           overflow-wrap: anywhere;
         }
 
         .subtitle {
           margin: 0;
-          font-size: 0.78rem;
+          font-size: 0.76rem;
           color: #475569;
-          line-height: 1.35;
+          line-height: 1.32;
           overflow-wrap: anywhere;
         }
 
         .footer {
-          margin-top: 0.15rem;
+          margin-top: auto;
           display: flex;
           justify-content: space-between;
           gap: 0.4rem;
           align-items: center;
           min-height: 1rem;
+          padding-top: 0.08rem;
         }
 
         .count {
@@ -241,10 +244,10 @@ class OcCardItemElement extends HTMLElement {
           <span class="body">
             <span id="title" class="title">${escapeHtml(this.model.title || "Item")}</span>
             <span id="subtitle" class="subtitle">${escapeHtml(this.model.subtitle || "License not set")}</span>
-            <span class="footer">
-              <span id="count" class="count"></span>
-              <span id="actionHint" class="action-hint">Open item</span>
-            </span>
+          </span>
+          <span class="footer">
+            <span id="count" class="count"></span>
+            <span id="actionHint" class="action-hint">Open item</span>
           </span>
         </span>
       </button>

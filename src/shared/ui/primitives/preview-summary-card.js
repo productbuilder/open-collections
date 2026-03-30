@@ -109,10 +109,10 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           border: 1px solid #dbe3ec;
           border-radius: 11px;
           background: #ffffff;
-          padding: 0.62rem;
+          padding: 0.64rem;
           display: grid;
           align-content: start;
-          gap: 0.55rem;
+          gap: 0.5rem;
           text-align: left;
           font: inherit;
           color: inherit;
@@ -144,7 +144,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-strip {
           width: 100%;
-          height: 90px;
+          height: 84px;
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 0.35rem;
@@ -167,7 +167,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-placeholder {
           width: 100%;
-          height: 90px;
+          height: 84px;
           display: grid;
           place-items: center;
           border: 1px solid #dbe3ec;
@@ -175,6 +175,17 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           background: #f8fafc;
           color: #64748b;
           font-size: 0.8rem;
+        }
+
+        .header {
+          display: flex;
+          align-items: start;
+          justify-content: space-between;
+          gap: 0.55rem;
+        }
+
+        .title-group {
+          min-width: 0;
         }
 
         .title {
@@ -189,12 +200,27 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .subtitle {
           display: block;
-          margin: 0;
-          font-size: 0.81rem;
-          line-height: 1.38;
+          margin: 0.14rem 0 0;
+          font-size: 0.78rem;
+          line-height: 1.35;
           color: #475569;
-          min-height: 1.1rem;
+          min-height: 1.05rem;
           overflow-wrap: anywhere;
+        }
+
+        .arrow {
+          width: 1.75rem;
+          height: 1.75rem;
+          border-radius: 999px;
+          border: 1px solid #cbd5e1;
+          background: #ffffff;
+          color: #0f6cc6;
+          display: grid;
+          place-items: center;
+          font-size: 1rem;
+          line-height: 1;
+          font-weight: 600;
+          flex: 0 0 auto;
         }
 
         .footer {
@@ -223,9 +249,14 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
       </style>
       <button class="card ${activeClass}" id="card" type="button" aria-label="${actionLabel} ${title}"${disabledAttr}>
+        <span class="header">
+          <span class="title-group">
+            <span class="title">${title}</span>
+            <span class="subtitle">${subtitle || "&nbsp;"}</span>
+          </span>
+          <span class="arrow" aria-hidden="true">&#8594;</span>
+        </span>
         ${this.renderPreviewStrip()}
-        <span class="title">${title}</span>
-        <span class="subtitle">${subtitle || "&nbsp;"}</span>
         <span class="footer">
           <span class="count">${countLabel || "&nbsp;"}</span>
           <span class="action-hint">${actionLabel}</span>

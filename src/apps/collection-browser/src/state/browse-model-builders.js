@@ -28,8 +28,8 @@ export function buildSourceBrowseCardModels(
 	return list.map((entry) => ({
 		browseKind: "source",
 		id: String(entry.id || ""),
-		title: "Browse and collect",
-		subtitle: "Across multiple collections",
+		title: entry.label || "Source",
+		subtitle: entry.subtitle || "Browse source collections",
 		countLabel: entry.countLabel || "",
 		previewRows: Array.isArray(entry.previewRows)
 			? entry.previewRows

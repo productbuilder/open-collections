@@ -1,3 +1,5 @@
+import { renderArrowIcon } from "../../components/back-button.js";
+
 function escapeHtml(value) {
 	return String(value ?? "")
 		.replaceAll("&", "&amp;")
@@ -223,6 +225,12 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           flex: 0 0 auto;
         }
 
+        .arrow .icon {
+          width: 0.98rem;
+          height: 0.98rem;
+          fill: currentColor;
+        }
+
         .footer {
           display: flex;
           align-items: center;
@@ -254,7 +262,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
             <span class="title">${title}</span>
             <span class="subtitle">${subtitle || "&nbsp;"}</span>
           </span>
-          <span class="arrow" aria-hidden="true">&#8594;</span>
+          <span class="arrow" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
         </span>
         ${this.renderPreviewStrip()}
         <span class="footer">

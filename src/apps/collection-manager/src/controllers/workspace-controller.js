@@ -153,19 +153,13 @@ function startBackgroundRememberedSourceRehydrate(
 		return;
 	}
 
-	void (async () => {
-		for (const sourceId of eligibleSourceIds) {
-			const stillPresent = app.state.sources.some(
-				(source) => source.id === sourceId,
-			);
-			if (!stillPresent) {
-				continue;
-			}
-			await app.refreshSource(sourceId, {
-				backgroundRestore: true,
-			});
-		}
-	})();
+	const sourceIdsToRefresh = eligibleSourceIds.filter((sourceId) =>
+		app.state.sources.some((source) => source.id === sourceId),
+	);
+	if (sourceIdsToRefresh.length === 0) {
+		return;
+	}
+	void app.refreshSourcesInBackground(sourceIdsToRefresh);
 }
 
 export function currentWorkspaceSnapshot(app) {

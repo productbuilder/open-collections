@@ -105,6 +105,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         .card {
           width: 100%;
           pointer-events: auto;
+          touch-action: pan-y;
           appearance: none;
           -webkit-appearance: none;
           border: 1px solid #dbe3ec;

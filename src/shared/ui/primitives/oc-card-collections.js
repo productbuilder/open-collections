@@ -174,6 +174,7 @@ class OcCardCollectionsElement extends HTMLElement {
         .card {
           width: 100%;
           pointer-events: auto;
+          touch-action: pan-y;
           border: 1px solid #dbe3ec;
           border-radius: 16px;
           background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);

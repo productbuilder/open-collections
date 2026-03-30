@@ -124,6 +124,7 @@ class OcCardItemElement extends HTMLElement {
         .card {
           display: block;
           pointer-events: auto;
+          touch-action: pan-y;
           width: 100%;
           border: 1px solid #dbe3ec;
           border-radius: 11px;

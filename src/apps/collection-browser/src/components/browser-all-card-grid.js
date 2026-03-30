@@ -1,5 +1,6 @@
 import "../../../../shared/ui/primitives/index.js";
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
+import "./browser-source-summary-card.js";
 
 class OpenBrowserAllCardGridElement extends HTMLElement {
 	constructor() {
@@ -121,14 +122,15 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
           align-items: flex-start;
         }
 
-        .mixed-cell > open-collections-preview-summary-card {
+        .mixed-cell > open-collections-preview-summary-card,
+        .mixed-cell > open-browser-source-summary-card {
           display: block;
           height: auto;
           max-width: 100%;
           align-self: flex-start;
         }
 
-        .mixed-cell.kind-source > open-collections-preview-summary-card {
+        .mixed-cell.kind-source > open-browser-source-summary-card {
           width: min(100%, 34rem);
           height: auto;
         }
@@ -159,7 +161,7 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
             grid-row: span 1;
           }
 
-          .mixed-cell.kind-source > open-collections-preview-summary-card {
+          .mixed-cell.kind-source > open-browser-source-summary-card {
             width: min(100%, 30rem);
           }
 
@@ -185,7 +187,7 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
             background: transparent;
           }
 
-          .mixed-cell.kind-source > open-collections-preview-summary-card,
+          .mixed-cell.kind-source > open-browser-source-summary-card,
           .mixed-cell.kind-collection > open-collections-preview-summary-card,
           .mixed-cell.kind-item > open-collections-preview-summary-card {
             width: 100%;
@@ -213,8 +215,11 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 					: entity.browseKind === "collection"
 						? "Open collection"
 						: "Open item";
+			const isSource = entity.browseKind === "source";
 			const card = document.createElement(
-				"open-collections-preview-summary-card",
+				isSource
+					? "open-browser-source-summary-card"
+					: "open-collections-preview-summary-card",
 			);
 			card.update({
 				title: entity.title || "Browse entity",
@@ -222,15 +227,19 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 				countLabel:
 					entity.countLabel ||
 					(entity.browseKind ? entity.browseKind : ""),
+				previewRows: Array.isArray(entity.previewRows) ? entity.previewRows : [],
 				previewImages,
 				placeholderLabel: entity.browseKind || "Card",
 				actionLabel,
 				actionValue: entity.actionValue || entity.id || "",
 				active: entity.active === true,
 			});
-			card.addEventListener("preview-card-activate", () => {
-				this.dispatchByKind(entity);
-			});
+			card.addEventListener(
+				isSource ? "source-card-activate" : "preview-card-activate",
+				() => {
+					this.dispatchByKind(entity);
+				},
+			);
 			const wrapper = document.createElement("div");
 			const kind = String(entity?.browseKind || "item").trim() || "item";
 			wrapper.className = `mixed-cell kind-${kind}`;

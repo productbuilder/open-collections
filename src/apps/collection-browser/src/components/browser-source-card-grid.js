@@ -1,5 +1,6 @@
 import "../../../../shared/ui/primitives/index.js";
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
+import "./browser-source-summary-card.js";
 
 class OpenBrowserSourceCardGridElement extends HTMLElement {
 	constructor() {
@@ -44,6 +45,9 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 								? "Multi-collection source"
 								: "Single collection source"),
 						countLabel: source.countLabel || "",
+						previewRows: Array.isArray(source.previewRows)
+							? source.previewRows
+							: [],
 						previewImages: Array.isArray(source.previewImages)
 							? source.previewImages
 							: [],
@@ -75,24 +79,22 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 		}
 
 		for (const source of sources) {
-			const card = document.createElement(
-				"open-collections-preview-summary-card",
-			);
+			const card = document.createElement("open-browser-source-summary-card");
 			card.update({
 				title: source.title || "Source",
 				subtitle: source.subtitle || "Source",
 				countLabel: source.countLabel || "",
+				previewRows: Array.isArray(source.previewRows) ? source.previewRows : [],
 				previewImages: Array.isArray(source.previewImages)
 					? source.previewImages
 					: [],
-				placeholderLabel: "Source",
 				actionLabel: source.actionLabel || "Browse",
 				actionValue: source.actionValue || source.id || "",
 				active:
 					source.active === true ||
 					this.model.activeSourceId === source.id,
 			});
-			card.addEventListener("preview-card-activate", (event) => {
+			card.addEventListener("source-card-activate", (event) => {
 				const sourceId = String(event.detail?.value || "").trim();
 				if (!sourceId) {
 					return;

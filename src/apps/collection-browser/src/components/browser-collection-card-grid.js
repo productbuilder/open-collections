@@ -76,18 +76,23 @@ class OpenBrowserCollectionCardGridElement extends HTMLElement {
 
 		this.shadowRoot.innerHTML = `
       <style>${browserRendererStyles}</style>
-      <div class="asset-grid" id="collectionGrid"></div>
+      <open-collections-card-layout id="collectionGrid"></open-collections-card-layout>
     `;
 
 		const grid = this.shadowRoot.getElementById("collectionGrid");
 		if (!grid) {
 			return;
 		}
+		grid.update({
+			mode: "grid",
+			columnsDesktop: 6,
+			columnsTablet: 4,
+			columnsMobile: 2,
+			gap: "0.7rem",
+		});
 
 		for (const entry of collections) {
-			const card = document.createElement(
-				"open-collections-preview-summary-card",
-			);
+			const card = document.createElement("oc-card-collection");
 			card.update({
 				title: entry.title || "Collection",
 				subtitle: entry.subtitle || "Select to browse this collection.",
@@ -103,7 +108,7 @@ class OpenBrowserCollectionCardGridElement extends HTMLElement {
 					(Boolean(this.model.selectedManifestUrl) &&
 						this.model.selectedManifestUrl === entry.manifestUrl),
 			});
-			card.addEventListener("preview-card-activate", (event) => {
+			card.addEventListener("oc-card-activate", (event) => {
 				const manifestUrl = String(event.detail?.value || "").trim();
 				if (!manifestUrl) {
 					return;

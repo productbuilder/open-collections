@@ -1,6 +1,5 @@
 import "../../../../shared/ui/primitives/index.js";
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
-import "./browser-source-summary-card.js";
 
 class OpenBrowserSourceCardGridElement extends HTMLElement {
 	constructor() {
@@ -70,16 +69,23 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 
 		this.shadowRoot.innerHTML = `
       <style>${browserRendererStyles}</style>
-      <div class="asset-grid" id="sourceGrid"></div>
+      <open-collections-card-layout id="sourceGrid"></open-collections-card-layout>
     `;
 
 		const grid = this.shadowRoot.getElementById("sourceGrid");
 		if (!grid) {
 			return;
 		}
+		grid.update({
+			mode: "grid",
+			columnsDesktop: 6,
+			columnsTablet: 4,
+			columnsMobile: 2,
+			gap: "0.7rem",
+		});
 
 		for (const source of sources) {
-			const card = document.createElement("open-browser-source-summary-card");
+			const card = document.createElement("oc-card-collections");
 			card.update({
 				title: source.title || "Source",
 				subtitle: source.subtitle || "Source",
@@ -94,7 +100,7 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 					source.active === true ||
 					this.model.activeSourceId === source.id,
 			});
-			card.addEventListener("source-card-activate", (event) => {
+			card.addEventListener("oc-card-activate", (event) => {
 				const sourceId = String(event.detail?.value || "").trim();
 				if (!sourceId) {
 					return;

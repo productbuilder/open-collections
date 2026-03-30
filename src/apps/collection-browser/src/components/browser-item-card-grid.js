@@ -65,6 +65,18 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		return `<img class="thumb" src="${mediaUrl}" alt="${itemCard.title || itemCard.id}" />`;
 	}
 
+	findElementInPath(event, selector) {
+		const path = Array.isArray(event.composedPath?.())
+			? event.composedPath()
+			: [];
+		for (const node of path) {
+			if (node instanceof Element && node.matches(selector)) {
+				return node;
+			}
+		}
+		return null;
+	}
+
 	cardMarkup(itemCard) {
 		return `
       <article
@@ -82,15 +94,14 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 	}
 
 	bindDelegatedEvents() {
-		const grid = this.shadowRoot.querySelector(".asset-grid");
+		const grid = this.shadowRoot.querySelector("#itemGrid");
 		if (!grid || grid.dataset.bound === "true") {
 			return;
 		}
 
 		grid.dataset.bound = "true";
 		grid.addEventListener("click", (event) => {
-			const target = event.target instanceof Element ? event.target : null;
-			const card = target?.closest("[data-item-id]");
+			const card = this.findElementInPath(event, "[data-item-id]");
 			if (!card) {
 				return;
 			}
@@ -103,8 +114,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			if (event.key !== "Enter" && event.key !== " ") {
 				return;
 			}
-			const target = event.target instanceof Element ? event.target : null;
-			const card = target?.closest("[data-item-id]");
+			const card = this.findElementInPath(event, "[data-item-id]");
 			if (!card) {
 				return;
 			}
@@ -116,7 +126,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 	}
 
 	renderItemsInChunks(items = []) {
-		const host = this.shadowRoot.querySelector(".asset-grid");
+		const host = this.shadowRoot.querySelector("#itemGrid");
 		if (!host) {
 			return;
 		}
@@ -183,7 +193,15 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			return;
 		}
 
-		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="asset-grid"></div>`;
+		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><open-collections-card-layout id="itemGrid"></open-collections-card-layout>`;
+		const grid = this.shadowRoot.getElementById("itemGrid");
+		grid?.update({
+			mode: "grid",
+			columnsDesktop: 6,
+			columnsTablet: 4,
+			columnsMobile: 2,
+			gap: "0.7rem",
+		});
 		this.bindDelegatedEvents();
 		this.renderItemsInChunks(items);
 	}

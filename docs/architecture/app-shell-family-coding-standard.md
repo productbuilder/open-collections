@@ -71,6 +71,10 @@ Use Shadow DOM by default for app-shell family components.
 
 Use light DOM only when there is a clear requirement (for example host-level slot/layout integration that cannot be handled cleanly in shadow DOM).
 
+For a composition-focused refinement (Shadow DOM default for reusable/shared components, light DOM acceptable for unique app-level composition-heavy views), see:
+
+- `docs/architecture/app-shell-family-composition-pattern.md`
+
 ## Public component API
 
 Treat attributes, properties, and events as the component public API.

@@ -44,7 +44,7 @@ function buildFallbackRows(previewImages = []) {
 	return rows;
 }
 
-class OpenBrowserSourceSummaryCardElement extends HTMLElement {
+class OcCardCollectionsElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
@@ -77,7 +77,7 @@ class OpenBrowserSourceSummaryCardElement extends HTMLElement {
 			return;
 		}
 		this.dispatchEvent(
-			new CustomEvent("source-card-activate", {
+			new CustomEvent("oc-card-activate", {
 				detail: { value: this.model.actionValue || "" },
 				bubbles: true,
 				composed: true,
@@ -163,6 +163,7 @@ class OpenBrowserSourceSummaryCardElement extends HTMLElement {
         :host {
           display: block;
           min-height: 0;
+          pointer-events: none;
         }
 
         * {
@@ -171,6 +172,7 @@ class OpenBrowserSourceSummaryCardElement extends HTMLElement {
 
         .card {
           width: 100%;
+          pointer-events: auto;
           border: 1px solid #dbe3ec;
           border-radius: 16px;
           background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
@@ -347,11 +349,11 @@ class OpenBrowserSourceSummaryCardElement extends HTMLElement {
             <p class="title">${title}</p>
             <p class="subtitle">${subtitle || "&nbsp;"}</p>
           </div>
-          <span class="arrow" aria-hidden="true">→</span>
+          <span class="arrow" aria-hidden="true">&rarr;</span>
         </div>
         ${this.renderRows()}
         <div class="footer">
-          <p class="meta">${countLabel ? '<span class="meta-icon" aria-hidden="true">◉</span>' : ""}${countLabel || "&nbsp;"}</p>
+          <p class="meta">${countLabel ? '<span class="meta-icon" aria-hidden="true">&#9679;</span>' : ""}${countLabel || "&nbsp;"}</p>
           <p class="action">${actionLabel}</p>
         </div>
       </article>
@@ -359,11 +361,8 @@ class OpenBrowserSourceSummaryCardElement extends HTMLElement {
 	}
 }
 
-if (!customElements.get("open-browser-source-summary-card")) {
-	customElements.define(
-		"open-browser-source-summary-card",
-		OpenBrowserSourceSummaryCardElement,
-	);
+if (!customElements.get("oc-card-collections")) {
+	customElements.define("oc-card-collections", OcCardCollectionsElement);
 }
 
-export { OpenBrowserSourceSummaryCardElement };
+export { OcCardCollectionsElement };

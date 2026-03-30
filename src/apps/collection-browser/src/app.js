@@ -1117,9 +1117,7 @@ class TimemapBrowserElement extends ComponentBase {
 				)
 			: null;
 		const subtitle = focusedCollection
-			? showBackInViewport
-				? `${items.length} item${items.length === 1 ? "" : "s"} in ${focusedCollection.label}. Use Back to collections to return.`
-				: `${items.length} item${items.length === 1 ? "" : "s"} in ${focusedCollection.label}.`
+			? `${items.length} item${items.length === 1 ? "" : "s"}`
 			: this.isEmbeddedRuntime()
 				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections.`
 				: items.length > 0

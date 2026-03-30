@@ -18,6 +18,27 @@ function derivePreviewImages(items = [], max = 3) {
 	return previews;
 }
 
+function cleanShortText(value, maxLength = 110) {
+	const text = String(value || "").replace(/\s+/g, " ").trim();
+	if (!text) {
+		return "";
+	}
+	return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+function deriveItemSubtitle(item) {
+	const directSubtitle = cleanShortText(item?.subtitle || item?.subTitle || "");
+	if (directSubtitle) {
+		return directSubtitle;
+	}
+	const description = cleanShortText(item?.description || "", 140);
+	if (description) {
+		return description;
+	}
+	const date = cleanShortText(item?.date || item?.created || item?.year || "", 60);
+	return date || "";
+}
+
 export function buildSourceBrowseCardModels(
 	sourceEntries = [],
 	{ activeSourceId = "", useActiveState = false } = {},
@@ -89,9 +110,7 @@ export function buildItemBrowseCardModels(
 			browseKind: "item",
 			id: resolvedId,
 			title: item?.title || resolvedId,
-			subtitle: item?.license
-				? `License: ${item.license}`
-				: "License not set",
+			subtitle: deriveItemSubtitle(item),
 			previewUrl,
 			mediaType,
 			actionValue: resolvedId,

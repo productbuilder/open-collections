@@ -17,7 +17,7 @@ class OcCardItemElement extends HTMLElement {
 			countLabel: "",
 			previewImages: [],
 			previewUrl: "",
-			actionLabel: "Open item",
+			actionLabel: "",
 			actionValue: "",
 			active: false,
 			disabled: false,
@@ -73,23 +73,26 @@ class OcCardItemElement extends HTMLElement {
 		const count = this.shadowRoot?.getElementById("count");
 		const image = this.shadowRoot?.getElementById("previewImage");
 		const placeholder = this.shadowRoot?.getElementById("previewPlaceholder");
-		const action = this.shadowRoot?.getElementById("actionHint");
-		if (!card || !title || !subtitle || !count || !image || !placeholder || !action) {
+		if (!card || !title || !subtitle || !count || !image || !placeholder) {
 			return;
 		}
 
 		const previews = this.resolvePreviewImages();
 		const previewUrl = previews[0] || "";
+		const subtitleText = String(this.model.subtitle || "").trim();
+		const actionText = String(this.model.actionLabel || "").trim();
 
 		title.textContent = this.model.title || "Item";
-		subtitle.textContent = this.model.subtitle || "License not set";
+		subtitle.textContent = subtitleText;
+		subtitle.hidden = !subtitleText;
 		count.textContent = this.model.countLabel || "";
-		action.textContent = this.model.actionLabel || "Open item";
 		card.classList.toggle("is-active", this.model.active === true);
 		card.toggleAttribute("disabled", this.model.disabled === true);
 		card.setAttribute(
 			"aria-label",
-			`${this.model.actionLabel || "Open item"} ${this.model.title || "Item"}`,
+			actionText
+				? `${actionText} ${this.model.title || "Item"}`
+				: `${this.model.title || "Item"}`,
 		);
 
 		if (previewUrl) {
@@ -202,6 +205,10 @@ class OcCardItemElement extends HTMLElement {
           line-height: 1.3;
           color: #0f172a;
           overflow-wrap: anywhere;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         .subtitle {
@@ -210,12 +217,16 @@ class OcCardItemElement extends HTMLElement {
           color: #475569;
           line-height: 1.32;
           overflow-wrap: anywhere;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         .footer {
           margin-top: auto;
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 0.4rem;
           align-items: center;
           min-height: 1rem;
@@ -228,12 +239,6 @@ class OcCardItemElement extends HTMLElement {
           font-weight: 600;
         }
 
-        .action-hint {
-          font-size: 0.72rem;
-          color: #64748b;
-          font-weight: 600;
-          white-space: nowrap;
-        }
       </style>
       <button id="card" class="card" type="button">
         <span class="content">
@@ -247,7 +252,6 @@ class OcCardItemElement extends HTMLElement {
           </span>
           <span class="footer">
             <span id="count" class="count"></span>
-            <span id="actionHint" class="action-hint">Open item</span>
           </span>
         </span>
       </button>

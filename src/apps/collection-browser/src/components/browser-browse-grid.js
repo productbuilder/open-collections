@@ -209,7 +209,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsDesktop: 6,
 			columnsTablet: 4,
 			columnsMobile: 2,
-			gap: "0.7rem",
+			gap: "0.62rem",
 		});
 	}
 
@@ -274,7 +274,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsDesktop: 6,
 			columnsTablet: 4,
 			columnsMobile: 2,
-			gap: "0.7rem",
+			gap: "0.62rem",
 		});
 		for (const entity of entities) {
 			grid.appendChild(this.buildGridCell(entity));

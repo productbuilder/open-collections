@@ -92,7 +92,6 @@ class OcCardCollectionsElement extends HTMLElement {
 		if (!card || this._boundCard === card) {
 			return;
 		}
-		card.addEventListener("click", () => this.dispatchActivate());
 		card.addEventListener("keydown", (event) => {
 			if (event.key !== "Enter" && event.key !== " ") {
 				return;

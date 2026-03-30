@@ -131,6 +131,29 @@ Design app-shell family components so apps can run in both:
 
 Keep host/runtime seams explicit and avoid hard-coding one host context.
 
+## Shell/session lifecycle rule
+
+Within one active `app-shell` session, section switching should behave like SPA navigation, not full app teardown/restart.
+
+- Prefer keeping embedded sub-app instances mounted during normal section switching.
+- For intra-session navigation, hide/show section hosts instead of unmounting/remounting sub-app roots by default.
+- Preserve in-memory workflow state and live session state unless an explicit reset/reload is requested.
+- Keep business logic ownership inside each app; shell lifecycle orchestration must not absorb app domain behavior.
+
+Unmount/remount is still valid for explicit session boundary changes (for example full shell teardown, hard reload, or host-directed reset).
+
+## Performance + lazy-loading rule
+
+Performance is a core architectural requirement for this app family, not optional polish.
+
+- Assume large local/remote datasets (many collections, items, files, connected sources).
+- Prefer incremental loading over eager full hydration.
+- Load and render only what the current view needs; defer non-visible or non-critical work.
+- Keep memory bounded across long-running sessions; avoid unbounded retention of list/detail payloads.
+- Use local loading states for async surfaces (panel/section-level), not only global blocking states.
+- Prefer skeletons or local loading affordances over blank surfaces when that improves continuity.
+- Virtualization/windowing is allowed where justified by measured list size/render cost, but avoid heavyweight abstractions before they are needed.
+
 ## Reuse rule
 
 When reuse is needed across apps, prefer extracting/reusing a component (or low-level shared primitive) over duplicating markup logic.

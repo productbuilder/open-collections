@@ -161,6 +161,22 @@ Host
 
 The Manager updates JSON manifests and media assets directly in host storage.
 
+## Terminology and filename guidance
+
+To avoid connection/collection ambiguity:
+
+- Use **host** for the storage location/root (repo, bucket, folder, CMS location).
+- Use **source** for the app entry point path/URL within a host.
+- Use **connection** for the saved app/runtime link to a source (with config/credentials as needed).
+- Use **collection** for the curated content unit represented by a `collection.json` manifest.
+
+Protocol filenames remain:
+
+- `collections.json` = multi-collection root/index manifest.
+- `collection.json` = single collection manifest.
+
+Do not introduce `connection.json` as a storage protocol manifest in this phase.
+
 ## Summary
 
 Collections are files, not database records.

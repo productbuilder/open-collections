@@ -66,9 +66,6 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
         <div class="thumb-frame">${this.previewMarkup(item)}</div>
         <h3 class="card-title">${item.title || item.id}</h3>
         <p class="meta">${item.license ? `License: ${item.license}` : "License not set"}</p>
-        <div class="card-actions">
-          <button type="button" class="btn" data-view-id="${item.id}">View</button>
-        </div>
       </article>
     `;
 	}
@@ -82,19 +79,11 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		grid.dataset.bound = "true";
 		grid.addEventListener("click", (event) => {
 			const target = event.target instanceof Element ? event.target : null;
-			const viewButton = target?.closest("[data-view-id]");
-			if (viewButton) {
-				event.stopPropagation();
-				this.dispatch("item-view", {
-					itemId: viewButton.getAttribute("data-view-id") || "",
-				});
-				return;
-			}
 			const card = target?.closest("[data-item-id]");
 			if (!card) {
 				return;
 			}
-			this.dispatch("item-select", {
+			this.dispatch("item-open", {
 				itemId: card.getAttribute("data-item-id") || "",
 			});
 		});
@@ -109,7 +98,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 				return;
 			}
 			event.preventDefault();
-			this.dispatch("item-select", {
+			this.dispatch("item-open", {
 				itemId: card.getAttribute("data-item-id") || "",
 			});
 		});

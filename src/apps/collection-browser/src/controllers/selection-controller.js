@@ -6,16 +6,22 @@ export function isMobileViewport() {
 }
 
 export function findSelectedItem(app) {
+	const items = Array.isArray(app.getCurrentItems?.())
+		? app.getCurrentItems()
+		: app.state.collection?.items || [];
 	return (
-		(app.state.collection?.items || []).find(
+		items.find(
 			(item) => item.id === app.state.selectedItemId,
 		) || null
 	);
 }
 
 export function findViewerItem(app) {
+	const items = Array.isArray(app.getCurrentItems?.())
+		? app.getCurrentItems()
+		: app.state.collection?.items || [];
 	return (
-		(app.state.collection?.items || []).find(
+		items.find(
 			(item) => item.id === app.state.viewerItemId,
 		) || null
 	);
@@ -36,7 +42,10 @@ export function selectItem(app, itemId) {
 }
 
 export function openViewer(app, itemId) {
-	const item = (app.state.collection?.items || []).find(
+	const items = Array.isArray(app.getCurrentItems?.())
+		? app.getCurrentItems()
+		: app.state.collection?.items || [];
+	const item = items.find(
 		(entry) => entry.id === itemId,
 	);
 	if (!item) {

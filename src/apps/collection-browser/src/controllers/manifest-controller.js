@@ -7,6 +7,8 @@ import {
 const RECENT_MANIFEST_STORAGE_KEY =
 	"open-collections-browser:recent-manifest-urls:v1";
 const MAX_RECENT_MANIFEST_URLS = 8;
+const EMBEDDED_SOURCE_TYPE_COLLECTION = "collection.json";
+const EMBEDDED_SOURCE_TYPE_COLLECTIONS = "collections.json";
 
 export function readRecentManifestUrls() {
 	try {
@@ -124,4 +126,127 @@ export async function hydrateRecentManifestUrls(app) {
 		return;
 	}
 	app.state.recentManifestUrls = hydrated;
+}
+
+function normalizeEmbeddedSourceType(value) {
+	const sourceType = String(value || "").trim().toLowerCase();
+	return sourceType === EMBEDDED_SOURCE_TYPE_COLLECTIONS
+		? EMBEDDED_SOURCE_TYPE_COLLECTIONS
+		: EMBEDDED_SOURCE_TYPE_COLLECTION;
+}
+
+function normalizeEmbeddedSourceUrl(value) {
+	return String(value || "").trim();
+}
+
+export function normalizeEmbeddedSourceCatalog(entries = []) {
+	if (!Array.isArray(entries)) {
+		return [];
+	}
+
+	const normalized = [];
+	for (let index = 0; index < entries.length; index += 1) {
+		const entry = entries[index];
+		if (!entry || typeof entry !== "object") {
+			continue;
+		}
+		const sourceUrl = normalizeEmbeddedSourceUrl(entry.sourceUrl || entry.url);
+		if (!sourceUrl) {
+			continue;
+		}
+		const id = String(entry.id || `source-${index + 1}`).trim();
+		const sourceType = normalizeEmbeddedSourceType(entry.sourceType || entry.type);
+		const label = String(
+			entry.label ||
+				entry.title ||
+				(sourceType === EMBEDDED_SOURCE_TYPE_COLLECTIONS
+					? "Collections source"
+					: "Collection source"),
+		).trim();
+		normalized.push({
+			id: id || `source-${index + 1}`,
+			label: label || `Source ${index + 1}`,
+			sourceType,
+			sourceUrl,
+		});
+	}
+	return normalized;
+}
+
+function parseCollectionsIndexEntries(payload, baseUrl) {
+	const collectionEntries = Array.isArray(payload?.collections)
+		? payload.collections
+		: [];
+	const parsed = [];
+	for (let index = 0; index < collectionEntries.length; index += 1) {
+		const entry = collectionEntries[index];
+		if (!entry || typeof entry !== "object") {
+			continue;
+		}
+		const manifestPath = String(entry.manifest || entry.url || "").trim();
+		if (!manifestPath) {
+			continue;
+		}
+		const manifestUrl = new URL(manifestPath, baseUrl).href;
+		const id = String(entry.id || `collection-${index + 1}`).trim();
+		const label = String(
+			entry.title || entry.label || entry.id || `Collection ${index + 1}`,
+		).trim();
+		const description = String(entry.description || "").trim();
+		parsed.push({
+			id: id || `collection-${index + 1}`,
+			label: label || `Collection ${index + 1}`,
+			description,
+			manifestUrl,
+		});
+	}
+	return parsed;
+}
+
+export async function resolveEmbeddedSourceDescriptor(source) {
+	if (!source || typeof source !== "object") {
+		throw new Error("Embedded source entry is invalid.");
+	}
+
+	const sourceType = normalizeEmbeddedSourceType(source.sourceType);
+	const sourceUrl = normalizeEmbeddedSourceUrl(source.sourceUrl);
+	if (!sourceUrl) {
+		throw new Error("Embedded source entry is missing sourceUrl.");
+	}
+	const sourceCatalogUrl = new URL(sourceUrl, window.location.href);
+
+	if (sourceType === EMBEDDED_SOURCE_TYPE_COLLECTION) {
+		return {
+			sourceType,
+			sourceUrl: sourceCatalogUrl.href,
+			manifestUrl: sourceCatalogUrl.href,
+			collections: [],
+		};
+	}
+
+	const response = await fetch(sourceCatalogUrl.href);
+	if (!response.ok) {
+		throw new Error(`Could not load source catalog (${response.status}).`);
+	}
+
+	const json = await response.json();
+	const collections = parseCollectionsIndexEntries(json, sourceCatalogUrl);
+	if (!collections.length) {
+		throw new Error("Source catalog does not contain a collection manifest.");
+	}
+
+	return {
+		sourceType,
+		sourceUrl: sourceCatalogUrl.href,
+		manifestUrl: "",
+		collections,
+	};
+}
+
+export async function resolveCatalogSourceManifestUrl(source) {
+	const descriptor = await resolveEmbeddedSourceDescriptor(source);
+	if (descriptor.sourceType === EMBEDDED_SOURCE_TYPE_COLLECTION) {
+		return descriptor.manifestUrl;
+	}
+	return descriptor.collections[0]?.manifestUrl || "";
 }

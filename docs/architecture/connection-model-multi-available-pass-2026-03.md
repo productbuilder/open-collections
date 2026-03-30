@@ -20,6 +20,23 @@ It preserves existing direction already established in the repo:
 - Standalone and embedded behavior both remain supported.
 - Migration should be incremental and low-risk.
 
+## Terminology alignment for this pass
+
+This pass keeps a strict layer split:
+
+- **Host**: underlying storage/root location.
+- **Source**: app entry point in that host (`collections.json` or `collection.json`).
+- **Connection**: saved runtime/app link to a host/source.
+- **Collection**: actual curated content unit.
+
+Naming and protocol stance for this pass:
+
+- Keep `collections.json` as multi-collection index/root manifest.
+- Keep `collection.json` as single collection manifest.
+- Do not introduce `connection.json` as a protocol filename.
+- Keep Browser/Manager able to consume sources resolving to either protocol file.
+- Keep collection-level `connectionId` seam as the assignment/runtime bridge; no broad code rename sweep in this pass.
+
 ---
 
 ## Shift in model (framing)

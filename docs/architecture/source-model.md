@@ -15,6 +15,17 @@ The Manager can start from different entry points, depending on which source URL
 
 ## Core Concepts
 
+### Terminology guardrails (host/source/connection/collection)
+
+Use these terms as separate layers:
+
+- **Host**: storage location/root/provider-backed location (folder, repo, bucket, CMS root).
+- **Source**: app-consumable entry point within a host; resolves to either `collections.json` or `collection.json`.
+- **Connection**: saved app/runtime link to a host/source (for example saved credentials/config and reconnectable link).
+- **Collection**: curated content unit described by a collection manifest.
+
+Important: a connection is runtime/app state, not a protocol manifest file.
+
 ### Host
 
 A **Host** is the storage location where collections live.
@@ -65,6 +76,8 @@ A source can point to either:
 `collections.json`  
 or  
 `collection.json`
+
+In runtime terms, a saved connection usually targets a host + source entry point.
 
 The Manager loads a source first, then navigates from there.
 
@@ -136,6 +149,13 @@ Flow:
 -> Items view
 
 This makes `collection.json` a single-collection entry point.
+
+### Protocol filename stance (current)
+
+- Keep `collections.json` as the multi-collection root/index manifest filename.
+- Keep `collection.json` as the single-collection manifest filename.
+- Do not introduce `connection.json` as a protocol filename in this phase.
+- Browser and Manager should be able to consume sources that resolve to either `collections.json` or `collection.json`.
 
 ### Collections
 

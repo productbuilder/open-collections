@@ -8,8 +8,10 @@ import {
 	announceManifestUrl,
 	clearRecentManifestUrls,
 	hydrateRecentManifestUrls,
+	normalizeEmbeddedSourceCatalog,
 	readRecentManifestUrls,
 	rememberRecentManifestUrl,
+	resolveEmbeddedSourceDescriptor,
 	resolveStartupManifestUrl,
 } from "./controllers/manifest-controller.js";
 import {
@@ -33,6 +35,13 @@ class TimemapBrowserElement extends ComponentBase {
 			manifestUrlInput: "",
 			currentManifestUrl: "",
 			recentManifestUrls: readRecentManifestUrls(),
+			embeddedSources: [],
+			activeEmbeddedSourceId: "",
+			sourceType: "collection.json",
+			viewMode: "items",
+			collectionsIndex: [],
+			sourceItems: [],
+			selectedCollectionManifestUrl: "",
 			selectedItemId: null,
 			viewerItemId: null,
 			mobileMetadataOpen: false,
@@ -41,18 +50,24 @@ class TimemapBrowserElement extends ComponentBase {
 			isLoadingCollection: false,
 		};
 		this.shadow = this.attachShadow({ mode: "open" });
-		this.renderShell();
-		this.cacheDom();
 	}
 
 	connectedCallback() {
+		this.renderShell();
+		this.cacheDom();
+		this._eventsBound = false;
 		this.bindEvents();
 		this.setStatus(this.state.statusText, this.state.statusTone);
 		this.renderHeader();
 		this.renderManifestControls();
+		this.renderEmbeddedSourceControls();
 		this.renderViewport();
 		this.renderMetadata();
 		this.syncMetadataPanelVisibility();
+		if (this.isEmbeddedRuntime()) {
+			void this.initializeEmbeddedSources();
+			return;
+		}
 		void this.hydrateRecentStateAndInitialize();
 	}
 
@@ -67,6 +82,7 @@ class TimemapBrowserElement extends ComponentBase {
 			window.removeEventListener("resize", this._handleWindowResize);
 			this._handleWindowResize = null;
 		}
+		this._eventsBound = false;
 	}
 
 	bindEvents() {
@@ -77,7 +93,336 @@ class TimemapBrowserElement extends ComponentBase {
 		this.dom = cacheDomElements(this.shadow);
 	}
 
+	isEmbeddedRuntime() {
+		return (
+			this.hasAttribute("data-workbench-embed") ||
+			this.hasAttribute("data-shell-embed") ||
+			this.getAttribute("data-oc-app-mode") === "embedded"
+		);
+	}
+
+	renderEmbeddedSourceControls() {
+		const select = this.dom?.embeddedSourceSelect;
+		const collectionsBtn = this.dom?.embeddedViewCollectionsBtn;
+		const itemsBtn = this.dom?.embeddedViewItemsBtn;
+		const backBtn = this.dom?.embeddedBackToCollectionsBtn;
+		if (!select && !collectionsBtn && !itemsBtn && !backBtn) {
+			return;
+		}
+
+		const sources = Array.isArray(this.state.embeddedSources)
+			? this.state.embeddedSources
+			: [];
+		if (select) {
+			select.innerHTML = "";
+			for (const source of sources) {
+				const option = document.createElement("option");
+				option.value = source.id;
+				option.textContent = source.label;
+				select.appendChild(option);
+			}
+		}
+
+		if (!this.state.activeEmbeddedSourceId && sources[0]?.id) {
+			this.state.activeEmbeddedSourceId = sources[0].id;
+		}
+		if (select) {
+			select.value = this.state.activeEmbeddedSourceId || "";
+			select.disabled =
+				this.state.isLoadingCollection || sources.length <= 1;
+		}
+
+		const sourceType = this.state.sourceType || "collection.json";
+		const canUseCollections = sourceType === "collections.json";
+		const canUseItems =
+			sourceType === "collection.json" ||
+			sourceType === "collections.json";
+		if (collectionsBtn) {
+			collectionsBtn.disabled =
+				this.state.isLoadingCollection || !canUseCollections;
+			collectionsBtn.dataset.active =
+				this.state.viewMode === "collections" ? "true" : "false";
+		}
+		if (itemsBtn) {
+			itemsBtn.disabled = this.state.isLoadingCollection || !canUseItems;
+			itemsBtn.dataset.active =
+				this.state.viewMode === "items" ? "true" : "false";
+		}
+		if (backBtn) {
+			const showBack =
+				this.state.sourceType === "collections.json" &&
+				this.state.viewMode === "items" &&
+				Boolean(this.state.selectedCollectionManifestUrl);
+			backBtn.hidden = !showBack;
+			backBtn.disabled = this.state.isLoadingCollection;
+		}
+	}
+
+	setEmbeddedViewMode(mode) {
+		if (!this.isEmbeddedRuntime()) {
+			return;
+		}
+		const nextMode = mode === "collections" ? "collections" : "items";
+		if (
+			nextMode === "collections" &&
+			this.state.sourceType !== "collections.json"
+		) {
+			return;
+		}
+		this.state.viewMode = nextMode;
+		if (
+			nextMode === "collections" &&
+			this.state.sourceType === "collections.json"
+		) {
+			this.state.selectedItemId = null;
+		}
+		this.renderEmbeddedSourceControls();
+		this.renderViewport();
+		this.renderMetadata();
+	}
+
+	async openEmbeddedCollectionFromIndex(manifestUrl) {
+		if (!this.isEmbeddedRuntime()) {
+			return;
+		}
+		const resolvedManifestUrl = String(manifestUrl || "").trim();
+		if (!resolvedManifestUrl) {
+			return;
+		}
+
+		this.state.selectedCollectionManifestUrl = resolvedManifestUrl;
+		this.state.viewMode = "items";
+		const focusedCollection = this.state.collectionsIndex.find(
+			(entry) => entry.manifestUrl === resolvedManifestUrl,
+		);
+		if (focusedCollection?.collection) {
+			this.state.collection = focusedCollection.collection;
+			this.state.currentManifestUrl = resolvedManifestUrl;
+			this.state.selectedItemId =
+				focusedCollection.collection.items?.[0]?.id || null;
+			this.state.viewerItemId = null;
+			this.state.mobileMetadataOpen = false;
+			this.setStatus(
+				`Focused collection ${focusedCollection.label}.`,
+				"ok",
+			);
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
+			this.renderMetadata();
+			this.renderViewer();
+			this.syncMetadataPanelVisibility();
+			return;
+		}
+		this.renderEmbeddedSourceControls();
+		this.setManifestInput(resolvedManifestUrl);
+		await this.loadCollection({
+			manifestUrl: resolvedManifestUrl,
+			announceInput: false,
+		});
+	}
+
+	backToCollectionsView() {
+		if (
+			!this.isEmbeddedRuntime() ||
+			this.state.sourceType !== "collections.json"
+		) {
+			return;
+		}
+		this.state.selectedCollectionManifestUrl = "";
+		this.state.viewMode = "collections";
+		this.state.selectedItemId = null;
+		this.state.viewerItemId = null;
+		this.closeViewer();
+		this.renderEmbeddedSourceControls();
+		this.renderViewport();
+		this.renderMetadata();
+	}
+
+	async loadCollectionManifest(manifestUrl) {
+		const response = await fetch(manifestUrl);
+		if (!response.ok) {
+			throw new Error(`Could not load manifest (${response.status}).`);
+		}
+		const json = await response.json();
+		return normalizeCollection(json);
+	}
+
+	async hydrateCollectionsForSource(collections = []) {
+		const entries = Array.isArray(collections) ? collections : [];
+		const resolved = await Promise.all(
+			entries.map(async (entry) => {
+				const collection = await this.loadCollectionManifest(
+					entry.manifestUrl,
+				);
+				return {
+					...entry,
+					collection,
+				};
+			}),
+		);
+
+		const sourceItems = [];
+		for (const entry of resolved) {
+			const collectionItems = Array.isArray(entry.collection?.items)
+				? entry.collection.items
+				: [];
+			for (let index = 0; index < collectionItems.length; index += 1) {
+				const item = collectionItems[index];
+				sourceItems.push({
+					...item,
+					id: `${entry.id}::${item.id || `item-${index + 1}`}`,
+					sourceCollectionId: entry.id,
+					sourceCollectionTitle:
+						entry.collection?.title || entry.label || "",
+					sourceCollectionManifestUrl: entry.manifestUrl,
+				});
+			}
+		}
+
+		return {
+			collectionsIndex: resolved,
+			sourceItems,
+		};
+	}
+
+	getCurrentItems() {
+		if (
+			this.isEmbeddedRuntime() &&
+			this.state.sourceType === "collections.json"
+		) {
+			if (this.state.selectedCollectionManifestUrl) {
+				const focusedCollection = this.state.collectionsIndex.find(
+					(entry) =>
+						entry.manifestUrl ===
+						this.state.selectedCollectionManifestUrl,
+				);
+				return focusedCollection?.collection?.items || [];
+			}
+			return Array.isArray(this.state.sourceItems)
+				? this.state.sourceItems
+				: [];
+		}
+		return this.state.collection?.items || [];
+	}
+
+	openItemFromCard(itemId) {
+		if (!itemId) {
+			return;
+		}
+		this.selectItem(itemId);
+		this.openViewer(itemId);
+	}
+
+	openMetadataFromViewer() {
+		const itemId = this.state.viewerItemId;
+		if (!itemId) {
+			return;
+		}
+		this.selectItem(itemId);
+		if (this.isMobileViewport()) {
+			this.openMobileMetadataPanel();
+		} else {
+			this.dom.browserViewport?.setDesktopInspectorOpen?.(true);
+		}
+		this.closeViewer();
+	}
+
+	async initializeEmbeddedSources() {
+		const configuredSources = normalizeEmbeddedSourceCatalog(
+			BROWSER_CONFIG.embeddedSourceCatalog,
+		);
+		this.state.embeddedSources = configuredSources;
+
+		if (!configuredSources.length) {
+			this.setStatus("No embedded browser sources configured.", "warn");
+			this.renderEmbeddedSourceControls();
+			return;
+		}
+
+		this.state.activeEmbeddedSourceId =
+			this.state.activeEmbeddedSourceId || configuredSources[0].id;
+		this.renderEmbeddedSourceControls();
+		await this.loadEmbeddedSourceById(this.state.activeEmbeddedSourceId);
+	}
+
+	async loadEmbeddedSourceById(sourceId) {
+		if (!this.isEmbeddedRuntime()) {
+			return;
+		}
+
+		const source = this.state.embeddedSources.find(
+			(entry) => entry.id === sourceId,
+		);
+		if (!source) {
+			this.setStatus("Selected source is not available.", "warn");
+			return;
+		}
+
+		this.state.activeEmbeddedSourceId = source.id;
+		this.renderEmbeddedSourceControls();
+		try {
+			const descriptor = await resolveEmbeddedSourceDescriptor(source);
+			this.state.sourceType = descriptor.sourceType;
+			this.state.collectionsIndex = [];
+			this.state.sourceItems = [];
+			this.state.collection = null;
+			this.state.selectedItemId = null;
+			this.state.viewerItemId = null;
+			this.state.mobileMetadataOpen = false;
+
+			if (descriptor.sourceType === "collections.json") {
+				const hydrated = await this.hydrateCollectionsForSource(
+					descriptor.collections,
+				);
+				this.state.collectionsIndex = hydrated.collectionsIndex;
+				this.state.sourceItems = hydrated.sourceItems;
+				this.state.currentManifestUrl = descriptor.sourceUrl || "";
+				this.state.selectedCollectionManifestUrl = "";
+				this.state.viewMode = "collections";
+				this.setStatus(
+					`Loaded ${this.state.collectionsIndex.length} collections with ${this.state.sourceItems.length} total items.`,
+					"ok",
+				);
+				this.renderEmbeddedSourceControls();
+				this.renderViewport();
+				this.renderMetadata();
+				this.renderViewer();
+				this.syncMetadataPanelVisibility();
+				return;
+			}
+
+			this.state.selectedCollectionManifestUrl = descriptor.manifestUrl;
+			this.state.sourceItems = [];
+			this.state.viewMode = "items";
+			this.setManifestInput(descriptor.manifestUrl);
+			await this.loadCollection({
+				manifestUrl: descriptor.manifestUrl,
+				announceInput: false,
+			});
+		} catch (error) {
+			this.setStatus(`Source load failed: ${error.message}`, "warn");
+		}
+	}
+
 	renderShell() {
+		const isEmbedded = this.isEmbeddedRuntime();
+		const toolbarTemplate = isEmbedded
+			? `
+            <div class="embedded-source-controls" slot="toolbar">
+              <label class="embedded-source-label" for="embeddedSourceSelect">Source</label>
+              <select id="embeddedSourceSelect" class="embedded-source-select" aria-label="Select source"></select>
+            </div>
+            <div class="embedded-view-toggle" slot="toolbar">
+              <span class="embedded-view-label">View</span>
+              <div class="embedded-view-buttons" role="group" aria-label="Browser view mode">
+                <button id="embeddedViewCollectionsBtn" class="embedded-view-btn" type="button">Collections</button>
+                <button id="embeddedViewItemsBtn" class="embedded-view-btn" type="button">Items</button>
+              </div>
+              <button id="embeddedBackToCollectionsBtn" class="embedded-back-btn" type="button" hidden>Back to collections</button>
+            </div>
+          `
+			: `<open-browser-manifest-controls id="manifestControls" slot="toolbar"></open-browser-manifest-controls>`;
+
 		this.shadow.innerHTML = `
       <style>
         :host {
@@ -207,6 +552,89 @@ class TimemapBrowserElement extends ComponentBase {
           grid-template-rows: minmax(0, 1fr);
         }
 
+        .embedded-source-controls {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        .embedded-view-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          min-width: 0;
+        }
+
+        .embedded-source-label {
+          font-size: 0.78rem;
+          color: #475569;
+          font-weight: 700;
+        }
+
+        .embedded-view-label {
+          font-size: 0.78rem;
+          color: #475569;
+          font-weight: 700;
+        }
+
+        .embedded-source-select {
+          border: 1px solid #cbd5e1;
+          background: #ffffff;
+          color: #0f172a;
+          border-radius: 8px;
+          padding: 0.42rem 0.65rem;
+          font: inherit;
+          font-size: 0.83rem;
+          max-width: min(100%, 24rem);
+          min-width: 12rem;
+          cursor: pointer;
+        }
+
+        .embedded-view-buttons {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+        }
+
+        .embedded-view-btn {
+          border: 0;
+          border-right: 1px solid #cbd5e1;
+          background: #ffffff;
+          color: #0f172a;
+          padding: 0.38rem 0.7rem;
+          font: inherit;
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .embedded-view-btn:last-child {
+          border-right: 0;
+        }
+
+        .embedded-view-btn[data-active="true"] {
+          background: #e8f2ff;
+          color: #0f4f90;
+        }
+
+        .embedded-back-btn {
+          border: 1px solid #cbd5e1;
+          background: #ffffff;
+          color: #0f172a;
+          border-radius: 8px;
+          padding: 0.38rem 0.65rem;
+          font: inherit;
+          font-size: 0.79rem;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
         :host([data-workbench-embed]) .app-shell,
         :host([data-shell-embed]) .app-shell,
         :host([data-oc-app-mode="embedded"]) .app-shell {
@@ -220,6 +648,12 @@ class TimemapBrowserElement extends ComponentBase {
         :host([data-shell-embed]) .shell,
         :host([data-oc-app-mode="embedded"]) .shell {
           min-height: 0;
+        }
+
+        :host([data-workbench-embed]) .browser-header,
+        :host([data-shell-embed]) .browser-header,
+        :host([data-oc-app-mode="embedded"]) .browser-header {
+          display: none;
         }
 
         @media (max-width: 760px) {
@@ -264,6 +698,34 @@ class TimemapBrowserElement extends ComponentBase {
           .shell {
             padding: 0.75rem;
           }
+
+          .embedded-source-controls {
+            width: 100%;
+          }
+
+          .embedded-view-toggle {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+          }
+
+          .embedded-source-select {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+          }
+
+          .embedded-view-buttons {
+            flex: 1 1 auto;
+          }
+
+          .embedded-view-btn {
+            flex: 1 1 auto;
+          }
+
+          .embedded-back-btn {
+            width: 100%;
+          }
         }
       </style>
       <div class="app-shell">
@@ -280,7 +742,7 @@ class TimemapBrowserElement extends ComponentBase {
         </header>
         <div class="shell">
           <open-browser-collection-browser id="browserViewport">
-            <open-browser-manifest-controls id="manifestControls" slot="toolbar"></open-browser-manifest-controls>
+            ${toolbarTemplate}
             <open-browser-metadata-panel id="metadataPanel" slot="inspector"></open-browser-metadata-panel>
           </open-browser-collection-browser>
           <open-browser-viewer-dialog id="viewerDialog"></open-browser-viewer-dialog>
@@ -307,6 +769,7 @@ class TimemapBrowserElement extends ComponentBase {
 	setManifestInput(manifestUrl) {
 		this.state.manifestUrlInput = String(manifestUrl || "").trim();
 		this.renderManifestControls();
+		this.renderEmbeddedSourceControls();
 	}
 
 	setStatus(text, tone = "neutral") {
@@ -314,6 +777,7 @@ class TimemapBrowserElement extends ComponentBase {
 		this.state.statusTone = tone;
 		this.renderHeader();
 		this.renderManifestControls();
+		this.renderEmbeddedSourceControls();
 	}
 
 	isMobileViewport() {
@@ -347,13 +811,55 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	viewportModel() {
-		const items = this.state.collection?.items || [];
+		const items = this.getCurrentItems();
+		const collections = Array.isArray(this.state.collectionsIndex)
+			? this.state.collectionsIndex
+			: [];
+		if (
+			this.isEmbeddedRuntime() &&
+			this.state.sourceType === "collections.json" &&
+			this.state.viewMode === "collections"
+		) {
+			return {
+				viewportTitle: "Collections",
+				viewportSubtitle:
+					collections.length > 0
+						? `${collections.length} collection${collections.length === 1 ? "" : "s"} available. Select one to browse items.`
+						: "No collections found in this source.",
+				viewMode: "collections",
+				collections,
+				selectedCollectionManifestUrl:
+					this.state.selectedCollectionManifestUrl || "",
+				items: [],
+				selectedItemId: null,
+				isLoading: false,
+			};
+		}
+
+		const focusedCollection =
+			this.state.sourceType === "collections.json" &&
+			this.state.selectedCollectionManifestUrl
+				? this.state.collectionsIndex.find(
+						(entry) =>
+							entry.manifestUrl ===
+							this.state.selectedCollectionManifestUrl,
+					)
+				: null;
+		const subtitle = focusedCollection
+			? `${items.length} item${items.length === 1 ? "" : "s"} in ${focusedCollection.label}. Use Back to collections to return.`
+			: this.state.sourceType === "collections.json"
+				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections in this source.`
+				: items.length > 0
+					? `${items.length} item${items.length === 1 ? "" : "s"} available. Select a card to open media.`
+					: "Load a collection to browse its items.";
+
 		return {
 			viewportTitle: "Collection items",
-			viewportSubtitle:
-				items.length > 0
-					? `${items.length} item${items.length === 1 ? "" : "s"} available. Click a card to inspect metadata, or use View to open media.`
-					: "Load a collection to browse its items.",
+			viewportSubtitle: subtitle,
+			viewMode: "items",
+			collections: [],
+			selectedCollectionManifestUrl:
+				this.state.selectedCollectionManifestUrl || "",
 			items,
 			selectedItemId: this.state.selectedItemId,
 			isLoading: this.state.isLoadingCollection,
@@ -361,6 +867,22 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	metadataModel() {
+		if (
+			this.isEmbeddedRuntime() &&
+			this.state.sourceType === "collections.json" &&
+			this.state.viewMode === "collections"
+		) {
+			return {
+				title: "Metadata",
+				contextText: "Read-only details for the selected item.",
+				fields: [],
+				emptyText:
+					"Select a collection to browse its items and metadata.",
+				mobileOpen:
+					this.isMobileViewport() && this.state.mobileMetadataOpen,
+			};
+		}
+
 		const selected = findSelectedItem(this);
 		if (selected) {
 			return {
@@ -369,6 +891,10 @@ class TimemapBrowserElement extends ComponentBase {
 				fields: [
 					["Title", selected.title || ""],
 					["Identifier", selected.id || ""],
+					[
+						"Collection",
+						selected.sourceCollectionTitle || "",
+					],
 					["Description", selected.description || ""],
 					["Creator", selected.creator || ""],
 					["Date", selected.date || ""],
@@ -499,6 +1025,7 @@ class TimemapBrowserElement extends ComponentBase {
 		this.setStatus("Loading collection...", "neutral");
 		this.state.isLoadingCollection = true;
 		this.renderManifestControls();
+		this.renderEmbeddedSourceControls();
 		this.renderViewport();
 		try {
 			const response = await fetch(manifestUrl);
@@ -517,13 +1044,16 @@ class TimemapBrowserElement extends ComponentBase {
 			this.state.selectedItemId = collection.items[0]?.id || null;
 			this.state.viewerItemId = null;
 			this.state.mobileMetadataOpen = false;
-			rememberRecentManifestUrl(this, manifestUrl);
+			if (!this.isEmbeddedRuntime()) {
+				rememberRecentManifestUrl(this, manifestUrl);
+			}
 			this.setStatus(
 				`Loaded ${collection.title} (${collection.items.length} items).`,
 				"ok",
 			);
 			announceManifestUrl(this, manifestUrl);
 			this.renderManifestControls();
+			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 			this.renderMetadata();
 			this.renderViewer();
@@ -533,6 +1063,7 @@ class TimemapBrowserElement extends ComponentBase {
 		} finally {
 			this.state.isLoadingCollection = false;
 			this.renderManifestControls();
+			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 		}
 	}

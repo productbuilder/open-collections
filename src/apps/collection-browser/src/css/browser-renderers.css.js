@@ -22,7 +22,7 @@ export const browserRendererStyles = `
     padding: 0.55rem;
     background: #ffffff;
     display: grid;
-    grid-template-rows: auto minmax(2.4rem, auto) auto auto;
+    grid-template-rows: auto minmax(2.4rem, auto) auto;
     align-content: start;
     gap: 0.5rem;
     height: 100%;

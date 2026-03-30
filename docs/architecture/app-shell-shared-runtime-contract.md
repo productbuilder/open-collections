@@ -106,6 +106,17 @@ To reduce manager-ownership of account/connection foundations:
 `collection-manager` keeps compatibility through a re-export at
 `src/apps/collection-manager/src/services/credential-store.js`.
 
+### Connection terminology boundary
+
+Within runtime contracts/docs:
+
+- **Connection** means the saved runtime/app link to a host/source (id, config, credential relationship, status).
+- **Source** means the app-consumable entry point resolved from that link (`collections.json` or `collection.json`).
+- **Host** means the underlying storage location/provider root.
+- **Collection** means content data described by protocol manifests.
+
+Connection runtime/state is not itself a protocol manifest file. Protocol filenames remain `collections.json` (multi-collection index) and `collection.json` (single collection manifest); `connection.json` is not introduced in this contract phase.
+
 ---
 
 ## 5) Shell vs shared runtime vs app-specific boundaries

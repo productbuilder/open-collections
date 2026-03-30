@@ -13,6 +13,17 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 
 	bindEvents() {
 		this.shadowRoot
+			.getElementById("viewerDetailsBtn")
+			?.addEventListener("click", () => {
+				this.dispatchEvent(
+					new CustomEvent("viewer-open-details", {
+						bubbles: true,
+						composed: true,
+					}),
+				);
+			});
+
+		this.shadowRoot
 			.getElementById("closeViewerBtn")
 			?.addEventListener("click", () => {
 				this.close();
@@ -132,6 +143,11 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           gap: 0.65rem;
         }
         .dialog-title { margin: 0; font-size: 0.95rem; color: #111827; }
+        .dialog-header-actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
         .dialog-body { padding: 0.85rem; overflow: auto; }
         .viewer-media {
           width: 100%;
@@ -165,7 +181,10 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         <div class="dialog-shell">
           <div class="dialog-header">
             <h2 id="viewerTitle" class="dialog-title">Viewer</h2>
-            <button id="closeViewerBtn" class="btn" type="button">Close</button>
+            <div class="dialog-header-actions">
+              <button id="viewerDetailsBtn" class="btn" type="button">Details</button>
+              <button id="closeViewerBtn" class="btn" type="button">Close</button>
+            </div>
           </div>
           <div id="viewerBody" class="dialog-body"></div>
         </div>

@@ -1,5 +1,6 @@
-﻿import { browserStyles } from "../css/browser.css.js";
+import { browserStyles } from "../css/browser.css.js";
 import "../../../../shared/ui/panels/index.js";
+import "./browser-collection-card-grid.js";
 import "./browser-item-card-grid.js";
 
 class OpenBrowserCollectionBrowserElement extends HTMLElement {
@@ -9,16 +10,22 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.model = {
 			viewportTitle: "Collection items",
 			viewportSubtitle: "Load a collection to browse its items.",
+			viewMode: "items",
+			collections: [],
+			selectedCollectionManifestUrl: "",
 			items: [],
 			selectedItemId: null,
 			isLoading: false,
+			desktopInspectorOpen: false,
 		};
 	}
 
 	connectedCallback() {
 		this.render();
+		this.bindEvents();
 		this.renderFrame();
 		this.renderBody();
+		this.syncInspectorState();
 	}
 
 	update(data = {}) {
@@ -28,6 +35,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		}
 		this.renderFrame();
 		this.renderBody();
+		this.syncInspectorState();
 	}
 
 	renderFrame() {
@@ -49,13 +57,53 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			return;
 		}
 		host.innerHTML = "";
-		const renderer = document.createElement("open-browser-item-card-grid");
-		renderer.update({
-			items: this.model.items,
-			selectedItemId: this.model.selectedItemId,
-			isLoading: this.model.isLoading,
-		});
+		const renderer =
+			this.model.viewMode === "collections"
+				? document.createElement("open-browser-collection-card-grid")
+				: document.createElement("open-browser-item-card-grid");
+
+		if (this.model.viewMode === "collections") {
+			renderer.update({
+				collections: this.model.collections,
+				selectedManifestUrl: this.model.selectedCollectionManifestUrl,
+			});
+		} else {
+			renderer.update({
+				items: this.model.items,
+				selectedItemId: this.model.selectedItemId,
+				isLoading: this.model.isLoading,
+			});
+		}
 		host.appendChild(renderer);
+	}
+
+	bindEvents() {
+		const toggle = this.shadowRoot.getElementById("inspectorToggle");
+		toggle?.addEventListener("click", () => {
+			this.model.desktopInspectorOpen = !this.model.desktopInspectorOpen;
+			this.syncInspectorState();
+		});
+	}
+
+	syncInspectorState() {
+		const layout = this.shadowRoot.getElementById("viewportLayout");
+		const toggle = this.shadowRoot.getElementById("inspectorToggle");
+		if (layout) {
+			layout.classList.toggle(
+				"is-inspector-open",
+				Boolean(this.model.desktopInspectorOpen),
+			);
+		}
+		if (toggle) {
+			const isOpen = Boolean(this.model.desktopInspectorOpen);
+			toggle.textContent = isOpen ? "Hide details" : "Show details";
+			toggle.setAttribute("aria-expanded", String(isOpen));
+		}
+	}
+
+	setDesktopInspectorOpen(open = true) {
+		this.model.desktopInspectorOpen = Boolean(open);
+		this.syncInspectorState();
 	}
 
 	render() {
@@ -68,11 +116,21 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
           subtitle="Load a collection to browse its items."
         >
           <slot name="toolbar" slot="toolbar"></slot>
-          <section class="viewport-layout">
+          <button
+            id="inspectorToggle"
+            class="btn inspector-toggle"
+            type="button"
+            slot="toolbar-actions"
+            aria-expanded="false"
+            aria-controls="browserInspector"
+          >
+            Show details
+          </button>
+          <section id="viewportLayout" class="viewport-layout">
             <section class="viewport-region">
               <div id="browserHost" class="browser-host"></div>
             </section>
-            <aside class="viewport-inspector">
+            <aside id="browserInspector" class="viewport-inspector">
               <slot class="inspector-slot" name="inspector"></slot>
             </aside>
           </section>

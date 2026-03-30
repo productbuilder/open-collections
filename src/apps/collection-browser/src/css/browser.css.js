@@ -25,10 +25,14 @@ export const browserStyles = `
 
   .viewport-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.9rem;
     min-height: 0;
     height: 100%;
+  }
+
+  .viewport-layout.is-inspector-open {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   }
 
   .viewport-region {
@@ -49,11 +53,34 @@ export const browserStyles = `
   .viewport-inspector {
     min-height: 0;
     overflow: hidden;
+    display: none;
+  }
+
+  .viewport-layout.is-inspector-open .viewport-inspector {
+    display: block;
   }
 
   .inspector-slot::slotted(*) {
     height: 100%;
     min-height: 0;
+  }
+
+  .inspector-toggle {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 8px;
+    padding: 0.42rem 0.7rem;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .inspector-toggle:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
   }
 
   @media (max-width: 760px) {
@@ -71,6 +98,10 @@ export const browserStyles = `
     }
 
     .viewport-inspector {
+      display: none;
+    }
+
+    .inspector-toggle {
       display: none;
     }
   }

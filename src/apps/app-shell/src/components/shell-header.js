@@ -2,6 +2,7 @@ export const SHELL_SECTIONS = [
 	{ key: "browse", label: "Browse", icon: "search" },
 	{ key: "collect", label: "Collect", icon: "add" },
 	{ key: "present", label: "Present", icon: "play_arrow" },
+	{ key: "scrollTest", label: "Scroll Test", icon: "grid_view" },
 	{ key: "account", label: "Account", icon: "account_circle" },
 ];
 
@@ -12,6 +13,8 @@ const ICON_PATHS = {
 		'<path d="M8 6v12l10-6-10-6Z" fill="currentColor" stroke="none"></path>',
 	account_circle:
 		'<circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 19c.8-3 3.4-5 6.5-5s5.7 2 6.5 5"></path>',
+	grid_view:
+		'<rect x="3.5" y="3.5" width="7" height="7" rx="1"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1"></rect>',
 };
 
 function renderIcon(iconName) {

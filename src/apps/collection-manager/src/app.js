@@ -226,7 +226,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.applyConnectionEntryPresentation();
 		this.setLocalDraftStatus("Checking local draft storage...", "neutral");
 		this.setLocalDraftControlsEnabled(false);
-		this.initializeLocalDraftState();
+		void this.initializeLocalDraftState().finally(() => {
+			this.state.assetSurfaceLoading = false;
+			this.renderAssets();
+		});
 		this.syncResponsivePanels();
 		this._handleWindowResize = () => this.syncResponsivePanels();
 		window.addEventListener("resize", this._handleWindowResize);

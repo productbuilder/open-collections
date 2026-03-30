@@ -1,11 +1,21 @@
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
 import { resolveItemPreviewUrl } from "../utils/preview-utils.js";
+import "../../../../shared/ui/primitives/index.js";
+
+const RENDER_CHUNK_SIZE = 40;
 
 class OpenItemRowListElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
-		this.model = { items: [], focusedItemId: null, selectedItemIds: [] };
+		this.model = {
+			items: [],
+			focusedItemId: null,
+			selectedItemIds: [],
+			isLoading: false,
+		};
+		this._renderFrame = 0;
+		this._renderToken = 0;
 	}
 
 	update(data = {}) {
@@ -17,10 +27,22 @@ class OpenItemRowListElement extends HTMLElement {
 		this.render();
 	}
 
+	disconnectedCallback() {
+		this.cancelChunkedRender();
+	}
+
 	dispatch(name, detail = {}) {
 		this.dispatchEvent(
 			new CustomEvent(name, { detail, bubbles: true, composed: true }),
 		);
+	}
+
+	cancelChunkedRender() {
+		this._renderToken += 1;
+		if (this._renderFrame) {
+			window.cancelAnimationFrame(this._renderFrame);
+			this._renderFrame = 0;
+		}
 	}
 
 	requiredFieldScore(item) {
@@ -45,21 +67,8 @@ class OpenItemRowListElement extends HTMLElement {
 		return Boolean(String(item?.media?.url || "").trim());
 	}
 
-	render() {
-		const items = Array.isArray(this.model.items) ? this.model.items : [];
-		const selectedIds = new Set(
-			Array.isArray(this.model.selectedItemIds)
-				? this.model.selectedItemIds
-				: [],
-		);
-		if (items.length === 0) {
-			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">This collection has no items yet. Add item to begin.</div>`;
-			return;
-		}
-
-		const rows = items
-			.map(
-				(item) => `
+	rowMarkup(item, selectedIds) {
+		return `
       <tr
         class="${this.model.focusedItemId === item.workspaceId ? "is-focused" : ""} ${selectedIds.has(item.workspaceId) ? "is-selected" : ""}"
         data-id="${item.workspaceId}"
@@ -86,9 +95,112 @@ class OpenItemRowListElement extends HTMLElement {
 			}
         </td>
       </tr>
-    `,
-			)
-			.join("");
+    `;
+	}
+
+	bindDelegatedEvents() {
+		const body = this.shadowRoot.querySelector("tbody");
+		if (!body || body.dataset.bound === "true") {
+			return;
+		}
+		body.dataset.bound = "true";
+
+		body.addEventListener("click", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const openButton = target?.closest("button[data-open-id]");
+			if (openButton) {
+				event.stopPropagation();
+				this.dispatch("item-view", {
+					workspaceId: openButton.getAttribute("data-open-id"),
+				});
+				return;
+			}
+			const uploadButton = target?.closest("button[data-upload-id]");
+			if (uploadButton) {
+				event.stopPropagation();
+				this.dispatch("attach-media-upload", {
+					itemId: uploadButton.getAttribute("data-upload-id"),
+				});
+				return;
+			}
+			const urlButton = target?.closest("button[data-url-id]");
+			if (urlButton) {
+				event.stopPropagation();
+				this.dispatch("attach-media-url", {
+					itemId: urlButton.getAttribute("data-url-id"),
+				});
+				return;
+			}
+			const input = target?.closest("input[data-select-id]");
+			if (input) {
+				event.stopPropagation();
+				return;
+			}
+			const row = target?.closest("tr[data-id]");
+			if (!row) {
+				return;
+			}
+			this.dispatch("item-select", {
+				workspaceId: row.getAttribute("data-id"),
+			});
+		});
+
+		body.addEventListener("change", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const input = target?.closest("input[data-select-id]");
+			if (!input) {
+				return;
+			}
+			event.stopPropagation();
+			this.dispatch("item-toggle-selected", {
+				workspaceId: input.getAttribute("data-select-id"),
+				selected: input.checked === true,
+			});
+		});
+	}
+
+	renderRowsInChunks(items = [], selectedIds) {
+		const body = this.shadowRoot.querySelector("tbody");
+		if (!body) {
+			return;
+		}
+		this.cancelChunkedRender();
+		const token = this._renderToken;
+		let index = 0;
+
+		const renderChunk = () => {
+			if (token !== this._renderToken) {
+				return;
+			}
+			const next = items.slice(index, index + RENDER_CHUNK_SIZE);
+			body.insertAdjacentHTML(
+				"beforeend",
+				next.map((item) => this.rowMarkup(item, selectedIds)).join(""),
+			);
+			index += RENDER_CHUNK_SIZE;
+			if (index < items.length) {
+				this._renderFrame = window.requestAnimationFrame(renderChunk);
+			}
+		};
+		renderChunk();
+	}
+
+	render() {
+		const items = Array.isArray(this.model.items) ? this.model.items : [];
+		const selectedIds = new Set(
+			Array.isArray(this.model.selectedItemIds)
+				? this.model.selectedItemIds
+				: [],
+		);
+		this.cancelChunkedRender();
+		if (this.model.isLoading) {
+			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><open-collections-loading-skeleton variant="row-list" count="9"></open-collections-loading-skeleton>`;
+			return;
+		}
+		if (items.length === 0) {
+			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">This collection has no items yet. Add item to begin.</div>`;
+			return;
+		}
 
 		this.shadowRoot.innerHTML = `
       <style>${browserRendererStyles}</style>
@@ -99,62 +211,13 @@ class OpenItemRowListElement extends HTMLElement {
               <th>Select</th><th>Media</th><th>Title</th><th>ID</th><th>Type</th><th>Completeness</th><th>Actions</th>
             </tr>
           </thead>
-          <tbody>${rows}</tbody>
+          <tbody></tbody>
         </table>
       </div>
     `;
 
-		this.shadowRoot.querySelectorAll("tbody tr[data-id]").forEach((row) => {
-			row.addEventListener("click", () => {
-				this.dispatch("item-select", {
-					workspaceId: row.getAttribute("data-id"),
-				});
-			});
-		});
-		this.shadowRoot
-			.querySelectorAll("input[data-select-id]")
-			.forEach((input) => {
-				input.addEventListener("click", (event) => {
-					event.stopPropagation();
-				});
-				input.addEventListener("change", (event) => {
-					event.stopPropagation();
-					this.dispatch("item-toggle-selected", {
-						workspaceId: input.getAttribute("data-select-id"),
-						selected: event.target?.checked === true,
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-open-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("item-view", {
-						workspaceId: button.getAttribute("data-open-id"),
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-upload-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("attach-media-upload", {
-						itemId: button.getAttribute("data-upload-id"),
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-url-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("attach-media-url", {
-						itemId: button.getAttribute("data-url-id"),
-					});
-				});
-			});
+		this.bindDelegatedEvents();
+		this.renderRowsInChunks(items, selectedIds);
 	}
 }
 

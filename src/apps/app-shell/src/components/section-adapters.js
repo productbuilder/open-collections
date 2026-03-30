@@ -35,6 +35,14 @@ export const SHELL_SECTION_ADAPTERS = {
 			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
+	scrollTest: {
+		appId: "scroll-test-app",
+		adapter: createWebComponentAppAdapter({
+			appId: "scroll-test-app",
+			tagName: "oc-scroll-test-app",
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
+		}),
+	},
 	account: {
 		appId: "collection-account",
 		adapter: createWebComponentAppAdapter({

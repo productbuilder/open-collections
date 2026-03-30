@@ -5,6 +5,7 @@ import "./loading-skeleton.js";
 import "./oc-card-collection.js";
 import "./oc-card-collections.js";
 import "./oc-card-item.js";
+import "./oc-skeleton-card.js";
 import "./preview-summary-card.js";
 import "./section-header.js";
 
@@ -17,4 +18,5 @@ export { OpenCollectionsLoadingSkeletonElement } from "./loading-skeleton.js";
 export { OcCardCollectionElement } from "./oc-card-collection.js";
 export { OcCardCollectionsElement } from "./oc-card-collections.js";
 export { OcCardItemElement } from "./oc-card-item.js";
+export { OcSkeletonCardElement } from "./oc-skeleton-card.js";
 export { OpenCollectionsPreviewSummaryCardElement } from "./preview-summary-card.js";

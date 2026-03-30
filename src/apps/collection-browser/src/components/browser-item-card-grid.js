@@ -2,6 +2,7 @@ import { browserRendererStyles } from "../css/browser-renderers.css.js";
 import "../../../../shared/ui/primitives/index.js";
 
 const RENDER_CHUNK_SIZE = 36;
+const LAZY_TAIL_SKELETON_COUNT = 6;
 
 class OpenBrowserItemCardGridElement extends HTMLElement {
 	constructor() {
@@ -80,6 +81,13 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		return card;
 	}
 
+	renderSkeletonGrid(count = 8) {
+		const safeCount = Math.min(Math.max(Number(count) || 1, 1), 24);
+		return `<oc-grid id="itemGrid">${Array.from({ length: safeCount })
+			.map(() => '<oc-skeleton-card variant="item"></oc-skeleton-card>')
+			.join("")}</oc-grid>`;
+	}
+
 	renderItemsInChunks(items = []) {
 		const host = this.shadowRoot.querySelector("#itemGrid");
 		if (!host) {
@@ -89,6 +97,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		this.cancelChunkedRender();
 		const token = this._renderToken;
 		let index = 0;
+		const lazyTail = host.querySelector("#lazyLoadingTail");
 
 		const renderChunk = () => {
 			if (token !== this._renderToken) {
@@ -103,7 +112,9 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			index += RENDER_CHUNK_SIZE;
 			if (index < items.length) {
 				this._renderFrame = window.requestAnimationFrame(renderChunk);
+				return;
 			}
+			lazyTail?.remove();
 		};
 
 		renderChunk();
@@ -134,8 +145,16 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		if (this.model.isLoading) {
 			this.shadowRoot.innerHTML = `
 				<style>${browserRendererStyles}</style>
-				<open-collections-loading-skeleton variant="card-grid" count="8"></open-collections-loading-skeleton>
+				${this.renderSkeletonGrid(8)}
 			`;
+			const loadingGrid = this.shadowRoot.getElementById("itemGrid");
+			loadingGrid?.update({
+				mode: "grid",
+				columnsDesktop: 6,
+				columnsTablet: 4,
+				columnsMobile: 2,
+				gap: "0.7rem",
+			});
 			return;
 		}
 		if (items.length === 0) {
@@ -149,7 +168,16 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			return;
 		}
 
-		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><oc-grid id="itemGrid"></oc-grid>`;
+		this.shadowRoot.innerHTML = `
+			<style>${browserRendererStyles}</style>
+			<oc-grid id="itemGrid">
+				<div id="lazyLoadingTail">
+					${Array.from({ length: LAZY_TAIL_SKELETON_COUNT })
+						.map(() => '<oc-skeleton-card variant="item"></oc-skeleton-card>')
+						.join("")}
+				</div>
+			</oc-grid>
+		`;
 		const grid = this.shadowRoot.getElementById("itemGrid");
 		grid?.update({
 			mode: "grid",
@@ -158,6 +186,10 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			columnsMobile: 2,
 			gap: "0.7rem",
 		});
+		const lazyTail = this.shadowRoot.getElementById("lazyLoadingTail");
+		if (lazyTail) {
+			lazyTail.style.display = "contents";
+		}
 		this.bindDelegatedEvents();
 		this.renderItemsInChunks(items);
 	}

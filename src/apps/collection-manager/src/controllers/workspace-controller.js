@@ -266,6 +266,20 @@ export function applyWorkspaceSnapshot(app, snapshot = {}) {
 	) {
 		app.state.activeSourceFilter = snapshot.selectedSourceId;
 	}
+	const hasNonExampleSource = app.state.sources.some(
+		(source) => !app.isExampleSource(source),
+	);
+	const activeFilteredSource =
+		app.state.activeSourceFilter !== "all"
+			? app.getSourceById(app.state.activeSourceFilter)
+			: null;
+	if (
+		hasNonExampleSource &&
+		activeFilteredSource &&
+		app.isExampleSource(activeFilteredSource)
+	) {
+		app.state.activeSourceFilter = "all";
+	}
 	app.renderSourceFilter();
 
 	if (snapshot.selectedCollectionId) {

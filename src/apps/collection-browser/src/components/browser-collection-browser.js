@@ -62,12 +62,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	}
 
 	renderBody() {
-		const host = this.shadowRoot.getElementById("browserHost");
-		if (!host) {
+		const renderer = this.shadowRoot.getElementById("browserHost");
+		if (!renderer) {
 			return;
 		}
-		host.innerHTML = "";
-		const renderer = document.createElement("open-browser-browse-grid");
 		renderer.update({
 			viewMode: this.model.viewMode,
 			allBrowseEntities: this.model.allBrowseEntities,
@@ -76,7 +74,6 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			itemCards: this.model.itemCards,
 			isLoading: this.model.isLoading,
 		});
-		host.appendChild(renderer);
 	}
 
 	bindEvents() {
@@ -129,9 +126,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
             Show details
           </button>
           <section id="viewportLayout" class="viewport-layout">
-            <section class="viewport-region">
-              <div id="browserHost" class="browser-host"></div>
-            </section>
+            <open-browser-browse-grid id="browserHost" class="browser-host"></open-browser-browse-grid>
             <aside id="browserInspector" class="viewport-inspector">
               <slot class="inspector-slot" name="inspector"></slot>
             </aside>

@@ -20,7 +20,7 @@ function derivePreviewImages(items = [], max = 3) {
 
 export function buildSourceBrowseCardModels(
 	sourceEntries = [],
-	{ activeSourceId = "" } = {},
+	{ activeSourceId = "", useActiveState = false } = {},
 ) {
 	const list = Array.isArray(sourceEntries)
 		? sourceEntries.filter((entry) => entry && typeof entry === "object")
@@ -28,8 +28,8 @@ export function buildSourceBrowseCardModels(
 	return list.map((entry) => ({
 		browseKind: "source",
 		id: String(entry.id || ""),
-		title: entry.label || "Source",
-		subtitle: entry.subtitle || "Source",
+		title: "Browse and collect",
+		subtitle: "Across multiple collections",
 		countLabel: entry.countLabel || "",
 		previewRows: Array.isArray(entry.previewRows)
 			? entry.previewRows
@@ -39,7 +39,9 @@ export function buildSourceBrowseCardModels(
 			: [],
 		actionLabel: "Browse",
 		actionValue: String(entry.id || ""),
-		active: String(activeSourceId || "") === String(entry.id || ""),
+		active:
+			useActiveState &&
+			String(activeSourceId || "") === String(entry.id || ""),
 		sourceType: entry.sourceType || "",
 	}));
 }

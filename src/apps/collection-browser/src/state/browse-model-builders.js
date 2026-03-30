@@ -22,7 +22,9 @@ export function buildSourceBrowseCardModels(
 	sourceEntries = [],
 	{ activeSourceId = "" } = {},
 ) {
-	const list = Array.isArray(sourceEntries) ? sourceEntries : [];
+	const list = Array.isArray(sourceEntries)
+		? sourceEntries.filter((entry) => entry && typeof entry === "object")
+		: [];
 	return list.map((entry) => ({
 		browseKind: "source",
 		id: String(entry.id || ""),
@@ -46,7 +48,9 @@ export function buildCollectionBrowseCardModels(
 	collections = [],
 	{ selectedManifestUrl = "" } = {},
 ) {
-	const list = Array.isArray(collections) ? collections : [];
+	const list = Array.isArray(collections)
+		? collections.filter((entry) => entry && typeof entry === "object")
+		: [];
 	return list.map((entry, index) => {
 		const itemCount = entry.collection?.items?.length || 0;
 		const manifestUrl = String(entry.manifestUrl || "").trim();

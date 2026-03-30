@@ -69,7 +69,7 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 
 		this.shadowRoot.innerHTML = `
       <style>${browserRendererStyles}</style>
-      <open-collections-card-layout id="sourceGrid"></open-collections-card-layout>
+      <oc-grid id="sourceGrid"></oc-grid>
     `;
 
 		const grid = this.shadowRoot.getElementById("sourceGrid");

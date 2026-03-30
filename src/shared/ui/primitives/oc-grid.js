@@ -91,6 +91,7 @@ class OcGridElement extends HTMLElement {
           display: block;
           width: 100%;
           min-height: 0;
+          overflow: visible;
         }
 
         * {
@@ -100,6 +101,7 @@ class OcGridElement extends HTMLElement {
         .layout {
           width: 100%;
           min-height: 0;
+          overflow: visible;
         }
 
         .layout.is-grid {

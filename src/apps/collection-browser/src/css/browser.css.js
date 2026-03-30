@@ -3,7 +3,6 @@ export const browserStyles = `
     display: block;
     height: 100%;
     min-height: 0;
-    overflow: hidden;
     box-sizing: border-box;
     padding: 0;
     color: #111827;
@@ -40,7 +39,6 @@ export const browserStyles = `
     min-height: 0;
     height: 100%;
     display: block;
-    overflow: hidden;
     padding: 0;
   }
 
@@ -50,8 +48,9 @@ export const browserStyles = `
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     padding-right: 0;
-    pointer-events:none;
   }
 
   .browser-host > * {

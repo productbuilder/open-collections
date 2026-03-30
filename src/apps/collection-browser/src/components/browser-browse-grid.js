@@ -111,6 +111,12 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		this._grid = grid;
 		this._boundGridClickHandler = (event) => {
 			const card = this.resolveCardFromEvent(event);
+			console.log("[browser-browse-grid] delegated click", {
+				cardFound: Boolean(card),
+				tagName: card?.tagName?.toLowerCase?.() || "",
+				actionType: card?.dataset?.actionType || "",
+				actionValue: card?.dataset?.actionValue || "",
+			});
 			if (!card) {
 				return;
 			}
@@ -137,14 +143,17 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 
 	resolveCardFromEvent(event) {
 		const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+		const cardSelector = "oc-card-item, oc-card-collection, oc-card-collections";
 		for (const node of path) {
 			if (!(node instanceof HTMLElement)) {
 				continue;
 			}
-			if (
-				node.matches?.("oc-card-collections, oc-card-collection, oc-card-item")
-			) {
+			if (node.matches?.(cardSelector)) {
 				return node;
+			}
+			const nestedCard = node.querySelector?.(cardSelector);
+			if (nestedCard instanceof HTMLElement) {
+				return nestedCard;
 			}
 		}
 		return null;
@@ -226,10 +235,8 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				actionValue: sourceId,
 				active: entity.active === true,
 			});
-			if (sourceId) {
-				card.dataset.actionType = "source";
-				card.dataset.actionValue = sourceId;
-			}
+			card.dataset.actionType = "source";
+			card.dataset.actionValue = sourceId;
 			return card;
 		}
 		if (kind === "collection") {
@@ -247,10 +254,8 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				actionValue: manifestUrl,
 				active: entity.active === true,
 			});
-			if (manifestUrl) {
-				card.dataset.actionType = "collection";
-				card.dataset.actionValue = manifestUrl;
-			}
+			card.dataset.actionType = "collection";
+			card.dataset.actionValue = manifestUrl;
 			return card;
 		}
 
@@ -267,10 +272,8 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			actionValue: itemId,
 			active: entity.active === true,
 		});
-		if (itemId) {
-			card.dataset.actionType = "item";
-			card.dataset.actionValue = itemId;
-		}
+		card.dataset.actionType = "item";
+		card.dataset.actionValue = itemId;
 		return card;
 	}
 

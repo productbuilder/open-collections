@@ -97,9 +97,65 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		scrollContainer.addEventListener("scroll", this._boundScrollHandler);
 	}
 
+	bindGridInteractions() {
+		if (this._grid && this._boundGridClickHandler) {
+			this._grid.removeEventListener("click", this._boundGridClickHandler);
+		}
+		const grid = this.shadowRoot?.getElementById("browseGrid");
+		if (!grid) {
+			this._grid = null;
+			this._boundGridClickHandler = null;
+			return;
+		}
+
+		this._grid = grid;
+		this._boundGridClickHandler = (event) => {
+			const card = this.resolveCardFromEvent(event);
+			if (!card) {
+				return;
+			}
+			const actionType = String(card.dataset.actionType || "").trim();
+			const actionValue = String(card.dataset.actionValue || "").trim();
+			if (!actionType || !actionValue) {
+				return;
+			}
+			if (actionType === "source") {
+				this.dispatch("source-open", { sourceId: actionValue });
+				return;
+			}
+			if (actionType === "collection") {
+				this.dispatch("collection-open", { manifestUrl: actionValue });
+				return;
+			}
+			if (actionType === "item") {
+				this.dispatch("item-open", { itemId: actionValue });
+			}
+		};
+
+		grid.addEventListener("click", this._boundGridClickHandler);
+	}
+
+	resolveCardFromEvent(event) {
+		const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+		for (const node of path) {
+			if (!(node instanceof HTMLElement)) {
+				continue;
+			}
+			if (
+				node.matches?.("oc-card-collections, oc-card-collection, oc-card-item")
+			) {
+				return node;
+			}
+		}
+		return null;
+	}
+
 	disconnectedCallback() {
 		if (this._scrollContainer && this._boundScrollHandler) {
 			this._scrollContainer.removeEventListener("scroll", this._boundScrollHandler);
+		}
+		if (this._grid && this._boundGridClickHandler) {
+			this._grid.removeEventListener("click", this._boundGridClickHandler);
 		}
 	}
 
@@ -157,6 +213,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		const kind = this.entityKind(entity);
 		if (kind === "source") {
 			const card = document.createElement("oc-card-collections");
+			const sourceId = String(entity.actionValue || entity.id || "").trim();
 			card.update({
 				title: entity.title || "Source",
 				subtitle: entity.subtitle || "Source",
@@ -166,21 +223,18 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 					? entity.previewImages
 					: [],
 				actionLabel: entity.actionLabel || "Browse",
-				actionValue: entity.actionValue || entity.id || "",
+				actionValue: sourceId,
 				active: entity.active === true,
 			});
-			card.addEventListener("oc-card-activate", (event) => {
-				const sourceId = String(
-					event.detail?.value || entity.actionValue || entity.id || "",
-				).trim();
-				if (sourceId) {
-					this.dispatch("source-open", { sourceId });
-				}
-			});
+			if (sourceId) {
+				card.dataset.actionType = "source";
+				card.dataset.actionValue = sourceId;
+			}
 			return card;
 		}
 		if (kind === "collection") {
 			const card = document.createElement("oc-card-collection");
+			const manifestUrl = String(entity.actionValue || entity.manifestUrl || "").trim();
 			card.update({
 				title: entity.title || "Collection",
 				subtitle: entity.subtitle || "Select to browse this collection.",
@@ -190,24 +244,18 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 					: [],
 				placeholderLabel: "Collection",
 				actionLabel: entity.actionLabel || "Open",
-				actionValue: entity.actionValue || entity.manifestUrl || "",
+				actionValue: manifestUrl,
 				active: entity.active === true,
 			});
-			card.addEventListener("oc-card-activate", (event) => {
-				const manifestUrl = String(
-					event.detail?.value ||
-						entity.actionValue ||
-						entity.manifestUrl ||
-						"",
-				).trim();
-				if (manifestUrl) {
-					this.dispatch("collection-open", { manifestUrl });
-				}
-			});
+			if (manifestUrl) {
+				card.dataset.actionType = "collection";
+				card.dataset.actionValue = manifestUrl;
+			}
 			return card;
 		}
 
 		const card = document.createElement("oc-card-item");
+		const itemId = String(entity.actionValue || entity.id || "").trim();
 		card.update({
 			title: entity.title || entity.id || "Item",
 			subtitle: entity.subtitle || "",
@@ -216,17 +264,13 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				: [],
 			previewUrl: entity.previewUrl || entity.item?.media?.thumbnailUrl || "",
 			actionLabel: entity.actionLabel || "",
-			actionValue: entity.actionValue || entity.id || "",
+			actionValue: itemId,
 			active: entity.active === true,
 		});
-		card.addEventListener("oc-card-activate", (event) => {
-			const itemId = String(
-				event.detail?.value || entity.actionValue || entity.id || "",
-			).trim();
-			if (itemId) {
-				this.dispatch("item-open", { itemId });
-			}
-		});
+		if (itemId) {
+			card.dataset.actionType = "item";
+			card.dataset.actionValue = itemId;
+		}
 		return card;
 	}
 
@@ -267,7 +311,8 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				</oc-grid>
 			</div>
 		`;
-		this.shadowRoot.getElementById("browseGrid")?.update({
+		const grid = this.shadowRoot.getElementById("browseGrid");
+		grid?.update({
 			mode: "grid",
 			columnsDesktop: 6,
 			columnsTablet: 4,
@@ -275,6 +320,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			gap: "0.62rem",
 		});
 		this.bindScrollDebug();
+		this.bindGridInteractions();
 	}
 
 	renderEmpty(mode) {
@@ -323,6 +369,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			gap: "0.62rem",
 		});
 		this.bindScrollDebug();
+		this.bindGridInteractions();
 		for (const entity of entities) {
 			grid.appendChild(this.buildGridCell(entity));
 		}

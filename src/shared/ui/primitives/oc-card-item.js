@@ -26,33 +26,12 @@ class OcCardItemElement extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
-		this.bindEvents();
 		this.applyModel();
 	}
 
 	update(data = {}) {
 		this.model = { ...this.model, ...data };
 		this.applyModel();
-	}
-
-	bindEvents() {
-		const card = this.shadowRoot?.getElementById("card");
-		if (!card || this._boundCard === card) {
-			return;
-		}
-		card.addEventListener("click", () => {
-			if (this.model.disabled) {
-				return;
-			}
-			this.dispatchEvent(
-				new CustomEvent("oc-card-activate", {
-					detail: { value: this.model.actionValue || "" },
-					bubbles: true,
-					composed: true,
-				}),
-			);
-		});
-		this._boundCard = card;
 	}
 
 	resolvePreviewImages() {

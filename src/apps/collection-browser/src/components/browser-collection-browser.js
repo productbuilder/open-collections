@@ -1,11 +1,16 @@
 import { browserStyles } from "../css/browser.css.js";
 import "../../../../shared/ui/primitives/index.js";
 
+const VALID_MODES = ["all", "sources", "collections", "items"];
+
 class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
 		this.model = {
+			viewportTitle: "Browser",
+			viewportSubtitle: "Browse available entities.",
+			viewMode: "items",
 			allBrowseEntities: [],
 			sourceCards: [],
 			collectionCards: [],
@@ -22,20 +27,36 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.render();
 	}
 
-	renderCards() {
-		const cards = [
-			...this.safeArray(this.model.sourceCards),
-			...this.safeArray(this.model.collectionCards),
-			...this.safeArray(this.model.itemCards),
-		];
-		if (cards.length > 0) {
-			return cards;
-		}
-		return this.safeArray(this.model.allBrowseEntities);
-	}
-
 	safeArray(value) {
 		return Array.isArray(value) ? value.filter(Boolean) : [];
+	}
+
+	normalizedMode() {
+		return VALID_MODES.includes(this.model.viewMode)
+			? this.model.viewMode
+			: "items";
+	}
+
+	renderCards() {
+		const mode = this.normalizedMode();
+		const sourceCards = this.safeArray(this.model.sourceCards);
+		const collectionCards = this.safeArray(this.model.collectionCards);
+		const itemCards = this.safeArray(this.model.itemCards);
+		const allBrowseEntities = this.safeArray(this.model.allBrowseEntities);
+
+		if (mode === "all") {
+			if (allBrowseEntities.length > 0) {
+				return allBrowseEntities;
+			}
+			return [...sourceCards, ...collectionCards, ...itemCards];
+		}
+		if (mode === "sources") {
+			return sourceCards;
+		}
+		if (mode === "collections") {
+			return collectionCards;
+		}
+		return itemCards.length > 0 ? itemCards : allBrowseEntities;
 	}
 
 	entityKind(entity = {}) {
@@ -91,13 +112,87 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		return card;
 	}
 
+	buildGridCell(entity = {}) {
+		const kind = this.entityKind(entity);
+		const wrapper = document.createElement("div");
+		wrapper.className = `browse-cell kind-${kind}`;
+		wrapper.dataset.browseKind = kind;
+		if (kind === "source") {
+			wrapper.setAttribute("data-span-cols", "2");
+			wrapper.setAttribute("data-span-rows", "2");
+		} else if (kind === "collection") {
+			wrapper.setAttribute("data-span-cols", "2");
+			wrapper.setAttribute("data-span-rows", "1");
+		} else {
+			wrapper.setAttribute("data-span-cols", "1");
+			wrapper.setAttribute("data-span-rows", "1");
+		}
+		wrapper.appendChild(this.buildCard(entity));
+		return wrapper;
+	}
+
+	modeButtonLabel(mode) {
+		if (mode === "all") {
+			return "All";
+		}
+		if (mode === "sources") {
+			return "Sources";
+		}
+		if (mode === "collections") {
+			return "Collections";
+		}
+		return "Items";
+	}
+
+	renderToggleBar() {
+		const mode = this.normalizedMode();
+		return `
+			<div class="toggle-bar" role="toolbar" aria-label="Browse mode">
+				${VALID_MODES.map(
+					(entry) => `
+						<button
+							type="button"
+							class="mode-toggle"
+							data-mode="${entry}"
+							data-active="${entry === mode ? "true" : "false"}"
+						>
+							${this.modeButtonLabel(entry)}
+						</button>
+					`,
+				).join("")}
+			</div>
+		`;
+	}
+
+	bindToggleEvents() {
+		const buttons = this.shadowRoot.querySelectorAll(".mode-toggle[data-mode]");
+		for (const button of buttons) {
+			button.addEventListener("click", () => {
+				const mode = String(button.dataset.mode || "").trim();
+				if (!VALID_MODES.includes(mode) || mode === this.normalizedMode()) {
+					return;
+				}
+				this.model.viewMode = mode;
+				this.render();
+			});
+		}
+	}
+
 	render() {
 		this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <div class="root">
-        <div class="header">Browser</div>
-        <div id="scrollContainer" class="scroll-container">
-          <oc-grid id="browseGrid"></oc-grid>
+        <header class="header" aria-label="Browser header">
+          <h2 class="title">${this.model.viewportTitle || "Browser"}</h2>
+          <p class="subtitle">${this.model.viewportSubtitle || "Browse available entities."}</p>
+        </header>
+        ${this.renderToggleBar()}
+        <div class="scroll-container-wrapper">
+          <div id="scrollContainer" class="scroll-container">
+            <div class="grid-host">
+              <oc-grid id="browseGrid"></oc-grid>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -115,8 +210,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		});
 
 		for (const entity of this.renderCards()) {
-			grid.appendChild(this.buildCard(entity));
+			grid.appendChild(this.buildGridCell(entity));
 		}
+
+		this.bindToggleEvents();
 	}
 }
 

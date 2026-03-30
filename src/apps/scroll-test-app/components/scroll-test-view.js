@@ -1,11 +1,12 @@
 import "../../../shared/ui/primitives/index.js";
+import "../../../shared/ui/primitives/oc-grid.js";
 
 class ScrollTestViewElement extends HTMLElement {
 	constructor() {
 		super();
 		this.state = {
 			blockingEnabled: false,
-			cardMode: "simple",
+			gridMode: "div",
 		};
 		this.shadow = this.attachShadow({ mode: "open" });
 	}
@@ -20,7 +21,10 @@ class ScrollTestViewElement extends HTMLElement {
 		const toggleButton = this.shadow.querySelector('[data-action="toggle-blocking"]');
 		const modeButton = this.shadow.querySelector('[data-action="toggle-mode"]');
 		const scrollContainer = this.shadow.querySelector(".scroll-container");
-		const grid = this.shadow.querySelector(".grid");
+		const grid =
+			this.state.gridMode === "oc-grid"
+				? this.shadow.querySelector("oc-grid.grid-test")
+				: this.shadow.querySelector(".grid");
 
 		toggleButton?.addEventListener("click", () => {
 			this.state.blockingEnabled = !this.state.blockingEnabled;
@@ -28,7 +32,7 @@ class ScrollTestViewElement extends HTMLElement {
 		});
 
 		modeButton?.addEventListener("click", () => {
-			this.state.cardMode = this.state.cardMode === "simple" ? "oc-card-item" : "simple";
+			this.state.gridMode = this.state.gridMode === "div" ? "oc-grid" : "div";
 			this.render();
 			this.bindEvents();
 			this.updateBlockingState();
@@ -42,7 +46,7 @@ class ScrollTestViewElement extends HTMLElement {
 		grid?.addEventListener("click", (event) => {
 			const target = event.target;
 			const tag = target && target.tagName ? target.tagName.toLowerCase() : "unknown";
-			console.log("grid click", { mode: this.state.cardMode, target: tag });
+			console.log("grid click", { mode: this.state.gridMode, target: tag });
 		});
 	}
 
@@ -66,20 +70,22 @@ class ScrollTestViewElement extends HTMLElement {
 			return;
 		}
 
-		root.dataset.cardMode = this.state.cardMode;
+		root.dataset.gridMode = this.state.gridMode;
 		modeButton.textContent =
-			this.state.cardMode === "simple"
-				? "Use oc-card-item cards"
-				: "Use simple div cards";
+			this.state.gridMode === "div"
+				? "Switch to oc-grid"
+				: "Switch to div.grid";
 	}
 
 	render() {
-		const cardsMarkup = Array.from({ length: 40 }, (_, index) => {
-			if (this.state.cardMode === "oc-card-item") {
-				return `<oc-card-item data-id="test-${index + 1}" data-kind="item"></oc-card-item>`;
-			}
-			return `<div class="card">Card ${index + 1}</div>`;
-		}).join("");
+		const cardsMarkup = Array.from(
+			{ length: 40 },
+			(_, index) => `<oc-card-item data-id="test-${index + 1}" data-kind="item"></oc-card-item>`,
+		).join("");
+		const gridMarkup =
+			this.state.gridMode === "oc-grid"
+				? `<oc-grid class="grid-test">${cardsMarkup}</oc-grid>`
+				: `<div class="grid">${cardsMarkup}</div>`;
 
 		this.shadow.innerHTML = `
 			<style>
@@ -119,16 +125,25 @@ class ScrollTestViewElement extends HTMLElement {
 					padding: 12px;
 				}
 
-				.card {
-					height: 140px;
-					background: white;
-					border: 1px solid #ccc;
-					display: flex;
-					align-items: center;
-					justify-content: center;
+				oc-grid {
+					outline: 2px solid red;
 				}
 
 				.grid > oc-card-item {
+					display: block;
+					height: 140px;
+				}
+
+				oc-grid.grid-test {
+					padding: 12px;
+					gap: 12px;
+					--oc-layout-columns-desktop: 2;
+					--oc-layout-columns-tablet: 2;
+					--oc-layout-columns-mobile: 2;
+					--oc-layout-gap: 12px;
+				}
+
+				oc-grid.grid-test > oc-card-item {
 					display: block;
 					height: 140px;
 				}
@@ -140,8 +155,16 @@ class ScrollTestViewElement extends HTMLElement {
 				.toggle-blocking .grid > * {
 					pointer-events: auto;
 				}
+
+				.toggle-blocking oc-grid.grid-test {
+					pointer-events: none;
+				}
+
+				.toggle-blocking oc-grid.grid-test > * {
+					pointer-events: auto;
+				}
 			</style>
-			<div class="root" data-card-mode="${this.state.cardMode}">
+			<div class="root" data-grid-mode="${this.state.gridMode}">
 				<div class="header">
 					<strong>Scroll Test</strong>
 					<div>
@@ -150,7 +173,7 @@ class ScrollTestViewElement extends HTMLElement {
 					</div>
 				</div>
 				<div class="scroll-container">
-					<div class="grid">${cardsMarkup}</div>
+					${gridMarkup}
 				</div>
 			</div>
 		`;

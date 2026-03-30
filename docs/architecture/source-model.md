@@ -225,6 +225,7 @@ The source may point to either `collections.json` or `collection.json`.
 
 For browser/discovery UX, source selection may begin as a simple control.
 As source catalogs grow, sources should become browseable first-class entities (for example source cards or a scalable source directory/filter surface), not only a long dropdown.
+See also: [Collection Browser Browse Hierarchy Plan](./collection-browser-browse-hierarchy-plan.md).
 
 ## Why This Model Exists
 

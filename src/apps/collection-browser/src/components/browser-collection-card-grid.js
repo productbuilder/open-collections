@@ -1,32 +1,13 @@
 import "../../../../shared/ui/primitives/index.js";
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
 
-function deriveItemPreviewUrl(item) {
-	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
-}
-
-function deriveCollectionPreviewImages(collection) {
-	const items = Array.isArray(collection?.items) ? collection.items : [];
-	const previewImages = [];
-	for (const item of items) {
-		const previewUrl = deriveItemPreviewUrl(item);
-		if (!previewUrl) {
-			continue;
-		}
-		previewImages.push(previewUrl);
-		if (previewImages.length >= 3) {
-			break;
-		}
-	}
-	return previewImages;
-}
-
 class OpenBrowserCollectionCardGridElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
 		this.model = {
 			collections: [],
+			collectionCards: [],
 			selectedManifestUrl: "",
 		};
 	}
@@ -47,9 +28,40 @@ class OpenBrowserCollectionCardGridElement extends HTMLElement {
 	}
 
 	render() {
-		const collections = Array.isArray(this.model.collections)
-			? this.model.collections
+		const collectionCards = Array.isArray(this.model.collectionCards)
+			? this.model.collectionCards
 			: [];
+		const collections = collectionCards.length
+			? collectionCards
+			: (Array.isArray(this.model.collections)
+					? this.model.collections
+					: []).map((entry) => {
+					const itemCount = entry.collection?.items?.length || 0;
+					const previewImages = Array.isArray(entry.collection?.items)
+						? entry.collection.items
+								.map((item) =>
+									String(
+										item?.media?.thumbnailUrl || item?.media?.url || "",
+									).trim(),
+								)
+								.filter(Boolean)
+								.slice(0, 3)
+						: [];
+					return {
+						browseKind: "collection",
+						id: entry.id || entry.manifestUrl || "",
+						title: entry.label || "Collection",
+						subtitle:
+							entry.description || "Select to browse this collection.",
+						countLabel: `${itemCount} item${itemCount === 1 ? "" : "s"}`,
+						previewImages,
+						actionLabel: "Open",
+						actionValue: entry.manifestUrl || "",
+						active:
+							Boolean(this.model.selectedManifestUrl) &&
+							this.model.selectedManifestUrl === entry.manifestUrl,
+					};
+				});
 
 		if (collections.length === 0) {
 			this.shadowRoot.innerHTML = `
@@ -73,22 +85,23 @@ class OpenBrowserCollectionCardGridElement extends HTMLElement {
 		}
 
 		for (const entry of collections) {
-			const itemCount = entry.collection?.items?.length || 0;
 			const card = document.createElement(
 				"open-collections-preview-summary-card",
 			);
 			card.update({
-				title: entry.label || "Collection",
-				subtitle:
-					entry.description || "Select to browse this collection.",
-				countLabel: `${itemCount} item${itemCount === 1 ? "" : "s"}`,
-				previewImages: deriveCollectionPreviewImages(entry.collection),
+				title: entry.title || "Collection",
+				subtitle: entry.subtitle || "Select to browse this collection.",
+				countLabel: entry.countLabel || "",
+				previewImages: Array.isArray(entry.previewImages)
+					? entry.previewImages
+					: [],
 				placeholderLabel: "Collection",
-				actionLabel: "Open",
-				actionValue: entry.manifestUrl || "",
+				actionLabel: entry.actionLabel || "Open",
+				actionValue: entry.actionValue || entry.manifestUrl || "",
 				active:
-					Boolean(this.model.selectedManifestUrl) &&
-					this.model.selectedManifestUrl === entry.manifestUrl,
+					entry.active === true ||
+					(Boolean(this.model.selectedManifestUrl) &&
+						this.model.selectedManifestUrl === entry.manifestUrl),
 			});
 			card.addEventListener("preview-card-activate", (event) => {
 				const manifestUrl = String(event.detail?.value || "").trim();

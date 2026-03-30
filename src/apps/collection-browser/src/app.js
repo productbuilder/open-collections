@@ -22,6 +22,12 @@ import {
 	openViewer,
 	selectItem,
 } from "./controllers/selection-controller.js";
+import {
+	buildAllBrowseEntities,
+	buildCollectionBrowseCardModels,
+	buildItemBrowseCardModels,
+	buildSourceBrowseCardModels,
+} from "./state/browse-model-builders.js";
 import "./components/browser-collection-browser.js";
 import "./components/browser-manifest-controls.js";
 import "./components/browser-metadata-panel.js";
@@ -127,12 +133,13 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	renderEmbeddedSourceControls() {
+		const allBtn = this.dom?.embeddedViewAllBtn;
 		const sourcesBtn = this.dom?.embeddedViewSourcesBtn;
 		const collectionsBtn = this.dom?.embeddedViewCollectionsBtn;
 		const itemsBtn = this.dom?.embeddedViewItemsBtn;
 		const backBtn = this.dom?.embeddedBackToCollectionsBtn;
 		const activeSourceLabel = this.dom?.embeddedActiveSource;
-		if (!sourcesBtn && !collectionsBtn && !itemsBtn && !backBtn) {
+		if (!allBtn && !sourcesBtn && !collectionsBtn && !itemsBtn && !backBtn) {
 			return;
 		}
 
@@ -146,14 +153,17 @@ class TimemapBrowserElement extends ComponentBase {
 				: "Source: none selected";
 		}
 
-		const sourceType = this.state.sourceType || "collection.json";
-		const hasSourceSelection = Boolean(this.state.activeEmbeddedSourceId);
-		const canUseCollections =
-			hasSourceSelection && sourceType === "collections.json";
-		const canUseItems =
-			hasSourceSelection &&
-			(sourceType === "collection.json" ||
-				sourceType === "collections.json");
+		const canUseCollections = this.state.collectionsIndex.length > 0;
+		const canUseItems = this.state.sourceItems.length > 0;
+		const canUseAll =
+			this.state.embeddedSourceCards.length > 0 ||
+			this.state.collectionsIndex.length > 0 ||
+			this.state.sourceItems.length > 0;
+		if (allBtn) {
+			allBtn.disabled = this.state.isLoadingCollection || !canUseAll;
+			allBtn.dataset.active =
+				this.state.viewMode === "all" ? "true" : "false";
+		}
 		if (sourcesBtn) {
 			sourcesBtn.disabled = this.state.isLoadingCollection;
 			sourcesBtn.dataset.active =
@@ -172,7 +182,6 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 		if (backBtn) {
 			const showBack =
-				this.state.sourceType === "collections.json" &&
 				this.state.viewMode === "items" &&
 				Boolean(this.state.selectedCollectionManifestUrl);
 			backBtn.hidden = !showBack;
@@ -185,18 +194,27 @@ class TimemapBrowserElement extends ComponentBase {
 			return;
 		}
 		const nextMode =
-			mode === "sources"
+			mode === "all"
+				? "all"
+				: mode === "sources"
 				? "sources"
 				: mode === "collections"
 					? "collections"
 					: "items";
 		if (
-			nextMode === "collections" &&
-			this.state.sourceType !== "collections.json"
+			nextMode === "all" &&
+			!(
+				this.state.embeddedSourceCards.length ||
+				this.state.collectionsIndex.length ||
+				this.state.sourceItems.length
+			)
 		) {
 			return;
 		}
-		if (nextMode === "items" && !this.state.activeEmbeddedSourceId) {
+		if (nextMode === "collections" && !this.state.collectionsIndex.length) {
+			return;
+		}
+		if (nextMode === "items" && !this.state.sourceItems.length) {
 			return;
 		}
 		this.state.viewMode = nextMode;
@@ -252,10 +270,7 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	backToCollectionsView() {
-		if (
-			!this.isEmbeddedRuntime() ||
-			this.state.sourceType !== "collections.json"
-		) {
+		if (!this.isEmbeddedRuntime()) {
 			return;
 		}
 		this.state.selectedCollectionManifestUrl = "";
@@ -313,6 +328,41 @@ class TimemapBrowserElement extends ComponentBase {
 			collectionsIndex: resolved,
 			sourceItems,
 		};
+	}
+
+	async buildEmbeddedCollectionsCatalog(sources = []) {
+		const allEntries = [];
+		for (const source of sources) {
+			const descriptor = await resolveEmbeddedSourceDescriptor(source);
+			if (descriptor.sourceType === "collections.json") {
+				const entries = Array.isArray(descriptor.collections)
+					? descriptor.collections
+					: [];
+				for (const entry of entries) {
+					allEntries.push({
+						...entry,
+						id: `${source.id}::${entry.id}`,
+						sourceId: source.id,
+						sourceLabel: source.label,
+					});
+				}
+				continue;
+			}
+
+			const collection = await this.loadCollectionManifest(
+				descriptor.manifestUrl,
+			);
+			allEntries.push({
+				id: `${source.id}::single`,
+				label: collection.title || source.label || "Collection",
+				description: collection.description || "",
+				manifestUrl: descriptor.manifestUrl,
+				sourceId: source.id,
+				sourceLabel: source.label,
+			});
+		}
+
+		return this.hydrateCollectionsForSource(allEntries);
 	}
 
 	async buildEmbeddedSourceCard(source) {
@@ -381,10 +431,7 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	getCurrentItems() {
-		if (
-			this.isEmbeddedRuntime() &&
-			this.state.sourceType === "collections.json"
-		) {
+		if (this.isEmbeddedRuntime()) {
 			if (this.state.selectedCollectionManifestUrl) {
 				const focusedCollection = this.state.collectionsIndex.find(
 					(entry) =>
@@ -427,13 +474,13 @@ class TimemapBrowserElement extends ComponentBase {
 			BROWSER_CONFIG.embeddedSourceCatalog,
 		);
 		this.state.embeddedSources = configuredSources;
-		this.state.embeddedSourceCards = configuredSources.map((source) => ({
+		const multiCollectionSources = configuredSources.filter(
+			(source) => source.sourceType === "collections.json",
+		);
+		this.state.embeddedSourceCards = multiCollectionSources.map((source) => ({
 			id: source.id,
 			label: source.label,
-			subtitle:
-				source.sourceType === "collections.json"
-					? "Multi-collection source"
-					: "Single collection source",
+			subtitle: "Multi-collection source",
 			countLabel: "",
 			previewImages: [],
 			sourceType: source.sourceType,
@@ -447,11 +494,31 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 
 		this.state.activeEmbeddedSourceId =
-			this.state.activeEmbeddedSourceId || configuredSources[0].id;
-		this.state.viewMode = "sources";
+			this.state.activeEmbeddedSourceId || multiCollectionSources[0]?.id || "";
+		this.state.viewMode = multiCollectionSources.length ? "sources" : "collections";
 		this.renderEmbeddedSourceControls();
 		this.renderViewport();
-		void this.hydrateEmbeddedSourceCards(configuredSources);
+		void this.hydrateEmbeddedSourceCards(multiCollectionSources);
+		try {
+			const hydratedCatalog =
+				await this.buildEmbeddedCollectionsCatalog(configuredSources);
+			this.state.collectionsIndex = hydratedCatalog.collectionsIndex;
+			this.state.sourceItems = hydratedCatalog.sourceItems;
+			this.state.selectedCollectionManifestUrl = "";
+			this.state.selectedItemId = null;
+			this.state.viewerItemId = null;
+			this.setStatus(
+				`Loaded ${this.state.collectionsIndex.length} collections with ${this.state.sourceItems.length} total items.`,
+				"ok",
+			);
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
+			this.renderMetadata();
+			this.renderViewer();
+			this.syncMetadataPanelVisibility();
+		} catch (error) {
+			this.setStatus(`Source load failed: ${error.message}`, "warn");
+		}
 	}
 
 	async loadEmbeddedSourceById(sourceId) {
@@ -468,49 +535,17 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 
 		this.state.activeEmbeddedSourceId = source.id;
+		this.state.viewMode = "collections";
+		this.state.selectedCollectionManifestUrl = "";
+		this.state.selectedItemId = null;
+		this.state.viewerItemId = null;
+		this.state.mobileMetadataOpen = false;
+		this.setStatus(`Browsing collections from ${source.label}.`, "ok");
 		this.renderEmbeddedSourceControls();
-		try {
-			const descriptor = await resolveEmbeddedSourceDescriptor(source);
-			this.state.sourceType = descriptor.sourceType;
-			this.state.collectionsIndex = [];
-			this.state.sourceItems = [];
-			this.state.collection = null;
-			this.state.selectedItemId = null;
-			this.state.viewerItemId = null;
-			this.state.mobileMetadataOpen = false;
-
-			if (descriptor.sourceType === "collections.json") {
-				const hydrated = await this.hydrateCollectionsForSource(
-					descriptor.collections,
-				);
-				this.state.collectionsIndex = hydrated.collectionsIndex;
-				this.state.sourceItems = hydrated.sourceItems;
-				this.state.currentManifestUrl = descriptor.sourceUrl || "";
-				this.state.selectedCollectionManifestUrl = "";
-				this.state.viewMode = "collections";
-				this.setStatus(
-					`Loaded ${this.state.collectionsIndex.length} collections with ${this.state.sourceItems.length} total items.`,
-					"ok",
-				);
-				this.renderEmbeddedSourceControls();
-				this.renderViewport();
-				this.renderMetadata();
-				this.renderViewer();
-				this.syncMetadataPanelVisibility();
-				return;
-			}
-
-			this.state.selectedCollectionManifestUrl = descriptor.manifestUrl;
-			this.state.sourceItems = [];
-			this.state.viewMode = "items";
-			this.setManifestInput(descriptor.manifestUrl);
-			await this.loadCollection({
-				manifestUrl: descriptor.manifestUrl,
-				announceInput: false,
-			});
-		} catch (error) {
-			this.setStatus(`Source load failed: ${error.message}`, "warn");
-		}
+		this.renderViewport();
+		this.renderMetadata();
+		this.renderViewer();
+		this.syncMetadataPanelVisibility();
 	}
 
 	renderShell() {
@@ -523,6 +558,7 @@ class TimemapBrowserElement extends ComponentBase {
             <div class="embedded-view-toggle" slot="toolbar">
               <span class="embedded-view-label">Browse</span>
               <div class="embedded-view-buttons" role="group" aria-label="Browser browse level">
+                <button id="embeddedViewAllBtn" class="embedded-view-btn" type="button">All</button>
                 <button id="embeddedViewSourcesBtn" class="embedded-view-btn" type="button">Sources</button>
                 <button id="embeddedViewCollectionsBtn" class="embedded-view-btn" type="button">Collections</button>
                 <button id="embeddedViewItemsBtn" class="embedded-view-btn" type="button">Items</button>
@@ -924,6 +960,39 @@ class TimemapBrowserElement extends ComponentBase {
 		const sources = Array.isArray(this.state.embeddedSourceCards)
 			? this.state.embeddedSourceCards
 			: [];
+		const sourceCards = buildSourceBrowseCardModels(sources, {
+			activeSourceId: this.state.activeEmbeddedSourceId || "",
+		});
+		const collectionCards = buildCollectionBrowseCardModels(collections, {
+			selectedManifestUrl: this.state.selectedCollectionManifestUrl || "",
+		});
+		const itemCards = buildItemBrowseCardModels(items, {
+			selectedItemId: this.state.selectedItemId,
+		});
+		const allBrowseEntities = buildAllBrowseEntities({
+			sourceCards,
+			collectionCards,
+			itemCards,
+		});
+		if (this.isEmbeddedRuntime() && this.state.viewMode === "all") {
+			return {
+				viewportTitle: "All",
+				viewportSubtitle: `${allBrowseEntities.length} browse entit${allBrowseEntities.length === 1 ? "y" : "ies"} across sources, collections, and items.`,
+				viewMode: "all",
+				sources,
+				sourceCards,
+				collectionCards,
+				itemCards,
+				allBrowseEntities,
+				activeSourceId: this.state.activeEmbeddedSourceId || "",
+				collections,
+				selectedCollectionManifestUrl:
+					this.state.selectedCollectionManifestUrl || "",
+				items,
+				selectedItemId: this.state.selectedItemId,
+				isLoading: this.state.isLoadingCollection,
+			};
+		}
 		if (this.isEmbeddedRuntime() && this.state.viewMode === "sources") {
 			return {
 				viewportTitle: "Sources",
@@ -933,6 +1002,10 @@ class TimemapBrowserElement extends ComponentBase {
 						: "No sources available.",
 				viewMode: "sources",
 				sources,
+				sourceCards,
+				collectionCards: [],
+				itemCards: [],
+				allBrowseEntities,
 				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections: [],
 				selectedCollectionManifestUrl: "",
@@ -941,11 +1014,7 @@ class TimemapBrowserElement extends ComponentBase {
 				isLoading: false,
 			};
 		}
-		if (
-			this.isEmbeddedRuntime() &&
-			this.state.sourceType === "collections.json" &&
-			this.state.viewMode === "collections"
-		) {
+		if (this.isEmbeddedRuntime() && this.state.viewMode === "collections") {
 			return {
 				viewportTitle: "Collections",
 				viewportSubtitle:
@@ -954,6 +1023,10 @@ class TimemapBrowserElement extends ComponentBase {
 						: "No collections found in this source.",
 				viewMode: "collections",
 				sources: [],
+				sourceCards: [],
+				collectionCards,
+				itemCards: [],
+				allBrowseEntities,
 				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections,
 				selectedCollectionManifestUrl:
@@ -964,19 +1037,17 @@ class TimemapBrowserElement extends ComponentBase {
 			};
 		}
 
-		const focusedCollection =
-			this.state.sourceType === "collections.json" &&
-			this.state.selectedCollectionManifestUrl
-				? this.state.collectionsIndex.find(
-						(entry) =>
-							entry.manifestUrl ===
-							this.state.selectedCollectionManifestUrl,
-					)
-				: null;
+		const focusedCollection = this.state.selectedCollectionManifestUrl
+			? this.state.collectionsIndex.find(
+					(entry) =>
+						entry.manifestUrl ===
+						this.state.selectedCollectionManifestUrl,
+				)
+			: null;
 		const subtitle = focusedCollection
 			? `${items.length} item${items.length === 1 ? "" : "s"} in ${focusedCollection.label}. Use Back to collections to return.`
-			: this.state.sourceType === "collections.json"
-				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections in this source.`
+			: this.isEmbeddedRuntime()
+				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections.`
 				: items.length > 0
 					? `${items.length} item${items.length === 1 ? "" : "s"} available. Select a card to open media.`
 					: "Load a collection to browse its items.";
@@ -986,6 +1057,10 @@ class TimemapBrowserElement extends ComponentBase {
 			viewportSubtitle: subtitle,
 			viewMode: "items",
 			sources: [],
+			sourceCards: [],
+			collectionCards: [],
+			itemCards,
+			allBrowseEntities,
 			activeSourceId: this.state.activeEmbeddedSourceId || "",
 			collections: [],
 			selectedCollectionManifestUrl:
@@ -999,12 +1074,14 @@ class TimemapBrowserElement extends ComponentBase {
 	metadataModel() {
 		if (
 			this.isEmbeddedRuntime() &&
-			(this.state.viewMode === "sources" ||
-				(this.state.sourceType === "collections.json" &&
-					this.state.viewMode === "collections"))
+			(this.state.viewMode === "all" ||
+				this.state.viewMode === "sources" ||
+				this.state.viewMode === "collections")
 		) {
 			const emptyText =
-				this.state.viewMode === "sources"
+				this.state.viewMode === "all"
+					? "Use All to jump between sources, collections, and items."
+					: this.state.viewMode === "sources"
 					? "Select a source to browse collections and items."
 					: "Select a collection to browse its items and metadata.";
 			return {

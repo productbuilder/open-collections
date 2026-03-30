@@ -6,6 +6,7 @@ export function cacheDomElements(root) {
 		browserViewport: root.getElementById("browserViewport"),
 		manifestControls: root.getElementById("manifestControls"),
 		embeddedActiveSource: root.getElementById("embeddedActiveSource"),
+		embeddedViewAllBtn: root.getElementById("embeddedViewAllBtn"),
 		embeddedViewSourcesBtn: root.getElementById("embeddedViewSourcesBtn"),
 		embeddedViewCollectionsBtn: root.getElementById(
 			"embeddedViewCollectionsBtn",
@@ -58,6 +59,9 @@ export function bindDomEvents(app) {
 	});
 	app.dom.embeddedViewSourcesBtn?.addEventListener("click", () => {
 		app.setEmbeddedViewMode("sources");
+	});
+	app.dom.embeddedViewAllBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("all");
 	});
 	app.dom.embeddedViewCollectionsBtn?.addEventListener("click", () => {
 		app.setEmbeddedViewMode("collections");

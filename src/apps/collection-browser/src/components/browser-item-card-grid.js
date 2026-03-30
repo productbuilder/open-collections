@@ -7,7 +7,12 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
-		this.model = { items: [], selectedItemId: null, isLoading: false };
+		this.model = {
+			items: [],
+			itemCards: [],
+			selectedItemId: null,
+			isLoading: false,
+		};
 		this._renderFrame = 0;
 		this._renderToken = 0;
 	}
@@ -39,9 +44,15 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		}
 	}
 
-	previewMarkup(item) {
-		const mediaUrl = item.media?.thumbnailUrl || item.media?.url || "";
-		const mediaType = (item.media?.type || "").toLowerCase();
+	previewMarkup(itemCard) {
+		const mediaUrl =
+			itemCard.previewUrl ||
+			itemCard.item?.media?.thumbnailUrl ||
+			itemCard.item?.media?.url ||
+			"";
+		const mediaType = String(
+			itemCard.mediaType || itemCard.item?.media?.type || "",
+		).toLowerCase();
 
 		if (!mediaUrl) {
 			return '<div class="thumb-placeholder">No preview</div>';
@@ -51,21 +62,21 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			return `<video class="thumb" src="${mediaUrl}" muted playsinline preload="metadata"></video>`;
 		}
 
-		return `<img class="thumb" src="${mediaUrl}" alt="${item.title || item.id}" />`;
+		return `<img class="thumb" src="${mediaUrl}" alt="${itemCard.title || itemCard.id}" />`;
 	}
 
-	cardMarkup(item) {
+	cardMarkup(itemCard) {
 		return `
       <article
-        class="asset-card ${this.model.selectedItemId === item.id ? "is-focused" : ""}"
+        class="asset-card ${(itemCard.active === true || this.model.selectedItemId === itemCard.id) ? "is-focused" : ""}"
         role="button"
         tabindex="0"
-        data-item-id="${item.id}"
-        aria-label="Select ${item.title || item.id}"
+        data-item-id="${itemCard.id}"
+        aria-label="Select ${itemCard.title || itemCard.id}"
       >
-        <div class="thumb-frame">${this.previewMarkup(item)}</div>
-        <h3 class="card-title">${item.title || item.id}</h3>
-        <p class="meta">${item.license ? `License: ${item.license}` : "License not set"}</p>
+        <div class="thumb-frame">${this.previewMarkup(itemCard)}</div>
+        <h3 class="card-title">${itemCard.title || itemCard.id}</h3>
+        <p class="meta">${itemCard.subtitle || "License not set"}</p>
       </article>
     `;
 	}
@@ -133,7 +144,26 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 	}
 
 	render() {
-		const items = Array.isArray(this.model.items) ? this.model.items : [];
+		const itemCards = Array.isArray(this.model.itemCards)
+			? this.model.itemCards
+			: [];
+		const items = itemCards.length
+			? itemCards
+			: (Array.isArray(this.model.items) ? this.model.items : []).map(
+					(item, index) => ({
+						browseKind: "item",
+						id: item?.id || `item-${index + 1}`,
+						title: item?.title || item?.id || `item-${index + 1}`,
+						subtitle: item?.license
+							? `License: ${item.license}`
+							: "License not set",
+						previewUrl:
+							item?.media?.thumbnailUrl || item?.media?.url || "",
+						mediaType: item?.media?.type || "",
+						active: this.model.selectedItemId === item?.id,
+						item,
+					}),
+				);
 		this.cancelChunkedRender();
 		if (this.model.isLoading) {
 			this.shadowRoot.innerHTML = `

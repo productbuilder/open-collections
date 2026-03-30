@@ -1,5 +1,6 @@
 import { browserStyles } from "../css/browser.css.js";
 import "../../../../shared/ui/panels/index.js";
+import "./browser-all-card-grid.js";
 import "./browser-source-card-grid.js";
 import "./browser-collection-card-grid.js";
 import "./browser-item-card-grid.js";
@@ -12,11 +13,15 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			viewportTitle: "Collection items",
 			viewportSubtitle: "Load a collection to browse its items.",
 			viewMode: "sources",
+			allBrowseEntities: [],
 			sources: [],
+			sourceCards: [],
 			activeSourceId: "",
 			collections: [],
+			collectionCards: [],
 			selectedCollectionManifestUrl: "",
 			items: [],
+			itemCards: [],
 			selectedItemId: null,
 			isLoading: false,
 			desktopInspectorOpen: false,
@@ -61,22 +66,30 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		}
 		host.innerHTML = "";
 		let renderer;
-		if (this.model.viewMode === "sources") {
+		if (this.model.viewMode === "all") {
+			renderer = document.createElement("open-browser-all-card-grid");
+			renderer.update({
+				entities: this.model.allBrowseEntities,
+			});
+		} else if (this.model.viewMode === "sources") {
 			renderer = document.createElement("open-browser-source-card-grid");
 			renderer.update({
 				sources: this.model.sources,
+				sourceCards: this.model.sourceCards,
 				activeSourceId: this.model.activeSourceId,
 			});
 		} else if (this.model.viewMode === "collections") {
 			renderer = document.createElement("open-browser-collection-card-grid");
 			renderer.update({
 				collections: this.model.collections,
+				collectionCards: this.model.collectionCards,
 				selectedManifestUrl: this.model.selectedCollectionManifestUrl,
 			});
 		} else {
 			renderer = document.createElement("open-browser-item-card-grid");
 			renderer.update({
 				items: this.model.items,
+				itemCards: this.model.itemCards,
 				selectedItemId: this.model.selectedItemId,
 				isLoading: this.model.isLoading,
 			});

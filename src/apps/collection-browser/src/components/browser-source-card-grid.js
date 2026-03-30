@@ -7,6 +7,7 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 		this.attachShadow({ mode: "open" });
 		this.model = {
 			sources: [],
+			sourceCards: [],
 			activeSourceId: "",
 		};
 	}
@@ -27,9 +28,30 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 	}
 
 	render() {
-		const sources = Array.isArray(this.model.sources)
-			? this.model.sources
+		const sourceCards = Array.isArray(this.model.sourceCards)
+			? this.model.sourceCards
 			: [];
+		const sources = sourceCards.length
+			? sourceCards
+			: (Array.isArray(this.model.sources) ? this.model.sources : []).map(
+					(source) => ({
+						browseKind: "source",
+						id: source.id || "",
+						title: source.label || "Source",
+						subtitle:
+							source.subtitle ||
+							(source.sourceType === "collections.json"
+								? "Multi-collection source"
+								: "Single collection source"),
+						countLabel: source.countLabel || "",
+						previewImages: Array.isArray(source.previewImages)
+							? source.previewImages
+							: [],
+						actionLabel: "Browse",
+						actionValue: source.id || "",
+						active: this.model.activeSourceId === source.id,
+					}),
+				);
 
 		if (sources.length === 0) {
 			this.shadowRoot.innerHTML = `
@@ -57,20 +79,18 @@ class OpenBrowserSourceCardGridElement extends HTMLElement {
 				"open-collections-preview-summary-card",
 			);
 			card.update({
-				title: source.label || "Source",
-				subtitle:
-					source.subtitle ||
-					(source.sourceType === "collections.json"
-						? "Multi-collection source"
-						: "Single collection source"),
+				title: source.title || "Source",
+				subtitle: source.subtitle || "Source",
 				countLabel: source.countLabel || "",
 				previewImages: Array.isArray(source.previewImages)
 					? source.previewImages
 					: [],
 				placeholderLabel: "Source",
-				actionLabel: "Browse",
-				actionValue: source.id || "",
-				active: this.model.activeSourceId === source.id,
+				actionLabel: source.actionLabel || "Browse",
+				actionValue: source.actionValue || source.id || "",
+				active:
+					source.active === true ||
+					this.model.activeSourceId === source.id,
 			});
 			card.addEventListener("preview-card-activate", (event) => {
 				const sourceId = String(event.detail?.value || "").trim();

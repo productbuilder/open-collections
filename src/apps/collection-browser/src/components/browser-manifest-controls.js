@@ -8,6 +8,7 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
 			recentOpen: false,
+			isLoading: false,
 		};
 		this.closeRecentTimer = null;
 	}
@@ -34,6 +35,9 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 		const recentList = this.shadowRoot.getElementById("recentList");
 
 		loadBtn?.addEventListener("click", () => {
+			if (this.model.isLoading) {
+				return;
+			}
 			this.dispatch("manifest-load", {
 				manifestUrl: this.currentInputValue(),
 			});
@@ -63,6 +67,9 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 		input?.addEventListener("keydown", (event) => {
 			if (event.key === "Enter") {
 				event.preventDefault();
+				if (this.model.isLoading) {
+					return;
+				}
 				this.dispatch("manifest-load", {
 					manifestUrl: this.currentInputValue(),
 				});
@@ -187,11 +194,13 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 		const recentList = this.shadowRoot.getElementById("recentList");
 		const toggleBtn = this.shadowRoot.getElementById("recentToggleBtn");
 		const clearBtn = this.shadowRoot.getElementById("clearRecentBtn");
+		const loadBtn = this.shadowRoot.getElementById("loadBtn");
 		if (!input || !recentList || !toggleBtn || !clearBtn) {
 			return;
 		}
 
 		input.value = this.model.currentManifestUrl || "";
+		input.disabled = this.model.isLoading;
 
 		const recentUrls = Array.isArray(this.model.recentManifestUrls)
 			? this.model.recentManifestUrls
@@ -200,6 +209,10 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 		toggleBtn.textContent =
 			recentUrls.length > 0 ? `Recent (${recentUrls.length})` : "Recent";
 		clearBtn.disabled = recentUrls.length === 0;
+		if (loadBtn) {
+			loadBtn.disabled = this.model.isLoading;
+			loadBtn.textContent = this.model.isLoading ? "Loading..." : "Load";
+		}
 
 		recentList.innerHTML = "";
 		for (const url of recentUrls) {

@@ -161,25 +161,40 @@ export function bindDomEvents(app) {
 	app.dom.addConnectionPanel.addEventListener(
 		"connect-provider",
 		async () => {
-			await app.connectCurrentProvider();
+			app.dom.addConnectionPanel?.setBusy?.(true);
+			try {
+				await app.connectCurrentProvider();
+			} finally {
+				app.dom.addConnectionPanel?.setBusy?.(false);
+			}
 		},
 	);
 	app.dom.addConnectionPanel.addEventListener(
 		"add-example-connection",
 		async () => {
+			app.dom.addConnectionPanel?.setBusy?.(true);
 			app.clearPendingSourceRepair();
 			app.setSelectedProvider("example");
-			await app.connectCurrentProvider();
+			try {
+				await app.connectCurrentProvider();
+			} finally {
+				app.dom.addConnectionPanel?.setBusy?.(false);
+			}
 		},
 	);
 	app.dom.addConnectionPanel.addEventListener(
 		"add-local-folder-connection",
 		async () => {
+			app.dom.addConnectionPanel?.setBusy?.(true);
 			app.clearPendingSourceRepair();
 			app.setSelectedProvider("local");
-			const didPick = await app.pickLocalFolder();
-			if (didPick) {
-				await app.connectCurrentProvider();
+			try {
+				const didPick = await app.pickLocalFolder();
+				if (didPick) {
+					await app.connectCurrentProvider();
+				}
+			} finally {
+				app.dom.addConnectionPanel?.setBusy?.(false);
 			}
 		},
 	);

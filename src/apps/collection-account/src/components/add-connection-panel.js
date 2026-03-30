@@ -26,6 +26,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 			supportsLocalFolderPicker: true,
 			connectionStatusText: "Not connected.",
 			connectionStatusTone: "neutral",
+			isConnecting: false,
 			localFolderStatusText: "No folder selected.",
 			localFolderStatusTone: "neutral",
 			configValues: {
@@ -169,8 +170,16 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		this.shadowRoot
 			.getElementById("connectBtn")
 			?.addEventListener("click", () => {
+				if (this.model.isConnecting) {
+					return;
+				}
 				this.dispatch("connect-provider");
 			});
+	}
+
+	setBusy(isBusy = false) {
+		this.model.isConnecting = Boolean(isBusy);
+		this.renderProviderVisibility();
 	}
 
 	applyState() {
@@ -455,10 +464,15 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		}
 
 		if (connectBtn) {
-			connectBtn.textContent = isRepairFlow
-				? "Reconnect"
-				: "Add connection";
+			connectBtn.textContent = this.model.isConnecting
+				? isRepairFlow
+					? "Reconnecting..."
+					: "Connecting..."
+				: isRepairFlow
+					? "Reconnect"
+					: "Add connection";
 			connectBtn.disabled =
+				this.model.isConnecting ||
 				selected?.enabled === false ||
 				!["github", "s3"].includes(this.model.selectedProviderId);
 		}

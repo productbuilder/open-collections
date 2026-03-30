@@ -327,6 +327,7 @@ export function renderAssets(app) {
 			},
 			availableConnections,
 			connectionActionLabel: app.browserConnectionActionLabel(),
+			isLoading: app.state.assetSurfaceLoading === true,
 		};
 		app.dom.collectionBrowser.update(browserState);
 		app.dom.mobileFlow?.setBrowserState(browserState);
@@ -350,6 +351,7 @@ export function renderAssets(app) {
 		selectedItemIds: app.state.selectedItemIds,
 		viewModes: app.state.browserViewModes,
 		connectionActionLabel: app.browserConnectionActionLabel(),
+		isLoading: app.state.assetSurfaceLoading === true,
 	};
 	app.dom.collectionBrowser.update(browserState);
 	app.dom.mobileFlow?.setBrowserState(browserState);

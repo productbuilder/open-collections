@@ -33,5 +33,6 @@
 		},
 		inspectorPlacement: "right",
 		connectionsDialogView: "list",
+		assetSurfaceLoading: true,
 	};
 }

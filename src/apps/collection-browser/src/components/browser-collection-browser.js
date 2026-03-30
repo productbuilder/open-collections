@@ -11,6 +11,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			viewportSubtitle: "Load a collection to browse its items.",
 			items: [],
 			selectedItemId: null,
+			isLoading: false,
 		};
 	}
 
@@ -52,6 +53,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		renderer.update({
 			items: this.model.items,
 			selectedItemId: this.model.selectedItemId,
+			isLoading: this.model.isLoading,
 		});
 		host.appendChild(renderer);
 	}

@@ -55,6 +55,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			workspaceContextText: "",
 			statusText: "No connections yet.",
 			statusTone: "neutral",
+			isLoading: false,
 		};
 	}
 
@@ -447,12 +448,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				selectedCollectionId: this.model.selectedCollectionId,
 				selectedCollectionIds: this.model.selectedCollectionIds,
 				availableConnections: this.model.availableConnections,
+				isLoading: this.model.isLoading,
 			});
 		} else {
 			renderer.update({
 				items: this.model.items,
 				focusedItemId: this.model.focusedItemId,
 				selectedItemIds: this.model.selectedItemIds,
+				isLoading: this.model.isLoading,
 			});
 		}
 		host.appendChild(renderer);

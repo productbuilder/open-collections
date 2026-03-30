@@ -38,6 +38,7 @@ class TimemapBrowserElement extends ComponentBase {
 			mobileMetadataOpen: false,
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
+			isLoadingCollection: false,
 		};
 		this.shadow = this.attachShadow({ mode: "open" });
 		this.renderShell();
@@ -355,6 +356,7 @@ class TimemapBrowserElement extends ComponentBase {
 					: "Load a collection to browse its items.",
 			items,
 			selectedItemId: this.state.selectedItemId,
+			isLoading: this.state.isLoadingCollection,
 		};
 	}
 
@@ -416,6 +418,7 @@ class TimemapBrowserElement extends ComponentBase {
 			recentManifestUrls: this.state.recentManifestUrls,
 			statusText: this.state.statusText,
 			statusTone: this.state.statusTone,
+			isLoading: this.state.isLoadingCollection,
 		});
 	}
 
@@ -494,6 +497,9 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 
 		this.setStatus("Loading collection...", "neutral");
+		this.state.isLoadingCollection = true;
+		this.renderManifestControls();
+		this.renderViewport();
 		try {
 			const response = await fetch(manifestUrl);
 			if (!response.ok) {
@@ -524,6 +530,10 @@ class TimemapBrowserElement extends ComponentBase {
 			this.syncMetadataPanelVisibility();
 		} catch (error) {
 			this.setStatus(`Load failed: ${error.message}`, "warn");
+		} finally {
+			this.state.isLoadingCollection = false;
+			this.renderManifestControls();
+			this.renderViewport();
 		}
 	}
 }

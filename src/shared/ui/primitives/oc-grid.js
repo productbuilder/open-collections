@@ -91,6 +91,11 @@ class OcGridElement extends HTMLElement {
           display: grid;
           width: 100%;
           min-height: 0;
+          pointer-events: none;
+        }
+
+        ::slotted(*) {
+          pointer-events: auto;
         }
 
         * {

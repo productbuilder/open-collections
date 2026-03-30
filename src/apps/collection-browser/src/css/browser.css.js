@@ -5,7 +5,7 @@ export const browserStyles = `
     min-height: 0;
     overflow: hidden;
     box-sizing: border-box;
-    padding: 0.95rem;
+    padding: 0;
     color: #111827;
   }
 
@@ -93,12 +93,8 @@ export const browserStyles = `
   }
 
   @media (max-width: 760px) {
-    :host {
-      padding: 0;
-    }
-
     .viewport-region {
-      padding: 0.8rem;
+      padding: 0;
       gap: 0.7rem;
     }
 

@@ -12,6 +12,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this.model = {
 			viewportTitle: "Collection items",
 			viewportSubtitle: "Load a collection to browse its items.",
+			showBack: false,
 			viewMode: "sources",
 			allBrowseEntities: [],
 			sources: [],
@@ -57,6 +58,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			this.model.viewportTitle || "Collection items",
 		);
 		sectionPanel.setAttribute("subtitle", this.model.viewportSubtitle || "");
+		sectionPanel.setAttribute(
+			"show-back",
+			this.model.showBack ? "true" : "false",
+		);
 	}
 
 	renderBody() {

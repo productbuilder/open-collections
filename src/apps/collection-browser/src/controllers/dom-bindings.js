@@ -5,16 +5,12 @@ export function cacheDomElements(root) {
 		browserHeaderStatus: root.getElementById("browserHeaderStatus"),
 		browserViewport: root.getElementById("browserViewport"),
 		manifestControls: root.getElementById("manifestControls"),
-		embeddedActiveSource: root.getElementById("embeddedActiveSource"),
 		embeddedViewAllBtn: root.getElementById("embeddedViewAllBtn"),
 		embeddedViewSourcesBtn: root.getElementById("embeddedViewSourcesBtn"),
 		embeddedViewCollectionsBtn: root.getElementById(
 			"embeddedViewCollectionsBtn",
 		),
 		embeddedViewItemsBtn: root.getElementById("embeddedViewItemsBtn"),
-		embeddedBackToCollectionsBtn: root.getElementById(
-			"embeddedBackToCollectionsBtn",
-		),
 		metadataPanel: root.getElementById("metadataPanel"),
 		viewerDialog: root.getElementById("viewerDialog"),
 	};
@@ -69,8 +65,8 @@ export function bindDomEvents(app) {
 	app.dom.embeddedViewItemsBtn?.addEventListener("click", () => {
 		app.setEmbeddedViewMode("items");
 	});
-	app.dom.embeddedBackToCollectionsBtn?.addEventListener("click", () => {
-		app.backToCollectionsView();
+	app.dom.browserViewport?.addEventListener("panel-back", () => {
+		app.goBackInEmbeddedNav();
 	});
 
 	app.dom.browserViewport?.addEventListener("item-open", (event) => {
@@ -81,14 +77,14 @@ export function bindDomEvents(app) {
 		if (!manifestUrl) {
 			return;
 		}
-		await app.openEmbeddedCollectionFromIndex(manifestUrl);
+		await app.openCollectionFromBrowse(manifestUrl);
 	});
 	app.dom.browserViewport?.addEventListener("source-open", async (event) => {
 		const sourceId = String(event.detail?.sourceId || "").trim();
 		if (!sourceId) {
 			return;
 		}
-		await app.loadEmbeddedSourceById(sourceId);
+		await app.openSourceFromBrowse(sourceId);
 	});
 
 	app.dom.metadataPanel?.addEventListener("close-metadata", () => {

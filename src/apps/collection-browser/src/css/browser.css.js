@@ -4,6 +4,7 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     overflow: hidden;
+    box-sizing: border-box;
     padding: 0.95rem;
     color: #111827;
   }
@@ -39,15 +40,22 @@ export const browserStyles = `
     min-height: 0;
     height: 100%;
     display: block;
-    padding: 0.95rem;
     overflow: hidden;
+    padding: 1rem 0rem;
   }
 
   .browser-host {
     min-height: 0;
-    overflow: auto;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
     padding-right: 0.1rem;
+  }
+
+  .browser-host > * {
+    display: block;
+    min-height: 0;
   }
 
   .viewport-inspector {

@@ -1,4 +1,5 @@
 import { browserStyles } from "../css/browser.css.js";
+import { backButtonStyles, renderBackButton } from "../../../../shared/components/back-button.js";
 import "../../../../shared/ui/primitives/index.js";
 
 const VALID_MODES = ["all", "sources", "collections", "items"];
@@ -20,6 +21,14 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
+	}
+
+	disconnectedCallback() {
+		if (this._grid && this._boundGridClickHandler) {
+			this._grid.removeEventListener("click", this._boundGridClickHandler);
+		}
+		this._grid = null;
+		this._boundGridClickHandler = null;
 	}
 
 	update(data = {}) {
@@ -114,9 +123,14 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	buildGridCell(entity = {}) {
 		const kind = this.entityKind(entity);
+		const actionValue = String(
+			entity.actionValue || (kind === "collection" ? entity.manifestUrl : entity.id) || "",
+		).trim();
 		const wrapper = document.createElement("div");
 		wrapper.className = `browse-cell kind-${kind}`;
 		wrapper.dataset.browseKind = kind;
+		wrapper.dataset.actionType = kind;
+		wrapper.dataset.actionValue = actionValue;
 		if (kind === "source") {
 			wrapper.setAttribute("data-span-cols", "2");
 			wrapper.setAttribute("data-span-rows", "2");
@@ -129,6 +143,63 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		}
 		wrapper.appendChild(this.buildCard(entity));
 		return wrapper;
+	}
+
+	dispatch(name, detail = {}) {
+		this.dispatchEvent(
+			new CustomEvent(name, { detail, bubbles: true, composed: true }),
+		);
+	}
+
+	resolveGridCellFromEvent(event) {
+		const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+		for (const node of path) {
+			if (!(node instanceof HTMLElement)) {
+				continue;
+			}
+			if (node.classList?.contains("browse-cell")) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	bindGridInteractions() {
+		if (this._grid && this._boundGridClickHandler) {
+			this._grid.removeEventListener("click", this._boundGridClickHandler);
+		}
+		const grid = this.shadowRoot?.getElementById("browseGrid");
+		if (!grid) {
+			this._grid = null;
+			this._boundGridClickHandler = null;
+			return;
+		}
+
+		this._grid = grid;
+		this._boundGridClickHandler = (event) => {
+			const cell = this.resolveGridCellFromEvent(event);
+			if (!cell) {
+				return;
+			}
+			const actionType = String(cell.dataset.actionType || "").trim();
+			const actionValue = String(cell.dataset.actionValue || "").trim();
+			if (!actionType || !actionValue) {
+				return;
+			}
+			if (actionType === "source") {
+				this.dispatch("source-open", { sourceId: actionValue });
+				return;
+			}
+			if (actionType === "collection") {
+				this.dispatch("collection-open", { manifestUrl: actionValue });
+				return;
+			}
+			if (actionType === "item") {
+				this.dispatch("item-open", { itemId: actionValue });
+			}
+		};
+
+		grid.addEventListener("click", this._boundGridClickHandler);
 	}
 
 	modeButtonLabel(mode) {
@@ -180,9 +251,11 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	render() {
 		this.shadowRoot.innerHTML = `
+      <style>${backButtonStyles}</style>
       <style>${browserStyles}</style>
       <div class="root">
         <header class="header" aria-label="Browser header">
+          ${this.model.showBack ? renderBackButton({ id: "panelBackBtn" }) : ""}
           <h2 class="title">${this.model.viewportTitle || "Browser"}</h2>
           <p class="subtitle">${this.model.viewportSubtitle || "Browse available entities."}</p>
         </header>
@@ -213,7 +286,13 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			grid.appendChild(this.buildGridCell(entity));
 		}
 
+		const backBtn = this.shadowRoot.getElementById("panelBackBtn");
+		backBtn?.addEventListener("click", () => {
+			this.dispatch("panel-back");
+		});
+
 		this.bindToggleEvents();
+		this.bindGridInteractions();
 	}
 }
 

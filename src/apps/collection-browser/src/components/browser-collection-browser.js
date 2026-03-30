@@ -1,9 +1,6 @@
 import { browserStyles } from "../css/browser.css.js";
 import "../../../../shared/ui/panels/index.js";
-import "./browser-all-card-grid.js";
-import "./browser-source-card-grid.js";
-import "./browser-collection-card-grid.js";
-import "./browser-item-card-grid.js";
+import "./browser-browse-grid.js";
 
 class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	constructor() {
@@ -70,35 +67,15 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			return;
 		}
 		host.innerHTML = "";
-		let renderer;
-		if (this.model.viewMode === "all") {
-			renderer = document.createElement("open-browser-all-card-grid");
-			renderer.update({
-				entities: this.model.allBrowseEntities,
-			});
-		} else if (this.model.viewMode === "sources") {
-			renderer = document.createElement("open-browser-source-card-grid");
-			renderer.update({
-				sources: this.model.sources,
-				sourceCards: this.model.sourceCards,
-				activeSourceId: this.model.activeSourceId,
-			});
-		} else if (this.model.viewMode === "collections") {
-			renderer = document.createElement("open-browser-collection-card-grid");
-			renderer.update({
-				collections: this.model.collections,
-				collectionCards: this.model.collectionCards,
-				selectedManifestUrl: this.model.selectedCollectionManifestUrl,
-			});
-		} else {
-			renderer = document.createElement("open-browser-item-card-grid");
-			renderer.update({
-				items: this.model.items,
-				itemCards: this.model.itemCards,
-				selectedItemId: this.model.selectedItemId,
-				isLoading: this.model.isLoading,
-			});
-		}
+		const renderer = document.createElement("open-browser-browse-grid");
+		renderer.update({
+			viewMode: this.model.viewMode,
+			allBrowseEntities: this.model.allBrowseEntities,
+			sourceCards: this.model.sourceCards,
+			collectionCards: this.model.collectionCards,
+			itemCards: this.model.itemCards,
+			isLoading: this.model.isLoading,
+		});
 		host.appendChild(renderer);
 	}
 

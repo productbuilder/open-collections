@@ -15,6 +15,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		};
 		this._renderFrame = 0;
 		this._renderToken = 0;
+		this._boundGrid = null;
 	}
 
 	connectedCallback() {
@@ -44,85 +45,39 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 		}
 	}
 
-	previewMarkup(itemCard) {
-		const mediaUrl =
-			itemCard.previewUrl ||
-			itemCard.item?.media?.thumbnailUrl ||
-			itemCard.item?.media?.url ||
-			"";
-		const mediaType = String(
-			itemCard.mediaType || itemCard.item?.media?.type || "",
-		).toLowerCase();
-
-		if (!mediaUrl) {
-			return '<div class="thumb-placeholder">No preview</div>';
-		}
-
-		if (mediaType.includes("video")) {
-			return `<video class="thumb" src="${mediaUrl}" muted playsinline preload="metadata"></video>`;
-		}
-
-		return `<img class="thumb" src="${mediaUrl}" alt="${itemCard.title || itemCard.id}" />`;
-	}
-
-	findElementInPath(event, selector) {
-		const path = Array.isArray(event.composedPath?.())
-			? event.composedPath()
-			: [];
-		for (const node of path) {
-			if (node instanceof Element && node.matches(selector)) {
-				return node;
-			}
-		}
-		return null;
-	}
-
-	cardMarkup(itemCard) {
-		return `
-      <article
-        class="asset-card ${(itemCard.active === true || this.model.selectedItemId === itemCard.id) ? "is-focused" : ""}"
-        role="button"
-        tabindex="0"
-        data-item-id="${itemCard.id}"
-        aria-label="Select ${itemCard.title || itemCard.id}"
-      >
-        <div class="thumb-frame">${this.previewMarkup(itemCard)}</div>
-        <h3 class="card-title">${itemCard.title || itemCard.id}</h3>
-        <p class="meta">${itemCard.subtitle || "License not set"}</p>
-      </article>
-    `;
-	}
-
 	bindDelegatedEvents() {
 		const grid = this.shadowRoot.querySelector("#itemGrid");
-		if (!grid || grid.dataset.bound === "true") {
+		if (!grid || this._boundGrid === grid) {
 			return;
 		}
-
-		grid.dataset.bound = "true";
-		grid.addEventListener("click", (event) => {
-			const card = this.findElementInPath(event, "[data-item-id]");
-			if (!card) {
+		this._boundGrid = grid;
+		grid.addEventListener("oc-card-activate", (event) => {
+			const itemId = String(event.detail?.value || "").trim();
+			if (!itemId) {
 				return;
 			}
-			this.dispatch("item-open", {
-				itemId: card.getAttribute("data-item-id") || "",
-			});
+			this.dispatch("item-open", { itemId });
 		});
+	}
 
-		grid.addEventListener("keydown", (event) => {
-			if (event.key !== "Enter" && event.key !== " ") {
-				return;
-			}
-			const card = this.findElementInPath(event, "[data-item-id]");
-			if (!card) {
-				return;
-			}
-			event.preventDefault();
-			this.dispatch("item-open", {
-				itemId: card.getAttribute("data-item-id") || "",
-			});
+	createItemCard(itemCard) {
+		const card = document.createElement("oc-card-item");
+		card.update({
+			title: itemCard.title || itemCard.id || "Item",
+			subtitle: itemCard.subtitle || "License not set",
+			previewImages: [],
+			previewUrl:
+				itemCard.previewUrl ||
+				itemCard.item?.media?.thumbnailUrl ||
+				itemCard.item?.media?.url ||
+				"",
+			actionLabel: "Open item",
+			actionValue: itemCard.id || "",
+			active:
+				itemCard.active === true ||
+				this.model.selectedItemId === itemCard.id,
 		});
+		return card;
 	}
 
 	renderItemsInChunks(items = []) {
@@ -140,10 +95,11 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 				return;
 			}
 			const nextItems = items.slice(index, index + RENDER_CHUNK_SIZE);
-			host.insertAdjacentHTML(
-				"beforeend",
-				nextItems.map((item) => this.cardMarkup(item)).join(""),
-			);
+			const fragment = document.createDocumentFragment();
+			for (const item of nextItems) {
+				fragment.appendChild(this.createItemCard(item));
+			}
+			host.appendChild(fragment);
 			index += RENDER_CHUNK_SIZE;
 			if (index < items.length) {
 				this._renderFrame = window.requestAnimationFrame(renderChunk);

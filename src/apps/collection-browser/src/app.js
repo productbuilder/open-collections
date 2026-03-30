@@ -429,23 +429,37 @@ class TimemapBrowserElement extends ComponentBase {
 				const collections = Array.isArray(descriptor.collections)
 					? descriptor.collections
 					: [];
-				const firstManifestUrl = collections[0]?.manifestUrl || "";
-				let previewImages = [];
-				if (firstManifestUrl) {
+				const previewRows = [];
+				for (const collectionEntry of collections.slice(0, 3)) {
+					const manifestUrl = String(collectionEntry?.manifestUrl || "").trim();
+					if (!manifestUrl) {
+						continue;
+					}
 					try {
 						const previewCollection = await this.loadCollectionManifest(
-							firstManifestUrl,
+							manifestUrl,
 						);
-						previewImages = derivePreviewImages(previewCollection.items, 3);
+						const rowImages = derivePreviewImages(previewCollection.items, 5);
+						if (rowImages.length === 0) {
+							continue;
+						}
+						previewRows.push({
+							title: collectionEntry?.label || previewCollection?.title || "",
+							images: rowImages,
+						});
 					} catch {
-						// Keep source card rendering resilient when preview hydration fails.
+						// Keep source card rendering resilient when one collection preview fails.
 					}
 				}
+				const previewImages = previewRows.flatMap((row) =>
+					Array.isArray(row.images) ? row.images : [],
+				);
 				return {
 					id: source.id,
 					label: source.label,
 					subtitle: fallbackSubtitle,
 					countLabel: `${collections.length} collection${collections.length === 1 ? "" : "s"}`,
+					previewRows,
 					previewImages,
 					sourceType: descriptor.sourceType,
 				};
@@ -460,6 +474,7 @@ class TimemapBrowserElement extends ComponentBase {
 				label: source.label,
 				subtitle: collection.title || fallbackSubtitle,
 				countLabel: `${items.length} item${items.length === 1 ? "" : "s"}`,
+				previewRows: [],
 				previewImages: derivePreviewImages(items, 3),
 				sourceType: descriptor.sourceType,
 			};
@@ -469,6 +484,7 @@ class TimemapBrowserElement extends ComponentBase {
 				label: source.label,
 				subtitle: fallbackSubtitle,
 				countLabel: "",
+				previewRows: [],
 				previewImages: [],
 				sourceType: source.sourceType,
 			};
@@ -558,6 +574,7 @@ class TimemapBrowserElement extends ComponentBase {
 			label: source.label,
 			subtitle: "Multi-collection source",
 			countLabel: "",
+			previewRows: [],
 			previewImages: [],
 			sourceType: source.sourceType,
 		}));

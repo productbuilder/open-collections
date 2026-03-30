@@ -29,6 +29,9 @@ export function buildSourceBrowseCardModels(
 		title: entry.label || "Source",
 		subtitle: entry.subtitle || "Source",
 		countLabel: entry.countLabel || "",
+		previewRows: Array.isArray(entry.previewRows)
+			? entry.previewRows
+			: [],
 		previewImages: Array.isArray(entry.previewImages)
 			? entry.previewImages
 			: [],
@@ -102,4 +105,3 @@ export function buildAllBrowseEntities({
 	const items = Array.isArray(itemCards) ? itemCards : [];
 	return [...sources, ...collections, ...items];
 }
-

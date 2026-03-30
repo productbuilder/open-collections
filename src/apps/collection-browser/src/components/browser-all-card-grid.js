@@ -117,12 +117,15 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
         .mixed-cell.kind-item {
           grid-column: span 1;
           grid-row: span 1;
+          display: flex;
+          align-items: flex-start;
         }
 
         .mixed-cell > open-collections-preview-summary-card {
           display: block;
-          height: 100%;
-          pointer-events: auto;
+          height: auto;
+          max-width: 100%;
+          align-self: flex-start;
         }
 
         .mixed-cell.kind-source > open-collections-preview-summary-card {
@@ -137,7 +140,8 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
 
         .mixed-cell.kind-item > open-collections-preview-summary-card {
           width: 100%;
-          height: 100%;
+          height: auto;
+          max-width: 100%;
         }
 
         @media (max-width: 1040px) {

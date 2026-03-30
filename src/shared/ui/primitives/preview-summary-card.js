@@ -54,13 +54,6 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 			return;
 		}
 		card.addEventListener("click", () => this.dispatchActivate());
-		card.addEventListener("keydown", (event) => {
-			if (event.key !== "Enter" && event.key !== " ") {
-				return;
-			}
-			event.preventDefault();
-			this.dispatchActivate();
-		});
 		this._boundCard = card;
 	}
 
@@ -69,11 +62,11 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 			? this.model.previewImages.filter(Boolean).slice(0, 3)
 			: [];
 		if (previews.length === 0) {
-			return `<div class="preview-placeholder">${escapeHtml(this.model.placeholderLabel)}</div>`;
+			return `<span class="preview-placeholder">${escapeHtml(this.model.placeholderLabel)}</span>`;
 		}
 
 		return `
-      <div class="preview-strip">
+      <span class="preview-strip">
         ${previews
 					.map(
 						(imageUrl, index) => `
@@ -83,7 +76,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           `,
 					)
 					.join("")}
-      </div>
+      </span>
     `;
 	}
 
@@ -94,13 +87,14 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 		const actionLabel = escapeHtml(
 			this.model.actionLabel || "Open",
 		);
-		const disabledAttr = this.model.disabled ? "true" : "false";
+		const disabledAttr = this.model.disabled ? " disabled" : "";
 		const activeClass = this.model.active ? "is-active" : "";
 
 		this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: block;
+          pointer-events: none;
         }
 
         * {
@@ -109,6 +103,9 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .card {
           width: 100%;
+          pointer-events: auto;
+          appearance: none;
+          -webkit-appearance: none;
           border: 1px solid #dbe3ec;
           border-radius: 11px;
           background: #ffffff;
@@ -123,13 +120,13 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
         }
 
-        .card:hover {
+        .card:not(:disabled):hover {
           border-color: #93c5fd;
           box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
           background: #f8fbff;
         }
 
-        .card:focus-visible {
+        .card:not(:disabled):focus-visible {
           outline: 2px solid #60a5fa;
           outline-offset: 2px;
         }
@@ -140,7 +137,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           background: #f5faff;
         }
 
-        .card[aria-disabled="true"] {
+        .card:disabled {
           opacity: 0.7;
           cursor: default;
         }
@@ -181,6 +178,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
 
         .title {
+          display: block;
           margin: 0;
           font-size: 0.9rem;
           font-weight: 700;
@@ -190,6 +188,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
 
         .subtitle {
+          display: block;
           margin: 0;
           font-size: 0.81rem;
           line-height: 1.38;
@@ -207,6 +206,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
 
         .count {
+          display: block;
           margin: 0;
           font-size: 0.78rem;
           color: #334155;
@@ -214,6 +214,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
 
         .action-hint {
+          display: block;
           margin: 0;
           font-size: 0.76rem;
           color: #64748b;
@@ -221,15 +222,15 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           white-space: nowrap;
         }
       </style>
-      <article class="card ${activeClass}" id="card" role="button" tabindex="0" aria-label="${actionLabel} ${title}" aria-disabled="${disabledAttr}">
+      <button class="card ${activeClass}" id="card" type="button" aria-label="${actionLabel} ${title}"${disabledAttr}>
         ${this.renderPreviewStrip()}
-        <p class="title">${title}</p>
-        <p class="subtitle">${subtitle || "&nbsp;"}</p>
-        <div class="footer">
-          <p class="count">${countLabel || "&nbsp;"}</p>
-          <p class="action-hint">${actionLabel}</p>
-        </div>
-      </article>
+        <span class="title">${title}</span>
+        <span class="subtitle">${subtitle || "&nbsp;"}</span>
+        <span class="footer">
+          <span class="count">${countLabel || "&nbsp;"}</span>
+          <span class="action-hint">${actionLabel}</span>
+        </span>
+      </button>
     `;
 	}
 }

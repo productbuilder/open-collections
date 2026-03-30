@@ -51,6 +51,7 @@ export const browserStyles = `
     overflow-x: hidden;
     overscroll-behavior: contain;
     padding-right: 0.1rem;
+    pointer-events:none;
   }
 
   .browser-host > * {

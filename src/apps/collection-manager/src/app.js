@@ -157,6 +157,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.pendingSourceRepair = null;
 		this._unsubscribeSessionConnectionSources = null;
 		this._isApplyingSessionSources = false;
+		this._assetSurfaceLoadingBatchCount = 0;
 		this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
 
 		this.providerFactories = createDefaultConnectionProviderFactories();
@@ -332,10 +333,46 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		} finally {
 			this._isApplyingSessionSources = false;
 		}
-		for (const sourceId of addedSourceIds) {
-			void this.refreshSource(sourceId, {
-				backgroundRestore: true,
-			});
+		void this.refreshSourcesInBackground(addedSourceIds);
+	}
+
+	beginAssetSurfaceBackgroundLoading() {
+		this._assetSurfaceLoadingBatchCount += 1;
+		if (this._assetSurfaceLoadingBatchCount === 1) {
+			this.state.assetSurfaceLoading = true;
+			this.renderAssets();
+		}
+	}
+
+	endAssetSurfaceBackgroundLoading() {
+		this._assetSurfaceLoadingBatchCount = Math.max(
+			0,
+			this._assetSurfaceLoadingBatchCount - 1,
+		);
+		if (this._assetSurfaceLoadingBatchCount === 0) {
+			this.state.assetSurfaceLoading = false;
+			this.renderAssets();
+		}
+	}
+
+	async refreshSourcesInBackground(sourceIds = []) {
+		const queuedSourceIds = (Array.isArray(sourceIds) ? sourceIds : []).filter(
+			(sourceId) => typeof sourceId === "string" && sourceId.trim(),
+		);
+		if (queuedSourceIds.length === 0) {
+			return;
+		}
+		this.beginAssetSurfaceBackgroundLoading();
+		try {
+			await Promise.allSettled(
+				queuedSourceIds.map((sourceId) =>
+					this.refreshSource(sourceId, {
+						backgroundRestore: true,
+					}),
+				),
+			);
+		} finally {
+			this.endAssetSurfaceBackgroundLoading();
 		}
 	}
 

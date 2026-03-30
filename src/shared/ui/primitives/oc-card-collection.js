@@ -70,7 +70,6 @@ class OcCardCollectionElement extends HTMLElement {
         :host {
           display: block;
           min-height: 0;
-          pointer-events: none;
         }
 
         open-collections-preview-summary-card {

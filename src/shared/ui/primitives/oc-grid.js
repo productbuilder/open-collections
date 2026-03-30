@@ -88,10 +88,9 @@ class OcGridElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>
         :host {
-          display: block;
+          display: grid;
           width: 100%;
           min-height: 0;
-          overflow: visible;
         }
 
         * {
@@ -101,7 +100,7 @@ class OcGridElement extends HTMLElement {
         .layout {
           width: 100%;
           min-height: 0;
-          overflow: visible;
+          grid-auto-rows: minmax(0, auto);
         }
 
         .layout.is-grid {

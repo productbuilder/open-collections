@@ -45,11 +45,6 @@ export const browserStyles = `
   .browser-host {
     min-height: 0;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
     padding-right: 0;
   }
 

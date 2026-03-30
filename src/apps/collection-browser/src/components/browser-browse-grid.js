@@ -65,6 +65,11 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			oc-grid {
 				display: block;
 				min-height: 0;
+				pointer-events: none;
+			}
+
+			oc-grid > * {
+				pointer-events: auto;
 			}
 
 			.browse-cell {

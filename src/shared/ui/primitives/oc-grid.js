@@ -151,10 +151,6 @@ if (!customElements.get("oc-grid")) {
 	customElements.define("oc-grid", OcGridElement);
 }
 
-if (!customElements.get("open-collections-card-layout")) {
-	customElements.define("open-collections-card-layout", OcGridElement);
-}
-
 const OpenCollectionsCardLayoutElement = OcGridElement;
 
 export { OcGridElement, OpenCollectionsCardLayoutElement };

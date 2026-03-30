@@ -150,12 +150,12 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		const card = document.createElement("oc-card-item");
 		card.update({
 			title: entity.title || entity.id || "Item",
-			subtitle: entity.subtitle || "License not set",
+			subtitle: entity.subtitle || "",
 			previewImages: Array.isArray(entity.previewImages)
 				? entity.previewImages
 				: [],
 			previewUrl: entity.previewUrl || entity.item?.media?.thumbnailUrl || "",
-			actionLabel: entity.actionLabel || "Open item",
+			actionLabel: entity.actionLabel || "",
 			actionValue: entity.actionValue || entity.id || "",
 			active: entity.active === true,
 		});

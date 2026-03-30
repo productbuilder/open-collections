@@ -1,3 +1,5 @@
+import { renderArrowIcon } from "../../components/back-button.js";
+
 function escapeHtml(value) {
 	return String(value ?? "")
 		.replaceAll("&", "&amp;")
@@ -252,6 +254,12 @@ class OcCardCollectionsElement extends HTMLElement {
           flex: 0 0 auto;
         }
 
+        .arrow .icon {
+          width: 1rem;
+          height: 1rem;
+          fill: currentColor;
+        }
+
         .rows {
           display: grid;
           gap: 0.46rem;
@@ -349,7 +357,7 @@ class OcCardCollectionsElement extends HTMLElement {
             <p class="title">${title}</p>
             <p class="subtitle">${subtitle || "&nbsp;"}</p>
           </div>
-          <span class="arrow" aria-hidden="true">&rarr;</span>
+          <span class="arrow" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
         </div>
         ${this.renderRows()}
         <div class="footer">

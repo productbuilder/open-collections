@@ -796,12 +796,15 @@ class TimemapBrowserElement extends ComponentBase {
         .embedded-view-toggle {
           display: inline-flex;
           align-items: center;
+          width: 100%;
           min-width: 0;
+          margin-bottom: 0.3rem;
         }
 
         .embedded-view-buttons {
-          display: inline-flex;
+          display: flex;
           align-items: center;
+          width: 100%;
           border: 1px solid #cbd5e1;
           border-radius: 8px;
           overflow: hidden;
@@ -895,16 +898,15 @@ class TimemapBrowserElement extends ComponentBase {
 
           .embedded-view-toggle {
             width: 100%;
-            justify-content: space-between;
-            flex-wrap: wrap;
           }
 
           .embedded-view-buttons {
-            flex: 1 1 auto;
+            flex: 1 1 100%;
           }
 
           .embedded-view-btn {
-            flex: 1 1 auto;
+            flex: 1 1 25%;
+            min-width: 0;
           }
 
         }
@@ -1034,8 +1036,8 @@ class TimemapBrowserElement extends ComponentBase {
 			: null;
 		if (this.isEmbeddedRuntime() && this.state.viewMode === "all") {
 			return {
-				viewportTitle: "All",
-				viewportSubtitle: `${allBrowseEntities.length} browse entit${allBrowseEntities.length === 1 ? "y" : "ies"} across sources, collections, and items.`,
+				viewportTitle: "Browse and collect",
+				viewportSubtitle: "Across multiple collections",
 				showBack: showBackInViewport,
 				viewMode: "all",
 				sources,

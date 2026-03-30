@@ -17,7 +17,6 @@ export const browserStyles = `
     grid-template-rows: minmax(0, 1fr);
     height: 100%;
     min-height: 0;
-    overflow: hidden;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -35,27 +34,15 @@ export const browserStyles = `
     grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   }
 
-  .viewport-region {
+  .browser-host {
     min-height: 0;
     height: 100%;
     display: block;
     padding: 0;
   }
 
-  .browser-host {
-    min-height: 0;
-    height: 100%;
-    padding-right: 0;
-  }
-
-  .browser-host > * {
-    display: block;
-    min-height: 0;
-  }
-
   .viewport-inspector {
     min-height: 0;
-    overflow: hidden;
     display: none;
   }
 
@@ -87,7 +74,7 @@ export const browserStyles = `
   }
 
   @media (max-width: 760px) {
-    .viewport-region {
+    .browser-host {
       padding: 0;
       gap: 0.7rem;
     }

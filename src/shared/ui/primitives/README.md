@@ -10,6 +10,8 @@ This folder holds the first modest set of app-shell family shared primitives.
   - Low-level empty/placeholder callout with optional title and message.
 - `open-collections-action-row`
   - Reusable full-width navigation/action row with leading icon, title/subtitle, optional trailing arrow, and optional secondary trailing slot control.
+- `open-collections-preview-summary-card`
+  - Reusable whole-card action surface with title/subtitle, thumbnail preview strip, and summary count label for browse/discovery cards.
 
 ## Why these first
 

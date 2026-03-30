@@ -27,6 +27,26 @@ import "./components/browser-manifest-controls.js";
 import "./components/browser-metadata-panel.js";
 import "./components/browser-viewer-dialog.js";
 
+function deriveItemPreviewUrl(item) {
+	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
+}
+
+function derivePreviewImages(items = [], max = 3) {
+	const previews = [];
+	const list = Array.isArray(items) ? items : [];
+	for (const item of list) {
+		const previewUrl = deriveItemPreviewUrl(item);
+		if (!previewUrl) {
+			continue;
+		}
+		previews.push(previewUrl);
+		if (previews.length >= max) {
+			break;
+		}
+	}
+	return previews;
+}
+
 class TimemapBrowserElement extends ComponentBase {
 	constructor() {
 		super();
@@ -36,6 +56,7 @@ class TimemapBrowserElement extends ComponentBase {
 			currentManifestUrl: "",
 			recentManifestUrls: readRecentManifestUrls(),
 			embeddedSources: [],
+			embeddedSourceCards: [],
 			activeEmbeddedSourceId: "",
 			sourceType: "collection.json",
 			viewMode: "items",
@@ -53,6 +74,10 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	connectedCallback() {
+		if (this.isEmbeddedRuntime()) {
+			this.state.viewMode = "sources";
+			this.state.statusText = "Select a source to start browsing.";
+		}
 		this.renderShell();
 		this.cacheDom();
 		this._eventsBound = false;
@@ -102,41 +127,38 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	renderEmbeddedSourceControls() {
-		const select = this.dom?.embeddedSourceSelect;
+		const sourcesBtn = this.dom?.embeddedViewSourcesBtn;
 		const collectionsBtn = this.dom?.embeddedViewCollectionsBtn;
 		const itemsBtn = this.dom?.embeddedViewItemsBtn;
 		const backBtn = this.dom?.embeddedBackToCollectionsBtn;
-		if (!select && !collectionsBtn && !itemsBtn && !backBtn) {
+		const activeSourceLabel = this.dom?.embeddedActiveSource;
+		if (!sourcesBtn && !collectionsBtn && !itemsBtn && !backBtn) {
 			return;
 		}
 
-		const sources = Array.isArray(this.state.embeddedSources)
-			? this.state.embeddedSources
-			: [];
-		if (select) {
-			select.innerHTML = "";
-			for (const source of sources) {
-				const option = document.createElement("option");
-				option.value = source.id;
-				option.textContent = source.label;
-				select.appendChild(option);
-			}
-		}
-
-		if (!this.state.activeEmbeddedSourceId && sources[0]?.id) {
-			this.state.activeEmbeddedSourceId = sources[0].id;
-		}
-		if (select) {
-			select.value = this.state.activeEmbeddedSourceId || "";
-			select.disabled =
-				this.state.isLoadingCollection || sources.length <= 1;
+		if (activeSourceLabel) {
+			const activeSource =
+				this.state.embeddedSources.find(
+					(source) => source.id === this.state.activeEmbeddedSourceId,
+				) || null;
+			activeSourceLabel.textContent = activeSource
+				? `Source: ${activeSource.label}`
+				: "Source: none selected";
 		}
 
 		const sourceType = this.state.sourceType || "collection.json";
-		const canUseCollections = sourceType === "collections.json";
+		const hasSourceSelection = Boolean(this.state.activeEmbeddedSourceId);
+		const canUseCollections =
+			hasSourceSelection && sourceType === "collections.json";
 		const canUseItems =
-			sourceType === "collection.json" ||
-			sourceType === "collections.json";
+			hasSourceSelection &&
+			(sourceType === "collection.json" ||
+				sourceType === "collections.json");
+		if (sourcesBtn) {
+			sourcesBtn.disabled = this.state.isLoadingCollection;
+			sourcesBtn.dataset.active =
+				this.state.viewMode === "sources" ? "true" : "false";
+		}
 		if (collectionsBtn) {
 			collectionsBtn.disabled =
 				this.state.isLoadingCollection || !canUseCollections;
@@ -162,11 +184,19 @@ class TimemapBrowserElement extends ComponentBase {
 		if (!this.isEmbeddedRuntime()) {
 			return;
 		}
-		const nextMode = mode === "collections" ? "collections" : "items";
+		const nextMode =
+			mode === "sources"
+				? "sources"
+				: mode === "collections"
+					? "collections"
+					: "items";
 		if (
 			nextMode === "collections" &&
 			this.state.sourceType !== "collections.json"
 		) {
+			return;
+		}
+		if (nextMode === "items" && !this.state.activeEmbeddedSourceId) {
 			return;
 		}
 		this.state.viewMode = nextMode;
@@ -285,6 +315,71 @@ class TimemapBrowserElement extends ComponentBase {
 		};
 	}
 
+	async buildEmbeddedSourceCard(source) {
+		const fallbackSubtitle =
+			source.sourceType === "collections.json"
+				? "Multi-collection source"
+				: "Single collection source";
+		try {
+			const descriptor = await resolveEmbeddedSourceDescriptor(source);
+			if (descriptor.sourceType === "collections.json") {
+				const collections = Array.isArray(descriptor.collections)
+					? descriptor.collections
+					: [];
+				const firstManifestUrl = collections[0]?.manifestUrl || "";
+				let previewImages = [];
+				if (firstManifestUrl) {
+					try {
+						const previewCollection = await this.loadCollectionManifest(
+							firstManifestUrl,
+						);
+						previewImages = derivePreviewImages(previewCollection.items, 3);
+					} catch {
+						// Keep source card rendering resilient when preview hydration fails.
+					}
+				}
+				return {
+					id: source.id,
+					label: source.label,
+					subtitle: fallbackSubtitle,
+					countLabel: `${collections.length} collection${collections.length === 1 ? "" : "s"}`,
+					previewImages,
+					sourceType: descriptor.sourceType,
+				};
+			}
+
+			const collection = await this.loadCollectionManifest(
+				descriptor.manifestUrl,
+			);
+			const items = Array.isArray(collection.items) ? collection.items : [];
+			return {
+				id: source.id,
+				label: source.label,
+				subtitle: collection.title || fallbackSubtitle,
+				countLabel: `${items.length} item${items.length === 1 ? "" : "s"}`,
+				previewImages: derivePreviewImages(items, 3),
+				sourceType: descriptor.sourceType,
+			};
+		} catch {
+			return {
+				id: source.id,
+				label: source.label,
+				subtitle: fallbackSubtitle,
+				countLabel: "",
+				previewImages: [],
+				sourceType: source.sourceType,
+			};
+		}
+	}
+
+	async hydrateEmbeddedSourceCards(sources = []) {
+		const cards = await Promise.all(
+			sources.map((source) => this.buildEmbeddedSourceCard(source)),
+		);
+		this.state.embeddedSourceCards = cards;
+		this.renderViewport();
+	}
+
 	getCurrentItems() {
 		if (
 			this.isEmbeddedRuntime() &&
@@ -332,17 +427,31 @@ class TimemapBrowserElement extends ComponentBase {
 			BROWSER_CONFIG.embeddedSourceCatalog,
 		);
 		this.state.embeddedSources = configuredSources;
+		this.state.embeddedSourceCards = configuredSources.map((source) => ({
+			id: source.id,
+			label: source.label,
+			subtitle:
+				source.sourceType === "collections.json"
+					? "Multi-collection source"
+					: "Single collection source",
+			countLabel: "",
+			previewImages: [],
+			sourceType: source.sourceType,
+		}));
 
 		if (!configuredSources.length) {
 			this.setStatus("No embedded browser sources configured.", "warn");
 			this.renderEmbeddedSourceControls();
+			this.renderViewport();
 			return;
 		}
 
 		this.state.activeEmbeddedSourceId =
 			this.state.activeEmbeddedSourceId || configuredSources[0].id;
+		this.state.viewMode = "sources";
 		this.renderEmbeddedSourceControls();
-		await this.loadEmbeddedSourceById(this.state.activeEmbeddedSourceId);
+		this.renderViewport();
+		void this.hydrateEmbeddedSourceCards(configuredSources);
 	}
 
 	async loadEmbeddedSourceById(sourceId) {
@@ -409,12 +518,12 @@ class TimemapBrowserElement extends ComponentBase {
 		const toolbarTemplate = isEmbedded
 			? `
             <div class="embedded-source-controls" slot="toolbar">
-              <label class="embedded-source-label" for="embeddedSourceSelect">Source</label>
-              <select id="embeddedSourceSelect" class="embedded-source-select" aria-label="Select source"></select>
+              <span id="embeddedActiveSource" class="embedded-source-chip">Source: none selected</span>
             </div>
             <div class="embedded-view-toggle" slot="toolbar">
-              <span class="embedded-view-label">View</span>
-              <div class="embedded-view-buttons" role="group" aria-label="Browser view mode">
+              <span class="embedded-view-label">Browse</span>
+              <div class="embedded-view-buttons" role="group" aria-label="Browser browse level">
+                <button id="embeddedViewSourcesBtn" class="embedded-view-btn" type="button">Sources</button>
                 <button id="embeddedViewCollectionsBtn" class="embedded-view-btn" type="button">Collections</button>
                 <button id="embeddedViewItemsBtn" class="embedded-view-btn" type="button">Items</button>
               </div>
@@ -567,29 +676,27 @@ class TimemapBrowserElement extends ComponentBase {
           min-width: 0;
         }
 
-        .embedded-source-label {
-          font-size: 0.78rem;
-          color: #475569;
-          font-weight: 700;
-        }
-
         .embedded-view-label {
           font-size: 0.78rem;
           color: #475569;
           font-weight: 700;
         }
 
-        .embedded-source-select {
+        .embedded-source-chip {
+          display: inline-flex;
+          align-items: center;
           border: 1px solid #cbd5e1;
           background: #ffffff;
-          color: #0f172a;
+          color: #334155;
           border-radius: 8px;
-          padding: 0.42rem 0.65rem;
-          font: inherit;
-          font-size: 0.83rem;
-          max-width: min(100%, 24rem);
-          min-width: 12rem;
-          cursor: pointer;
+          padding: 0.36rem 0.58rem;
+          font-size: 0.79rem;
+          font-weight: 600;
+          min-height: 1.95rem;
+          white-space: nowrap;
+          max-width: 26rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .embedded-view-buttons {
@@ -709,10 +816,9 @@ class TimemapBrowserElement extends ComponentBase {
             flex-wrap: wrap;
           }
 
-          .embedded-source-select {
+          .embedded-source-chip {
             width: 100%;
             max-width: 100%;
-            min-width: 0;
           }
 
           .embedded-view-buttons {
@@ -815,6 +921,26 @@ class TimemapBrowserElement extends ComponentBase {
 		const collections = Array.isArray(this.state.collectionsIndex)
 			? this.state.collectionsIndex
 			: [];
+		const sources = Array.isArray(this.state.embeddedSourceCards)
+			? this.state.embeddedSourceCards
+			: [];
+		if (this.isEmbeddedRuntime() && this.state.viewMode === "sources") {
+			return {
+				viewportTitle: "Sources",
+				viewportSubtitle:
+					sources.length > 0
+						? `${sources.length} source${sources.length === 1 ? "" : "s"} available. Select one to continue.`
+						: "No sources available.",
+				viewMode: "sources",
+				sources,
+				activeSourceId: this.state.activeEmbeddedSourceId || "",
+				collections: [],
+				selectedCollectionManifestUrl: "",
+				items: [],
+				selectedItemId: null,
+				isLoading: false,
+			};
+		}
 		if (
 			this.isEmbeddedRuntime() &&
 			this.state.sourceType === "collections.json" &&
@@ -827,6 +953,8 @@ class TimemapBrowserElement extends ComponentBase {
 						? `${collections.length} collection${collections.length === 1 ? "" : "s"} available. Select one to browse items.`
 						: "No collections found in this source.",
 				viewMode: "collections",
+				sources: [],
+				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections,
 				selectedCollectionManifestUrl:
 					this.state.selectedCollectionManifestUrl || "",
@@ -854,9 +982,11 @@ class TimemapBrowserElement extends ComponentBase {
 					: "Load a collection to browse its items.";
 
 		return {
-			viewportTitle: "Collection items",
+			viewportTitle: "Items",
 			viewportSubtitle: subtitle,
 			viewMode: "items",
+			sources: [],
+			activeSourceId: this.state.activeEmbeddedSourceId || "",
 			collections: [],
 			selectedCollectionManifestUrl:
 				this.state.selectedCollectionManifestUrl || "",
@@ -869,15 +999,19 @@ class TimemapBrowserElement extends ComponentBase {
 	metadataModel() {
 		if (
 			this.isEmbeddedRuntime() &&
-			this.state.sourceType === "collections.json" &&
-			this.state.viewMode === "collections"
+			(this.state.viewMode === "sources" ||
+				(this.state.sourceType === "collections.json" &&
+					this.state.viewMode === "collections"))
 		) {
+			const emptyText =
+				this.state.viewMode === "sources"
+					? "Select a source to browse collections and items."
+					: "Select a collection to browse its items and metadata.";
 			return {
 				title: "Metadata",
 				contextText: "Read-only details for the selected item.",
 				fields: [],
-				emptyText:
-					"Select a collection to browse its items and metadata.",
+				emptyText,
 				mobileOpen:
 					this.isMobileViewport() && this.state.mobileMetadataOpen,
 			};

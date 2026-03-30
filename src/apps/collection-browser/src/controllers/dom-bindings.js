@@ -5,7 +5,8 @@ export function cacheDomElements(root) {
 		browserHeaderStatus: root.getElementById("browserHeaderStatus"),
 		browserViewport: root.getElementById("browserViewport"),
 		manifestControls: root.getElementById("manifestControls"),
-		embeddedSourceSelect: root.getElementById("embeddedSourceSelect"),
+		embeddedActiveSource: root.getElementById("embeddedActiveSource"),
+		embeddedViewSourcesBtn: root.getElementById("embeddedViewSourcesBtn"),
 		embeddedViewCollectionsBtn: root.getElementById(
 			"embeddedViewCollectionsBtn",
 		),
@@ -55,12 +56,8 @@ export function bindDomEvents(app) {
 		);
 		app.renderManifestControls();
 	});
-	app.dom.embeddedSourceSelect?.addEventListener("change", async (event) => {
-		const sourceId = String(event.target?.value || "").trim();
-		if (!sourceId) {
-			return;
-		}
-		await app.loadEmbeddedSourceById(sourceId);
+	app.dom.embeddedViewSourcesBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("sources");
 	});
 	app.dom.embeddedViewCollectionsBtn?.addEventListener("click", () => {
 		app.setEmbeddedViewMode("collections");
@@ -81,6 +78,13 @@ export function bindDomEvents(app) {
 			return;
 		}
 		await app.openEmbeddedCollectionFromIndex(manifestUrl);
+	});
+	app.dom.browserViewport?.addEventListener("source-open", async (event) => {
+		const sourceId = String(event.detail?.sourceId || "").trim();
+		if (!sourceId) {
+			return;
+		}
+		await app.loadEmbeddedSourceById(sourceId);
 	});
 
 	app.dom.metadataPanel?.addEventListener("close-metadata", () => {

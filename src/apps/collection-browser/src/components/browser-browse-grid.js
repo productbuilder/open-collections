@@ -84,17 +84,8 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		if (this._scrollContainer && this._boundScrollHandler) {
 			this._scrollContainer.removeEventListener("scroll", this._boundScrollHandler);
 		}
-		const scrollContainer = this.shadowRoot?.getElementById("browserScrollContainer");
-		if (!scrollContainer) {
-			this._scrollContainer = null;
-			this._boundScrollHandler = null;
-			return;
-		}
-		this._scrollContainer = scrollContainer;
-		this._boundScrollHandler = () => {
-			console.log("[browser-scroll-debug] browserScrollContainer");
-		};
-		scrollContainer.addEventListener("scroll", this._boundScrollHandler);
+		this._scrollContainer = null;
+		this._boundScrollHandler = null;
 	}
 
 	bindGridInteractions() {
@@ -110,18 +101,12 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 
 		this._grid = grid;
 		this._boundGridClickHandler = (event) => {
-			const card = this.resolveCardFromEvent(event);
-			console.log("[browser-browse-grid] delegated click", {
-				cardFound: Boolean(card),
-				tagName: card?.tagName?.toLowerCase?.() || "",
-				actionType: card?.dataset?.actionType || "",
-				actionValue: card?.dataset?.actionValue || "",
-			});
-			if (!card) {
+			const cell = this.resolveGridCellFromEvent(event);
+			if (!cell) {
 				return;
 			}
-			const actionType = String(card.dataset.actionType || "").trim();
-			const actionValue = String(card.dataset.actionValue || "").trim();
+			const actionType = String(cell.dataset.actionType || "").trim();
+			const actionValue = String(cell.dataset.actionValue || "").trim();
 			if (!actionType || !actionValue) {
 				return;
 			}
@@ -141,19 +126,14 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		grid.addEventListener("click", this._boundGridClickHandler);
 	}
 
-	resolveCardFromEvent(event) {
+	resolveGridCellFromEvent(event) {
 		const path = typeof event.composedPath === "function" ? event.composedPath() : [];
-		const cardSelector = "oc-card-item, oc-card-collection, oc-card-collections";
 		for (const node of path) {
 			if (!(node instanceof HTMLElement)) {
 				continue;
 			}
-			if (node.matches?.(cardSelector)) {
+			if (node.classList?.contains("browse-cell")) {
 				return node;
-			}
-			const nestedCard = node.querySelector?.(cardSelector);
-			if (nestedCard instanceof HTMLElement) {
-				return nestedCard;
 			}
 		}
 		return null;
@@ -235,8 +215,6 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				actionValue: sourceId,
 				active: entity.active === true,
 			});
-			card.dataset.actionType = "source";
-			card.dataset.actionValue = sourceId;
 			return card;
 		}
 		if (kind === "collection") {
@@ -254,8 +232,6 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 				actionValue: manifestUrl,
 				active: entity.active === true,
 			});
-			card.dataset.actionType = "collection";
-			card.dataset.actionValue = manifestUrl;
 			return card;
 		}
 
@@ -272,16 +248,19 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			actionValue: itemId,
 			active: entity.active === true,
 		});
-		card.dataset.actionType = "item";
-		card.dataset.actionValue = itemId;
 		return card;
 	}
 
 	buildGridCell(entity = {}) {
 		const kind = this.entityKind(entity);
+		const actionValue = String(
+			entity.actionValue || (kind === "collection" ? entity.manifestUrl : entity.id) || "",
+		).trim();
 		const wrapper = document.createElement("div");
 		wrapper.className = `browse-cell kind-${kind}`;
 		wrapper.dataset.browseKind = kind;
+		wrapper.dataset.actionType = kind;
+		wrapper.dataset.actionValue = actionValue;
 		if (kind === "source") {
 			wrapper.setAttribute("data-span-cols", "2");
 			wrapper.setAttribute("data-span-rows", "2");

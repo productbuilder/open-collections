@@ -67,8 +67,20 @@ class OcGridElement extends HTMLElement {
 			}
 			const spanCols = Number(child.getAttribute("data-span-cols")) || 1;
 			const spanRows = Number(child.getAttribute("data-span-rows")) || 1;
+			const spanColsMobile =
+				Number(child.getAttribute("data-span-cols-mobile")) || spanCols;
+			const spanRowsMobile =
+				Number(child.getAttribute("data-span-rows-mobile")) || spanRows;
 			child.style.setProperty("--oc-span-cols", String(Math.max(1, spanCols)));
 			child.style.setProperty("--oc-span-rows", String(Math.max(1, spanRows)));
+			child.style.setProperty(
+				"--oc-span-cols-mobile",
+				String(Math.max(1, spanColsMobile)),
+			);
+			child.style.setProperty(
+				"--oc-span-rows-mobile",
+				String(Math.max(1, spanRowsMobile)),
+			);
 		}
 	}
 
@@ -131,8 +143,8 @@ class OcGridElement extends HTMLElement {
           }
 
           .layout.is-grid ::slotted(*) {
-            grid-column: span 1;
-            grid-row: span 1;
+            grid-column: span var(--oc-span-cols-mobile, var(--oc-span-cols, 1));
+            grid-row: span var(--oc-span-rows-mobile, var(--oc-span-rows, 1));
           }
         }
       </style>

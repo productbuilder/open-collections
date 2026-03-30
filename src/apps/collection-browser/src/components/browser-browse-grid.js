@@ -178,12 +178,18 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 		if (kind === "source") {
 			wrapper.setAttribute("data-span-cols", "2");
 			wrapper.setAttribute("data-span-rows", "2");
+			wrapper.setAttribute("data-span-cols-mobile", "2");
+			wrapper.setAttribute("data-span-rows-mobile", "2");
 		} else if (kind === "collection") {
 			wrapper.setAttribute("data-span-cols", "2");
 			wrapper.setAttribute("data-span-rows", "1");
+			wrapper.setAttribute("data-span-cols-mobile", "2");
+			wrapper.setAttribute("data-span-rows-mobile", "1");
 		} else {
 			wrapper.setAttribute("data-span-cols", "1");
 			wrapper.setAttribute("data-span-rows", "1");
+			wrapper.setAttribute("data-span-cols-mobile", "1");
+			wrapper.setAttribute("data-span-rows-mobile", "1");
 		}
 		wrapper.appendChild(this.createCard(entity));
 		return wrapper;

@@ -193,7 +193,7 @@ class OpenBrowserItemCardGridElement extends HTMLElement {
 			return;
 		}
 
-		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><open-collections-card-layout id="itemGrid"></open-collections-card-layout>`;
+		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><oc-grid id="itemGrid"></oc-grid>`;
 		const grid = this.shadowRoot.getElementById("itemGrid");
 		grid?.update({
 			mode: "grid",

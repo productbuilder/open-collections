@@ -73,7 +73,7 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
           pointer-events: none;
         }
 
-        open-collections-card-layout {
+        oc-grid {
           display: block;
           min-height: 0;
           pointer-events: none;
@@ -168,7 +168,7 @@ class OpenBrowserAllCardGridElement extends HTMLElement {
           }
         }
       </style>
-      <open-collections-card-layout id="allGrid"></open-collections-card-layout>
+      <oc-grid id="allGrid"></oc-grid>
     `;
 		const grid = this.shadowRoot.getElementById("allGrid");
 		if (!grid) {

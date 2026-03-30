@@ -10,8 +10,9 @@ This folder holds the first modest set of app-shell family shared primitives.
   - Low-level empty/placeholder callout with optional title and message.
 - `open-collections-action-row`
   - Reusable full-width navigation/action row with leading icon, title/subtitle, optional trailing arrow, and optional secondary trailing slot control.
-- `open-collections-card-layout`
+- `oc-grid`
   - Reusable card/list layout container with responsive grid columns and optional per-item span vars via `data-span-cols` and `data-span-rows`.
+  - Backward-compatible alias: `open-collections-card-layout` (to support incremental migration).
 - `open-collections-preview-summary-card`
   - Reusable whole-card action surface with title/subtitle, thumbnail preview strip, and summary count label for browse/discovery cards.
 - `oc-card-collections`

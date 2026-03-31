@@ -1,3 +1,5 @@
+import "../../../time-comparer/src/components/time-comparer-item.js";
+
 class OpenBrowserViewerDialogElement extends HTMLElement {
 	constructor() {
 		super();
@@ -89,6 +91,18 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 		}
 
 		title.textContent = item.title || item.id || "Viewer";
+		if (
+			String(item.presentationType || "").toLowerCase() ===
+			"time-comparer"
+		) {
+			const comparer = document.createElement("oc-time-comparer-item");
+			comparer.update({
+				item,
+				items: this.model.item?.__collectionItems || [],
+			});
+			body.appendChild(comparer);
+			return;
+		}
 		const mediaType = (item.media?.type || "").toLowerCase();
 		if (mediaType.includes("video")) {
 			const video = document.createElement("video");

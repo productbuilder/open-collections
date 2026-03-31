@@ -567,6 +567,126 @@ export async function createEmptyDraftItem(manager) {
 	return item;
 }
 
+export async function createTimeComparerDraftItem(manager) {
+	const source = manager.getActiveIngestionSource();
+	if (!source) {
+		return null;
+	}
+
+	const collectionId = manager.ensureCollectionForSource(source);
+	if (!collectionId) {
+		manager.setStatus(
+			"Create or select a collection before adding a time comparer item.",
+			"warn",
+		);
+		return null;
+	}
+
+	const imageCandidates = manager.state.assets.filter(
+		(item) =>
+			item.collectionId === collectionId &&
+			item.workspaceId &&
+			String(item.media?.type || "image").toLowerCase().includes("image") &&
+			String(item.media?.url || "").trim(),
+	);
+	if (imageCandidates.length < 2) {
+		manager.setStatus(
+			"Add at least two image items in this collection before creating a time comparer.",
+			"warn",
+		);
+		return null;
+	}
+
+	const pastCandidate = imageCandidates[0];
+	const presentCandidate = imageCandidates[1];
+	const collectionLabel = manager.collectionLabelFor(source, collectionId);
+	const collectionRootPath =
+		manager.activeCollectionRootPath() ||
+		manager.normalizeCollectionRootPath(`${collectionId}/`, collectionId);
+	const itemId = manager.uniqueDraftItemId(
+		"time-comparer",
+		source.id,
+		collectionId,
+	);
+	const workspaceId = manager.toWorkspaceItemId(source.id, itemId);
+	const item = {
+		id: itemId,
+		type: "presentation",
+		presentationType: "time-comparer",
+		title: "Then and now comparison",
+		description: "Compare two moments in time from the same viewpoint.",
+		creator: "",
+		date: "",
+		location: "",
+		license: "Custom presentation item",
+		attribution: "",
+		source: "",
+		tags: ["presentation", "time-comparer"],
+		include: true,
+		compare: {
+			pastItemId: pastCandidate.id,
+			presentItemId: presentCandidate.id,
+		},
+		settings: {
+			initialSplit: 0.5,
+			pastLabel: "Past",
+			presentLabel: "Present",
+			showLabels: true,
+		},
+		media: {
+			type: "image",
+			mode: "managed",
+			url: String(presentCandidate.media?.url || "").trim(),
+			thumbnailUrl:
+				String(presentCandidate.media?.thumbnailUrl || "").trim() ||
+				String(presentCandidate.media?.url || "").trim(),
+		},
+		previewUrl:
+			String(presentCandidate.previewUrl || "").trim() ||
+			String(presentCandidate.media?.url || "").trim(),
+		thumbnailPreviewUrl:
+			String(presentCandidate.thumbnailPreviewUrl || "").trim() ||
+			String(presentCandidate.previewUrl || "").trim() ||
+			String(presentCandidate.media?.thumbnailUrl || "").trim() ||
+			String(presentCandidate.media?.url || "").trim(),
+		thumbnailRepoPath: "",
+		isLocalDraftAsset: true,
+		draftUploadStatus: "uploaded",
+		uploadError: "",
+		mediaError: false,
+		sourceAssetId: itemId,
+		workspaceId,
+		sourceId: source.id,
+		sourceLabel: source.label,
+		sourceDisplayLabel: source.displayLabel || source.label,
+		providerId: source.providerId,
+		collectionId,
+		collectionLabel,
+		collectionRootPath,
+		localFileRef: "",
+		localThumbnailRef: "",
+	};
+
+	manager.state.assets = [...manager.state.assets, item];
+	manager.refreshSourceCollectionsAndCounts(source.id);
+	manager.state.selectedCollectionId = collectionId;
+	manager.state.selectedItemId = workspaceId;
+	manager.renderSourcesList();
+	manager.renderSourceFilter();
+	manager.renderCollectionFilter();
+	manager.renderAssets();
+	manager.renderEditor();
+	manager.markDirty();
+	if (manager.state.opfsAvailable) {
+		await manager.saveLocalDraft();
+	}
+	manager.setStatus(
+		"Added a time comparer presentation item using the first two image items in this collection.",
+		"ok",
+	);
+	return item;
+}
+
 export async function attachUploadedMediaToItem(manager, itemId, file) {
 	const item = manager.state.assets.find(
 		(entry) => entry.workspaceId === itemId,

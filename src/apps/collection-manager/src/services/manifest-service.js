@@ -42,6 +42,15 @@ export function isItemPublishable(manager, item, context = {}) {
 	if (!item || item.include === false) {
 		return false;
 	}
+	const isTimeComparerPresentation =
+		String(item.type || "").toLowerCase() === "presentation" &&
+		String(item.presentationType || "").toLowerCase() === "time-comparer";
+	if (isTimeComparerPresentation) {
+		return Boolean(
+			String(item.compare?.pastItemId || "").trim() &&
+				String(item.compare?.presentItemId || "").trim(),
+		);
+	}
 	if (!String(item.media?.url || "").trim()) {
 		return false;
 	}

@@ -175,23 +175,16 @@ export const browserStyles = `
   }
 
   .browser-host {
-    display: flex;
-    flex: 1 1 auto;
+    display: block;
+    flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    overflow: hidden;
-    overscroll-behavior: contain;
+    padding-bottom: var(--oc-space-2);
   }
 
   .browser-host > * {
-    flex: 1 1 auto;
+    display: block;
     min-width: 0;
-    min-height: 0;
-  }
-
-  .scroll-container-wrapper {
-    flex: 1;
-    min-height: 0;
   }
 
   .scroll-container {

@@ -165,7 +165,6 @@ export const browserStyles = `
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
-    height: 100%;
     min-height: 0;
     width: 100%;
     padding: 0;
@@ -174,9 +173,13 @@ export const browserStyles = `
     overscroll-behavior: contain;
   }
 
+  .scroll-container-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .browser-host {
     display: block;
-    flex: 0 0 auto;
     min-height: 0;
     width: 100%;
     padding-bottom: var(--oc-space-2);

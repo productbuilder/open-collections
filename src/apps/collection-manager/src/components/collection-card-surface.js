@@ -36,6 +36,8 @@ class OpenCollectionCardSurfaceElement extends HTMLElement {
 		const wrapper = document.createElement("article");
 		wrapper.className = "browse-cell kind-collection";
 		wrapper.dataset.collectionId = collection.id || "";
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
 		wrapper.setAttribute("data-span-cols", "2");
 		wrapper.setAttribute("data-span-rows", "1");
 
@@ -48,7 +50,7 @@ class OpenCollectionCardSurfaceElement extends HTMLElement {
 			previewImages: Array.isArray(collection.previewImages)
 				? collection.previewImages
 				: [],
-			actionLabel: "Open",
+			actionLabel: "",
 			actionValue: collection.id || "",
 			active: isFocused || isSelected,
 		});
@@ -60,7 +62,6 @@ class OpenCollectionCardSurfaceElement extends HTMLElement {
 				<input type="checkbox" data-select-id="${collection.id}" ${isSelected ? "checked" : ""} />
 				<span>Select</span>
 			</label>
-			<button type="button" class="btn" data-open-id="${collection.id}">Open</button>
 			<button type="button" class="btn ${isUnassigned ? "btn-primary" : ""}" data-assign-id="${collection.id}" ${canAssign ? "" : "disabled"}>
 				${isUnassigned ? "Assign connection" : "Reassign connection"}
 			</button>
@@ -144,19 +145,31 @@ class OpenCollectionCardSurfaceElement extends HTMLElement {
 				});
 				return;
 			}
-			const openBtn = target.closest("[data-open-id]");
-			if (openBtn) {
+			const selectInput = target.closest("input[data-select-id]");
+			if (selectInput) {
 				event.stopPropagation();
-				this.dispatch("collection-open", {
-					collectionId: openBtn.getAttribute("data-open-id"),
-				});
 				return;
 			}
 			const cell = target.closest(".browse-cell[data-collection-id]");
 			if (!cell) {
 				return;
 			}
-			this.dispatch("collection-select", {
+			this.dispatch("collection-open", {
+				collectionId: cell.getAttribute("data-collection-id"),
+			});
+		});
+
+		grid?.addEventListener("keydown", (event) => {
+			if (event.key !== "Enter" && event.key !== " ") {
+				return;
+			}
+			const target = event.target instanceof Element ? event.target : null;
+			const cell = target?.closest(".browse-cell[data-collection-id]");
+			if (!cell) {
+				return;
+			}
+			event.preventDefault();
+			this.dispatch("collection-open", {
 				collectionId: cell.getAttribute("data-collection-id"),
 			});
 		});

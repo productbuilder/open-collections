@@ -34,6 +34,7 @@ const panelChromeStyles = `
   }
 
   .panel-titlebar,
+  .panel-subheader-row,
   .panel-toolbar-row {
     display: flex;
     align-items: center;
@@ -141,6 +142,10 @@ const panelChromeStyles = `
     padding: var(--oc-space-2) 0;
   }
 
+  .panel-subheader-row {
+    padding: 0 0 var(--oc-space-1);
+  }
+
   .panel-toolbar-main {
     flex: 1 1 auto;
   }
@@ -230,6 +235,8 @@ class OpenCollectionsPanelChromeElement extends BaseElement {
           </div>
           <div class="panel-titlebar-actions"><slot name="header-actions"></slot></div>
         </header>
+
+        <div class="panel-subheader-row"><slot name="subheader"></slot></div>
 
         <header>
           <div class="panel-toolbar-row">

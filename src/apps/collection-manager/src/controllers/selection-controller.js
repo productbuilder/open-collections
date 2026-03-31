@@ -297,6 +297,37 @@ export function renderAssets(app) {
 
 	if (app.state.currentLevel === "collections") {
 		const collections = app.getVisibleCollections();
+		const sourceCards = (app.state.sources || []).map((source) => {
+			const sourceCollections = Array.isArray(source?.collections)
+				? source.collections
+				: [];
+			const sourceAssets = (app.state.assets || []).filter(
+				(item) => item?.sourceId === source.id,
+			);
+			const previewImages = sourceAssets
+				.map((item) =>
+					app.resolveItemForDisplay(item)?.media?.thumbnailUrl ||
+					item?.media?.thumbnailUrl ||
+					item?.media?.url ||
+					"",
+				)
+				.filter(Boolean)
+				.slice(0, 12);
+			return {
+				id: source.id,
+				title:
+					source.displayLabel ||
+					source.label ||
+					source.providerLabel ||
+					source.id,
+				subtitle: source.kindLabel || source.providerLabel || "Source",
+				countLabel: `${sourceCollections.length} collection${sourceCollections.length === 1 ? "" : "s"} · ${sourceAssets.length} item${sourceAssets.length === 1 ? "" : "s"}`,
+				previewImages,
+				active:
+					source.id === app.state.activeSourceFilter &&
+					app.state.activeSourceFilter !== "all",
+			};
+		});
 		const availableConnections = (app.state.sources || [])
 			.filter((source) => source && source.enabled !== false)
 			.map((source) => ({
@@ -320,11 +351,14 @@ export function renderAssets(app) {
 				app.getDeletableSelectedCollectionIds().length,
 			focusedItemId: null,
 			selectedItemIds: [],
+			openedCollectionId: app.state.openedCollectionId,
 			viewModes: app.state.browserViewModes,
+			managerMode: app.state.managerBrowseMode || "collections",
 			onboarding: {
 				visible:
 					app.state.sources.length === 0 && collections.length === 0,
 			},
+			sourceCards,
 			availableConnections,
 			connectionActionLabel: app.browserConnectionActionLabel(),
 			isLoading: app.state.assetSurfaceLoading === true,
@@ -350,6 +384,9 @@ export function renderAssets(app) {
 		focusedItemId: app.state.selectedItemId,
 		selectedItemIds: app.state.selectedItemIds,
 		viewModes: app.state.browserViewModes,
+		managerMode: "items",
+		sourceCards: [],
+		openedCollectionId: app.state.openedCollectionId,
 		connectionActionLabel: app.browserConnectionActionLabel(),
 		isLoading: app.state.assetSurfaceLoading === true,
 	};

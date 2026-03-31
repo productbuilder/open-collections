@@ -11,6 +11,7 @@
 		selectedCollectionId: "all",
 		selectedCollectionIds: [],
 		currentLevel: "collections",
+		managerBrowseMode: "collections",
 		metadataMode: "collection",
 		mobileView: "browse",
 		openedCollectionId: null,

@@ -72,6 +72,32 @@ export const browserStyles = `
     gap: 0.22rem;
   }
 
+  .manager-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding-bottom: var(--oc-space-1);
+  }
+
+  .mode-toggle {
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-pill);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-secondary);
+    font: inherit;
+    font-size: 0.78rem;
+    line-height: 1;
+    padding: 0.34rem 0.62rem;
+    cursor: pointer;
+  }
+
+  .mode-toggle[data-active="true"] {
+    border-color: var(--oc-border-accent);
+    color: var(--oc-color-blue-800);
+    font-weight: 700;
+  }
+
   .delete-action-btn {
     color: #b42318;
     border: var(--oc-border-width-sm) solid var(--oc-border-control);
@@ -153,7 +179,7 @@ export const browserStyles = `
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
-    overflow: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
   }
 
@@ -161,6 +187,34 @@ export const browserStyles = `
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
+  }
+
+  .scroll-container-wrapper {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .scroll-container {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .grid-host {
+    min-height: 0;
+  }
+
+  .browse-cell {
+    display: block;
+    min-width: 0;
+  }
+
+  .browse-cell > oc-card-collections {
+    display: block;
   }
 
   .onboarding-panel {

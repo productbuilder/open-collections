@@ -23,6 +23,25 @@ export const browserStyles = `
     padding: 0.5rem 0 0;
   }
 
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .header-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .header-top .back-btn {
+    flex: 0 0 auto;
+    margin-top: -0.1rem;
+  }
+
   .title {
     margin: 0;
     font-size: 1rem;
@@ -35,6 +54,7 @@ export const browserStyles = `
     color: var(--oc-color-text-muted, #5f6368);
     font-size: 0.85rem;
     line-height: 1.25;
+    overflow-wrap: anywhere;
   }
 
   .toggle-bar {

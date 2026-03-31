@@ -95,7 +95,7 @@ export const appFoundationLayoutStyles = `
 
   @media (max-width: 760px) {
     .oc-app-viewport {
-      padding: var(--oc-space-3) var(--oc-space-3) calc(var(--oc-space-3) + var(--oc-layout-safe-bottom));
+      <!-- padding: var(--oc-space-3) var(--oc-space-3) calc(var(--oc-space-3) + var(--oc-layout-safe-bottom)); -->
     }
 
   .oc-app-nav {

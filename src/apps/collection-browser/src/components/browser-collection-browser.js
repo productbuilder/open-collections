@@ -310,16 +310,18 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
       <style>${backButtonStyles}</style>
       <style>${browserStyles}</style>
       <div class="root">
-        <header class="header" aria-label="Browser header">
-          <div class="header-top">
-            ${this.model.showBack ? renderBackButton({ id: "panelBackBtn" }) : ""}
-            <div class="header-copy">
-              <h2 class="title">${this.model.viewportTitle || "Browser"}</h2>
-              <p class="subtitle">${this.model.viewportSubtitle || "Browse available entities."}</p>
+        <div class="sticky-chrome">
+          <header class="header" aria-label="Browser header">
+            <div class="header-top">
+              ${this.model.showBack ? renderBackButton({ id: "panelBackBtn" }) : ""}
+              <div class="header-copy">
+                <h2 class="title">${this.model.viewportTitle || "Browser"}</h2>
+                <p class="subtitle">${this.model.viewportSubtitle || "Browse available entities."}</p>
+              </div>
             </div>
-          </div>
-        </header>
-        ${this.renderToggleBar()}
+          </header>
+          ${this.renderToggleBar()}
+        </div>
         <div class="scroll-container-wrapper">
           <div id="scrollContainer" class="scroll-container">
             <div class="grid-host">

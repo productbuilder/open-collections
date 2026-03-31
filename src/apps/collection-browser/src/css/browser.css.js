@@ -4,7 +4,7 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     box-sizing: border-box;
-    --oc-browser-bg-app: #f4efe9;
+    --oc-browser-bg-app: #e7e7e3;
     --oc-browser-bg-card: #fffdfa;
     --oc-browser-bg-card-soft: #f7f4f1;
     --oc-browser-border: #d9d5d0;
@@ -26,15 +26,25 @@ export const browserStyles = `
 
   .root {
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    display: block;
     min-height: 0;
-    gap: 0.75rem;
+    padding: 0 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .sticky-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--oc-browser-bg-app, #e7e7e3);
+    padding-bottom: 0.62rem;
   }
 
   .header {
     display: block;
-    padding: 0.5rem 0 0;
+    padding: 0.75rem 0 0;
   }
 
   .header-top {
@@ -64,7 +74,7 @@ export const browserStyles = `
   }
 
   .subtitle {
-    margin: 0.25rem 0 0;
+    margin: 0.25rem 0;
     color: var(--oc-browser-text-muted, #6c6258);
     font-size: 0.85rem;
     line-height: 1.25;
@@ -77,6 +87,7 @@ export const browserStyles = `
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    margin-top: 0.12rem;
   }
 
   .mode-toggle {
@@ -99,13 +110,12 @@ export const browserStyles = `
   }
 
   .scroll-container-wrapper {
-    flex: 1;
     min-height: 0;
   }
 
   .scroll-container {
-    height: 100%;
-    overflow-y: auto;
+    height: auto;
+    overflow: visible;
     min-height: 0;
   }
 

@@ -300,18 +300,21 @@ class OcCardCollectionsElement extends HTMLElement {
         .rows {
           display: grid;
           grid-template-rows: repeat(3, minmax(0, 1fr));
-          gap: 0.4rem;
+          gap: 0;
           min-height: 240px;
+          border-top: 1px solid var(--oc-browser-divider, #e2d8cd);
         }
 
         .preview-row {
-          border: 1px solid var(--oc-browser-border, #d9d5d0);
-          border-radius: 10px;
-          padding: 0.34rem;
+          padding: 0.4rem 0;
           background: var(--oc-browser-bg-card, #fffdfa);
           display: grid;
           grid-template-rows: 0.75rem minmax(0, 1fr);
           gap: 0.28rem;
+        }
+
+        .preview-row + .preview-row {
+          border-top: 1px solid var(--oc-browser-divider, #e2d8cd);
         }
 
         .row-label {
@@ -325,7 +328,7 @@ class OcCardCollectionsElement extends HTMLElement {
         }
 
         .row-label.is-placeholder {
-          width: 54%;
+          width: 32%;
           border-radius: 999px;
           background: var(--oc-browser-placeholder-fill, #e8e4de);
           color: transparent;
@@ -349,7 +352,7 @@ class OcCardCollectionsElement extends HTMLElement {
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           background: var(--oc-browser-surface-muted, #eee5dc);
           position: relative;
-          aspect-ratio: 3 / 2;
+          aspect-ratio: 2 / 1;
         }
 
         .row-image {
@@ -407,7 +410,7 @@ class OcCardCollectionsElement extends HTMLElement {
         }
 
         .preview-row.is-empty {
-          background: var(--oc-browser-bg-card-soft, #f8f3ed);
+          background: var(--oc-browser-bg-card, #fffdfa);
         }
 
         .footer {
@@ -416,6 +419,8 @@ class OcCardCollectionsElement extends HTMLElement {
           align-items: center;
           gap: 0.5rem;
           min-height: 1.2rem;
+          border-top: 1px solid var(--oc-browser-divider, #e2d8cd);
+          padding-top: 0.42rem;
         }
 
         .meta {

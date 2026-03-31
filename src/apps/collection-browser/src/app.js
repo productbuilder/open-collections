@@ -669,7 +669,7 @@ class TimemapBrowserElement extends ComponentBase {
           min-height: 0;
           overflow: hidden;
           font-family: "Segoe UI", Tahoma, sans-serif;
-          --oc-browser-bg-app: #f4efe9;
+          --oc-browser-bg-app: #e7e7e3;
           --oc-browser-bg-card: #fffdfa;
           --oc-browser-bg-card-soft: #f7f4f1;
           --oc-browser-border: #d9d5d0;
@@ -684,7 +684,7 @@ class TimemapBrowserElement extends ComponentBase {
           --oc-browser-accent-soft: #ece7e1;
           --oc-browser-focus-ring: #91857a;
           color: var(--oc-browser-text, #2e2924);
-          background: var(--oc-browser-bg-app, #f4efe9);
+          background: var(--oc-browser-bg-app, #e7e7e3);
         }
 
         * {
@@ -694,7 +694,7 @@ class TimemapBrowserElement extends ComponentBase {
         .app-shell {
           height: min(100dvh, 100vh);
           min-height: 640px;
-          background: var(--oc-browser-bg-app, #f4efe9);
+          background: var(--oc-browser-bg-app, #e7e7e3);
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 10px;
           overflow: hidden;
@@ -799,7 +799,7 @@ class TimemapBrowserElement extends ComponentBase {
         .shell {
           flex: 1;
           min-height: 0;
-          padding: 0.95rem;
+          /* padding: 0.95rem; */
           display: grid;
           grid-template-rows: minmax(0, 1fr);
           overflow: hidden;
@@ -911,7 +911,7 @@ class TimemapBrowserElement extends ComponentBase {
           }
 
           .shell {
-            padding: 0.75rem;
+            /* padding: 0.75rem; */
           }
 
           .embedded-view-toggle {

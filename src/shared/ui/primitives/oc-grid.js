@@ -7,7 +7,7 @@ class OcGridElement extends HTMLElement {
 			columnsDesktop: 6,
 			columnsTablet: 4,
 			columnsMobile: 2,
-			gap: "0.7rem",
+			gap: "0.875rem",
 			listGap: "0.65rem",
 			squareCellsDesktop: false,
 		};
@@ -57,7 +57,7 @@ class OcGridElement extends HTMLElement {
 			"--oc-layout-columns-mobile",
 			String(Number(this.model.columnsMobile) > 0 ? Number(this.model.columnsMobile) : 2),
 		);
-		layout.style.setProperty("--oc-layout-gap", this.model.gap || "0.7rem");
+		layout.style.setProperty("--oc-layout-gap", this.model.gap || "0.875rem");
 		layout.style.setProperty(
 			"--oc-layout-list-gap",
 			this.model.listGap || "0.65rem",
@@ -116,7 +116,7 @@ class OcGridElement extends HTMLElement {
         .layout.is-grid {
           display: grid;
           grid-template-columns: repeat(var(--oc-layout-columns-desktop, 6), minmax(0, 1fr));
-          gap: var(--oc-layout-gap, 0.7rem);
+          gap: var(--oc-layout-gap, 0.875rem);
           align-items: stretch;
           align-content: start;
           grid-auto-rows: minmax(0, auto);
@@ -124,7 +124,7 @@ class OcGridElement extends HTMLElement {
 
         .layout.is-grid.is-square-desktop {
           grid-auto-rows: calc(
-            (100% - (var(--oc-layout-columns-desktop, 6) - 1) * var(--oc-layout-gap, 0.7rem))
+            (100% - (var(--oc-layout-columns-desktop, 6) - 1) * var(--oc-layout-gap, 0.875rem))
               / var(--oc-layout-columns-desktop, 6)
           );
         }

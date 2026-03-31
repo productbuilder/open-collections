@@ -8,16 +8,22 @@ export const BROWSER_CONFIG = {
 			sourceUrl: "../../collections/collections.json",
 		},
 		{
-			id: "city-photos",
-			label: "City photos",
-			sourceType: "collection.json",
-			sourceUrl: "../../collections/city-photos/collection.json",
+			id: "collectie-hilversum-prenten",
+			label: "Collectie Hilversum",
+			sourceType: "collections.json",
+			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/collectie-hilversum/collections.json",
 		},
-		{
-			id: "single-collection",
-			label: "Single collection",
-			sourceType: "collection.json",
-			sourceUrl: "../../collections/single-collection/collection.json",
-		},
+		// {
+		// 	id: "city-photos",
+		// 	label: "City photos",
+		// 	sourceType: "collection.json",
+		// 	sourceUrl: "../../collections/city-photos/collection.json",
+		// },
+		// {
+		// 	id: "single-collection",
+		// 	label: "Single collection",
+		// 	sourceType: "collection.json",
+		// 	sourceUrl: "../../collections/single-collection/collection.json",
+		// },
 	],
 };

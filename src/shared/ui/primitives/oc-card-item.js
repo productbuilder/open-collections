@@ -22,11 +22,68 @@ class OcCardItemElement extends HTMLElement {
 			active: false,
 			disabled: false,
 		};
+		this._lastPreviewErrorKey = "";
 	}
 
 	connectedCallback() {
 		this.render();
+		this.bindEvents();
 		this.applyModel();
+	}
+
+	bindEvents() {
+		const image = this.shadowRoot?.getElementById("previewImage");
+		const preview = this.shadowRoot?.querySelector(".preview");
+		if (!image || this._boundPreviewImage === image) {
+			return;
+		}
+		image.addEventListener("load", async () => {
+			const placeholder = this.shadowRoot?.getElementById("previewPlaceholder");
+			const currentSrc = String(image.currentSrc || image.src || "").trim();
+			if (!currentSrc || currentSrc !== this._activePreviewUrl) {
+				return;
+			}
+			try {
+				if (typeof image.decode === "function") {
+					await image.decode();
+				}
+			} catch {
+				// decode() can reject after successful load in some browsers; keep reveal behavior.
+			}
+			image.hidden = false;
+			if (placeholder) {
+				placeholder.hidden = true;
+			}
+			preview?.setAttribute("data-state", "loaded");
+		});
+		image.addEventListener("error", () => {
+			const placeholder = this.shadowRoot?.getElementById("previewPlaceholder");
+			const actionValue = String(this.model.actionValue || "").trim();
+			const previewUrl = String(image.currentSrc || image.src || "").trim();
+			const errorKey = `${actionValue}|${previewUrl}`;
+			if (!previewUrl || this._lastPreviewErrorKey === errorKey) {
+				return;
+			}
+			image.hidden = true;
+			if (placeholder) {
+				placeholder.hidden = false;
+			}
+			preview?.setAttribute("data-state", "error");
+			this._lastPreviewErrorKey = errorKey;
+			this.dispatchEvent(
+				new CustomEvent("oc-card-preview-error", {
+					detail: {
+						browseKind: "item",
+						actionValue,
+						previewUrl,
+						title: this.model.title || "",
+					},
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		});
+		this._boundPreviewImage = image;
 	}
 
 	update(data = {}) {
@@ -52,6 +109,7 @@ class OcCardItemElement extends HTMLElement {
 		const count = this.shadowRoot?.getElementById("count");
 		const image = this.shadowRoot?.getElementById("previewImage");
 		const placeholder = this.shadowRoot?.getElementById("previewPlaceholder");
+		const preview = this.shadowRoot?.querySelector(".preview");
 		if (!card || !title || !subtitle || !count || !image || !placeholder) {
 			return;
 		}
@@ -60,10 +118,11 @@ class OcCardItemElement extends HTMLElement {
 		const previewUrl = previews[0] || "";
 		const subtitleText = String(this.model.subtitle || "").trim();
 		const actionText = String(this.model.actionLabel || "").trim();
+		this._lastPreviewErrorKey = "";
 
 		title.textContent = this.model.title || "Item";
-		subtitle.textContent = subtitleText;
-		subtitle.hidden = !subtitleText;
+		subtitle.textContent = subtitleText || "\u00A0";
+		subtitle.hidden = false;
 		count.textContent = this.model.countLabel || "";
 		card.classList.toggle("is-active", this.model.active === true);
 		card.toggleAttribute("disabled", this.model.disabled === true);
@@ -75,16 +134,35 @@ class OcCardItemElement extends HTMLElement {
 		);
 
 		if (previewUrl) {
-			image.src = previewUrl;
-			image.alt = `${this.model.title || "Item"} preview`;
-			image.hidden = false;
-			placeholder.hidden = true;
+			image.loading = "lazy";
+			image.decoding = "async";
+			image.fetchPriority = "low";
+			const isSamePreviewUrl = this._activePreviewUrl === previewUrl;
+			this._activePreviewUrl = previewUrl;
+			image.alt = "";
+			if (
+				isSamePreviewUrl &&
+				image.complete &&
+				Number(image.naturalWidth) > 0
+			) {
+				image.hidden = false;
+				placeholder.hidden = true;
+				preview.setAttribute("data-state", "loaded");
+			} else {
+				preview.setAttribute("data-state", "loading");
+				image.hidden = true;
+				placeholder.hidden = false;
+				if (image.getAttribute("src") !== previewUrl) {
+					image.src = previewUrl;
+				}
+			}
 		} else {
+			this._activePreviewUrl = "";
 			image.removeAttribute("src");
 			image.alt = "";
 			image.hidden = true;
 			placeholder.hidden = false;
-			placeholder.textContent = "Item";
+			preview.setAttribute("data-state", "empty");
 		}
 	}
 
@@ -140,7 +218,7 @@ class OcCardItemElement extends HTMLElement {
 
         .content {
           display: grid;
-          grid-template-rows: auto auto 1fr auto;
+          grid-template-rows: auto auto auto;
           gap: 0.42rem;
           align-content: start;
           min-height: 100%;
@@ -155,6 +233,7 @@ class OcCardItemElement extends HTMLElement {
           background: #f8fafc;
           display: grid;
           place-items: center;
+          position: relative;
         }
 
         .preview img {
@@ -162,12 +241,43 @@ class OcCardItemElement extends HTMLElement {
           height: 100%;
           object-fit: cover;
           display: block;
+          opacity: 0;
+          transition: opacity 180ms ease;
+        }
+
+        .preview[data-state="loaded"] img {
+          opacity: 1;
         }
 
         .preview-placeholder {
-          color: #64748b;
-          font-size: 0.72rem;
-          font-weight: 600;
+          width: 100%;
+          height: 100%;
+          display: block;
+          background:
+            linear-gradient(
+              110deg,
+              rgba(226, 232, 240, 0.45) 8%,
+              rgba(241, 245, 249, 0.9) 18%,
+              rgba(226, 232, 240, 0.45) 33%
+            );
+          background-size: 220% 100%;
+          animation: preview-shimmer 1.15s linear infinite;
+        }
+
+        .preview[data-state="loaded"] .preview-placeholder {
+          display: none;
+        }
+
+        .preview[data-state="error"] .preview-placeholder,
+        .preview[data-state="empty"] .preview-placeholder {
+          animation: none;
+          background: #eef2f7;
+        }
+
+        @keyframes preview-shimmer {
+          to {
+            background-position-x: -220%;
+          }
         }
 
         .body {
@@ -182,6 +292,7 @@ class OcCardItemElement extends HTMLElement {
           font-size: 0.86rem;
           font-weight: 700;
           line-height: 1.3;
+          min-height: 2.24rem;
           color: #0f172a;
           overflow-wrap: anywhere;
           display: -webkit-box;
@@ -195,6 +306,7 @@ class OcCardItemElement extends HTMLElement {
           font-size: 0.76rem;
           color: #475569;
           line-height: 1.32;
+          min-height: 2.01rem;
           overflow-wrap: anywhere;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -223,7 +335,7 @@ class OcCardItemElement extends HTMLElement {
         <span class="content">
           <span class="preview">
             <img id="previewImage" alt="" hidden />
-            <span id="previewPlaceholder" class="preview-placeholder">Item</span>
+            <span id="previewPlaceholder" class="preview-placeholder" aria-hidden="true"></span>
           </span>
           <span class="body">
             <span id="title" class="title">${escapeHtml(this.model.title || "Item")}</span>

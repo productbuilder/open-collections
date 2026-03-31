@@ -66,12 +66,14 @@ class OcCardCollectionsElement extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.bindEvents();
+		this.bindRowPreviewLoadStates();
 	}
 
 	update(data = {}) {
 		this.model = { ...this.model, ...data };
 		this.render();
 		this.bindEvents();
+		this.bindRowPreviewLoadStates();
 	}
 
 	dispatchActivate() {
@@ -102,6 +104,38 @@ class OcCardCollectionsElement extends HTMLElement {
 		this._boundCard = card;
 	}
 
+	bindRowPreviewLoadStates() {
+		const images = this.shadowRoot?.querySelectorAll(".row-image");
+		if (!images?.length) {
+			return;
+		}
+		for (const image of images) {
+			if (!(image instanceof HTMLImageElement)) {
+				continue;
+			}
+			const slot = image.closest(".row-slot");
+			if (!(slot instanceof HTMLElement) || image.dataset.ocBound === "true") {
+				continue;
+			}
+			image.dataset.ocBound = "true";
+			slot.dataset.state = "loading";
+			image.addEventListener("load", async () => {
+				try {
+					if (typeof image.decode === "function") {
+						await image.decode();
+					}
+				} catch {
+					// decode can reject after successful load in some browsers; keep reveal behavior.
+				}
+				slot.dataset.state = "loaded";
+			});
+			image.addEventListener("error", () => {
+				slot.dataset.state = "error";
+				image.hidden = true;
+			});
+		}
+	}
+
 	renderRows() {
 		const preferredRows = normalizeRows(this.model.previewRows);
 		const rows = preferredRows.length
@@ -130,13 +164,15 @@ class OcCardCollectionsElement extends HTMLElement {
               <div class="row-track">
                 ${row.images
 								.map(
-									(imageUrl, imageIndex) => `
-                    <span class="row-slot">
+									(imageUrl) => `
+                    <span class="row-slot" data-state="loading">
                       <img
                         class="row-image"
                         src="${escapeHtml(imageUrl)}"
-                        alt="${escapeHtml(this.model.title || "Source")} ${escapeHtml(rowLabel)} preview ${imageIndex + 1}"
+                        alt=""
                         loading="lazy"
+                        decoding="async"
+                        fetchpriority="low"
                       />
                     </span>
                   `,
@@ -294,6 +330,7 @@ class OcCardCollectionsElement extends HTMLElement {
           overflow: hidden;
           border: 1px solid #dbe3ec;
           background: #eef2f7;
+          position: relative;
         }
 
         .row-image {
@@ -302,6 +339,42 @@ class OcCardCollectionsElement extends HTMLElement {
           min-height: 44px;
           object-fit: cover;
           display: block;
+          opacity: 0;
+          transition: opacity 160ms ease;
+        }
+
+        .row-slot::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              110deg,
+              rgba(226, 232, 240, 0.45) 8%,
+              rgba(241, 245, 249, 0.9) 18%,
+              rgba(226, 232, 240, 0.45) 33%
+            );
+          background-size: 220% 100%;
+          animation: preview-shimmer 1.15s linear infinite;
+        }
+
+        .row-slot[data-state="loaded"]::before {
+          display: none;
+        }
+
+        .row-slot[data-state="loaded"] .row-image {
+          opacity: 1;
+        }
+
+        .row-slot[data-state="error"]::before {
+          animation: none;
+          background: #eef2f7;
+        }
+
+        @keyframes preview-shimmer {
+          to {
+            background-position-x: -220%;
+          }
         }
 
         .preview-row.is-empty {

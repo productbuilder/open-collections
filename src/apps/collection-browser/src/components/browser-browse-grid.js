@@ -24,6 +24,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
+		this.failedItemPreviewKeys = new Set();
 		this.model = {
 			viewMode: "items",
 			allBrowseEntities: [],
@@ -36,6 +37,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
+		this.bindPreviewFailureEvents();
 	}
 
 	update(data = {}) {
@@ -177,17 +179,18 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			? this.model.itemCards
 			: [];
 		if (mode === "all") {
-			return allBrowseEntities.length
+			return (allBrowseEntities.length
 				? allBrowseEntities
-				: [...sourceCards, ...collectionCards, ...itemCards];
+				: [...sourceCards, ...collectionCards, ...itemCards]
+			).filter((entity) => this.shouldRenderEntity(entity));
 		}
 		if (mode === "sources") {
-			return sourceCards;
+			return sourceCards.filter((entity) => this.shouldRenderEntity(entity));
 		}
 		if (mode === "collections") {
-			return collectionCards;
+			return collectionCards.filter((entity) => this.shouldRenderEntity(entity));
 		}
-		return itemCards;
+		return itemCards.filter((entity) => this.shouldRenderEntity(entity));
 	}
 
 	entityKind(entity = {}) {
@@ -196,6 +199,53 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			return browseKind;
 		}
 		return "item";
+	}
+
+	itemPreviewFailureKey(entity = {}) {
+		const actionValue = String(entity?.actionValue || entity?.id || "").trim();
+		const previewUrl = String(
+			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+		).trim();
+		return `${actionValue}|${previewUrl}`;
+	}
+
+	shouldRenderEntity(entity = {}) {
+		const kind = this.entityKind(entity);
+		if (kind !== "item") {
+			return true;
+		}
+		const previewUrl = String(
+			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+		).trim();
+		if (!previewUrl) {
+			return false;
+		}
+		return !this.failedItemPreviewKeys.has(this.itemPreviewFailureKey(entity));
+	}
+
+	bindPreviewFailureEvents() {
+		if (this._boundPreviewFailureEvents) {
+			return;
+		}
+		this._boundPreviewFailureEvents = true;
+		this.addEventListener("oc-card-preview-error", (event) => {
+			const detail = event.detail || {};
+			if (String(detail.browseKind || "") !== "item") {
+				return;
+			}
+			const actionValue = String(detail.actionValue || "").trim();
+			const previewUrl = String(detail.previewUrl || "").trim();
+			if (!actionValue || !previewUrl) {
+				return;
+			}
+			this.failedItemPreviewKeys.add(`${actionValue}|${previewUrl}`);
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+			const cardCell = target.closest(".browse-cell.kind-item");
+			cardCell?.remove();
+		});
 	}
 
 	createCard(entity = {}) {
@@ -300,7 +350,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
-			squareCellsDesktop: true,
+			squareCellsDesktop: false,
 		});
 		this.bindScrollDebug();
 		this.bindGridInteractions();
@@ -350,7 +400,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
-			squareCellsDesktop: true,
+			squareCellsDesktop: false,
 		});
 		this.bindScrollDebug();
 		this.bindGridInteractions();

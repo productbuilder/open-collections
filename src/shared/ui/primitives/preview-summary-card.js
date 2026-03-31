@@ -29,12 +29,14 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.bindEvents();
+		this.bindPreviewLoadStates();
 	}
 
 	update(data = {}) {
 		this.model = { ...this.model, ...data };
 		this.render();
 		this.bindEvents();
+		this.bindPreviewLoadStates();
 	}
 
 	dispatchActivate() {
@@ -59,6 +61,38 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 		this._boundCard = card;
 	}
 
+	bindPreviewLoadStates() {
+		const images = this.shadowRoot?.querySelectorAll(".preview-image");
+		if (!images?.length) {
+			return;
+		}
+		for (const image of images) {
+			if (!(image instanceof HTMLImageElement)) {
+				continue;
+			}
+			const slot = image.closest(".preview-slot");
+			if (!(slot instanceof HTMLElement) || image.dataset.ocBound === "true") {
+				continue;
+			}
+			image.dataset.ocBound = "true";
+			slot.dataset.state = "loading";
+			image.addEventListener("load", async () => {
+				try {
+					if (typeof image.decode === "function") {
+						await image.decode();
+					}
+				} catch {
+					// decode can reject after successful load in some browsers; keep reveal behavior.
+				}
+				slot.dataset.state = "loaded";
+			});
+			image.addEventListener("error", () => {
+				slot.dataset.state = "error";
+				image.hidden = true;
+			});
+		}
+	}
+
 	renderPreviewStrip() {
 		const previews = Array.isArray(this.model.previewImages)
 			? this.model.previewImages.filter(Boolean).slice(0, 3)
@@ -71,9 +105,9 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
       <span class="preview-strip">
         ${previews
 					.map(
-						(imageUrl, index) => `
-            <span class="preview-slot">
-              <img class="preview-image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(this.model.title || `Preview ${index + 1}`)}" loading="lazy" />
+						(imageUrl) => `
+            <span class="preview-slot" data-state="loading">
+              <img class="preview-image" src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async" fetchpriority="low" />
             </span>
           `,
 					)
@@ -158,6 +192,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           border-radius: 7px;
           border: 1px solid #dbe3ec;
           background: #eef2f7;
+          position: relative;
         }
 
         .preview-image {
@@ -165,6 +200,42 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           height: 100%;
           object-fit: cover;
           display: block;
+          opacity: 0;
+          transition: opacity 160ms ease;
+        }
+
+        .preview-slot::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              110deg,
+              rgba(226, 232, 240, 0.45) 8%,
+              rgba(241, 245, 249, 0.9) 18%,
+              rgba(226, 232, 240, 0.45) 33%
+            );
+          background-size: 220% 100%;
+          animation: preview-shimmer 1.15s linear infinite;
+        }
+
+        .preview-slot[data-state="loaded"]::before {
+          display: none;
+        }
+
+        .preview-slot[data-state="loaded"] .preview-image {
+          opacity: 1;
+        }
+
+        .preview-slot[data-state="error"]::before {
+          animation: none;
+          background: #eef2f7;
+        }
+
+        @keyframes preview-shimmer {
+          to {
+            background-position-x: -220%;
+          }
         }
 
         .preview-placeholder {

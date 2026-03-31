@@ -8,6 +8,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
+		this.failedItemPreviewKeys = new Set();
 		this.model = {
 			viewportTitle: "Browser",
 			viewportSubtitle: "Browse available entities.",
@@ -21,6 +22,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
+		this.bindPreviewFailureEvents();
 	}
 
 	disconnectedCallback() {
@@ -55,17 +57,22 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 		if (mode === "all") {
 			if (allBrowseEntities.length > 0) {
-				return allBrowseEntities;
+				return allBrowseEntities.filter((entity) =>
+					this.shouldRenderEntity(entity),
+				);
 			}
-			return [...sourceCards, ...collectionCards, ...itemCards];
+			return [...sourceCards, ...collectionCards, ...itemCards].filter(
+				(entity) => this.shouldRenderEntity(entity),
+			);
 		}
 		if (mode === "sources") {
-			return sourceCards;
+			return sourceCards.filter((entity) => this.shouldRenderEntity(entity));
 		}
 		if (mode === "collections") {
-			return collectionCards;
+			return collectionCards.filter((entity) => this.shouldRenderEntity(entity));
 		}
-		return itemCards.length > 0 ? itemCards : allBrowseEntities;
+		const preferred = itemCards.length > 0 ? itemCards : allBrowseEntities;
+		return preferred.filter((entity) => this.shouldRenderEntity(entity));
 	}
 
 	entityKind(entity = {}) {
@@ -74,6 +81,53 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			return browseKind;
 		}
 		return "item";
+	}
+
+	itemPreviewFailureKey(entity = {}) {
+		const actionValue = String(entity?.actionValue || entity?.id || "").trim();
+		const previewUrl = String(
+			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+		).trim();
+		return `${actionValue}|${previewUrl}`;
+	}
+
+	shouldRenderEntity(entity = {}) {
+		const kind = this.entityKind(entity);
+		if (kind !== "item") {
+			return true;
+		}
+		const previewUrl = String(
+			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+		).trim();
+		if (!previewUrl) {
+			return false;
+		}
+		return !this.failedItemPreviewKeys.has(this.itemPreviewFailureKey(entity));
+	}
+
+	bindPreviewFailureEvents() {
+		if (this._boundPreviewFailureEvents) {
+			return;
+		}
+		this._boundPreviewFailureEvents = true;
+		this.addEventListener("oc-card-preview-error", (event) => {
+			const detail = event.detail || {};
+			if (String(detail.browseKind || "") !== "item") {
+				return;
+			}
+			const actionValue = String(detail.actionValue || "").trim();
+			const previewUrl = String(detail.previewUrl || "").trim();
+			if (!actionValue || !previewUrl) {
+				return;
+			}
+			this.failedItemPreviewKeys.add(`${actionValue}|${previewUrl}`);
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+			const cardCell = target.closest(".browse-cell.kind-item");
+			cardCell?.remove();
+		});
 	}
 
 	buildCard(entity = {}) {
@@ -109,6 +163,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		}
 
 		const card = document.createElement("oc-card-item");
+		const actionValue = String(entity.actionValue || entity.id || "").trim();
 		card.update({
 			title: entity.title || entity.id || "Item",
 			subtitle: entity.subtitle || "",
@@ -117,6 +172,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 				: [],
 			previewUrl: entity.previewUrl || entity.item?.media?.thumbnailUrl || "",
 			actionLabel: entity.actionLabel || "",
+			actionValue,
 		});
 		return card;
 	}
@@ -284,10 +340,11 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
-			squareCellsDesktop: true,
+			squareCellsDesktop: false,
 		});
 
 		for (const entity of this.renderCards()) {
+			// TODO(perf): Virtualize/window item cells so only in-viewport rows are mounted.
 			grid.appendChild(this.buildGridCell(entity));
 		}
 

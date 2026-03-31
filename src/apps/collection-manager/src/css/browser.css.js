@@ -173,16 +173,13 @@ export const browserStyles = `
     overscroll-behavior: contain;
   }
 
-  .browser-host {
-    display: block;
-    min-height: 0;
-    width: 100%;
-    padding-bottom: var(--oc-space-2);
-  }
-
-  .browser-host > * {
+  .scroll-container > * {
     display: block;
     min-width: 0;
+  }
+
+  .scroll-container > :last-child {
+    padding-bottom: var(--oc-space-2);
   }
 
   .scroll-container {

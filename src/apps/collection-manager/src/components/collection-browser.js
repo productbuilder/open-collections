@@ -137,7 +137,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 
 	reportScrollDiagnostics(trigger = "manual") {
 		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
-		const browserHost = this.shadowRoot?.getElementById("browserHost");
 		const assetWrap = this.shadowRoot?.getElementById("assetWrap");
 		const panelShell = this.shadowRoot?.getElementById("panelShell");
 		const panelContent = panelShell?.shadowRoot?.querySelector(".panel-content");
@@ -148,7 +147,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			viewMode: this.getCurrentViewMode(),
 			scrollOwnerCandidate: this.collectElementScrollState(browserScroll),
 			assetWrap: this.collectElementScrollState(assetWrap),
-			browserHost: this.collectElementScrollState(browserHost),
 			viewportPanel: this.collectElementScrollState(viewportPanel),
 			panelContent: this.collectElementScrollState(panelContent),
 			ancestorsOfBrowserScroll: this.collectAncestorStates(browserScroll),
@@ -516,14 +514,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 	}
 
 	renderBody() {
-		const host = this.shadowRoot.getElementById("browserHost");
-		if (!host) {
+		const browserScroll = this.shadowRoot.getElementById("browserScroll");
+		if (!browserScroll) {
 			return;
 		}
-		host.innerHTML = "";
+		browserScroll.innerHTML = "";
 
 		if (this.model.onboarding?.visible) {
-			host.innerHTML = `
+			browserScroll.innerHTML = `
         <open-collections-section-panel
           class="onboarding-panel"
           title="Start your first collection workspace"
@@ -556,11 +554,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				? this.model.sourceCards
 				: [];
 			if (sourceCards.length === 0) {
-				host.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
+				browserScroll.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
 				return;
 			}
-			host.innerHTML = `<div class="grid-host"><oc-grid id="sourceGrid"></oc-grid></div>`;
-			const grid = host.querySelector("#sourceGrid");
+			browserScroll.innerHTML = `<div class="grid-host"><oc-grid id="sourceGrid"></oc-grid></div>`;
+			const grid = browserScroll.querySelector("#sourceGrid");
 			grid?.update({
 				mode: "grid",
 				columnsDesktop: 6,
@@ -599,7 +597,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		}
 
 		if (managerMode === "items" && !this.model.openedCollectionId) {
-			host.innerHTML = `<open-collections-empty-state title="No collection open" message="Open a collection first to manage its items."></open-collections-empty-state>`;
+			browserScroll.innerHTML = `<open-collections-empty-state title="No collection open" message="Open a collection first to manage its items."></open-collections-empty-state>`;
 			return;
 		}
 
@@ -629,7 +627,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				isLoading: this.model.isLoading,
 			});
 		}
-		host.appendChild(renderer);
+		browserScroll.appendChild(renderer);
 		this.reportScrollDiagnostics("render-body");
 	}
 
@@ -659,7 +657,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           <div id="assetWrap" class="asset-wrap">
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
 			<div id="browserScroll" class="scroll-container">
-				<div id="browserHost" class="browser-host"></div>
 			</div>
           </div>
         </open-collections-panel-chrome>
@@ -675,7 +672,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			});
 
 		this.shadowRoot
-			.getElementById("browserHost")
+			.getElementById("browserScroll")
 			?.addEventListener("click", (event) => {
 				const path =
 					typeof event.composedPath === "function"

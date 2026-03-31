@@ -29,11 +29,13 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			assetCountText: "No assets loaded.",
 			collections: [],
 			items: [],
+			sourceCards: [],
 			selectedCollectionId: null,
 			selectedCollectionIds: [],
 			deletableSelectedCollectionCount: 0,
 			focusedItemId: null,
 			selectedItemIds: [],
+			openedCollectionId: null,
 			dropTargetActive: false,
 			desktopFileDropEnabled: true,
 			publishAction: {
@@ -46,6 +48,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				collections: "cards",
 				items: "cards",
 			},
+			managerMode: "collections",
 			onboarding: {
 				visible: false,
 			},
@@ -76,6 +79,16 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.renderFrame();
 		this.renderBody();
 		this.setDropTargetActive(this.model.dropTargetActive);
+	}
+
+	getManagerMode() {
+		if (this.model.currentLevel === "items") {
+			return "items";
+		}
+		const mode = String(this.model.managerMode || "").trim();
+		return ["sources", "collections", "items"].includes(mode)
+			? mode
+			: "collections";
 	}
 
 	detectDesktopFileDropSupport() {
@@ -252,6 +265,19 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.renderFrame();
 	}
 
+	setManagerMode(mode) {
+		const normalizedMode = ["sources", "collections", "items"].includes(mode)
+			? mode
+			: "collections";
+		if (normalizedMode === this.getManagerMode()) {
+			return;
+		}
+		this.model.managerMode = normalizedMode;
+		this.dispatch("manager-mode-change", { mode: normalizedMode });
+		this.renderFrame();
+		this.renderBody();
+	}
+
 	update(data = {}) {
 		const viewModes = data.viewModes
 			? { ...this.model.viewModes, ...data.viewModes }
@@ -282,6 +308,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		const publishBtn = this.shadowRoot.getElementById(
 			"publishCollectionBtn",
 		);
+		const managerModeToggle =
+			this.shadowRoot.getElementById("managerModeToggle");
 		if (
 			!panelShell ||
 			!addBtn ||
@@ -289,7 +317,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!selectionStatus ||
 			!deleteSelectedBtn ||
 			!clearSelectionBtn ||
-			!publishBtn
+			!publishBtn ||
+			!managerModeToggle
 		) {
 			return;
 		}
@@ -330,6 +359,15 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				? "Add collection"
 				: "Add item";
 		viewToggle.setAttribute("mode", this.getCurrentViewMode());
+		const managerMode = this.getManagerMode();
+		managerModeToggle
+			.querySelectorAll("button[data-manager-mode]")
+			.forEach((button) => {
+				const isActive =
+					button.getAttribute("data-manager-mode") === managerMode;
+				button.setAttribute("data-active", isActive ? "true" : "false");
+				button.setAttribute("aria-pressed", isActive ? "true" : "false");
+			});
 		const publishAction = this.model.publishAction || {};
 		publishBtn.textContent = publishAction.label || "Publish collection";
 		publishBtn.hidden = publishAction.visible === false;
@@ -429,9 +467,70 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			return;
 		}
 
-		const level =
-			this.model.currentLevel === "items" ? "items" : "collections";
+		const managerMode = this.getManagerMode();
+		const level = managerMode === "items" ? "items" : "collections";
 		const mode = this.getCurrentViewMode();
+
+		if (managerMode === "sources") {
+			const sourceCards = Array.isArray(this.model.sourceCards)
+				? this.model.sourceCards
+				: [];
+			if (sourceCards.length === 0) {
+				host.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
+				return;
+			}
+			host.innerHTML = `
+				<div class="scroll-container-wrapper">
+					<div class="scroll-container">
+						<div class="grid-host">
+							<oc-grid id="sourceGrid"></oc-grid>
+						</div>
+					</div>
+				</div>
+			`;
+			const grid = host.querySelector("#sourceGrid");
+			grid?.update({
+				mode: "grid",
+				columnsDesktop: 6,
+				columnsTablet: 4,
+				columnsMobile: 2,
+				gap: "0.62rem",
+			});
+			for (const source of sourceCards) {
+				const wrapper = document.createElement("div");
+				wrapper.className = "browse-cell kind-source";
+				wrapper.dataset.actionType = "source";
+				wrapper.dataset.actionValue = source.id || "";
+				wrapper.setAttribute("data-span-cols", "2");
+				wrapper.setAttribute("data-span-rows", "2");
+				wrapper.setAttribute("data-span-cols-mobile", "2");
+				wrapper.setAttribute("data-span-rows-mobile", "2");
+				const card = document.createElement("oc-card-collections");
+				card.update({
+					title: source.title || "Source",
+					subtitle: source.subtitle || "",
+					countLabel: source.countLabel || "",
+					previewRows: Array.isArray(source.previewRows)
+						? source.previewRows
+						: [],
+					previewImages: Array.isArray(source.previewImages)
+						? source.previewImages
+						: [],
+					actionLabel: "Browse",
+					actionValue: source.id || "",
+					active: source.active === true,
+				});
+				wrapper.append(card);
+				grid?.append(wrapper);
+			}
+			return;
+		}
+
+		if (managerMode === "items" && !this.model.openedCollectionId) {
+			host.innerHTML = `<open-collections-empty-state title="No collection open" message="Open a collection first to manage its items."></open-collections-empty-state>`;
+			return;
+		}
+
 		const componentTag =
 			level === "collections"
 				? mode === "rows"
@@ -470,6 +569,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
             <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
             <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
           </div>
+		  <div class="manager-mode-toggle" id="managerModeToggle" role="toolbar" aria-label="Manager mode" slot="subheader">
+			<button type="button" class="mode-toggle" data-manager-mode="sources" data-active="false" aria-pressed="false">Sources</button>
+			<button type="button" class="mode-toggle" data-manager-mode="collections" data-active="true" aria-pressed="true">Collections</button>
+			<button type="button" class="mode-toggle" data-manager-mode="items" data-active="false" aria-pressed="false">Items</button>
+		  </div>
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
             <button class="icon-btn delete-action-btn" id="deleteSelectedBtn" type="button" hidden aria-label="Delete selected collections"></button>
@@ -486,6 +590,36 @@ class OpenCollectionsBrowserElement extends HTMLElement {
         </open-collections-panel-chrome>
       </section>
     `;
+
+		this.shadowRoot
+			.querySelectorAll("button[data-manager-mode]")
+			.forEach((button) => {
+				button.addEventListener("click", () => {
+					this.setManagerMode(button.getAttribute("data-manager-mode"));
+				});
+			});
+
+		this.shadowRoot
+			.getElementById("browserHost")
+			?.addEventListener("click", (event) => {
+				const path =
+					typeof event.composedPath === "function"
+						? event.composedPath()
+						: [];
+				const cell = path.find(
+					(node) =>
+						node instanceof HTMLElement &&
+						node.classList?.contains("browse-cell"),
+				);
+				if (!cell) {
+					return;
+				}
+				const actionType = String(cell.dataset.actionType || "").trim();
+				const actionValue = String(cell.dataset.actionValue || "").trim();
+				if (actionType === "source" && actionValue) {
+					this.dispatch("source-open", { sourceId: actionValue });
+				}
+			});
 	}
 }
 

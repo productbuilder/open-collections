@@ -211,6 +211,44 @@ export function bindDomEvents(app) {
 
 		target.addEventListener("back-to-collections", () => {
 			app.leaveCollectionView();
+			app.state.managerBrowseMode = "collections";
+			app.refreshWorkingStatus();
+		});
+		target.addEventListener("source-open", (event) => {
+			app.state.activeSourceFilter = event.detail?.sourceId || "all";
+			app.state.selectedCollectionId = "all";
+			app.state.selectedCollectionIds = [];
+			app.state.currentLevel = "collections";
+			app.state.managerBrowseMode = "collections";
+			app.state.openedCollectionId = null;
+			app.state.selectedItemId = null;
+			app.state.selectedItemIds = [];
+			app.renderCollectionFilter();
+			app.syncMetadataModeFromState();
+			app.closeMobileDetail();
+			app.renderSourceContext();
+			app.renderAssets();
+			app.renderEditor();
+			app.refreshWorkingStatus();
+		});
+		target.addEventListener("manager-mode-change", (event) => {
+			const mode = event.detail?.mode || "collections";
+			app.state.managerBrowseMode = mode;
+			if (mode === "sources") {
+				app.state.currentLevel = "collections";
+				app.state.openedCollectionId = null;
+				app.state.selectedItemId = null;
+				app.state.selectedItemIds = [];
+			} else if (mode === "items") {
+				app.state.currentLevel = app.state.openedCollectionId
+					? "items"
+					: "collections";
+			} else {
+				app.state.currentLevel = "collections";
+			}
+			app.syncMetadataModeFromState();
+			app.renderAssets();
+			app.renderEditor();
 			app.refreshWorkingStatus();
 		});
 		target.addEventListener("source-filter-change", (event) => {
@@ -285,6 +323,7 @@ export function bindDomEvents(app) {
 		});
 		target.addEventListener("collection-open", (event) => {
 			app.openCollectionView(event.detail?.collectionId || "");
+			app.state.managerBrowseMode = "items";
 			app.refreshWorkingStatus();
 		});
 		target.addEventListener("collection-assign-connection", async (event) => {

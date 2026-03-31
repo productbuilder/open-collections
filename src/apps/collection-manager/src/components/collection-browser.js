@@ -1,11 +1,10 @@
 import { browserStyles } from "../css/browser.css.js?v=20260322-titlebar-center";
 import "./view-toggle.js";
-import "./collection-card-surface.js";
 import "./collection-row-list.js";
-import "./item-card-grid.js";
 import "./item-row-list.js";
 import "../../../../shared/ui/panels/index.js";
 import "../../../../shared/ui/primitives/index.js";
+import { resolveItemPreviewUrl } from "../utils/preview-utils.js";
 import {
 	getPlatformType,
 	PLATFORM_TYPES,
@@ -22,10 +21,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.model = {
 			currentLevel: "collections",
 			viewportTitle: "Collections",
-			workingStatus: {
-				label: "Draft",
-				tone: "neutral",
-			},
 			assetCountText: "No assets loaded.",
 			collections: [],
 			items: [],
@@ -38,12 +33,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			openedCollectionId: null,
 			dropTargetActive: false,
 			desktopFileDropEnabled: true,
-			publishAction: {
-				label: "Publish collection",
-				visible: false,
-				disabled: true,
-				reason: "Select a collection to publish.",
-			},
 			viewModes: {
 				collections: "cards",
 				items: "cards",
@@ -95,6 +84,184 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 
 	detectDesktopFileDropSupport() {
 		return getPlatformType() !== PLATFORM_TYPES.CAPACITOR;
+	}
+
+	requiredFieldScore(item) {
+		const checks = [
+			Boolean(item?.id),
+			Boolean(item?.title),
+			Boolean(item?.media?.url),
+			Boolean(item?.license),
+		];
+		return `${checks.filter(Boolean).length}/${checks.length}`;
+	}
+
+	buildSourceGridCell(source = {}) {
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-source";
+		wrapper.dataset.actionType = "source";
+		wrapper.dataset.actionValue = source.id || "";
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "2");
+		wrapper.setAttribute("data-span-rows", "2");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-rows-mobile", "2");
+		const card = document.createElement("oc-card-collections");
+		card.update({
+			title: source.title || "Source",
+			subtitle: source.subtitle || "",
+			countLabel: source.countLabel || "",
+			previewRows: Array.isArray(source.previewRows) ? source.previewRows : [],
+			previewImages: Array.isArray(source.previewImages)
+				? source.previewImages
+				: [],
+			actionLabel: "Browse",
+			actionValue: source.id || "",
+			active: source.active === true,
+		});
+		wrapper.append(card);
+		return wrapper;
+	}
+
+	buildCollectionGridCell(collection = {}, selectedCollectionIds = new Set()) {
+		const isSelected = selectedCollectionIds.has(collection.id);
+		const isFocused = this.model.selectedCollectionId === collection.id;
+		const isUnassigned = collection.assignmentState === "unassigned";
+		const canAssign = (this.model.availableConnections || []).length > 0;
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-collection";
+		wrapper.dataset.actionType = "collection";
+		wrapper.dataset.actionValue = collection.id || "";
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "2");
+		wrapper.setAttribute("data-span-rows", "1");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-rows-mobile", "1");
+
+		const card = document.createElement("oc-card-collection");
+		card.update({
+			title: collection.title || collection.id || "Collection",
+			subtitle:
+				collection.assignmentLabel || "Select to browse this collection.",
+			countLabel: collection.countLabel || "",
+			previewImages: Array.isArray(collection.previewImages)
+				? collection.previewImages
+				: [],
+			actionLabel: "",
+			actionValue: collection.id || "",
+			active: isFocused || isSelected,
+		});
+
+		const controls = document.createElement("div");
+		controls.className = "browse-cell-controls";
+		controls.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true">
+				<input type="checkbox" data-select-collection-id="${collection.id || ""}" ${isSelected ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+			<button type="button" class="btn ${isUnassigned ? "btn-primary" : ""}" data-assign-id="${collection.id || ""}" ${canAssign ? "" : "disabled"}>
+				${isUnassigned ? "Assign connection" : "Reassign connection"}
+			</button>
+		`;
+
+		wrapper.append(card, controls);
+		return wrapper;
+	}
+
+	buildItemGridCell(item = {}, selectedItemIds = new Set()) {
+		const workspaceId = String(item.workspaceId || "").trim();
+		const hasMedia = Boolean(String(item?.media?.url || "").trim());
+		const isSelected = selectedItemIds.has(workspaceId);
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-item";
+		wrapper.dataset.actionType = "item";
+		wrapper.dataset.actionValue = workspaceId;
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "1");
+		wrapper.setAttribute("data-span-rows", "1");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-rows-mobile", "1");
+
+		const card = document.createElement("oc-card-item");
+		card.update({
+			title: item.title || item.id || "Item",
+			subtitle: item.license ? `License: ${item.license}` : "",
+			countLabel: `Completeness ${this.requiredFieldScore(item)}`,
+			previewUrl: resolveItemPreviewUrl(item),
+			previewImages: [],
+			actionLabel: "Select",
+			actionValue: workspaceId,
+			active: false,
+			disabled: false,
+		});
+
+		const controls = document.createElement("div");
+		controls.className = "browse-cell-controls";
+		controls.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true">
+				<input type="checkbox" data-select-item-id="${workspaceId}" ${isSelected ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+			${
+				hasMedia
+					? `<button type="button" class="btn" data-open-id="${workspaceId}">View</button>`
+					: `<button type="button" class="btn" data-upload-id="${workspaceId}">Upload image</button>
+               <button type="button" class="btn" data-url-id="${workspaceId}">Use image URL</button>`
+			}
+		`;
+
+		wrapper.append(card, controls);
+		return wrapper;
+	}
+
+	renderCardGrid(browserScroll, managerMode) {
+		browserScroll.innerHTML =
+			`<div class="grid-host"><oc-grid id="managerGrid"></oc-grid></div>`;
+		const grid = browserScroll.querySelector("#managerGrid");
+		grid?.update({
+			mode: "grid",
+			columnsDesktop: 6,
+			columnsTablet: 4,
+			columnsMobile: 2,
+			gap: "0.62rem",
+		});
+
+		if (managerMode === "sources") {
+			for (const source of Array.isArray(this.model.sourceCards)
+				? this.model.sourceCards
+				: []) {
+				grid?.append(this.buildSourceGridCell(source));
+			}
+			return;
+		}
+
+		if (managerMode === "collections") {
+			const selectedCollectionIds = new Set(
+				Array.isArray(this.model.selectedCollectionIds)
+					? this.model.selectedCollectionIds
+					: [],
+			);
+			for (const collection of Array.isArray(this.model.collections)
+				? this.model.collections
+				: []) {
+				grid?.append(
+					this.buildCollectionGridCell(collection, selectedCollectionIds),
+				);
+			}
+			return;
+		}
+
+		const selectedItemIds = new Set(
+			Array.isArray(this.model.selectedItemIds)
+				? this.model.selectedItemIds
+				: [],
+		);
+		for (const item of Array.isArray(this.model.items) ? this.model.items : []) {
+			grid?.append(this.buildItemGridCell(item, selectedItemIds));
+		}
 	}
 
 	disconnectedCallback() {
@@ -210,11 +377,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				this.dispatch("add-collection");
 			}
 		});
-		this.shadowRoot
-			.getElementById("publishCollectionBtn")
-			?.addEventListener("click", () => {
-				this.dispatch("publish-collection");
-			});
 
 		this.shadowRoot
 			.getElementById("viewToggle")
@@ -238,16 +400,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 					return;
 				}
 				this.dispatch("clear-item-selection");
-			});
-
-		this.shadowRoot
-			.getElementById("imageFileInput")
-			?.addEventListener("change", (event) => {
-				const files = Array.from(event.target?.files || []);
-				if (files.length > 0) {
-					this.dispatch("files-selected", { files });
-				}
-				event.target.value = "";
 			});
 
 		const assetWrap = this.shadowRoot.getElementById("assetWrap");
@@ -304,22 +456,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		if (overlay) {
 			overlay.classList.toggle("is-active", this.model.dropTargetActive);
 		}
-	}
-
-	setPublishActionState(action = {}) {
-		this.model.publishAction = {
-			...this.model.publishAction,
-			...action,
-		};
-		this.renderFrame();
-	}
-
-	setWorkingStatus(status = {}) {
-		this.model.workingStatus = {
-			...this.model.workingStatus,
-			...status,
-		};
-		this.renderFrame();
 	}
 
 	getCurrentViewMode() {
@@ -383,9 +519,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.shadowRoot.getElementById("deleteSelectedBtn");
 		const clearSelectionBtn =
 			this.shadowRoot.getElementById("clearSelectionBtn");
-		const publishBtn = this.shadowRoot.getElementById(
-			"publishCollectionBtn",
-		);
 		const managerModeToggle =
 			this.shadowRoot.getElementById("managerModeToggle");
 		if (
@@ -395,7 +528,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!selectionStatus ||
 			!deleteSelectedBtn ||
 			!clearSelectionBtn ||
-			!publishBtn ||
 			!managerModeToggle
 		) {
 			return;
@@ -419,19 +551,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			}
 			panelShell.setAttribute("show-back", "true");
 		}
-		if (isCollectionsView && this.model.workingStatus?.label) {
-			panelShell.setAttribute(
-				"status-label",
-				this.model.workingStatus.label,
-			);
-			panelShell.setAttribute(
-				"status-tone",
-				this.model.workingStatus.tone || "neutral",
-			);
-		} else {
-			panelShell.removeAttribute("status-label");
-			panelShell.removeAttribute("status-tone");
-		}
+		panelShell.removeAttribute("status-label");
+		panelShell.removeAttribute("status-tone");
 		addBtn.textContent =
 			this.model.currentLevel === "collections"
 				? "Add collection"
@@ -446,21 +567,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				button.setAttribute("data-active", isActive ? "true" : "false");
 				button.setAttribute("aria-pressed", isActive ? "true" : "false");
 			});
-		const publishAction = this.model.publishAction || {};
-		publishBtn.textContent = publishAction.label || "Publish collection";
-		publishBtn.hidden = publishAction.visible === false;
-		publishBtn.disabled = publishAction.disabled !== false;
-		const publishReason = publishAction.reason || "";
-		if (publishReason) {
-			publishBtn.title = publishReason;
-			publishBtn.setAttribute(
-				"aria-label",
-				`${publishBtn.textContent}. ${publishReason}`,
-			);
-		} else {
-			publishBtn.removeAttribute("title");
-			publishBtn.setAttribute("aria-label", publishBtn.textContent);
-		}
 		const overlay = this.shadowRoot.getElementById("assetDropOverlay");
 		if (overlay) {
 			overlay.hidden = !this.model.desktopFileDropEnabled;
@@ -548,52 +654,15 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		const managerMode = this.getManagerMode();
 		const level = managerMode === "items" ? "items" : "collections";
 		const mode = this.getCurrentViewMode();
+		const sourceCards = Array.isArray(this.model.sourceCards)
+			? this.model.sourceCards
+			: [];
 
 		if (managerMode === "sources") {
-			const sourceCards = Array.isArray(this.model.sourceCards)
-				? this.model.sourceCards
-				: [];
 			if (sourceCards.length === 0) {
 				browserScroll.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
 				return;
 			}
-			browserScroll.innerHTML = `<div class="grid-host"><oc-grid id="sourceGrid"></oc-grid></div>`;
-			const grid = browserScroll.querySelector("#sourceGrid");
-			grid?.update({
-				mode: "grid",
-				columnsDesktop: 6,
-				columnsTablet: 4,
-				columnsMobile: 2,
-				gap: "0.62rem",
-			});
-			for (const source of sourceCards) {
-				const wrapper = document.createElement("div");
-				wrapper.className = "browse-cell kind-source";
-				wrapper.dataset.actionType = "source";
-				wrapper.dataset.actionValue = source.id || "";
-				wrapper.setAttribute("data-span-cols", "2");
-				wrapper.setAttribute("data-span-rows", "2");
-				wrapper.setAttribute("data-span-cols-mobile", "2");
-				wrapper.setAttribute("data-span-rows-mobile", "2");
-				const card = document.createElement("oc-card-collections");
-				card.update({
-					title: source.title || "Source",
-					subtitle: source.subtitle || "",
-					countLabel: source.countLabel || "",
-					previewRows: Array.isArray(source.previewRows)
-						? source.previewRows
-						: [],
-					previewImages: Array.isArray(source.previewImages)
-						? source.previewImages
-						: [],
-					actionLabel: "Browse",
-					actionValue: source.id || "",
-					active: source.active === true,
-				});
-				wrapper.append(card);
-				grid?.append(wrapper);
-			}
-			return;
 		}
 
 		if (managerMode === "items" && !this.model.openedCollectionId) {
@@ -601,14 +670,16 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			return;
 		}
 
+		if (mode === "cards") {
+			this.renderCardGrid(browserScroll, managerMode);
+			this.reportScrollDiagnostics("render-body");
+			return;
+		}
+
 		const componentTag =
 			level === "collections"
-				? mode === "rows"
-					? "open-collection-row-list"
-					: "open-collection-card-surface"
-				: mode === "rows"
-					? "open-item-row-list"
-					: "open-item-card-grid";
+				? "open-collection-row-list"
+				: "open-item-row-list";
 
 		const renderer = document.createElement(componentTag);
 		if (level === "collections") {
@@ -636,14 +707,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
         <open-collections-panel-chrome id="panelShell" title="Collections" show-back="false">
-          <div class="viewport-actions viewport-title-actions" slot="header-actions">
-            <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
-            <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
-          </div>
 		  <div class="manager-mode-toggle" id="managerModeToggle" role="toolbar" aria-label="Manager mode" slot="subheader">
 			<button type="button" class="mode-toggle" data-manager-mode="sources" data-active="false" aria-pressed="false">Sources</button>
 			<button type="button" class="mode-toggle" data-manager-mode="collections" data-active="true" aria-pressed="true">Collections</button>
-			<button type="button" class="mode-toggle" data-manager-mode="items" data-active="false" aria-pressed="false">Items</button>
 		  </div>
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
@@ -674,15 +740,48 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.shadowRoot
 			.getElementById("browserScroll")
 			?.addEventListener("click", (event) => {
-				const path =
-					typeof event.composedPath === "function"
-						? event.composedPath()
-						: [];
-				const cell = path.find(
-					(node) =>
-						node instanceof HTMLElement &&
-						node.classList?.contains("browse-cell"),
-				);
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target) {
+					return;
+				}
+				const assignBtn = target.closest("button[data-assign-id]");
+				if (assignBtn) {
+					event.stopPropagation();
+					this.dispatch("collection-assign-connection", {
+						collectionId: assignBtn.getAttribute("data-assign-id") || "",
+					});
+					return;
+				}
+				const openBtn = target.closest("button[data-open-id]");
+				if (openBtn) {
+					event.stopPropagation();
+					this.dispatch("item-view", {
+						workspaceId: openBtn.getAttribute("data-open-id") || "",
+					});
+					return;
+				}
+				const uploadBtn = target.closest("button[data-upload-id]");
+				if (uploadBtn) {
+					event.stopPropagation();
+					this.dispatch("attach-media-upload", {
+						itemId: uploadBtn.getAttribute("data-upload-id") || "",
+					});
+					return;
+				}
+				const urlBtn = target.closest("button[data-url-id]");
+				if (urlBtn) {
+					event.stopPropagation();
+					this.dispatch("attach-media-url", {
+						itemId: urlBtn.getAttribute("data-url-id") || "",
+					});
+					return;
+				}
+				const selectWrap = target.closest("[data-select-wrap]");
+				if (selectWrap) {
+					event.stopPropagation();
+					return;
+				}
+				const cell = target.closest(".browse-cell[data-action-type]");
 				if (!cell) {
 					return;
 				}
@@ -690,6 +789,71 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				const actionValue = String(cell.dataset.actionValue || "").trim();
 				if (actionType === "source" && actionValue) {
 					this.dispatch("source-open", { sourceId: actionValue });
+					return;
+				}
+				if (actionType === "collection" && actionValue) {
+					this.dispatch("collection-open", { collectionId: actionValue });
+					return;
+				}
+				if (actionType === "item" && actionValue) {
+					this.dispatch("item-select", { workspaceId: actionValue });
+				}
+			});
+
+		this.shadowRoot
+			.getElementById("browserScroll")
+			?.addEventListener("change", (event) => {
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target) {
+					return;
+				}
+				const collectionInput = target.closest("input[data-select-collection-id]");
+				if (collectionInput) {
+					event.stopPropagation();
+					this.dispatch("collection-toggle-selected", {
+						collectionId:
+							collectionInput.getAttribute("data-select-collection-id") || "",
+						selected: collectionInput.checked === true,
+					});
+					return;
+				}
+				const itemInput = target.closest("input[data-select-item-id]");
+				if (itemInput) {
+					event.stopPropagation();
+					this.dispatch("item-toggle-selected", {
+						workspaceId: itemInput.getAttribute("data-select-item-id") || "",
+						selected: itemInput.checked === true,
+					});
+				}
+			});
+
+		this.shadowRoot
+			.getElementById("browserScroll")
+			?.addEventListener("keydown", (event) => {
+				if (event.key !== "Enter" && event.key !== " ") {
+					return;
+				}
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target || target.closest("button, input, label")) {
+					return;
+				}
+				const cell = target.closest(".browse-cell[data-action-type]");
+				if (!cell) {
+					return;
+				}
+				event.preventDefault();
+				const actionType = String(cell.dataset.actionType || "").trim();
+				const actionValue = String(cell.dataset.actionValue || "").trim();
+				if (actionType === "source" && actionValue) {
+					this.dispatch("source-open", { sourceId: actionValue });
+					return;
+				}
+				if (actionType === "collection" && actionValue) {
+					this.dispatch("collection-open", { collectionId: actionValue });
+					return;
+				}
+				if (actionType === "item" && actionValue) {
+					this.dispatch("item-select", { workspaceId: actionValue });
 				}
 			});
 	}

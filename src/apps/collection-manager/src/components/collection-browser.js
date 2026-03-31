@@ -78,6 +78,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		);
 		this.renderFrame();
 		this.renderBody();
+		this.installScrollDiagnostics();
+		this.reportScrollDiagnostics("connected");
 		this.setDropTargetActive(this.model.dropTargetActive);
 	}
 
@@ -100,6 +102,82 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			"change",
 			this.handleViewportChange,
 		);
+		this.removeScrollDiagnostics();
+	}
+
+	collectElementScrollState(element) {
+		if (!(element instanceof Element)) {
+			return null;
+		}
+		const style = window.getComputedStyle(element);
+		return {
+			id: element.id || "",
+			tag: element.tagName?.toLowerCase() || "",
+			className:
+				typeof element.className === "string" ? element.className : "",
+			overflowY: style.overflowY,
+			overflowX: style.overflowX,
+			clientHeight: element.clientHeight,
+			scrollHeight: element.scrollHeight,
+			scrollTop: element.scrollTop ?? 0,
+		};
+	}
+
+	collectAncestorStates(element, maxDepth = 6) {
+		const states = [];
+		let current = element instanceof Element ? element.parentElement : null;
+		let depth = 0;
+		while (current && depth < maxDepth) {
+			states.push(this.collectElementScrollState(current));
+			current = current.parentElement;
+			depth += 1;
+		}
+		return states.filter(Boolean);
+	}
+
+	reportScrollDiagnostics(trigger = "manual") {
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		const browserHost = this.shadowRoot?.getElementById("browserHost");
+		const assetWrap = this.shadowRoot?.getElementById("assetWrap");
+		const panelShell = this.shadowRoot?.getElementById("panelShell");
+		const panelContent = panelShell?.shadowRoot?.querySelector(".panel-content");
+		const viewportPanel = this.shadowRoot?.querySelector(".viewport-panel");
+		const payload = {
+			trigger,
+			managerMode: this.getManagerMode(),
+			viewMode: this.getCurrentViewMode(),
+			scrollOwnerCandidate: this.collectElementScrollState(browserScroll),
+			assetWrap: this.collectElementScrollState(assetWrap),
+			browserHost: this.collectElementScrollState(browserHost),
+			viewportPanel: this.collectElementScrollState(viewportPanel),
+			panelContent: this.collectElementScrollState(panelContent),
+			ancestorsOfBrowserScroll: this.collectAncestorStates(browserScroll),
+		};
+		console.info("[collection-browser][scroll-diag]", payload);
+	}
+
+	installScrollDiagnostics() {
+		if (this._scrollDiagnosticsInstalled) {
+			return;
+		}
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		if (!browserScroll) {
+			return;
+		}
+		this._scrollDiagnosticsInstalled = true;
+		this._handleBrowserScroll = () => this.reportScrollDiagnostics("browserScroll:scroll");
+		browserScroll.addEventListener("scroll", this._handleBrowserScroll, {
+			passive: true,
+		});
+	}
+
+	removeScrollDiagnostics() {
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		if (browserScroll && this._handleBrowserScroll) {
+			browserScroll.removeEventListener("scroll", this._handleBrowserScroll);
+		}
+		this._scrollDiagnosticsInstalled = false;
+		this._handleBrowserScroll = null;
 	}
 
 	bindEvents() {
@@ -276,6 +354,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.dispatch("manager-mode-change", { mode: normalizedMode });
 		this.renderFrame();
 		this.renderBody();
+		this.reportScrollDiagnostics(`manager-mode:${normalizedMode}`);
 	}
 
 	update(data = {}) {
@@ -292,6 +371,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		}
 		this.renderFrame();
 		this.renderBody();
+		this.reportScrollDiagnostics("update");
 		this.setDropTargetActive(this.model.dropTargetActive);
 	}
 
@@ -550,6 +630,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			});
 		}
 		host.appendChild(renderer);
+		this.reportScrollDiagnostics("render-body");
 	}
 
 	render() {

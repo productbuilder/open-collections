@@ -8,11 +8,17 @@ export const BROWSER_CONFIG = {
 			sourceUrl: "../../collections/collections.json",
 		},
 		{
-			id: "collectie-hilversum-prenten",
+			id: "collectie-hilversum",
 			label: "Collectie Hilversum",
 			sourceType: "collections.json",
 			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/collectie-hilversum/collections.json",
 		},
+		{
+			id: "dudok-architectuur-centrum",
+			label: "Dudok Architectuur Centrum",
+			sourceType: "collections.json",
+			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/dudok-architectuur-centrum/collections.json",
+		}
 		// {
 		// 	id: "city-photos",
 		// 	label: "City photos",

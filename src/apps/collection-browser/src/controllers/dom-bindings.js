@@ -93,7 +93,5 @@ export function bindDomEvents(app) {
 	app.dom.viewerDialog?.addEventListener("close-viewer", () => {
 		app.state.viewerItemId = null;
 	});
-	app.dom.viewerDialog?.addEventListener("viewer-open-details", () => {
-		app.openMetadataFromViewer();
-	});
+	// Details action intentionally hidden in viewer header for now.
 }

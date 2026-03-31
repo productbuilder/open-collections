@@ -28,6 +28,25 @@ export const paneLayoutStyles = `
     overflow: hidden;
   }
 
+  .pane-main > slot,
+  .pane-inspector > slot {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .pane-main > slot::slotted(*),
+  .pane-inspector > slot::slotted(*) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .pane-layout[data-inspector-placement="right"] .pane-inspector {
     border-left: var(--oc-pane-divider);
   }

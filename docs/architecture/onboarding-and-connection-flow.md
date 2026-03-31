@@ -17,6 +17,8 @@ The core product behavior is:
 
 The default source-control integration path is **GitHub App authorization**. PAT-based onboarding remains a fallback path only.
 
+For users who already have hosting and want the simplest non-Git path, see **[Self-serve host connector](./self-serve-host-connector.md)**.
+
 ## Goals
 
 - Capture setup context once, in plain language, and persist it.
@@ -146,6 +148,7 @@ The system should classify user state and map it to a recommended setup path.
 
 The app should infer the path and recommend the **easiest viable next step**, prioritizing low-risk completion.
 
+- If user already has hosting and is a strong fit for non-Git onboarding -> recommend direct host connector path first (see self-serve host connector plan).
 - If GitHub account exists -> start GitHub App connect.
 - If no GitHub account -> send to GitHub signup/sign-in first, then resume GitHub App flow.
 - If hosting supports git deploy -> recommend git-based deploy path.

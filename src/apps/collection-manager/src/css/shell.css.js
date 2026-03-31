@@ -49,6 +49,7 @@ export const shellStyles = `
 
   #paneLayout {
     flex: 1;
+    height: 100%;
     min-height: 0;
   }
 

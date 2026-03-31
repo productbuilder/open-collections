@@ -9,6 +9,7 @@ class OcGridElement extends HTMLElement {
 			columnsMobile: 2,
 			gap: "0.7rem",
 			listGap: "0.65rem",
+			squareCellsDesktop: false,
 		};
 		this._slot = null;
 	}
@@ -40,6 +41,10 @@ class OcGridElement extends HTMLElement {
 		const mode = this.normalizedMode();
 		layout.classList.toggle("is-grid", mode === "grid");
 		layout.classList.toggle("is-list", mode === "list");
+		layout.classList.toggle(
+			"is-square-desktop",
+			this.model.squareCellsDesktop === true,
+		);
 		layout.style.setProperty(
 			"--oc-layout-columns-desktop",
 			String(Number(this.model.columnsDesktop) > 0 ? Number(this.model.columnsDesktop) : 6),
@@ -114,6 +119,14 @@ class OcGridElement extends HTMLElement {
           gap: var(--oc-layout-gap, 0.7rem);
           align-items: stretch;
           align-content: start;
+          grid-auto-rows: minmax(0, auto);
+        }
+
+        .layout.is-grid.is-square-desktop {
+          grid-auto-rows: calc(
+            (100% - (var(--oc-layout-columns-desktop, 6) - 1) * var(--oc-layout-gap, 0.7rem))
+              / var(--oc-layout-columns-desktop, 6)
+          );
         }
 
         .layout.is-grid ::slotted(*) {
@@ -140,6 +153,10 @@ class OcGridElement extends HTMLElement {
         @media (max-width: 1040px) {
           .layout.is-grid {
             grid-template-columns: repeat(var(--oc-layout-columns-tablet, 4), minmax(0, 1fr));
+          }
+
+          .layout.is-grid.is-square-desktop {
+            grid-auto-rows: minmax(0, auto);
           }
         }
 

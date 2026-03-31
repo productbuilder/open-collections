@@ -284,6 +284,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
+			squareCellsDesktop: true,
 		});
 
 		for (const entity of this.renderCards()) {

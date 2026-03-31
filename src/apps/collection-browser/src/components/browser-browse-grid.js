@@ -300,6 +300,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
+			squareCellsDesktop: true,
 		});
 		this.bindScrollDebug();
 		this.bindGridInteractions();
@@ -349,6 +350,7 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
+			squareCellsDesktop: true,
 		});
 		this.bindScrollDebug();
 		this.bindGridInteractions();

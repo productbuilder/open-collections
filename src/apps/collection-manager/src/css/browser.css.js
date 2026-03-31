@@ -25,6 +25,12 @@ export const browserStyles = `
     background: transparent;
   }
 
+  .viewport-panel > open-collections-panel-chrome {
+    display: block;
+    height: 100%;
+    min-height: 0;
+  }
+
   .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -163,6 +169,7 @@ export const browserStyles = `
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
+    height: 100%;
     min-height: 0;
     width: 100%;
     padding: 0;

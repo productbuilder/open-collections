@@ -2,6 +2,10 @@
 
 This companion note supports the end-user guide at `src/site/docs/publish-a-collection.html`.
 
+This note documents the current PAT-oriented publish path.
+
+For the preferred GitHub App onboarding approach (no manual PAT copy/paste), see: `docs/architecture/github-app-onboarding-flow.md`.
+
 It covers the practical publishing chain for Open Collections Desktop or Collection Manager:
 - GitHub account ownership
 - public repository setup

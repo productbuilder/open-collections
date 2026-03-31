@@ -276,12 +276,25 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>
         :host { display: contents; }
+        :host {
+          --oc-browser-bg-card: #fffdfa;
+          --oc-browser-bg-card-soft: #f7f4f1;
+          --oc-browser-border: #d9d5d0;
+          --oc-browser-border-strong: #c8c1b8;
+          --oc-browser-divider: #e2d8cd;
+          --oc-browser-surface-muted: #eeebe7;
+          --oc-browser-placeholder-fill: #e8e4de;
+          --oc-browser-placeholder-border: #d6d0c7;
+          --oc-browser-text: #2e2924;
+          --oc-browser-text-muted: #6c6258;
+        }
         * { box-sizing: border-box; }
         dialog {
           width: min(980px, 96vw);
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 12px;
           padding: 0;
+          background: var(--oc-browser-bg-card, #fffdfa);
         }
         dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
         .dialog-shell {
@@ -291,13 +304,13 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         }
         .dialog-header {
           padding: 0.75rem 0.9rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--oc-browser-divider, #e2d8cd);
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 0.65rem;
         }
-        .dialog-title { margin: 0; font-size: 0.95rem; color: #111827; }
+        .dialog-title { margin: 0; font-size: 0.95rem; color: var(--oc-browser-text, #2e2924); }
         .dialog-header-actions {
           display: inline-flex;
           align-items: center;
@@ -309,8 +322,8 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           height: min(64vh, 720px);
           min-height: 260px;
           border-radius: 8px;
-          border: 1px solid #dbe3ec;
-          background: #f8fafc;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card-soft, #f8f3ed);
           display: flex;
           align-items: center;
   			justify-content: center;
@@ -369,12 +382,12 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           font-weight: 600;
         }
         .empty {
-          border: 1px dashed #cbd5e1;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 8px;
           padding: 1rem;
           text-align: center;
-          color: #64748b;
-          background: #f8fafc;
+          color: var(--oc-browser-text-muted, #6c6258);
+          background: var(--oc-browser-surface-muted, #eee5dc);
           font-size: 0.9rem;
         }
         .icon-btn {
@@ -382,10 +395,10 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           height: 2rem;
           display: inline-grid;
           place-items: center;
-          border: 1px solid #cbd5e1;
-          background: #ffffff;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card, #fffdfa);
           border-radius: 8px;
-          color: #334155;
+          color: var(--oc-browser-text-muted, #6c6258);
           cursor: pointer;
           padding: 0;
         }

@@ -93,13 +93,20 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 		}
 	}
 
+	renderPlaceholderSlots(count = 20) {
+		return Array.from({ length: Math.max(0, count) })
+			.map(
+				() => `
+          <span class="preview-slot preview-slot-placeholder" aria-hidden="true"></span>
+        `,
+			)
+			.join("");
+	}
+
 	renderPreviewStrip() {
 		const previews = Array.isArray(this.model.previewImages)
-			? this.model.previewImages.filter(Boolean).slice(0, 3)
+			? this.model.previewImages.filter(Boolean)
 			: [];
-		if (previews.length === 0) {
-			return `<span class="preview-placeholder">${escapeHtml(this.model.placeholderLabel)}</span>`;
-		}
 
 		return `
       <span class="preview-strip">
@@ -112,6 +119,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           `,
 					)
 					.join("")}
+        ${this.renderPlaceholderSlots()}
       </span>
     `;
 	}
@@ -142,9 +150,9 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           touch-action: pan-y;
           appearance: none;
           -webkit-appearance: none;
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 11px;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
           padding: 0.64rem;
           display: grid;
           align-content: start;
@@ -157,20 +165,20 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
         }
 
         .card:not(:disabled):hover {
-          border-color: #93c5fd;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-          background: #f8fbff;
+          border-color: var(--oc-browser-border-strong, #c8c1b8);
+          box-shadow: 0 1px 3px rgba(46, 41, 36, 0.08);
+          background: var(--oc-browser-bg-card-soft, #f8f3ed);
         }
 
         .card:not(:disabled):focus-visible {
-          outline: 2px solid #60a5fa;
+          outline: 2px solid var(--oc-browser-focus-ring, #91857a);
           outline-offset: 2px;
         }
 
         .card.is-active {
-          border-color: #0f6cc6;
-          box-shadow: 0 0 0 1px #66a6e8 inset, 0 3px 10px rgba(15, 108, 198, 0.16);
-          background: #f5faff;
+          border-color: var(--oc-browser-accent, #756c64);
+          box-shadow: 0 0 0 1px color-mix(in srgb, var(--oc-browser-accent, #756c64) 44%, #ffffff 56%) inset, 0 3px 10px rgba(77, 64, 50, 0.16);
+          background: var(--oc-browser-accent-soft, #ece7e1);
         }
 
         .card:disabled {
@@ -180,18 +188,23 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-strip {
           width: 100%;
-          height: 84px;
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          height: 44px;
+          display: flex;
+          align-items: stretch;
           gap: 0.35rem;
+          overflow: hidden;
+          justify-content: flex-start;
         }
 
         .preview-slot {
+          flex: 0 0 auto;
+          height: 44px;
+          aspect-ratio: 3 / 2;
           display: block;
           overflow: hidden;
           border-radius: 7px;
-          border: 1px solid #dbe3ec;
-          background: #eef2f7;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-surface-muted, #eee5dc);
           position: relative;
         }
 
@@ -229,25 +242,23 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-slot[data-state="error"]::before {
           animation: none;
-          background: #eef2f7;
+          background: var(--oc-browser-surface-muted, #eee5dc);
+        }
+
+        .preview-slot-placeholder {
+          border-color: var(--oc-browser-placeholder-border, #d6d0c7);
+          background: var(--oc-browser-placeholder-fill, #e8e4de);
+        }
+
+        .preview-slot-placeholder::before {
+          animation: none;
+          background: transparent;
         }
 
         @keyframes preview-shimmer {
           to {
             background-position-x: -220%;
           }
-        }
-
-        .preview-placeholder {
-          width: 100%;
-          height: 84px;
-          display: grid;
-          place-items: center;
-          border: 1px solid #dbe3ec;
-          border-radius: 8px;
-          background: #f8fafc;
-          color: #64748b;
-          font-size: 0.8rem;
         }
 
         .header {
@@ -267,7 +278,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           font-size: 0.9rem;
           font-weight: 700;
           line-height: 1.25;
-          color: #0f172a;
+          color: var(--oc-browser-text, #2e2924);
           overflow-wrap: anywhere;
         }
 
@@ -276,7 +287,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           margin: 0.14rem 0 0;
           font-size: 0.78rem;
           line-height: 1.35;
-          color: #475569;
+          color: var(--oc-browser-text-muted, #6c6258);
           min-height: 1.05rem;
           overflow-wrap: anywhere;
         }
@@ -285,9 +296,9 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           width: 1.75rem;
           height: 1.75rem;
           border-radius: 999px;
-          border: 1px solid #cbd5e1;
-          background: #ffffff;
-          color: #0f6cc6;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-accent, #756c64);
           display: grid;
           place-items: center;
           font-size: 1rem;
@@ -314,7 +325,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           display: block;
           margin: 0;
           font-size: 0.78rem;
-          color: #334155;
+          color: var(--oc-browser-text, #2e2924);
           font-weight: 600;
         }
 
@@ -322,7 +333,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
           display: block;
           margin: 0;
           font-size: 0.76rem;
-          color: #64748b;
+          color: var(--oc-browser-text-muted, #6c6258);
           font-weight: 600;
           white-space: nowrap;
         }

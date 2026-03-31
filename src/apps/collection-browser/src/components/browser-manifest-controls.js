@@ -236,6 +236,17 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         :host {
           display: block;
           width: 100%;
+          --oc-browser-bg-card: #fffdfa;
+          --oc-browser-bg-card-soft: #f7f4f1;
+          --oc-browser-border: #d9d5d0;
+          --oc-browser-border-strong: #c8c1b8;
+          --oc-browser-surface-muted: #eeebe7;
+          --oc-browser-divider: #e2d8cd;
+          --oc-browser-text: #2e2924;
+          --oc-browser-text-muted: #6c6258;
+          --oc-browser-accent: #756c64;
+          --oc-browser-accent-soft: #ece7e1;
+          --oc-browser-focus-ring: #91857a;
         }
 
         * {
@@ -261,9 +272,9 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
           min-width: min(100%, 18rem);
           display: flex;
           align-items: center;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 8px;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
           overflow: hidden;
         }
 
@@ -273,7 +284,7 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
           min-width: 0;
           border: 0;
           background: transparent;
-          color: #0f172a;
+          color: var(--oc-browser-text, #2e2924);
           padding: 0.5rem 0.65rem;
           font: inherit;
         }
@@ -283,14 +294,14 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         }
 
         .manifest-input-wrap:focus-within {
-          border-color: #0f6cc6;
-          box-shadow: 0 0 0 2px rgba(15, 108, 198, 0.16);
+          border-color: var(--oc-browser-accent, #756c64);
+          box-shadow: 0 0 0 2px color-mix(in srgb, var(--oc-browser-accent, #756c64) 18%, transparent);
         }
 
         .btn {
-          border: 1px solid #cbd5e1;
-          background: #ffffff;
-          color: #0f172a;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-text, #2e2924);
           border-radius: 8px;
           padding: 0.45rem 0.7rem;
           cursor: pointer;
@@ -301,7 +312,7 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         }
 
         .btn:hover {
-          background: #f8fafc;
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
         }
 
         .btn:disabled {
@@ -311,30 +322,30 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
 
         .btn-inline {
           border: 0;
-          border-left: 1px solid #e2e8f0;
+          border-left: 1px solid var(--oc-browser-divider, #e2d8cd);
           border-radius: 0;
           height: 100%;
           min-height: 2.2rem;
           padding-inline: 0.65rem;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
         }
 
         .btn-primary {
-          border-color: #0f6cc6;
-          background: #0f6cc6;
+          border-color: var(--oc-browser-accent, #756c64);
+          background: var(--oc-browser-accent, #756c64);
           color: #ffffff;
         }
 
         .btn-primary:hover {
-          background: #0b5aa6;
+          background: color-mix(in srgb, var(--oc-browser-accent, #756c64) 88%, #000000 12%);
         }
 
         .recent-panel {
           display: grid;
           gap: 0.45rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--oc-browser-divider, #e2d8cd);
           border-radius: 10px;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
           padding: 0.55rem;
         }
 
@@ -350,7 +361,7 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
           margin: 0;
           font-size: 0.8rem;
           font-weight: 700;
-          color: #334155;
+          color: var(--oc-browser-text-muted, #6c6258);
         }
 
         .recent-list {
@@ -364,10 +375,10 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         .recent-link {
           width: 100%;
           text-align: left;
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 8px;
-          background: #ffffff;
-          color: #0f172a;
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-text, #2e2924);
           padding: 0.45rem 0.55rem;
           font: inherit;
           font-size: 0.84rem;
@@ -378,8 +389,8 @@ class OpenBrowserManifestControlsElement extends HTMLElement {
         }
 
         .recent-link:hover {
-          background: #f8fafc;
-          border-color: #bfdbfe;
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
+          border-color: var(--oc-browser-border-strong, #c8c1b8);
         }
 
         @media (max-width: 760px) {

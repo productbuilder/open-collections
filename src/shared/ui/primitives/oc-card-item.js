@@ -183,9 +183,9 @@ class OcCardItemElement extends HTMLElement {
           pointer-events: auto;
           touch-action: pan-y;
           width: 100%;
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 11px;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
           padding: 0.55rem;
           text-align: left;
           font: inherit;
@@ -195,20 +195,20 @@ class OcCardItemElement extends HTMLElement {
         }
 
         .card:hover {
-          border-color: #93c5fd;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-          background: #f8fbff;
+          border-color: var(--oc-browser-border-strong, #c8c1b8);
+          box-shadow: 0 1px 3px rgba(46, 41, 36, 0.08);
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
         }
 
         .card:focus-visible {
-          outline: 2px solid #60a5fa;
+          outline: 2px solid var(--oc-browser-focus-ring, #91857a);
           outline-offset: 2px;
         }
 
         .card.is-active {
-          border-color: #0f6cc6;
-          box-shadow: 0 0 0 1px #66a6e8 inset, 0 3px 10px rgba(15, 108, 198, 0.16);
-          background: #f5faff;
+          border-color: var(--oc-browser-accent, #756c64);
+          box-shadow: 0 0 0 1px color-mix(in srgb, var(--oc-browser-accent, #756c64) 44%, #ffffff 56%) inset, 0 3px 10px rgba(77, 64, 50, 0.16);
+          background: var(--oc-browser-accent-soft, #ece7e1);
         }
 
         .card:disabled {
@@ -229,8 +229,8 @@ class OcCardItemElement extends HTMLElement {
           aspect-ratio: 1 / 1;
           border-radius: 9px;
           overflow: hidden;
-          border: 1px solid #dbe3ec;
-          background: #f8fafc;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
           display: grid;
           place-items: center;
           position: relative;
@@ -271,7 +271,7 @@ class OcCardItemElement extends HTMLElement {
         .preview[data-state="error"] .preview-placeholder,
         .preview[data-state="empty"] .preview-placeholder {
           animation: none;
-          background: #eef2f7;
+          background: var(--oc-browser-surface-muted, #eeebe7);
         }
 
         @keyframes preview-shimmer {
@@ -293,7 +293,7 @@ class OcCardItemElement extends HTMLElement {
           font-weight: 700;
           line-height: 1.3;
           min-height: 2.24rem;
-          color: #0f172a;
+          color: var(--oc-browser-text, #2e2924);
           overflow-wrap: anywhere;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -304,7 +304,7 @@ class OcCardItemElement extends HTMLElement {
         .subtitle {
           margin: 0;
           font-size: 0.76rem;
-          color: #475569;
+          color: var(--oc-browser-text-muted, #6c6258);
           line-height: 1.32;
           min-height: 2.01rem;
           overflow-wrap: anywhere;
@@ -326,7 +326,7 @@ class OcCardItemElement extends HTMLElement {
 
         .count {
           font-size: 0.74rem;
-          color: #334155;
+          color: var(--oc-browser-text, #2e2924);
           font-weight: 600;
         }
 

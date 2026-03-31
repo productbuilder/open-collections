@@ -14,11 +14,8 @@ function normalizeRows(previewRows = []) {
 		? previewRows
 				.map((row) => ({
 					title: row?.title || "",
-					images: Array.isArray(row?.images)
-						? row.images.filter(Boolean).slice(0, 5)
-						: [],
+					images: Array.isArray(row?.images) ? row.images.filter(Boolean) : [],
 				}))
-				.filter((row) => row.images.length > 0)
 		: [];
 	return rows.slice(0, 3);
 }
@@ -136,15 +133,21 @@ class OcCardCollectionsElement extends HTMLElement {
 		}
 	}
 
+	renderRowPlaceholderSlots(count = 20) {
+		return Array.from({ length: Math.max(0, count) })
+			.map(
+				() => `
+          <span class="row-slot row-slot-placeholder" aria-hidden="true"></span>
+        `,
+			)
+			.join("");
+	}
+
 	renderRows() {
 		const preferredRows = normalizeRows(this.model.previewRows);
 		const rows = preferredRows.length
 			? preferredRows
 			: buildFallbackRows(this.model.previewImages);
-		if (rows.length === 0) {
-			return '<div class="row-placeholder">No collection previews yet</div>';
-		}
-
 		const normalizedRows = rows.slice(0, 3);
 		while (normalizedRows.length < 3) {
 			normalizedRows.push({ title: "", images: [] });
@@ -154,13 +157,10 @@ class OcCardCollectionsElement extends HTMLElement {
       <div class="rows" aria-hidden="true">
         ${normalizedRows
 					.map((row, rowIndex) => {
-						if (!row.images.length) {
-							return '<div class="preview-row is-empty"><span class="preview-row-empty">No collection preview</span></div>';
-						}
 						const rowLabel = row.title || `Collection ${rowIndex + 1}`;
 						return `
-            <div class="preview-row">
-              <p class="row-label">${escapeHtml(rowLabel)}</p>
+            <div class="preview-row${row.images.length ? "" : " is-empty"}">
+              <p class="row-label${row.title ? "" : " is-placeholder"}">${row.title ? escapeHtml(rowLabel) : ""}</p>
               <div class="row-track">
                 ${row.images
 								.map(
@@ -178,6 +178,7 @@ class OcCardCollectionsElement extends HTMLElement {
                   `,
 								)
 								.join("")}
+                ${this.renderRowPlaceholderSlots()}
               </div>
             </div>
           `;
@@ -208,15 +209,16 @@ class OcCardCollectionsElement extends HTMLElement {
 
         .card {
           width: 100%;
+          height: 100%;
           pointer-events: auto;
           touch-action: pan-y;
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 16px;
-          background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+          background: var(--oc-browser-bg-card, #fffdfa);
           padding: 0.9rem;
           display: grid;
-          gap: 0.72rem;
-          align-content: start;
+          grid-template-rows: auto 1fr auto;
+          gap: 0.62rem;
           text-align: left;
           font: inherit;
           color: inherit;
@@ -225,20 +227,20 @@ class OcCardCollectionsElement extends HTMLElement {
         }
 
         .card:hover {
-          border-color: #93c5fd;
-          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-          background: linear-gradient(180deg, #f2f8ff 0%, #ffffff 100%);
+          border-color: var(--oc-browser-border-strong, #c8c1b8);
+          box-shadow: 0 2px 8px rgba(46, 41, 36, 0.08);
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
         }
 
         .card:focus-visible {
-          outline: 2px solid #60a5fa;
+          outline: 2px solid var(--oc-browser-focus-ring, #91857a);
           outline-offset: 2px;
         }
 
         .card.is-active {
-          border-color: #0f6cc6;
-          box-shadow: 0 0 0 1px #66a6e8 inset, 0 4px 14px rgba(15, 108, 198, 0.16);
-          background: linear-gradient(180deg, #edf5ff 0%, #ffffff 100%);
+          border-color: var(--oc-browser-accent, #756c64);
+          box-shadow: 0 0 0 1px color-mix(in srgb, var(--oc-browser-accent, #756c64) 44%, #ffffff 56%) inset, 0 4px 14px rgba(77, 64, 50, 0.16);
+          background: var(--oc-browser-accent-soft, #ece7e1);
         }
 
         .card[aria-disabled="true"] {
@@ -262,7 +264,7 @@ class OcCardCollectionsElement extends HTMLElement {
           font-size: 0.98rem;
           font-weight: 700;
           line-height: 1.2;
-          color: #0f172a;
+          color: var(--oc-browser-text, #2e2924);
           overflow-wrap: anywhere;
         }
 
@@ -270,7 +272,7 @@ class OcCardCollectionsElement extends HTMLElement {
           margin: 0.18rem 0 0;
           font-size: 0.8rem;
           line-height: 1.34;
-          color: #475569;
+          color: var(--oc-browser-text-muted, #6c6258);
           overflow-wrap: anywhere;
           min-height: 1.05rem;
         }
@@ -279,9 +281,9 @@ class OcCardCollectionsElement extends HTMLElement {
           width: 1.9rem;
           height: 1.9rem;
           border-radius: 999px;
-          border: 1px solid #cbd5e1;
-          background: #ffffff;
-          color: #0f6cc6;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-accent, #756c64);
           display: grid;
           place-items: center;
           font-size: 1rem;
@@ -297,40 +299,57 @@ class OcCardCollectionsElement extends HTMLElement {
 
         .rows {
           display: grid;
-          gap: 0.46rem;
+          grid-template-rows: repeat(3, minmax(0, 1fr));
+          gap: 0.4rem;
+          min-height: 240px;
         }
 
         .preview-row {
-          border: 1px solid #dbe3ec;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 10px;
-          padding: 0.36rem;
-          background: #ffffff;
+          padding: 0.34rem;
+          background: var(--oc-browser-bg-card, #fffdfa);
           display: grid;
-          gap: 0.34rem;
+          grid-template-rows: 0.75rem minmax(0, 1fr);
+          gap: 0.28rem;
         }
 
         .row-label {
           margin: 0;
           font-size: 0.7rem;
           font-weight: 600;
-          color: #64748b;
+          color: var(--oc-browser-text-muted, #6c6258);
           line-height: 1.2;
+          min-height: 0.75rem;
+          align-self: center;
+        }
+
+        .row-label.is-placeholder {
+          width: 54%;
+          border-radius: 999px;
+          background: var(--oc-browser-placeholder-fill, #e8e4de);
+          color: transparent;
         }
 
         .row-track {
-          display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(44px, 1fr);
+          display: flex;
+          align-items: stretch;
           gap: 0.3rem;
-          min-height: 46px;
+          min-height: 44px;
+          height: 44px;
+          overflow: hidden;
+          justify-content: flex-start;
         }
 
         .row-slot {
+          flex: 0 0 auto;
+          height: 44px;
           border-radius: 7px;
           overflow: hidden;
-          border: 1px solid #dbe3ec;
-          background: #eef2f7;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-surface-muted, #eee5dc);
           position: relative;
+          aspect-ratio: 3 / 2;
         }
 
         .row-image {
@@ -368,7 +387,17 @@ class OcCardCollectionsElement extends HTMLElement {
 
         .row-slot[data-state="error"]::before {
           animation: none;
-          background: #eef2f7;
+          background: var(--oc-browser-surface-muted, #eee5dc);
+        }
+
+        .row-slot-placeholder {
+          border-color: var(--oc-browser-placeholder-border, #d6d0c7);
+          background: var(--oc-browser-placeholder-fill, #e8e4de);
+        }
+
+        .row-slot-placeholder::before {
+          animation: none;
+          background: transparent;
         }
 
         @keyframes preview-shimmer {
@@ -378,18 +407,7 @@ class OcCardCollectionsElement extends HTMLElement {
         }
 
         .preview-row.is-empty {
-          min-height: 64px;
-          display: grid;
-          place-items: center;
-          border-style: dashed;
-          background: #f8fafc;
-        }
-
-        .preview-row-empty,
-        .row-placeholder {
-          font-size: 0.76rem;
-          color: #64748b;
-          text-align: center;
+          background: var(--oc-browser-bg-card-soft, #f8f3ed);
         }
 
         .footer {
@@ -403,7 +421,7 @@ class OcCardCollectionsElement extends HTMLElement {
         .meta {
           margin: 0;
           font-size: 0.76rem;
-          color: #334155;
+          color: var(--oc-browser-text, #2e2924);
           font-weight: 600;
           display: inline-flex;
           align-items: center;
@@ -412,13 +430,13 @@ class OcCardCollectionsElement extends HTMLElement {
 
         .meta-icon {
           font-size: 0.82rem;
-          color: #64748b;
+          color: var(--oc-browser-text-muted, #6c6258);
         }
 
         .action {
           margin: 0;
           font-size: 0.74rem;
-          color: #64748b;
+          color: var(--oc-browser-text-muted, #6c6258);
           font-weight: 600;
           white-space: nowrap;
         }

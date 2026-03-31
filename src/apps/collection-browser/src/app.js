@@ -37,16 +37,19 @@ function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
 }
 
-function derivePreviewImages(items = [], max = 3) {
+function derivePreviewImages(items = [], max = Number.POSITIVE_INFINITY) {
 	const previews = [];
 	const list = Array.isArray(items) ? items : [];
+	const maxCount = Number.isFinite(Number(max))
+		? Math.max(0, Number(max))
+		: Number.POSITIVE_INFINITY;
 	for (const item of list) {
 		const previewUrl = deriveItemPreviewUrl(item);
 		if (!previewUrl) {
 			continue;
 		}
 		previews.push(previewUrl);
-		if (previews.length >= max) {
+		if (previews.length >= maxCount) {
 			break;
 		}
 	}
@@ -439,7 +442,7 @@ class TimemapBrowserElement extends ComponentBase {
 						const previewCollection = await this.loadCollectionManifest(
 							manifestUrl,
 						);
-						const rowImages = derivePreviewImages(previewCollection.items, 5);
+						const rowImages = derivePreviewImages(previewCollection.items);
 						if (rowImages.length === 0) {
 							continue;
 						}
@@ -666,8 +669,22 @@ class TimemapBrowserElement extends ComponentBase {
           min-height: 0;
           overflow: hidden;
           font-family: "Segoe UI", Tahoma, sans-serif;
-          color: #111827;
-          background: #f3f5f8;
+          --oc-browser-bg-app: #f4efe9;
+          --oc-browser-bg-card: #fffdfa;
+          --oc-browser-bg-card-soft: #f7f4f1;
+          --oc-browser-border: #d9d5d0;
+          --oc-browser-border-strong: #c8c1b8;
+          --oc-browser-divider: #e2d8cd;
+          --oc-browser-surface-muted: #eeebe7;
+          --oc-browser-placeholder-fill: #e8e4de;
+          --oc-browser-placeholder-border: #d6d0c7;
+          --oc-browser-text: #2e2924;
+          --oc-browser-text-muted: #6c6258;
+          --oc-browser-accent: #756c64;
+          --oc-browser-accent-soft: #ece7e1;
+          --oc-browser-focus-ring: #91857a;
+          color: var(--oc-browser-text, #2e2924);
+          background: var(--oc-browser-bg-app, #f4efe9);
         }
 
         * {
@@ -677,8 +694,8 @@ class TimemapBrowserElement extends ComponentBase {
         .app-shell {
           height: min(100dvh, 100vh);
           min-height: 640px;
-          background: #f3f5f8;
-          border: 1px solid #e5e7eb;
+          background: var(--oc-browser-bg-app, #f4efe9);
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 10px;
           overflow: hidden;
           display: flex;
@@ -686,8 +703,8 @@ class TimemapBrowserElement extends ComponentBase {
         }
 
         .browser-header {
-          background: #ffffff;
-          border-bottom: 1px solid #e5e7eb;
+          background: var(--oc-browser-bg-card, #fffdfa);
+          border-bottom: 1px solid var(--oc-browser-divider, #e2d8cd);
           padding: 0.85rem 1rem;
           display: flex;
           align-items: center;
@@ -705,13 +722,13 @@ class TimemapBrowserElement extends ComponentBase {
           margin: 0;
           font-size: 1rem;
           font-weight: 700;
-          color: #111827;
+          color: var(--oc-browser-text, #2e2924);
         }
 
         .context {
           margin: 0;
           font-size: 0.83rem;
-          color: #64748b;
+          color: var(--oc-browser-text-muted, #6c6258);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -721,7 +738,7 @@ class TimemapBrowserElement extends ComponentBase {
         .manifest {
           margin: 0;
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--oc-browser-text-muted, #6c6258);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -740,13 +757,13 @@ class TimemapBrowserElement extends ComponentBase {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           padding: 0.1rem 0.5rem;
           font-size: 0.72rem;
           line-height: 1.2;
           font-weight: 700;
-          color: #334155;
-          background: #f8fafc;
+          color: var(--oc-browser-text-muted, #6c6258);
+          background: var(--oc-browser-surface-muted, #eee5dc);
           white-space: nowrap;
         }
 
@@ -756,9 +773,9 @@ class TimemapBrowserElement extends ComponentBase {
           min-height: 1.9rem;
           padding: 0.2rem 0.65rem;
           border-radius: 999px;
-          border: 1px solid #cbd5e1;
-          background: #f8fafc;
-          color: #475569;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-surface-muted, #eee5dc);
+          color: var(--oc-browser-text-muted, #6c6258);
           font-size: 0.8rem;
           font-weight: 600;
           max-width: min(100%, 32rem);
@@ -806,17 +823,17 @@ class TimemapBrowserElement extends ComponentBase {
           display: flex;
           align-items: center;
           width: 100%;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 8px;
           overflow: hidden;
-          background: #ffffff;
+          background: var(--oc-browser-bg-card, #fffdfa);
         }
 
         .embedded-view-btn {
           border: 0;
-          border-right: 1px solid #cbd5e1;
-          background: #ffffff;
-          color: #0f172a;
+          border-right: 1px solid var(--oc-browser-border, #d9d5d0);
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-text, #2e2924);
           padding: 0.38rem 0.7rem;
           font: inherit;
           font-size: 0.8rem;
@@ -829,8 +846,8 @@ class TimemapBrowserElement extends ComponentBase {
         }
 
         .embedded-view-btn[data-active="true"] {
-          background: #e8f2ff;
-          color: #0f4f90;
+          background: var(--oc-browser-accent-soft, #ece7e1);
+          color: var(--oc-browser-accent, #756c64);
         }
 
         :host([data-workbench-embed]) .app-shell,

@@ -4,6 +4,20 @@ export const browserStyles = `
     height: 100%;
     min-height: 0;
     box-sizing: border-box;
+    --oc-browser-bg-app: #f4efe9;
+    --oc-browser-bg-card: #fffdfa;
+    --oc-browser-bg-card-soft: #f7f4f1;
+    --oc-browser-border: #d9d5d0;
+    --oc-browser-border-strong: #c8c1b8;
+    --oc-browser-surface-muted: #eeebe7;
+    --oc-browser-placeholder-fill: #e8e4de;
+    --oc-browser-placeholder-border: #d6d0c7;
+    --oc-browser-divider: #e2d8cd;
+    --oc-browser-text: #2e2924;
+    --oc-browser-text-muted: #6c6258;
+    --oc-browser-accent: #756c64;
+    --oc-browser-accent-soft: #ece7e1;
+    --oc-browser-focus-ring: #91857a;
   }
 
   * {
@@ -51,7 +65,7 @@ export const browserStyles = `
 
   .subtitle {
     margin: 0.25rem 0 0;
-    color: var(--oc-color-text-muted, #5f6368);
+    color: var(--oc-browser-text-muted, #6c6258);
     font-size: 0.85rem;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -66,10 +80,10 @@ export const browserStyles = `
   }
 
   .mode-toggle {
-    border: 1px solid var(--oc-color-border, #d6d9dd);
+    border: 1px solid var(--oc-browser-border, #d9d5d0);
     border-radius: 999px;
-    background: #fff;
-    color: var(--oc-color-text, #202124);
+    background: var(--oc-browser-bg-card, #fffdfa);
+    color: var(--oc-browser-text, #2e2924);
     font: inherit;
     font-size: 0.8rem;
     line-height: 1;
@@ -78,8 +92,9 @@ export const browserStyles = `
   }
 
   .mode-toggle[data-active="true"] {
-    border-color: var(--oc-color-primary, #1a73e8);
-    color: var(--oc-color-primary, #1a73e8);
+    border-color: var(--oc-browser-accent, #756c64);
+    background: var(--oc-browser-accent-soft, #ece7e1);
+    color: var(--oc-browser-accent, #756c64);
     font-weight: 600;
   }
 

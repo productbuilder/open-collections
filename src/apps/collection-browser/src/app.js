@@ -789,6 +789,7 @@ class TimemapBrowserElement extends ComponentBase {
         }
 
         .shell > open-browser-collection-browser {
+          display: block;
           min-height: 0;
           height: 100%;
         }

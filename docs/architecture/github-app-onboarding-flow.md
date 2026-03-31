@@ -12,6 +12,8 @@ The primary outcome is: a user can click **Connect GitHub**, authenticate/author
 
 This is an implementation-oriented plan for backend/frontend work, operational safeguards, and rollout.
 
+For broader onboarding/discovery/classification and hosting-connection strategy, see `docs/architecture/onboarding-and-connection-flow.md`.
+
 ## Goals
 
 - Remove manual PAT copy/paste from default onboarding.

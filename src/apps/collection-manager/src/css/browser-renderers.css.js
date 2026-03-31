@@ -168,7 +168,8 @@ export const browserRendererStyles = `
   .row-table-wrap {
     border: var(--oc-border-width-sm) solid var(--oc-border-subtle);
     border-radius: var(--oc-radius-panel);
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: visible;
     background: var(--oc-bg-panel);
   }
 

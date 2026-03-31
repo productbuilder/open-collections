@@ -1,6 +1,6 @@
 import { browserStyles } from "../css/browser.css.js?v=20260322-titlebar-center";
 import "./view-toggle.js";
-import "./collection-card-grid.js";
+import "./collection-card-surface.js";
 import "./collection-row-list.js";
 import "./item-card-grid.js";
 import "./item-row-list.js";
@@ -479,15 +479,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				host.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
 				return;
 			}
-			host.innerHTML = `
-				<div class="scroll-container-wrapper">
-					<div class="scroll-container">
-						<div class="grid-host">
-							<oc-grid id="sourceGrid"></oc-grid>
-						</div>
-					</div>
-				</div>
-			`;
+			host.innerHTML = `<div class="grid-host"><oc-grid id="sourceGrid"></oc-grid></div>`;
 			const grid = host.querySelector("#sourceGrid");
 			grid?.update({
 				mode: "grid",
@@ -535,7 +527,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			level === "collections"
 				? mode === "rows"
 					? "open-collection-row-list"
-					: "open-collection-card-grid"
+					: "open-collection-card-surface"
 				: mode === "rows"
 					? "open-item-row-list"
 					: "open-item-card-grid";
@@ -585,7 +577,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div id="assetWrap" class="asset-wrap">
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
-            <div id="browserHost" class="browser-host"></div>
+			<div id="browserScroll" class="scroll-container">
+            	<div id="browserHost" class="browser-host"></div>
+			</div>
           </div>
         </open-collections-panel-chrome>
       </section>

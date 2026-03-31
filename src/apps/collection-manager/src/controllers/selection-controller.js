@@ -297,6 +297,25 @@ export function renderAssets(app) {
 
 	if (app.state.currentLevel === "collections") {
 		const collections = app.getVisibleCollections();
+		const collectionsWithPreview = collections.map((collection) => {
+			const collectionAssets = (app.state.assets || []).filter(
+				(item) => item?.collectionId === collection.id,
+			);
+			const previewImages = collectionAssets
+				.map((item) =>
+					app.resolveItemForDisplay(item)?.media?.thumbnailUrl ||
+					item?.media?.thumbnailUrl ||
+					item?.media?.url ||
+					"",
+				)
+				.filter(Boolean)
+				.slice(0, 6);
+			return {
+				...collection,
+				countLabel: `${collectionAssets.length} item${collectionAssets.length === 1 ? "" : "s"}`,
+				previewImages,
+			};
+		});
 		const sourceCards = (app.state.sources || []).map((source) => {
 			const sourceCollections = Array.isArray(source?.collections)
 				? source.collections
@@ -343,7 +362,7 @@ export function renderAssets(app) {
 			currentLevel: "collections",
 			viewportTitle: "Collections",
 			assetCountText: `${collections.length} collections`,
-			collections,
+			collections: collectionsWithPreview,
 			items: [],
 			selectedCollectionId: app.state.selectedCollectionId,
 			selectedCollectionIds: app.state.selectedCollectionIds,
@@ -356,7 +375,7 @@ export function renderAssets(app) {
 			managerMode: app.state.managerBrowseMode || "collections",
 			onboarding: {
 				visible:
-					app.state.sources.length === 0 && collections.length === 0,
+					app.state.sources.length === 0 && collectionsWithPreview.length === 0,
 			},
 			sourceCards,
 			availableConnections,

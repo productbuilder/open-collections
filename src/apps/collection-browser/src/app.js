@@ -457,7 +457,10 @@ class TimemapBrowserElement extends ComponentBase {
 			this.closeViewer();
 			return;
 		}
-		this.dom.viewerDialog?.setItem(item);
+		this.dom.viewerDialog?.setItem({
+			...item,
+			__collectionItems: this.state.collection?.items || [],
+		});
 	}
 
 	selectItem(itemId) {

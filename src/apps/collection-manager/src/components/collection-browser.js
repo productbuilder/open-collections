@@ -577,10 +577,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div id="assetWrap" class="asset-wrap">
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
-			<div class="scroll-container-wrapper">
-				<div id="browserScroll" class="scroll-container">
-            		<div id="browserHost" class="browser-host"></div>
-				</div>
+			<div id="browserScroll" class="scroll-container">
+				<div id="browserHost" class="browser-host"></div>
 			</div>
           </div>
         </open-collections-panel-chrome>

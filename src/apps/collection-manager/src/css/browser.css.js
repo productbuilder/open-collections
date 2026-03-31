@@ -173,11 +173,6 @@ export const browserStyles = `
     overscroll-behavior: contain;
   }
 
-  .scroll-container-wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
   .browser-host {
     display: block;
     min-height: 0;
@@ -191,6 +186,7 @@ export const browserStyles = `
   }
 
   .scroll-container {
+    flex: 1 1 auto;
     height: 100%;
     min-height: 0;
     overflow-y: auto;

@@ -152,6 +152,8 @@ const panelChromeStyles = `
 
   .panel-content {
     display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     height: 100%;
     overflow: hidden;
@@ -159,15 +161,20 @@ const panelChromeStyles = `
 
   .panel-content > slot {
     display: block;
+    flex: 1 1 auto;
     width: 100%;
     height: 100%;
     min-height: 0;
+    min-width: 0;
   }
 
-  ::slotted(*) {
+  .panel-content > slot::slotted(*) {
     display: block;
+    height: 100%;
     width: 100%;
     min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   ${backButtonStyles}

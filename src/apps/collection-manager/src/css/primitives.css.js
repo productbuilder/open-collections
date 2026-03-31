@@ -91,7 +91,7 @@ export const primitiveStyles = `
     height: 1rem;
     fill: none;
     stroke: currentColor;
-    stroke-width: 2;
+    stroke-width: 1;
     stroke-linecap: round;
     stroke-linejoin: round;
   }

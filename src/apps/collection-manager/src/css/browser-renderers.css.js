@@ -157,6 +157,25 @@ export const browserRendererStyles = `
     flex: 1;
   }
 
+  .asset-card-mobile-shared {
+    grid-template-rows: auto;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+  }
+
+  .asset-card-mobile-shared .shared-item-card {
+    display: block;
+  }
+
+  .asset-card-mobile-shared .selection-toggle {
+    top: 0.35rem;
+    right: 0.35rem;
+  }
+
   .row-table td .btn + .btn {
     margin-left: 0.35rem;
   }
@@ -226,6 +245,16 @@ export const browserRendererStyles = `
     .asset-grid {
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 0.55rem;
+    }
+
+    .asset-grid.mobile-shared-cards {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .asset-card-mobile-shared {
+      width: 100%;
+      padding: 0;
+      gap: 0;
     }
 
     .thumb-frame {

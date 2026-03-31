@@ -99,14 +99,12 @@ export const browserStyles = `
   }
 
   .delete-action-btn {
-    color: #b42318;
     border: var(--oc-border-width-sm) solid var(--oc-border-control);
     border-radius: var(--oc-radius-control);
     background: var(--oc-bg-panel);
   }
 
   .delete-action-btn:hover {
-    color: #912018;
     background: rgba(180, 35, 24, 0.1);
   }
 

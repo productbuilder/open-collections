@@ -16,6 +16,8 @@ class OpenItemCardGridElement extends HTMLElement {
 		};
 		this._renderFrame = 0;
 		this._renderToken = 0;
+		this._mobileMediaQuery = null;
+		this._handleMobileMediaChange = null;
 	}
 
 	update(data = {}) {
@@ -24,10 +26,29 @@ class OpenItemCardGridElement extends HTMLElement {
 	}
 
 	connectedCallback() {
+		if (
+			typeof window !== "undefined" &&
+			typeof window.matchMedia === "function"
+		) {
+			this._mobileMediaQuery = window.matchMedia("(max-width: 760px)");
+			this._handleMobileMediaChange = () => this.render();
+			this._mobileMediaQuery.addEventListener(
+				"change",
+				this._handleMobileMediaChange,
+			);
+		}
 		this.render();
 	}
 
 	disconnectedCallback() {
+		if (this._mobileMediaQuery && this._handleMobileMediaChange) {
+			this._mobileMediaQuery.removeEventListener(
+				"change",
+				this._handleMobileMediaChange,
+			);
+		}
+		this._mobileMediaQuery = null;
+		this._handleMobileMediaChange = null;
 		this.cancelChunkedRender();
 	}
 
@@ -70,6 +91,41 @@ class OpenItemCardGridElement extends HTMLElement {
 
 	hasMedia(item) {
 		return Boolean(String(item?.media?.url || "").trim());
+	}
+
+	usesSharedMobileCard() {
+		return this._mobileMediaQuery?.matches === true;
+	}
+
+	buildSharedMobileCard(item, selectedIds) {
+		const workspaceId = String(item.workspaceId || "").trim();
+		const card = document.createElement("article");
+		card.className = "asset-card asset-card-mobile-shared";
+		card.setAttribute("role", "button");
+		card.setAttribute("tabindex", "0");
+		card.dataset.id = workspaceId;
+		card.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true" aria-label="Select ${item.title || item.id}">
+				<input type="checkbox" data-select-id="${workspaceId}" ${selectedIds.has(item.workspaceId) ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+		`;
+
+		const sharedCard = document.createElement("oc-card-item");
+		sharedCard.className = "shared-item-card";
+		sharedCard.update({
+			title: item.title || item.id || "Item",
+			subtitle: item.license ? `License: ${item.license}` : "",
+			countLabel: `Completeness ${this.requiredFieldScore(item)}`,
+			previewUrl: resolveItemPreviewUrl(item),
+			previewImages: [],
+			actionLabel: "Select",
+			actionValue: workspaceId,
+			active: false,
+			disabled: false,
+		});
+		card.append(sharedCard);
+		return card;
 	}
 
 	cardMarkup(item, selectedIds) {
@@ -168,16 +224,25 @@ class OpenItemCardGridElement extends HTMLElement {
 		this.cancelChunkedRender();
 		const token = this._renderToken;
 		let index = 0;
+		const useSharedMobileCard = this.usesSharedMobileCard();
 
 		const renderChunk = () => {
 			if (token !== this._renderToken) {
 				return;
 			}
 			const next = items.slice(index, index + RENDER_CHUNK_SIZE);
-			host.insertAdjacentHTML(
-				"beforeend",
-				next.map((item) => this.cardMarkup(item, selectedIds)).join(""),
-			);
+			if (useSharedMobileCard) {
+				const fragment = document.createDocumentFragment();
+				for (const item of next) {
+					fragment.append(this.buildSharedMobileCard(item, selectedIds));
+				}
+				host.append(fragment);
+			} else {
+				host.insertAdjacentHTML(
+					"beforeend",
+					next.map((item) => this.cardMarkup(item, selectedIds)).join(""),
+				);
+			}
 			index += RENDER_CHUNK_SIZE;
 			if (index < items.length) {
 				this._renderFrame = window.requestAnimationFrame(renderChunk);
@@ -204,7 +269,10 @@ class OpenItemCardGridElement extends HTMLElement {
 			return;
 		}
 
-		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="asset-grid"></div>`;
+		const mobileGridClass = this.usesSharedMobileCard()
+			? "asset-grid mobile-shared-cards"
+			: "asset-grid";
+		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="${mobileGridClass}"></div>`;
 		this.bindDelegatedEvents();
 		this.renderItemsInChunks(items, selectedIds);
 	}

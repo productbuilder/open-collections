@@ -182,7 +182,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("tabindex", "0");
 		wrapper.setAttribute("data-span-cols", "1");
 		wrapper.setAttribute("data-span-rows", "1");
-		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-cols-mobile", "1");
 		wrapper.setAttribute("data-span-rows-mobile", "1");
 
 		const card = document.createElement("oc-card-item");
@@ -593,8 +593,22 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			deleteSelectedBtn.hidden = !showSelectionToolbar;
 			clearSelectionBtn.hidden = !showSelectionToolbar;
 			selectionStatus.textContent = `${selectedItemCount} selected`;
-			deleteSelectedBtn.textContent = "Delete selected";
-			clearSelectionBtn.textContent = "Clear selection";
+			deleteSelectedBtn.innerHTML = renderTrashIcon(
+				"icon icon-trash delete-icon",
+			);
+			deleteSelectedBtn.setAttribute(
+				"aria-label",
+				"Delete selected items",
+			);
+			deleteSelectedBtn.setAttribute("title", "Delete selected items");
+			clearSelectionBtn.innerHTML = renderDeselectIcon(
+				"icon icon-deselect clear-selection-icon",
+			);
+			clearSelectionBtn.setAttribute(
+				"aria-label",
+				"Clear selected items",
+			);
+			clearSelectionBtn.setAttribute("title", "Clear selected items");
 			deleteSelectedBtn.disabled = false;
 			return;
 		}
@@ -714,8 +728,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
             <button class="icon-btn delete-action-btn" id="deleteSelectedBtn" type="button" hidden aria-label="Delete selected collections"></button>
-            <span id="selectionStatus" class="selection-status" hidden>#0</span>
 			<button class="btn clear-selection-btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
+			<span id="selectionStatus" class="selection-status" hidden>#0</span>
           </div>
           <div class="viewport-actions viewport-toolbar-actions" slot="toolbar-actions">
             <button class="btn" id="addImagesBtn" type="button">Add item</button>

@@ -37,7 +37,10 @@ const sectionHeaderStyles = `
   }
 
   :host([heading-level="1"]) .section-header-title {
-    font-size: clamp(1.35rem, 2.8vw, 1.9rem);
+    font-size: var(
+      --oc-section-header-h1-size,
+      clamp(1.25rem, 2.3vw, 1.65rem)
+    );
   }
 
   .section-header-description {

@@ -290,7 +290,7 @@ export async function connectCurrentProvider(app, options = {}) {
 				...normalizedWithCollections,
 			];
 		}
-		if (providerId === "local") {
+		if (providerId === "local" || providerId === "example") {
 			await app.hydrateLocalSourceAssetPreviews(source.id);
 		}
 		if (options.activateSource !== false) {

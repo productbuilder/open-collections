@@ -7,6 +7,7 @@
       "id": "item-city-then",
       "title": "City square (archive)",
       "description": "Historic city square photo used as the past image.",
+      "license": "CC-BY-4.0",
       "type": "image",
       "media": {
         "type": "image",
@@ -18,6 +19,7 @@
       "id": "item-city-now",
       "title": "City square (today)",
       "description": "Recent city square photo used as the present image.",
+      "license": "CC-BY-4.0",
       "type": "image",
       "media": {
         "type": "image",
@@ -31,6 +33,7 @@
       "presentationType": "time-comparer",
       "title": "Then and now comparison",
       "description": "Compare two moments in time using the time-comparer template.",
+      "license": "CC-BY-4.0",
       "tags": ["presentation", "time-comparer"],
       "compare": {
         "pastItemId": "item-city-then",

@@ -104,33 +104,52 @@ class Grid2CollectionsCardElement extends HTMLElement {
           padding: 12px;
           display: grid;
           grid-template-rows: auto 1fr auto;
-          gap: 10px;
+          gap: 12px;
           cursor: pointer;
         }
-        .head { display:grid; grid-template-columns:56px 1fr; gap:10px; }
+        .head {
+          display:grid;
+          grid-template-columns:56px 1fr;
+          gap:10px;
+          padding: 2px 2px 8px;
+          border-bottom: 1px solid #d6e2f2;
+        }
         .logo {
           width:56px; height:56px; border-radius:10px; display:grid; place-items:center;
-          border:1px dashed #98b4da; color:#38577d; background:#e3efff; font-size:0.8rem; font-weight:700;
+          border:1px solid #8fb0d9; color:#2f4f78; background:linear-gradient(180deg, #dbeaff, #ebf3ff);
+          box-shadow: inset 0 1px 0 #f4f9ff;
+          font-size:0.8rem; font-weight:700;
         }
         .title { margin:0; font-size:0.95rem; color:#1f2937; }
-        .meta { font-size:0.73rem; color:#5f6b7e; margin-top:2px; }
+        .meta { font-size:0.72rem; color:#5f6b7e; margin-top:2px; }
+        .meta.org { color:#445569; font-weight:500; }
+        .meta.country { color:#66768b; }
+        .meta.descriptor { color:#4b6483; }
         .rows { display:grid; gap:6px; }
         .preview-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
         .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:34px; background:#eaf2ff; }
         .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
         .placeholder { background:linear-gradient(120deg, #dbe7f9, #edf4ff); }
-        .foot { display:flex; justify-content:space-between; align-items:center; }
+        .foot {
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap: 8px;
+          padding-top: 8px;
+          border-top: 1px solid #dde7f4;
+          min-height: 28px;
+        }
         .pill { font-size:0.68rem; border:1px solid #bad0ea; background:#eaf4ff; color:#35577f; border-radius:999px; padding:3px 8px; }
-        .action { font-size:0.7rem; color:#4b5563; }
+        .action { font-size:0.71rem; color:#44556a; font-weight:500; }
       </style>
       <article class="card" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="head">
           <div class="logo">${logoLabel}</div>
           <div>
             <h3 class="title">${title}</h3>
-            <div class="meta">${subtitle}</div>
-            <div class="meta">${country}</div>
-            <div class="meta">${descriptor}</div>
+            <div class="meta org">${subtitle}</div>
+            <div class="meta country">${country}</div>
+            <div class="meta descriptor">${descriptor}</div>
           </div>
         </div>
         <div class="rows">${this.renderRows()}</div>

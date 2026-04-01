@@ -25,10 +25,12 @@
       }
       .tile-2x2 { grid-column: span 2; grid-row: span 2; }
       .tile-2x1 { grid-column: span 2; grid-row: span 1; }
+      .tile-1x1 { grid-column: span 1; grid-row: span 1; }
       @media (max-width: 760px) {
         .page { padding: 20px 12px 56px; }
         .grid { min-width: 0; grid-template-columns: repeat(2, minmax(120px, 1fr)); grid-auto-rows: 120px; }
         .tile-2x1 { grid-row: span 2; }
+        .tile-1x1 { grid-column: span 1; grid-row: span 1; }
       }
     </style>
   </head>
@@ -60,7 +62,8 @@
         { type: 'source', tile: 'tile-2x2', pos: 'grid-column:1 / span 2; grid-row:4 / span 2;', data: { title: 'Northern Commons', subtitle: 'Regional Museum Network', country: 'Iceland', countLabel: '17 collections', actionLabel: 'Open source', previewRows: [['https://picsum.photos/seed/n11/220/120','https://picsum.photos/seed/n12/220/120','https://picsum.photos/seed/n13/220/120'],['https://picsum.photos/seed/n14/220/120','https://picsum.photos/seed/n15/220/120','https://picsum.photos/seed/n16/220/120']] } },
         { type: 'collection', tile: 'tile-2x2', pos: 'grid-column:5 / span 2; grid-row:4 / span 2;', data: { title: 'Aerial Surveys', subtitle: 'Landscape image bundle', countLabel: '63 items', actionLabel: 'Open', previewImages: ['https://picsum.photos/seed/c31/220/140','https://picsum.photos/seed/c32/220/140','https://picsum.photos/seed/c33/220/140','https://picsum.photos/seed/c34/220/140'] } },
         { type: 'item', tile: 'tile-2x1', pos: 'grid-column:3 / span 2; grid-row:4 / span 1;', data: { title: 'Monument Detail', subtitle: 'Photo · stone carving', previewUrl: 'https://picsum.photos/seed/i15/320/220' } },
-        { type: 'item', tile: 'tile-2x1', pos: 'grid-column:7 / span 2; grid-row:4 / span 1;', data: { title: 'Transit Label', subtitle: 'Ephemera · ticket', previewUrl: 'https://picsum.photos/seed/i16/320/220' } },
+        { type: 'item', tile: 'tile-1x1', pos: 'grid-column:7 / span 1; grid-row:4 / span 1;', data: { title: 'Transit Label', subtitle: 'Ephemera · ticket', previewUrl: 'https://picsum.photos/seed/i16/320/220' } },
+        { type: 'item', tile: 'tile-1x1', pos: 'grid-column:8 / span 1; grid-row:4 / span 1;', data: { title: 'River Stamp', subtitle: 'Mark · ink', previewUrl: 'https://picsum.photos/seed/i17/240/220' } },
       ];
 
       const tagByType = {

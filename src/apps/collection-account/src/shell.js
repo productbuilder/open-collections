@@ -30,8 +30,10 @@ import {
 	APP_RUNTIME_MODES,
 } from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "./css/shell.css.js";
+import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
 
 function renderShell(shadowRoot) {
+	const header = ENTRY_VIEW_HEADERS.account;
 	shadowRoot.innerHTML = `
 
 		<style>
@@ -39,6 +41,14 @@ function renderShell(shadowRoot) {
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">
+			<section class="entry-view-header-wrap">
+				<open-collections-section-header
+					id="accountEntryTitle"
+					heading-level="1"
+					title="${header.title}"
+					description="${header.subtitle}"
+				></open-collections-section-header>
+			</section>
 
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 

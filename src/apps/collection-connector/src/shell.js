@@ -22,14 +22,24 @@ import "../../collection-account/src/components/add-connection-panel.js";
 import "../../collection-account/src/components/connection-detail-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "../../collection-account/src/css/shell.css.js";
+import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
 
 function renderShell(shadowRoot) {
+	const header = ENTRY_VIEW_HEADERS.connect;
 	shadowRoot.innerHTML = `
 		<style>
 			${accountShellStyles}
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">
+			<section class="entry-view-header-wrap">
+				<open-collections-section-header
+					id="connectEntryTitle"
+					heading-level="1"
+					title="${header.title}"
+					description="${header.subtitle}"
+				></open-collections-section-header>
+			</section>
 			<section class="account-section-content" id="connectionsSection" aria-labelledby="connectionsHeading">
 				<div id="connectionsOverviewView">
 					<open-collections-section-panel

@@ -111,6 +111,7 @@ import {
 	getPlatformType,
 	PLATFORM_TYPES,
 } from "../../../shared/platform/index.js";
+import "../../../shared/ui/primitives/section-header.js";
 import {
 	APP_LIFECYCLE_EVENTS,
 	APP_RUNTIME_MODES,

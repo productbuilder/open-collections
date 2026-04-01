@@ -20,6 +20,11 @@ export const accountShellStyles = `
     padding: var(--oc-space-4);
   }
 
+  .entry-view-header-wrap {
+    width: min(100%, var(--oc-layout-panel-max));
+    margin: 0 auto var(--oc-space-4);
+  }
+
   :host([data-app-presentation-embedded]) .account-shell {
     max-width: none;
     padding: var(--oc-space-3);

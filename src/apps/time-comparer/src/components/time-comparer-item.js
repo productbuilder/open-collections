@@ -1,9 +1,7 @@
 import "./time-comparer.js";
 
-const DEMO_PAST =
-	"https://upload.wikimedia.org/wikipedia/commons/3/3a/Lower_Manhattan_1931.jpg";
-const DEMO_PRESENT =
-	"https://upload.wikimedia.org/wikipedia/commons/a/a1/Lower_Manhattan_2013.jpg";
+const DEMO_PAST = "https://picsum.photos/id/1015/1200/800";
+const DEMO_PRESENT = "https://picsum.photos/id/1016/1200/800";
 
 function resolveImageUrl(item) {
 	return (

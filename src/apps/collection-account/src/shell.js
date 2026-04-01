@@ -205,7 +205,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.setActivePage("root");
 		this.renderConnectionsListPanel();
 		this.restoreRememberedSources();
-		void this.ensureStarterExampleConnection();
+		if (!this.isEmbeddedRuntime()) {
+			void this.ensureStarterExampleConnection();
+		}
 		this._unsubscribeSessionConnectionSources =
 			subscribeSessionConnectionSources((sources) => {
 				this.handleSessionConnectionSourcesChanged(sources);
@@ -1049,9 +1051,13 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 	restoreRememberedSources() {
 		const sessionSources = getSessionConnectionSources();
-		const remembered = Array.isArray(sessionSources) && sessionSources.length
+		const usingSessionSources =
+			Array.isArray(sessionSources) && sessionSources.length > 0;
+		const remembered = usingSessionSources
 			? sessionSources
-			: this.connectionsRuntime.restoreRememberedSources();
+			: this.isEmbeddedRuntime()
+				? []
+				: this.connectionsRuntime.restoreRememberedSources();
 		if (!remembered.length) {
 			return;
 		}
@@ -1060,7 +1066,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.state.activeSourceId = this.state.sources[0]?.id || "all";
 		this.renderConnectionsListPanel();
 		this.setStatus(
-			`Loaded ${this.state.sources.length} remembered connection${this.state.sources.length === 1 ? "" : "s"}.`,
+			usingSessionSources
+				? `Loaded ${this.state.sources.length} in-session connection${this.state.sources.length === 1 ? "" : "s"}.`
+				: `Loaded ${this.state.sources.length} remembered connection${this.state.sources.length === 1 ? "" : "s"}.`,
 			"neutral",
 		);
 	}

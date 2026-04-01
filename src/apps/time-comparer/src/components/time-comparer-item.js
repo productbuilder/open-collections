@@ -1,6 +1,16 @@
 import "./time-comparer.js";
 import { normalizeCollection } from "../../../../shared/library-core/src/index.js";
 
+const TIME_COMPARER_DEBUG_PREFIX = "[time-comparer]";
+
+function debugLog(message, details) {
+	if (details === undefined) {
+		console.debug(`${TIME_COMPARER_DEBUG_PREFIX} ${message}`);
+		return;
+	}
+	console.debug(`${TIME_COMPARER_DEBUG_PREFIX} ${message}`, details);
+}
+
 const DEMO_SETS = {
 	heritage: {
 		id: "heritage-demo",
@@ -35,6 +45,23 @@ function resolveImageUrl(item) {
 		String(item?.previewUrl || "").trim() ||
 		""
 	);
+}
+
+function resolveItemImageUrl(item, itemRef, contextManifestUrl) {
+	const raw = resolveImageUrl(item);
+	if (!raw) {
+		return "";
+	}
+	const referenceCollectionUrl = resolveAbsoluteUrl(
+		itemRef?.collectionUrl || "",
+		contextManifestUrl,
+	);
+	const itemManifestUrl = String(
+		item?.__manifestUrl || item?.__collectionManifestUrl || "",
+	).trim();
+	const baseUrl =
+		itemManifestUrl || referenceCollectionUrl || contextManifestUrl || window.location.href;
+	return resolveAbsoluteUrl(raw, baseUrl);
 }
 
 function resolveAbsoluteUrl(pathOrUrl, baseUrl) {
@@ -214,13 +241,30 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		const imageRight = settings?.imageRight || {};
 		const leftRef = imageLeft?.itemRef || null;
 		const rightRef = imageRight?.itemRef || null;
+		const contextManifestUrl = this.resolveContextManifestUrl();
 
 		const [leftItem, rightItem] = await Promise.all([
 			this.resolveItemByRef(leftRef),
 			this.resolveItemByRef(rightRef),
 		]);
-		const resolvedPastUrl = resolveImageUrl(leftItem);
-		const resolvedPresentUrl = resolveImageUrl(rightItem);
+		const resolvedPastUrl = resolveItemImageUrl(
+			leftItem,
+			leftRef,
+			contextManifestUrl,
+		);
+		const resolvedPresentUrl = resolveItemImageUrl(
+			rightItem,
+			rightRef,
+			contextManifestUrl,
+		);
+		debugLog("resolved compare urls", {
+			presentationItemId: String(item?.id || "").trim(),
+			contextManifestUrl,
+			leftItemId: String(leftItem?.id || "").trim(),
+			rightItemId: String(rightItem?.id || "").trim(),
+			resolvedPastUrl,
+			resolvedPresentUrl,
+		});
 
 		let pastSrc = resolvedPastUrl;
 		let presentSrc = resolvedPresentUrl;
@@ -231,6 +275,13 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 			const demoSet = resolveDemoSet();
 			pastSrc = demoSet.pastSrc;
 			presentSrc = demoSet.presentSrc;
+			debugLog("falling back to demo sources", {
+				presentationItemId: String(item?.id || "").trim(),
+				resolvedPastUrl,
+				resolvedPresentUrl,
+				demoPastSrc: pastSrc,
+				demoPresentSrc: presentSrc,
+			});
 		}
 
 		return {
@@ -254,6 +305,7 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		const item = this.model.item || {};
 		const settings = item.settings || {};
 		title.textContent = item.title || item.id || "Time comparer";
+		comparer.setAttribute("resolving", "true");
 		const { pastItem, presentItem, pastSrc, presentSrc, demoMode } =
 			await this.resolveCompareSources();
 		if (token !== this._resolveToken) {
@@ -275,6 +327,7 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		);
 		const split = Number(settings.initialSplit);
 		comparer.split = Number.isFinite(split) ? split : 0.5;
+		comparer.setAttribute("resolving", "false");
 
 		if (demoMode) {
 			note.textContent =

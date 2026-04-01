@@ -1,4 +1,13 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const TIME_COMPARER_DEBUG_PREFIX = "[time-comparer]";
+
+function debugLog(message, details) {
+	if (details === undefined) {
+		console.debug(`${TIME_COMPARER_DEBUG_PREFIX} ${message}`);
+		return;
+	}
+	console.debug(`${TIME_COMPARER_DEBUG_PREFIX} ${message}`, details);
+}
 
 class OpenCollectionsTimeComparerElement extends HTMLElement {
 	static get observedAttributes() {
@@ -9,6 +18,7 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 			"present-label",
 			"show-labels",
 			"split",
+			"resolving",
 		];
 	}
 
@@ -22,7 +32,14 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 			presentLabel: "Present",
 			showLabels: true,
 			split: 0.5,
+			resolving: false,
 			dragging: false,
+		};
+		this.imageState = {
+			pastSrc: "",
+			presentSrc: "",
+			pastStatus: "idle",
+			presentStatus: "idle",
 		};
 		this.handlePointerMove = this.handlePointerMove.bind(this);
 		this.handlePointerUp = this.handlePointerUp.bind(this);
@@ -93,6 +110,8 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 			const split = Number.parseFloat(this.getAttribute("split") || "0.5");
 			this.model.split = Number.isFinite(split) ? clamp(split, 0, 1) : 0.5;
 		}
+		this.model.resolving =
+			(this.getAttribute("resolving") || "").toLowerCase() === "true";
 	}
 
 	bindEvents() {
@@ -185,36 +204,146 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 		}
 		const pastImage = this.shadowRoot.getElementById("pastImage");
 		const presentImage = this.shadowRoot.getElementById("presentImage");
+		const pastLayer = this.shadowRoot.getElementById("pastLayer");
+		const presentLayer = this.shadowRoot.getElementById("presentOverlay");
 		const divider = this.shadowRoot.getElementById("divider");
 		const handle = this.shadowRoot.getElementById("sliderHandle");
 		const labels = this.shadowRoot.getElementById("labels");
 		const pastLabel = this.shadowRoot.getElementById("pastLabel");
 		const presentLabel = this.shadowRoot.getElementById("presentLabel");
-		const overlay = this.shadowRoot.getElementById("presentOverlay");
 		const empty = this.shadowRoot.getElementById("emptyState");
+		const loading = this.shadowRoot.getElementById("loadingState");
+		const error = this.shadowRoot.getElementById("errorState");
 		if (
 			!pastImage ||
 			!presentImage ||
+			!pastLayer ||
+			!presentLayer ||
 			!divider ||
 			!handle ||
 			!labels ||
 			!pastLabel ||
 			!presentLabel ||
-			!overlay ||
 			!empty
 		) {
 			return;
 		}
 
 		const hasBoth = Boolean(this.model.pastSrc && this.model.presentSrc);
-		empty.hidden = hasBoth;
+		const isResolving = this.model.resolving === true;
+		empty.hidden = true;
+		if (loading) {
+			loading.hidden = true;
+		}
+		if (error) {
+			error.hidden = true;
+		}
 		if (!hasBoth) {
+			debugLog(
+				isResolving
+					? "waiting for source resolution"
+					: "missing image sources",
+				{
+					pastSrc: this.model.pastSrc,
+					presentSrc: this.model.presentSrc,
+				},
+			);
+			this.imageState.pastSrc = "";
+			this.imageState.presentSrc = "";
+			this.imageState.pastStatus = "idle";
+			this.imageState.presentStatus = "idle";
+			pastImage.removeAttribute("src");
+			presentImage.removeAttribute("src");
+			pastLayer.dataset.status = "idle";
+			presentLayer.dataset.status = "idle";
+			if (loading) {
+				loading.hidden = !isResolving;
+			}
+			empty.hidden = isResolving;
 			return;
 		}
 
-		pastImage.src = this.model.pastSrc;
-		presentImage.src = this.model.presentSrc;
-		overlay.style.clipPath = `inset(0 0 0 ${this.model.split * 100}%)`;
+		const syncLayerState = () => {
+			pastLayer.dataset.status = this.imageState.pastStatus;
+			presentLayer.dataset.status = this.imageState.presentStatus;
+			const hasError =
+				this.imageState.pastStatus === "error" ||
+				this.imageState.presentStatus === "error";
+			const loadingActive =
+				this.imageState.pastStatus === "loading" ||
+				this.imageState.presentStatus === "loading";
+			if (error) {
+				const nextHidden = !hasError;
+				if (error.hidden !== nextHidden && hasError) {
+					debugLog("error overlay activated", {
+						pastStatus: this.imageState.pastStatus,
+						presentStatus: this.imageState.presentStatus,
+						pastSrc: this.imageState.pastSrc,
+						presentSrc: this.imageState.presentSrc,
+					});
+				}
+				error.hidden = !hasError;
+			}
+			if (loading) {
+				loading.hidden = hasError || !loadingActive;
+			}
+		};
+
+		const bindImage = (
+			image,
+			nextSrc,
+			sourceKey,
+			statusKey,
+		) => {
+			const next = String(nextSrc || "").trim();
+			if (!next) {
+				this.imageState[sourceKey] = "";
+				this.imageState[statusKey] = "idle";
+				image.removeAttribute("src");
+				syncLayerState();
+				return;
+			}
+			if (this.imageState[sourceKey] === next) {
+				syncLayerState();
+				return;
+			}
+			debugLog(`${sourceKey} load start`, { src: next });
+			this.imageState[sourceKey] = next;
+			this.imageState[statusKey] = "loading";
+			syncLayerState();
+			image.onload = () => {
+				if (this.imageState[sourceKey] !== next) {
+					return;
+				}
+				debugLog(`${sourceKey} onload`, { src: next });
+				this.imageState[statusKey] = "loaded";
+				syncLayerState();
+			};
+			image.onerror = () => {
+				if (this.imageState[sourceKey] !== next) {
+					return;
+				}
+				debugLog(`${sourceKey} onerror`, { src: next });
+				this.imageState[statusKey] = "error";
+				syncLayerState();
+			};
+			image.src = next;
+		};
+
+		bindImage(
+			pastImage,
+			this.model.pastSrc,
+			"pastSrc",
+			"pastStatus",
+		);
+		bindImage(
+			presentImage,
+			this.model.presentSrc,
+			"presentSrc",
+			"presentStatus",
+		);
+
+		presentLayer.style.clipPath = `inset(0 0 0 ${this.model.split * 100}%)`;
 		divider.style.left = `${this.model.split * 100}%`;
 		handle.style.left = `${this.model.split * 100}%`;
 		handle.setAttribute("aria-valuenow", String(Math.round(this.model.split * 100)));
@@ -241,6 +370,9 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
           overflow: hidden;
           touch-action: none;
         }
+        [hidden] {
+          display: none !important;
+        }
         .image-layer {
           position: absolute;
           inset: 0;
@@ -251,9 +383,14 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          opacity: 0;
           user-select: none;
           -webkit-user-drag: none;
           pointer-events: none;
+          transition: opacity 160ms ease;
+        }
+        .image-layer[data-status="loaded"] img {
+          opacity: 1;
         }
         .divider {
           position: absolute;
@@ -317,13 +454,54 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
           text-align: center;
           padding: 1rem;
         }
+        .loading {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          z-index: 2;
+          background:
+            linear-gradient(
+              110deg,
+              rgba(148, 163, 184, 0.14) 8%,
+              rgba(148, 163, 184, 0.28) 18%,
+              rgba(148, 163, 184, 0.14) 33%
+            )
+            #111827;
+          background-size: 200% 100%;
+          animation: shimmer 1.2s linear infinite;
+          color: #e2e8f0;
+          font-size: 0.82rem;
+        }
+        .error {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          z-index: 3;
+          text-align: center;
+          padding: 1rem;
+          background: rgba(15, 23, 42, 0.9);
+          color: #fca5a5;
+          font-size: 0.85rem;
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
       </style>
       <div class="frame" id="sliderTrack">
         <div id="emptyState" class="empty">No images available. Provide past and present image URLs or linked compare items.</div>
-        <div class="image-layer">
+        <div id="loadingState" class="loading" hidden>Loading images…</div>
+        <div id="errorState" class="error" hidden>Unable to load one or more images.</div>
+        <div id="pastLayer" class="image-layer" data-status="idle">
           <img id="pastImage" alt="Past image" />
         </div>
-        <div id="presentOverlay" class="image-layer">
+        <div id="presentOverlay" class="image-layer" data-status="idle">
           <img id="presentImage" alt="Present image" />
         </div>
         <div id="divider" class="divider"></div>

@@ -113,21 +113,14 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
       <style>
         :host {
           display: block;
-          width: 100%;
-          height: 100%;
-          min-height: 0;
+          padding: 16px;
         }
         .shell {
-          display: flex;
-          flex-direction: column;
           width: 100%;
-          height: 100%;
-          min-height: 0;
+          max-width: 1200px;
+          margin: 0 auto;
+          display: grid;
           gap: 0.65rem;
-        }
-        #comparer {
-          flex: 1;
-          min-height: 0;
         }
         h3 { margin: 0; font-size: 0.98rem; color: #0f172a; }
         p { margin: 0; font-size: 0.82rem; color: #475569; }

@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid-1 Mixed Card Wireframe</title>
+    <style>
+      :root {
+        --bg: #f4f5f7;
+        --surface: #ffffff;
+        --border: #d9dee6;
+        --muted: #6b7280;
+        --text: #1f2937;
+        --source-tint: #f2f8ff;
+        --collection-tint: #f8f7ff;
+        --item-tint: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 32px 24px 80px;
+      }
+
+      .header {
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        margin: 0 0 8px;
+        font-size: 1.35rem;
+        letter-spacing: 0.02em;
+      }
+
+      .header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(90px, 1fr));
+        grid-auto-rows: 110px;
+        gap: 14px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+      }
+
+      .source {
+        grid-column: span 2;
+        grid-row: span 2;
+        background: linear-gradient(180deg, var(--source-tint), #fff);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 10px;
+      }
+
+      .source-head {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 10px;
+      }
+
+      .logo {
+        border: 1px dashed #9db4d7;
+        background: #e6f1ff;
+        border-radius: 10px;
+        height: 56px;
+      }
+
+      .source-meta h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .source-meta .sub,
+      .source-meta .country,
+      .source-meta .tagline {
+        font-size: 0.73rem;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .preview-rows {
+        display: grid;
+        gap: 6px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .thumb {
+        height: 34px;
+        border-radius: 7px;
+        border: 1px solid #cfd8e3;
+        background: linear-gradient(120deg, #d9e7f7, #eaf3ff);
+      }
+
+      .source-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .pill {
+        font-size: 0.68rem;
+        border: 1px solid #b9cde7;
+        background: #eaf4ff;
+        color: #3b5d86;
+        border-radius: 999px;
+        padding: 3px 8px;
+      }
+
+      .tiny-link {
+        font-size: 0.7rem;
+        color: #4b5563;
+      }
+
+      .collection {
+        grid-column: span 2;
+        grid-row: span 2;
+        background: linear-gradient(180deg, var(--collection-tint), #fff);
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 8px;
+      }
+
+      .collection h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .collection p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .collection-preview {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .collection-preview .img {
+        height: 48px;
+        border-radius: 8px;
+        border: 1px solid #d9d3ef;
+        background: linear-gradient(120deg, #eee9ff, #f8f5ff);
+      }
+
+      .collection-foot {
+        font-size: 0.7rem;
+        color: #5f4d90;
+      }
+
+      .item {
+        grid-column: span 2;
+        grid-row: span 1;
+        background: linear-gradient(180deg, var(--item-tint), #fff);
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .item-image {
+        height: 74px;
+        border-radius: 10px;
+        border: 1px solid #ccd3dc;
+        background: linear-gradient(140deg, #e5eaef, #f3f6f9);
+      }
+
+      .item h4 {
+        margin: 0 0 4px;
+        font-size: 0.86rem;
+      }
+
+      .item .meta {
+        margin: 0;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      @media (max-width: 1040px) {
+        .grid {
+          grid-template-columns: repeat(6, minmax(90px, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          padding: 20px 12px 56px;
+        }
+
+        .grid {
+          grid-template-columns: repeat(2, minmax(120px, 1fr));
+          grid-auto-rows: 120px;
+        }
+
+        .item {
+          grid-row: span 2;
+          grid-template-columns: 1fr;
+        }
+
+        .item-image {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <h1>Mixed Card Grid Wireframe (Source / Collection / Item)</h1>
+        <p>Standalone concept board · hand-authored placement · placeholder content only</p>
+      </header>
+
+      <section class="grid">
+        <article class="card source" style="grid-column: 1 / span 2; grid-row: 1 / span 2">
+          <div class="source-head">
+            <div class="logo"></div>
+            <div class="source-meta">
+              <h3>Atlas Archive</h3>
+              <div class="sub">Atlas Organization</div>
+              <div class="country">Canada</div>
+              <div class="tagline">Multi-collection source</div>
+            </div>
+          </div>
+          <div class="preview-rows">
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          </div>
+          <div class="source-foot"><span class="pill">12 collections</span><span class="tiny-link">Open source</span></div>
+        </article>
+
+        <article class="card item" style="grid-column: 3 / span 2; grid-row: 1 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Ceramic Fragment 04</h4><p class="meta">Item · 1860 · Gallery A</p></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 5 / span 2; grid-row: 1 / span 2">
+          <h3>Early Maps Collection</h3>
+          <p>Curated map snapshots and notes.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">48 items</div>
+        </article>
+
+        <article class="card item" style="grid-column: 7 / span 2; grid-row: 1 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Signal Tower Photo</h4><p class="meta">Item · 1911 · Label Set B</p></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 3 / span 2; grid-row: 2 / span 2">
+          <h3>Botanical Plates</h3>
+          <p>Field sketches and taxonomy plates.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">73 items</div>
+        </article>
+
+        <article class="card source" style="grid-column: 7 / span 2; grid-row: 2 / span 2">
+          <div class="source-head">
+            <div class="logo"></div>
+            <div class="source-meta">
+              <h3>Northlight Labs</h3>
+              <div class="sub">Northlight Institute</div>
+              <div class="country">Germany</div>
+              <div class="tagline">Multi-collection source</div>
+            </div>
+          </div>
+          <div class="preview-rows">
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          </div>
+          <div class="source-foot"><span class="pill">9 collections</span><span class="tiny-link">View profile</span></div>
+        </article>
+
+        <article class="card item" style="grid-column: 1 / span 2; grid-row: 3 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Portrait Negative</h4><p class="meta">Item · 1930 · Box 12</p></div>
+        </article>
+
+        <article class="card item" style="grid-column: 5 / span 2; grid-row: 3 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Transit Pass Scan</h4><p class="meta">Item · 1954 · Archive C</p></div>
+        </article>
+
+        <article class="card source" style="grid-column: 1 / span 2; grid-row: 4 / span 2">
+          <div class="source-head">
+            <div class="logo"></div>
+            <div class="source-meta">
+              <h3>Riverbank Media</h3>
+              <div class="sub">Riverbank Foundation</div>
+              <div class="country">Japan</div>
+              <div class="tagline">Multi-collection source</div>
+            </div>
+          </div>
+          <div class="preview-rows">
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          </div>
+          <div class="source-foot"><span class="pill">17 collections</span><span class="tiny-link">Open source</span></div>
+        </article>
+
+        <article class="card item" style="grid-column: 3 / span 2; grid-row: 4 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Field Recording Tape</h4><p class="meta">Item · 1972 · Audio Vault</p></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 5 / span 2; grid-row: 4 / span 2">
+          <h3>Urban Signage Set</h3>
+          <p>Street-level symbols and typography.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">31 items</div>
+        </article>
+
+        <article class="card item" style="grid-column: 7 / span 2; grid-row: 4 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Watercolor Detail</h4><p class="meta">Item · 1889 · Drawer 4</p></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 3 / span 2; grid-row: 5 / span 2">
+          <h3>Mechanical Sketches</h3>
+          <p>Exploded diagrams and machine studies.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">56 items</div>
+        </article>
+
+        <article class="card source" style="grid-column: 7 / span 2; grid-row: 5 / span 2">
+          <div class="source-head">
+            <div class="logo"></div>
+            <div class="source-meta">
+              <h3>Public Record Hub</h3>
+              <div class="sub">Municipal Data Office</div>
+              <div class="country">United States</div>
+              <div class="tagline">Multi-collection source</div>
+            </div>
+          </div>
+          <div class="preview-rows">
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          </div>
+          <div class="source-foot"><span class="pill">22 collections</span><span class="tiny-link">View profile</span></div>
+        </article>
+
+        <article class="card item" style="grid-column: 1 / span 2; grid-row: 6 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Ticket Stub</h4><p class="meta">Item · 1948 · Misc. Ephemera</p></div>
+        </article>
+
+        <article class="card item" style="grid-column: 5 / span 2; grid-row: 6 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Studio Contact Sheet</h4><p class="meta">Item · 1966 · Photo Unit</p></div>
+        </article>
+
+        <article class="card source" style="grid-column: 1 / span 2; grid-row: 7 / span 2">
+          <div class="source-head">
+            <div class="logo"></div>
+            <div class="source-meta">
+              <h3>Polar Notes</h3>
+              <div class="sub">Arctic Research Group</div>
+              <div class="country">Norway</div>
+              <div class="tagline">Multi-collection source</div>
+            </div>
+          </div>
+          <div class="preview-rows">
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+            <div class="row"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+          </div>
+          <div class="source-foot"><span class="pill">11 collections</span><span class="tiny-link">Open source</span></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 3 / span 2; grid-row: 7 / span 2">
+          <h3>Poster Typography</h3>
+          <p>Graphic treatments and print variations.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">64 items</div>
+        </article>
+
+        <article class="card item" style="grid-column: 5 / span 2; grid-row: 7 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Pressed Flower Label</h4><p class="meta">Item · 1902 · Botany Drawer</p></div>
+        </article>
+
+        <article class="card collection" style="grid-column: 7 / span 2; grid-row: 7 / span 2">
+          <h3>Sea Route Diaries</h3>
+          <p>Captain journals and voyage marks.</p>
+          <div class="collection-preview"><div class="img"></div><div class="img"></div><div class="img"></div><div class="img"></div></div>
+          <div class="collection-foot">39 items</div>
+        </article>
+
+        <article class="card item" style="grid-column: 5 / span 2; grid-row: 8 / span 1">
+          <div class="item-image"></div>
+          <div><h4>Ink Margin Note</h4><p class="meta">Item · 1822 · Journal Leaf</p></div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

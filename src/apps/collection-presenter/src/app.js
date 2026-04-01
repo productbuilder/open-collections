@@ -24,6 +24,18 @@ function derivePreviewUrl(item = {}) {
 	return String(item?.previewUrl || item?.media?.thumbnailUrl || item?.media?.url || "").trim();
 }
 
+function resolveAbsoluteUrl(pathOrUrl, baseUrl) {
+	const raw = String(pathOrUrl || "").trim();
+	if (!raw) {
+		return "";
+	}
+	try {
+		return new URL(raw, baseUrl || window.location.href).href;
+	} catch {
+		return raw;
+	}
+}
+
 function toLabelCase(value = "") {
 	const normalized = String(value || "").trim();
 	if (!normalized) {
@@ -53,6 +65,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		super();
 		this.state = {
 			collection: null,
+			collectionManifestUrl: "",
 			items: [],
 			presentationItems: [],
 			viewerItemId: "",
@@ -92,16 +105,20 @@ class OpenCollectionsPresenterElement extends BaseElement {
 				throw new Error(`Could not load presentations (${response.status}).`);
 			}
 			const json = await response.json();
-			const collection = normalizeCollection(json);
+			const collection = normalizeCollection(json, {
+				manifestUrl: DEFAULT_PRESENTATIONS_URL,
+			});
 			const items = Array.isArray(collection.items) ? collection.items : [];
 			const presentationItems = items.filter(
 				(item) => String(item?.type || "").toLowerCase() === "presentation",
 			);
 			this.state.collection = collection;
+			this.state.collectionManifestUrl = DEFAULT_PRESENTATIONS_URL;
 			this.state.items = items;
 			this.state.presentationItems = presentationItems;
 		} catch {
 			this.state.collection = null;
+			this.state.collectionManifestUrl = "";
 			this.state.items = [];
 			this.state.presentationItems = [];
 		} finally {
@@ -127,9 +144,9 @@ class OpenCollectionsPresenterElement extends BaseElement {
 				const summary = escapeHtml(item?.summary || item?.description || "");
 				const previewUrl = escapeHtml(this.derivePresentationPreviewUrl(item));
 				const id = escapeHtml(item?.id || "");
-				const presentationType = escapeHtml(item?.presentationType || "presentation");
-				const presentationTypeLabel = escapeHtml(
-					toLabelCase(item?.presentationType || "presentation"),
+				const appId = escapeHtml(item?.appId || "presentation");
+				const appIdLabel = escapeHtml(
+					toLabelCase(item?.appId || "presentation"),
 				);
 				const summaryMarkup = summary
 					? `<p class="presenter-card-summary">${summary}</p>`
@@ -147,7 +164,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 								</span>
 								<span class="presenter-card-meta">
 									<span class="presenter-card-title">${title}</span>
-									<span class="presenter-card-badge">${presentationTypeLabel}</span>
+									<span class="presenter-card-badge">${appIdLabel}</span>
 									${summaryMarkup}
 								</span>
 							</button>
@@ -156,7 +173,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 									type="button"
 									class="btn btn-quiet presenter-edit-btn"
 									data-edit-item-id="${id}"
-									data-presentation-type="${presentationType}"
+									data-app-id="${appId}"
 								>
 									Edit
 								</button>
@@ -168,21 +185,56 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			.join("");
 	}
 
+	resolvePresentationItemRef(ref = {}) {
+		const itemId = String(ref?.itemId || "").trim();
+		if (!itemId) {
+			return null;
+		}
+		const resolver = String(ref?.resolver || "").trim().toLowerCase();
+		if (resolver !== "manifest") {
+			return null;
+		}
+		const collectionUrl = String(ref?.collectionUrl || "").trim();
+		if (!collectionUrl) {
+			return (
+				this.state.items.find((entry) => String(entry?.id || "").trim() === itemId) ||
+				null
+			);
+		}
+		const absoluteCollectionUrl = resolveAbsoluteUrl(
+			collectionUrl,
+			this.state.collectionManifestUrl || window.location.href,
+		);
+		const absoluteCurrentManifest = resolveAbsoluteUrl(
+			this.state.collectionManifestUrl || "",
+			window.location.href,
+		);
+		if (absoluteCollectionUrl !== absoluteCurrentManifest) {
+			return null;
+		}
+		return (
+			this.state.items.find((entry) => String(entry?.id || "").trim() === itemId) ||
+			null
+		);
+	}
+
 	derivePresentationTitle(item = {}) {
 		const explicitTitle = String(item?.title || "").trim();
 		if (explicitTitle) {
 			return explicitTitle;
 		}
-		if (String(item?.presentationType || "").trim() === "time-comparer") {
-			const pastItem = this.state.items.find(
-				(entry) => entry.id === item?.compare?.pastItemId,
+		if (String(item?.appId || "").trim() === "time-comparer") {
+			const pastItem = this.resolvePresentationItemRef(
+				item?.settings?.imageLeft?.itemRef || {},
 			);
-			const presentItem = this.state.items.find(
-				(entry) => entry.id === item?.compare?.presentItemId,
+			const presentItem = this.resolvePresentationItemRef(
+				item?.settings?.imageRight?.itemRef || {},
 			);
-			const pastTitle = String(pastItem?.title || item?.settings?.pastLabel || "Past").trim();
+			const pastTitle = String(
+				pastItem?.title || item?.settings?.imageLeft?.label || "Past",
+			).trim();
 			const presentTitle = String(
-				presentItem?.title || item?.settings?.presentLabel || "Present",
+				presentItem?.title || item?.settings?.imageRight?.label || "Present",
 			).trim();
 			return `${pastTitle} vs ${presentTitle}`;
 		}
@@ -190,12 +242,12 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	}
 
 	derivePresentationPreviewUrl(item = {}) {
-		if (String(item?.presentationType || "").trim() === "time-comparer") {
-			const presentItem = this.state.items.find(
-				(entry) => entry.id === item?.compare?.presentItemId,
+		if (String(item?.appId || "").trim() === "time-comparer") {
+			const presentItem = this.resolvePresentationItemRef(
+				item?.settings?.imageRight?.itemRef || {},
 			);
-			const pastItem = this.state.items.find(
-				(entry) => entry.id === item?.compare?.pastItemId,
+			const pastItem = this.resolvePresentationItemRef(
+				item?.settings?.imageLeft?.itemRef || {},
 			);
 			return derivePreviewUrl(presentItem) || derivePreviewUrl(pastItem) || derivePreviewUrl(item);
 		}
@@ -232,9 +284,11 @@ class OpenCollectionsPresenterElement extends BaseElement {
 
 	openEditFlow(itemId = "") {
 		const item = this.state.presentationItems.find((entry) => entry.id === itemId);
-		if (!item || String(item.presentationType || "") !== "time-comparer") {
+		if (!item || String(item.appId || "") !== "time-comparer") {
 			return;
 		}
+		const leftRef = item?.settings?.imageLeft?.itemRef || {};
+		const rightRef = item?.settings?.imageRight?.itemRef || {};
 		this.state.createFlow = {
 			open: true,
 			stage: "wizard",
@@ -242,10 +296,10 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			mode: "edit",
 			editingItemId: itemId,
 			templateType: "time-comparer",
-			pastItemId: String(item?.compare?.pastItemId || ""),
-			presentItemId: String(item?.compare?.presentItemId || ""),
-			pastLabel: String(item?.settings?.pastLabel || "Past"),
-			presentLabel: String(item?.settings?.presentLabel || "Present"),
+			pastItemId: String(leftRef?.itemId || ""),
+			presentItemId: String(rightRef?.itemId || ""),
+			pastLabel: String(item?.settings?.imageLeft?.label || "Past"),
+			presentLabel: String(item?.settings?.imageRight?.label || "Present"),
 			initialSplit: clampSplit(item?.settings?.initialSplit),
 			showLabels: Boolean(item?.settings?.showLabels ?? true),
 			errorText: "",
@@ -429,7 +483,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			...existingItem,
 			id: itemId,
 			type: "presentation",
-			presentationType: "time-comparer",
+			appId: "time-comparer",
 			title:
 				String(existingItem?.title || "").trim() ||
 				`${pastLabel} and ${presentLabel} comparison`,
@@ -439,15 +493,27 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			tags: Array.isArray(existingItem?.tags)
 				? existingItem.tags
 				: ["presentation", "time-comparer"],
-			compare: {
-				pastItemId: flow.pastItemId,
-				presentItemId: flow.presentItemId,
-			},
 			settings: {
-				pastLabel,
-				presentLabel,
 				initialSplit: clampSplit(flow.initialSplit),
 				showLabels: Boolean(flow.showLabels),
+				imageLeft: {
+					label: pastLabel,
+					itemRef: {
+						resolver: "manifest",
+						sourceUrl: "../source.json",
+						collectionUrl: "./collection.json",
+						itemId: flow.pastItemId,
+					},
+				},
+				imageRight: {
+					label: presentLabel,
+					itemRef: {
+						resolver: "manifest",
+						sourceUrl: "../source.json",
+						collectionUrl: "./collection.json",
+						itemId: flow.presentItemId,
+					},
+				},
 			},
 			media: {
 				type: "image",
@@ -652,6 +718,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		const viewerItem = {
 			...item,
 			__collectionItems: this.state.items,
+			__manifestUrl: this.state.collectionManifestUrl,
 		};
 		if (typeof viewer.setItem === "function") {
 			viewer.setItem(viewerItem);

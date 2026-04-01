@@ -44,11 +44,19 @@ export function isItemPublishable(manager, item, context = {}) {
 	}
 	const isTimeComparerPresentation =
 		String(item.type || "").toLowerCase() === "presentation" &&
-		String(item.presentationType || "").toLowerCase() === "time-comparer";
+		String(item.appId || "").toLowerCase() === "time-comparer";
 	if (isTimeComparerPresentation) {
+		const leftRef = item?.settings?.imageLeft?.itemRef || {};
+		const rightRef = item?.settings?.imageRight?.itemRef || {};
 		return Boolean(
-			String(item.compare?.pastItemId || "").trim() &&
-				String(item.compare?.presentItemId || "").trim(),
+			String(leftRef?.resolver || "").trim().toLowerCase() === "manifest" &&
+				String(rightRef?.resolver || "").trim().toLowerCase() === "manifest" &&
+				String(leftRef?.itemId || "").trim() &&
+				String(rightRef?.itemId || "").trim() &&
+				String(leftRef?.sourceUrl || "").trim() &&
+				String(rightRef?.sourceUrl || "").trim() &&
+				String(leftRef?.collectionUrl || "").trim() &&
+				String(rightRef?.collectionUrl || "").trim(),
 		);
 	}
 	if (!String(item.media?.url || "").trim()) {

@@ -18,16 +18,28 @@
 {
 	"id": "presentation-time-comparer-001",
 	"type": "presentation",
-	"presentationType": "time-comparer",
+	"appId": "time-comparer",
 	"title": "Then and now comparison",
-	"compare": {
-		"pastItemId": "item-old",
-		"presentItemId": "item-new"
-	},
 	"settings": {
 		"initialSplit": 0.5,
-		"pastLabel": "Past",
-		"presentLabel": "Present",
+		"imageLeft": {
+			"label": "Past",
+			"itemRef": {
+				"resolver": "manifest",
+				"sourceUrl": "../source.json",
+				"collectionUrl": "./collection.json",
+				"itemId": "item-old"
+			}
+		},
+		"imageRight": {
+			"label": "Present",
+			"itemRef": {
+				"resolver": "manifest",
+				"sourceUrl": "../source.json",
+				"collectionUrl": "./collection.json",
+				"itemId": "item-new"
+			}
+		},
 		"showLabels": true
 	},
 	"media": {
@@ -40,13 +52,13 @@
 
 Notes:
 
-- `compare.pastItemId` and `compare.presentItemId` should reference other image items in the same collection.
+- `settings.imageLeft.itemRef` and `settings.imageRight.itemRef` use manifest-based resolution (`resolver`, `sourceUrl`, `collectionUrl`, `itemId`).
 - `settings.initialSplit` uses a `0..1` value.
 
 ## Integration in MVP
 
 - `collection-manager` can create a draft time-comparer item from the current collection.
-- `collection-browser` opens and renders `presentationType: "time-comparer"` items in the viewer dialog.
+- `collection-browser` opens and renders `appId: "time-comparer"` items in the viewer dialog.
 - Viewer wrapper resolves linked collection images first.
 - If links/media are missing, renderer falls back to a demo set so slider behavior can be tested immediately.
 - Current demo fallback is technical/demo-only behavior and is not intended as production content.

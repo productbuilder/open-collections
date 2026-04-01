@@ -30,20 +30,32 @@
     {
       "id": "presentation-time-comparer-001",
       "type": "presentation",
-      "presentationType": "time-comparer",
+      "appId": "time-comparer",
       "title": "Then and now comparison",
       "description": "Compare two moments in time using the time-comparer template.",
       "license": "CC-BY-4.0",
       "tags": ["presentation", "time-comparer"],
-      "compare": {
-        "pastItemId": "item-city-then",
-        "presentItemId": "item-city-now"
-      },
       "settings": {
-        "pastLabel": "Then",
-        "presentLabel": "Now",
         "initialSplit": 0.5,
-        "showLabels": true
+        "showLabels": true,
+        "imageLeft": {
+          "label": "Then",
+          "itemRef": {
+            "resolver": "manifest",
+            "sourceUrl": "../source.json",
+            "collectionUrl": "./collection.json",
+            "itemId": "item-city-then"
+          }
+        },
+        "imageRight": {
+          "label": "Now",
+          "itemRef": {
+            "resolver": "manifest",
+            "sourceUrl": "../source.json",
+            "collectionUrl": "./collection.json",
+            "itemId": "item-city-now"
+          }
+        }
       },
       "media": {
         "type": "image",

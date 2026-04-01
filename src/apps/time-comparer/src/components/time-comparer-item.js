@@ -1,4 +1,5 @@
 import "./time-comparer.js";
+import { normalizeCollection } from "../../../../shared/library-core/src/index.js";
 
 const DEMO_SETS = {
 	heritage: {
@@ -36,6 +37,35 @@ function resolveImageUrl(item) {
 	);
 }
 
+function resolveAbsoluteUrl(pathOrUrl, baseUrl) {
+	const raw = String(pathOrUrl || "").trim();
+	if (!raw) {
+		return "";
+	}
+	try {
+		return new URL(raw, baseUrl || window.location.href).href;
+	} catch {
+		return raw;
+	}
+}
+
+function matchesItemRefTarget(entry, itemId) {
+	const target = String(itemId || "").trim();
+	if (!target) {
+		return false;
+	}
+	const entryId = String(entry?.id || "").trim();
+	const entrySource = String(entry?.source || "").trim();
+	if (entryId === target || entrySource === target) {
+		return true;
+	}
+	const idTokens = entryId
+		.toLowerCase()
+		.split(/[^a-z0-9]+/g)
+		.filter(Boolean);
+	return idTokens.includes(target.toLowerCase());
+}
+
 class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 	constructor() {
 		super();
@@ -44,34 +74,153 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 			item: null,
 			items: [],
 		};
+		this._resolveToken = 0;
 	}
 
 	connectedCallback() {
 		this.render();
-		this.applyView();
+		void this.applyView();
 	}
 
 	update(payload = {}) {
 		this.model = { ...this.model, ...payload };
-		this.applyView();
+		void this.applyView();
 	}
 
-	resolveCompareTargets() {
+	resolveContextManifestUrl() {
 		const item = this.model.item || {};
-		const items = Array.isArray(this.model.items) ? this.model.items : [];
-		const compare = item?.compare || {};
-		const pastId = String(compare?.pastItemId || "").trim();
-		const presentId = String(compare?.presentItemId || "").trim();
-		const pastItem = items.find((entry) => entry.id === pastId) || null;
-		const presentItem =
-			items.find((entry) => entry.id === presentId) || null;
-		return { pastItem, presentItem };
+		return String(
+			item?.__manifestUrl || item?.source || window.location.href,
+		).trim();
 	}
 
-	resolveCompareSources() {
-		const { pastItem, presentItem } = this.resolveCompareTargets();
-		const resolvedPastUrl = resolveImageUrl(pastItem);
-		const resolvedPresentUrl = resolveImageUrl(presentItem);
+	resolveLocalItemByRef(itemRef) {
+		const items = Array.isArray(this.model.items) ? this.model.items : [];
+		if (!itemRef || typeof itemRef !== "object") {
+			return null;
+		}
+		const itemId = String(itemRef.itemId || "").trim();
+		if (!itemId) {
+			return null;
+		}
+		const collectionUrl = String(itemRef.collectionUrl || "").trim();
+		if (!collectionUrl) {
+			return (
+				items.find((entry) => matchesItemRefTarget(entry, itemId)) ||
+				null
+			);
+		}
+		const contextManifestUrl = this.resolveContextManifestUrl();
+		const absoluteCollectionUrl = resolveAbsoluteUrl(
+			collectionUrl,
+			contextManifestUrl,
+		);
+		const absoluteContextManifestUrl = resolveAbsoluteUrl(
+			contextManifestUrl,
+			window.location.href,
+		);
+		if (absoluteCollectionUrl !== absoluteContextManifestUrl) {
+			return null;
+		}
+		return (
+			items.find((entry) => matchesItemRefTarget(entry, itemId)) ||
+			null
+		);
+	}
+
+	async resolveItemByRef(itemRef) {
+		if (!itemRef || typeof itemRef !== "object") {
+			return null;
+		}
+		const resolver = String(itemRef.resolver || "").trim().toLowerCase();
+		if (resolver !== "manifest") {
+			return null;
+		}
+		const itemId = String(itemRef.itemId || "").trim();
+		if (!itemId) {
+			return null;
+		}
+		const contextManifestUrl = this.resolveContextManifestUrl();
+		const sourceUrl = resolveAbsoluteUrl(itemRef.sourceUrl, contextManifestUrl);
+		if (!sourceUrl) {
+			return null;
+		}
+
+		const localMatch = this.resolveLocalItemByRef(itemRef);
+		if (localMatch) {
+			return localMatch;
+		}
+
+		let sourceCollectionUrls = [];
+		try {
+			const sourceResponse = await fetch(sourceUrl);
+			if (!sourceResponse.ok) {
+				return null;
+			}
+			const sourceJson = await sourceResponse.json();
+			const sourceCollections = Array.isArray(sourceJson?.collections)
+				? sourceJson.collections
+				: [];
+			sourceCollectionUrls = sourceCollections
+				.map((entry) =>
+					resolveAbsoluteUrl(
+						entry?.manifest || entry?.url || "",
+						sourceUrl,
+					),
+				)
+				.filter(Boolean);
+		} catch {
+			return null;
+		}
+
+		const collectionUrl = resolveAbsoluteUrl(
+			itemRef.collectionUrl,
+			contextManifestUrl,
+		);
+		if (!collectionUrl) {
+			return null;
+		}
+		if (
+			sourceCollectionUrls.length > 0 &&
+			!sourceCollectionUrls.includes(collectionUrl)
+		) {
+			return null;
+		}
+		try {
+			const response = await fetch(collectionUrl);
+			if (!response.ok) {
+				return null;
+			}
+			const json = await response.json();
+			const normalizedCollection = normalizeCollection(json, {
+				manifestUrl: collectionUrl,
+			});
+			const collectionItems = Array.isArray(normalizedCollection?.items)
+				? normalizedCollection.items
+				: [];
+			return (
+				collectionItems.find((entry) => matchesItemRefTarget(entry, itemId)) ||
+				null
+			);
+		} catch {
+			return null;
+		}
+	}
+
+	async resolveCompareSources() {
+		const item = this.model.item || {};
+		const settings = item?.settings || {};
+		const imageLeft = settings?.imageLeft || {};
+		const imageRight = settings?.imageRight || {};
+		const leftRef = imageLeft?.itemRef || null;
+		const rightRef = imageRight?.itemRef || null;
+
+		const [leftItem, rightItem] = await Promise.all([
+			this.resolveItemByRef(leftRef),
+			this.resolveItemByRef(rightRef),
+		]);
+		const resolvedPastUrl = resolveImageUrl(leftItem);
+		const resolvedPresentUrl = resolveImageUrl(rightItem);
 
 		let pastSrc = resolvedPastUrl;
 		let presentSrc = resolvedPresentUrl;
@@ -85,15 +234,16 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		}
 
 		return {
-			pastItem,
-			presentItem,
+			pastItem: leftItem,
+			presentItem: rightItem,
 			pastSrc,
 			presentSrc,
 			demoMode,
 		};
 	}
 
-	applyView() {
+	async applyView() {
+		const token = ++this._resolveToken;
 		const title = this.shadowRoot?.getElementById("title");
 		const note = this.shadowRoot?.getElementById("note");
 		const comparer = this.shadowRoot?.getElementById("comparer");
@@ -105,13 +255,19 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		const settings = item.settings || {};
 		title.textContent = item.title || item.id || "Time comparer";
 		const { pastItem, presentItem, pastSrc, presentSrc, demoMode } =
-			this.resolveCompareSources();
+			await this.resolveCompareSources();
+		if (token !== this._resolveToken) {
+			return;
+		}
 		comparer.pastSrc = pastSrc;
 		comparer.presentSrc = presentSrc;
-		comparer.setAttribute("past-label", settings.pastLabel || "Past");
+		comparer.setAttribute(
+			"past-label",
+			settings?.imageLeft?.label || "Past",
+		);
 		comparer.setAttribute(
 			"present-label",
-			settings.presentLabel || "Present",
+			settings?.imageRight?.label || "Present",
 		);
 		comparer.setAttribute(
 			"show-labels",

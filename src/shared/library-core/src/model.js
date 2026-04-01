@@ -2,17 +2,39 @@ function asArray(value) {
 	return Array.isArray(value) ? value : [];
 }
 
+function resolveManifestRelativeUrl(value, manifestUrl) {
+	const raw = String(value || "").trim();
+	if (!raw) {
+		return "";
+	}
+	const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw);
+	if (hasScheme || !manifestUrl) {
+		return raw;
+	}
+	try {
+		return new URL(raw, manifestUrl).href;
+	} catch {
+		return raw;
+	}
+}
+
 export function cloneValue(value) {
 	return JSON.parse(JSON.stringify(value));
 }
 
-export function normalizeCollection(collection) {
+export function normalizeCollection(collection, options = {}) {
 	if (!collection || typeof collection !== "object") {
 		throw new Error("Collection payload must be an object.");
 	}
+	const manifestUrl = String(options?.manifestUrl || "").trim();
 
 	const items = asArray(collection.items).map((item, index) => {
 		const media = item && typeof item.media === "object" ? item.media : {};
+		const mediaUrl = resolveManifestRelativeUrl(media.url || "", manifestUrl);
+		const thumbnailUrl = resolveManifestRelativeUrl(
+			media.thumbnailUrl || media.url || "",
+			manifestUrl,
+		);
 		const extraFields =
 			item && typeof item === "object"
 				? Object.fromEntries(
@@ -50,8 +72,8 @@ export function normalizeCollection(collection) {
 			include: item?.include !== false,
 			media: {
 				type: media.type || "image",
-				url: media.url || "",
-				thumbnailUrl: media.thumbnailUrl || media.url || "",
+				url: mediaUrl,
+				thumbnailUrl: thumbnailUrl,
 			},
 		};
 	});

@@ -347,7 +347,7 @@ class TimemapBrowserElement extends ComponentBase {
 			throw new Error(`Could not load manifest (${response.status}).`);
 		}
 		const json = await response.json();
-		return normalizeCollection(json);
+		return normalizeCollection(json, { manifestUrl });
 	}
 
 	async hydrateCollectionsForSource(collections = []) {
@@ -1276,6 +1276,7 @@ class TimemapBrowserElement extends ComponentBase {
 		this.dom.viewerDialog?.setItem({
 			...item,
 			__collectionItems: this.state.collection?.items || [],
+			__manifestUrl: this.state.currentManifestUrl || "",
 		});
 	}
 
@@ -1328,7 +1329,7 @@ class TimemapBrowserElement extends ComponentBase {
 			}
 
 			const json = await response.json();
-			const collection = normalizeCollection(json);
+			const collection = normalizeCollection(json, { manifestUrl });
 			this.state.collection = collection;
 			this.state.currentManifestUrl = manifestUrl;
 			this.state.selectedItemId = collection.items[0]?.id || null;

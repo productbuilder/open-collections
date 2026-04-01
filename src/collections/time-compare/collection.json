@@ -8,8 +8,8 @@
 			"title": "Google Street View Kampstraat april 2021  ",
 			"media": {
 				"type": "image",
-				"url": "google_street_view_hilversum_kampstraat_2021_april.jpg",
-				"thumbnailUrl": "google_street_view_hilversum_kampstraat_2021_april.jpg"
+				"url": "./google_street_view_hilversum_kampstraat_2021_april.jpg",
+				"thumbnailUrl": "./google_street_view_hilversum_kampstraat_2021_april.jpg"
 			},
 			"license": "CC-BY-4.0",
 			"description": "Kampstraat afbeelding voor vergelijking met Collectie Hilervsum Afbeelding",
@@ -28,7 +28,7 @@
 			"id": "b0084a25-1859-4373-a485-932eca7cf71d",
 			"type": "presentation",
 			"appId": "time-comparer",
-			"title": "Comparison",
+			"title": "Kampstraat toen en nu",
 			"description": "Kampstraat toen en nu",
 			"license": "CC-BY-4.0",
 			"tags": [
@@ -59,8 +59,8 @@
 			},
 			"media": {
 				"type": "image",
-				"url": "https://picsum.photos/id/1040/1200/800",
-				"thumbnailUrl": "https://picsum.photos/id/1040/800/530"
+				"url": "./google_street_view_hilversum_kampstraat_2021_april.jpg",
+				"thumbnailUrl": "./google_street_view_hilversum_kampstraat_2021_april.jpg"
 			}
 		}
 	]

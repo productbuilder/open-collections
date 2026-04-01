@@ -183,7 +183,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 
 		title.textContent = item.title || item.id || "Viewer";
 		if (
-			String(item.presentationType || "").toLowerCase() ===
+			String(item.appId || "").toLowerCase() ===
 			"time-comparer"
 		) {
 			const comparer = document.createElement("oc-time-comparer-item");

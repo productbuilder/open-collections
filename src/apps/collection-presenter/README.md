@@ -25,15 +25,15 @@ This collection includes one example `time-comparer` presentation item and its l
 The MVP follows the existing repository shape already used by `time-comparer` integration:
 
 - `type: "presentation"`
-- `presentationType: "time-comparer"`
-- `compare` for linked source items (`pastItemId`, `presentItemId`)
+- `appId: "time-comparer"`
 - `settings` for template options (`initialSplit`, labels, etc.)
+- `settings.imageLeft.itemRef` and `settings.imageRight.itemRef` for manifest-based linked items
 
 ## Viewer behavior
 
 Clicking a presentation card opens the existing viewer dialog pattern (`open-browser-viewer-dialog`).
 
-For `presentationType: "time-comparer"`, the viewer renders `oc-time-comparer-item` and passes collection items for compare-target resolution.
+For `appId: "time-comparer"`, the viewer renders `oc-time-comparer-item` and resolves linked items through manifest-based `itemRef`.
 
 ## Add app action (current MVP)
 

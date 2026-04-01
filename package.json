@@ -21,6 +21,7 @@
     "app-shell:start": "pnpm --filter @open-collections/app-shell-app start",
     "configurator:start": "pnpm --filter @open-collections/configurator-app start",
     "bucket-browser:start": "pnpm --filter @open-collections/bucket-browser-app start",
-    "collection-account:start": "pnpm --filter @open-collections/account-app start"
+    "collection-account:start": "pnpm --filter @open-collections/account-app start",
+    "collection-connector:start": "pnpm --filter @open-collections/connector-app start"
   }
 }

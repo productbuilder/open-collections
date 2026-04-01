@@ -503,13 +503,7 @@ class OpenCollectionsPresenterElement extends BaseElement {
 				</section>
 
 				<section class="oc-page presenter-panel-wrap">
-					<open-collections-panel-chrome
-						status-label="${escapeHtml(this.state.statusText)}"
-						status-tone="${escapeHtml(this.state.statusTone)}"
-					>
-						<div slot="toolbar" class="toolbar-copy">
-							<span>Collection: ${escapeHtml(this.state.collection?.title || "Presentations")}</span>
-						</div>
+					<open-collections-panel-chrome>
 						<div slot="toolbar-actions" class="toolbar-actions">
 							<button type="button" class="btn" id="presenterAddAppBtn">Add app</button>
 						</div>

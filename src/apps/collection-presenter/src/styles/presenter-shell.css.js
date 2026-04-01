@@ -17,16 +17,12 @@ export const presenterShellStyles = `
 
   .oc-app-viewport {
     min-height: 100%;
+    padding: 0 var(--oc-space-4) var(--oc-space-3);
   }
 
   .presenter-panel-wrap {
     min-height: 0;
     flex: 1 1 auto;
-  }
-
-  .toolbar-copy {
-    color: var(--oc-text-muted);
-    font-size: 0.82rem;
   }
 
   .toolbar-actions {
@@ -185,6 +181,14 @@ export const presenterShellStyles = `
 
   .btn-quiet {
     background: transparent;
+  }
+
+  @media (max-width: 760px) {
+    .oc-app-viewport {
+      padding:
+        0 var(--oc-space-3)
+        calc(var(--oc-space-3) + var(--oc-layout-safe-bottom));
+    }
   }
 
   .flow-template-card {

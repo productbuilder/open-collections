@@ -1,57 +1,67 @@
 {
-  "id": "d2bdd9cf-3437-4c81-bea1-8c146915a404",
-  "title": "Time Compare",
-  "description": "Time Compare Example",
-  "items": [
-    {
-      "id": "c382975a-187c-4510-976c-2dc67be2a99e",
-      "title": "Google Street View Kampstraat april 2021  ",
-      "media": {
-        "type": "image",
-        "url": "google_street_view_hilversum_kampstraat_2021_april.jpg",
-        "thumbnailUrl": "google_street_view_hilversum_kampstraat_2021_april.jpg"
-      },
-      "license": "CC-BY-4.0",
-      "description": "Kampstraat afbeelding voor vegrelijking met Collectie Hilervsum Afbeelding",
-      "creator": "Google Street View",
-      "date": "2021",
-      "location": "Hilversum",
-      "attribution": "",
-      "source": "https://www.google.com/maps/place/Kampstraat+20,+1211+GE+Hilversum/@52.225187,5.1788411,3a,75y,259.12h,89.59t/data=!3m8!1e1!3m6!1snSC7-E2d2qX411e5Bm2Gow!2e0!5s20201201T000000!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D0.41009722232600154%26panoid%3DnSC7-E2d2qX411e5Bm2Gow%26yaw%3D259.12260295428234!7i16384!8i8192!4m6!3m5!1s0x47c66b69b9de4b0d:0x6766565452266ecc!8m2!3d52.2250728!4d5.1784996!16s%2Fg%2F11xs76xwvk?entry=ttu&g_ep=EgoyMDI2MDMyOS4wIKXMDSoASAFQAw%3D%3D",
-      "tags": ["compare", "juxtapose"],
-      "include": true
-    },
-	  {
-      "id": "b0084a25-1859-4373-a485-932eca7cf71d",
-      "type": "presentation",
-      "presentationType": "time-comparer",
-      "title": "Comparison",
-      "description": "Kampstraat toen en nu",
-      "license": "CC-BY-4.0",
-      "tags": ["presentation", "time-comparer"],
-      "compare": {
-        "pastRef": {
-          "sourceUrl": "https://raw.githubusercontent.com/productbuilder/htm-data/main/dev/org/collectie-hilversum/collections.json",
-          "collectionUrl": "https://raw.githubusercontent.com/productbuilder/htm-data/main/dev/org/collectie-hilversum/prenten/collection.json",
-          "itemId": "270442"
-        },
-        "presentRef": {
-          "sourceUrl": "../collections.json",
-          "collectionUrl": "./collection.json",
-          "itemId": "c382975a-187c-4510-976c-2dc67be2a99e"
-        }
-      },
-      "settings": {
-        "pastLabel": "1969",
-        "presentLabel": "2021",
-        "initialSplit": 0.5,
-        "showLabels": true
-      },
-      "media": {
-        "type": "image",
-        "url": "https://picsum.photos/id/1040/1200/800",
-        "thumbnailUrl": "https://picsum.photos/id/1040/800/530"
-      }
-    }
-  ]
+	"id": "d2bdd9cf-3437-4c81-bea1-8c146915a404",
+	"title": "Time Compare",
+	"description": "Time Compare Example",
+	"items": [
+		{
+			"id": "c382975a-187c-4510-976c-2dc67be2a99e",
+			"title": "Google Street View Kampstraat april 2021  ",
+			"media": {
+				"type": "image",
+				"url": "google_street_view_hilversum_kampstraat_2021_april.jpg",
+				"thumbnailUrl": "google_street_view_hilversum_kampstraat_2021_april.jpg"
+			},
+			"license": "CC-BY-4.0",
+			"description": "Kampstraat afbeelding voor vergelijking met Collectie Hilervsum Afbeelding",
+			"creator": "Google Street View",
+			"date": "2021",
+			"location": "Hilversum",
+			"attribution": "",
+			"source": "https://www.google.com/maps/place/Kampstraat+20,+1211+GE+Hilversum/@52.225187,5.1788411,3a,75y,259.12h,89.59t/data=!3m8!1e1!3m6!1snSC7-E2d2qX411e5Bm2Gow!2e0!5s20201201T000000!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D0.41009722232600154%26panoid%3DnSC7-E2d2qX411e5Bm2Gow%26yaw%3D259.12260295428234!7i16384!8i8192!4m6!3m5!1s0x47c66b69b9de4b0d:0x6766565452266ecc!8m2!3d52.2250728!4d5.1784996!16s%2Fg%2F11xs76xwvk?entry=ttu&g_ep=EgoyMDI2MDMyOS4wIKXMDSoASAFQAw%3D%3D",
+			"tags": [
+				"compare",
+				"juxtapose"
+			],
+			"include": true
+		},
+		{
+			"id": "b0084a25-1859-4373-a485-932eca7cf71d",
+			"type": "presentation",
+			"appId": "time-comparer",
+			"title": "Comparison",
+			"description": "Kampstraat toen en nu",
+			"license": "CC-BY-4.0",
+			"tags": [
+				"presentation",
+				"time-comparer"
+			],
+			"settings": {
+				"initialSplit": 0.5,
+				"showLabels": true,
+				"imageLeft": {
+					"label": "1969",
+					"itemRef": {
+						"resolver": "manifest",
+						"sourceUrl": "https://raw.githubusercontent.com/productbuilder/htm-data/main/dev/org/collectie-hilversum/source.json",
+						"collectionUrl": "https://raw.githubusercontent.com/productbuilder/htm-data/main/dev/org/collectie-hilversum/prenten/collection.json",
+						"itemId": "270442"
+					}
+				},
+				"imageRight": {
+					"label": "2021",
+					"itemRef": {
+						"resolver": "manifest",
+						"sourceUrl": "../source.json",
+						"collectionUrl": "./collection.json",
+						"itemId": "c382975a-187c-4510-976c-2dc67be2a99e"
+					}
+				}
+			},
+			"media": {
+				"type": "image",
+				"url": "https://picsum.photos/id/1040/1200/800",
+				"thumbnailUrl": "https://picsum.photos/id/1040/800/530"
+			}
+		}
+	]
 }

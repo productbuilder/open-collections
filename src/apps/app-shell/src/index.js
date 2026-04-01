@@ -3,6 +3,7 @@ import "../../../shared/ui/panels/index.js";
 import "../../collection-browser/src/index.js";
 import "../../collection-manager/src/index.js";
 import "../../collection-presenter/src/index.js";
+import "../../collection-connector/src/index.js";
 import "../../collection-account/src/index.js";
 import { renderShellHeader } from "./components/shell-header.js";
 import { appShellStyles } from "./styles/shell.css.js";
@@ -23,6 +24,10 @@ import {
 import { MANAGER_CONFIG } from "../../collection-manager/src/config.js";
 
 const DEFAULT_SECTION_KEY = "browse";
+const SHELL_SECTION_KEYS_BY_APP_ID = {
+	"collection-account": "account",
+	"collection-connector": "connect",
+};
 
 class OpenAppShellElement extends HTMLElement {
 	constructor() {
@@ -100,11 +105,12 @@ class OpenAppShellElement extends HTMLElement {
 
 		this.addEventListener(APP_LIFECYCLE_EVENTS.NAVIGATE, (event) => {
 			const detail = event.detail || {};
-			if (detail.targetAppId !== "collection-account") {
+			const sectionKey = SHELL_SECTION_KEYS_BY_APP_ID[detail.targetAppId];
+			if (!sectionKey) {
 				return;
 			}
 			event.preventDefault();
-			this.setActiveSection("account");
+			this.setActiveSection(sectionKey);
 		});
 	}
 

@@ -35,6 +35,14 @@ export const SHELL_SECTION_ADAPTERS = {
 			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),
 	},
+	connect: {
+		appId: "collection-connector",
+		adapter: createWebComponentAppAdapter({
+			appId: "collection-connector",
+			tagName: "open-collections-connector",
+			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
+		}),
+	},
 	account: {
 		appId: "collection-account",
 		adapter: createWebComponentAppAdapter({

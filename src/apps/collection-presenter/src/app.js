@@ -35,6 +35,14 @@ function clampSplit(value) {
 	return Math.min(0.95, Math.max(0.05, parsed));
 }
 
+function asPresentationTypeLabel(type = "") {
+	const normalized = String(type || "").trim().toLowerCase();
+	if (normalized === "time-comparer") {
+		return "Time comparer";
+	}
+	return normalized ? normalized : "Presentation";
+}
+
 class OpenCollectionsPresenterElement extends BaseElement {
 	constructor() {
 		super();
@@ -48,6 +56,8 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			loading: true,
 			createFlow: {
 				open: false,
+				mode: "create",
+				editingItemId: "",
 				stage: "picker",
 				step: 1,
 				templateType: "",
@@ -119,26 +129,65 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		}
 		return this.state.presentationItems
 			.map((item) => {
-				const title = escapeHtml(item?.title || item?.id || "Presentation");
-				const description = escapeHtml(item?.description || "Presentation app item");
-				const previewUrl = escapeHtml(derivePreviewUrl(item));
+				const cardModel = this.buildPresentationCardModel(item);
+				const title = escapeHtml(cardModel.title);
+				const description = escapeHtml(cardModel.description);
+				const previewUrl = escapeHtml(cardModel.previewUrl);
 				const id = escapeHtml(item?.id || "");
-				const presentationType = escapeHtml(item?.presentationType || "presentation");
+				const presentationType = escapeHtml(cardModel.presentationTypeLabel);
 				return `
 					<div class="presenter-cell" data-item-id="${id}">
 						<oc-card-item
-							data-item-id="${id}"
-							data-presentation-type="${presentationType}"
-							title="${title}"
-							subtitle="${description}"
-							preview-url="${previewUrl}"
-							action-label="Open"
-							action-value="${id}"
+							data-card-id="${id}"
 						></oc-card-item>
+						<div class="presenter-card-meta">
+							<span class="presenter-type-badge">${presentationType}</span>
+							<span class="presenter-card-id">ID: ${id}</span>
+						</div>
+						<div class="presenter-card-actions">
+							<button class="btn btn-quiet" type="button" data-card-action="edit" data-item-id="${id}">Edit</button>
+							<button class="btn" type="button" data-card-action="open" data-item-id="${id}">Open</button>
+						</div>
+						<div hidden data-card-title="${title}" data-card-description="${description}" data-card-preview-url="${previewUrl}"></div>
 					</div>
 				`;
 			})
 			.join("");
+	}
+
+	buildPresentationCardModel(item = {}) {
+		const presentationType = String(item?.presentationType || "presentation").trim();
+		if (presentationType === "time-comparer") {
+			const compare = item?.compare || {};
+			const settings = item?.settings || {};
+			const pastItem = this.state.items.find((entry) => entry?.id === compare?.pastItemId);
+			const presentItem = this.state.items.find((entry) => entry?.id === compare?.presentItemId);
+			const pastLabel = String(settings?.pastLabel || "Past").trim() || "Past";
+			const presentLabel = String(settings?.presentLabel || "Present").trim() || "Present";
+			const title =
+				String(item?.title || "").trim() || `${pastLabel} vs ${presentLabel}`;
+			const description =
+				String(item?.description || "").trim() ||
+				`Compares ${pastItem?.title || compare?.pastItemId || pastLabel} with ${presentItem?.title || compare?.presentItemId || presentLabel}.`;
+			const previewUrl =
+				String(presentItem?.media?.thumbnailUrl || "").trim() ||
+				String(presentItem?.media?.url || "").trim() ||
+				String(pastItem?.media?.thumbnailUrl || "").trim() ||
+				String(pastItem?.media?.url || "").trim() ||
+				derivePreviewUrl(item);
+			return {
+				title,
+				description,
+				previewUrl,
+				presentationTypeLabel: asPresentationTypeLabel(presentationType),
+			};
+		}
+		return {
+			title: String(item?.title || item?.id || "Presentation").trim(),
+			description: String(item?.description || "Presentation app item").trim(),
+			previewUrl: derivePreviewUrl(item),
+			presentationTypeLabel: asPresentationTypeLabel(presentationType),
+		};
 	}
 
 	getImageCandidates() {
@@ -148,6 +197,8 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	resetCreateFlow() {
 		this.state.createFlow = {
 			open: false,
+			mode: "create",
+			editingItemId: "",
 			stage: "picker",
 			step: 1,
 			templateType: "",
@@ -163,6 +214,8 @@ class OpenCollectionsPresenterElement extends BaseElement {
 
 	openCreateFlow() {
 		this.state.createFlow.open = true;
+		this.state.createFlow.mode = "create";
+		this.state.createFlow.editingItemId = "";
 		this.state.createFlow.stage = "picker";
 		this.state.createFlow.errorText = "";
 		this.render();
@@ -178,6 +231,31 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		this.state.createFlow.stage = "wizard";
 		this.state.createFlow.step = 1;
 		this.state.createFlow.errorText = "";
+		this.render();
+	}
+
+	openEditFlow(itemId = "") {
+		const item = this.state.presentationItems.find((entry) => entry.id === itemId);
+		if (!item || String(item?.presentationType || "") !== "time-comparer") {
+			return;
+		}
+		const compare = item.compare || {};
+		const settings = item.settings || {};
+		this.state.createFlow = {
+			open: true,
+			mode: "edit",
+			editingItemId: item.id,
+			stage: "wizard",
+			step: 1,
+			templateType: "time-comparer",
+			pastItemId: String(compare.pastItemId || ""),
+			presentItemId: String(compare.presentItemId || ""),
+			pastLabel: String(settings.pastLabel || "Past"),
+			presentLabel: String(settings.presentLabel || "Present"),
+			initialSplit: clampSplit(settings.initialSplit),
+			showLabels: Boolean(settings.showLabels ?? true),
+			errorText: "",
+		};
 		this.render();
 	}
 
@@ -278,11 +356,13 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			`;
 		}
 		const showBack = flow.stage === "wizard";
-		const nextLabel = flow.step >= 4 ? "Save app" : "Next";
+		const isEdit = flow.mode === "edit";
+		const nextLabel = flow.step >= 4 ? (isEdit ? "Save changes" : "Save app") : "Next";
+		const heading = isEdit ? "Edit app" : "Add app";
 		return `
 			<dialog id="presenterCreateDialog" class="presenter-dialog" open>
 				<div class="flow-head">
-					<h2>Add app</h2>
+					<h2>${heading}</h2>
 					<button type="button" class="btn btn-quiet" id="flowCancelBtn">Close</button>
 				</div>
 				${stepMarkup}
@@ -331,16 +411,58 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	saveTimeComparerItem() {
 		const flow = this.state.createFlow;
 		const presentItem = this.state.items.find((item) => item.id === flow.presentItemId);
-		const idSuffix = Date.now().toString(36);
-		const itemId = `presentation-time-comparer-${idSuffix}`;
 		const pastLabel = String(flow.pastLabel || "Past").trim() || "Past";
 		const presentLabel = String(flow.presentLabel || "Present").trim() || "Present";
+		const itemTitle = `${pastLabel} and ${presentLabel} comparison`;
+		const itemDescription = "Time comparer presentation configured in Present.";
+		if (flow.mode === "edit" && flow.editingItemId) {
+			const nextItems = this.state.items.map((item) => {
+				if (item.id !== flow.editingItemId) {
+					return item;
+				}
+				return {
+					...item,
+					title: itemTitle,
+					description: itemDescription,
+					compare: {
+						pastItemId: flow.pastItemId,
+						presentItemId: flow.presentItemId,
+					},
+					settings: {
+						pastLabel,
+						presentLabel,
+						initialSplit: clampSplit(flow.initialSplit),
+						showLabels: Boolean(flow.showLabels),
+					},
+					media: {
+						type: "image",
+						url: String(presentItem?.media?.url || "").trim(),
+						thumbnailUrl:
+							String(presentItem?.media?.thumbnailUrl || "").trim() ||
+							String(presentItem?.media?.url || "").trim(),
+					},
+				};
+			});
+			this.state.items = nextItems;
+			this.state.presentationItems = nextItems.filter(
+				(item) => String(item?.type || "").toLowerCase() === "presentation",
+			);
+			if (this.state.collection && Array.isArray(this.state.collection.items)) {
+				this.state.collection.items = [...this.state.items];
+			}
+			this.state.statusText = `Updated presentation app: ${itemTitle}`;
+			this.state.statusTone = "ok";
+			this.closeCreateFlow();
+			return;
+		}
+		const idSuffix = Date.now().toString(36);
+		const itemId = `presentation-time-comparer-${idSuffix}`;
 		const newItem = {
 			id: itemId,
 			type: "presentation",
 			presentationType: "time-comparer",
-			title: `${pastLabel} and ${presentLabel} comparison`,
-			description: "Time comparer presentation created in Present.",
+			title: itemTitle,
+			description: itemDescription,
 			tags: ["presentation", "time-comparer"],
 			compare: {
 				pastItemId: flow.pastItemId,
@@ -409,6 +531,26 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	}
 
 	afterRender() {
+		this.shadowRoot?.querySelectorAll("[data-card-id]")?.forEach((node) => {
+			if (!(node instanceof HTMLElement) || typeof node.update !== "function") {
+				return;
+			}
+			const itemId = String(node.dataset.cardId || "");
+			const item = this.state.presentationItems.find((entry) => entry.id === itemId);
+			if (!item) {
+				return;
+			}
+			const cardModel = this.buildPresentationCardModel(item);
+			node.update({
+				title: cardModel.title,
+				subtitle: cardModel.description,
+				previewUrl: cardModel.previewUrl,
+				countLabel: cardModel.presentationTypeLabel,
+				actionLabel: "Open",
+				actionValue: itemId,
+			});
+		});
+
 		this.shadowRoot
 			?.getElementById("presenterAddAppBtn")
 			?.addEventListener("click", () => this.openCreateFlow());
@@ -510,17 +652,37 @@ class OpenCollectionsPresenterElement extends BaseElement {
 
 		const grid = this.shadowRoot?.getElementById("presenterGrid");
 		grid?.addEventListener("click", (event) => {
-			const path = typeof event.composedPath === "function" ? event.composedPath() : [];
-			for (const node of path) {
-				if (!(node instanceof HTMLElement)) {
-					continue;
-				}
-				const itemId = String(node.dataset?.itemId || "").trim();
-				if (!itemId) {
-					continue;
-				}
-				this.openPresentation(itemId);
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) {
 				return;
+			}
+			const actionNode = target.closest("[data-card-action]");
+			if (actionNode instanceof HTMLElement) {
+				const itemId = String(actionNode.dataset.itemId || "").trim();
+				if (!itemId) {
+					return;
+				}
+				const action = String(actionNode.dataset.cardAction || "").trim();
+				if (action === "edit") {
+					this.openEditFlow(itemId);
+					return;
+				}
+				if (action === "open") {
+					this.openPresentation(itemId);
+					return;
+				}
+			}
+			const cell = target.closest(".presenter-cell");
+			if (!(cell instanceof HTMLElement)) {
+				return;
+			}
+			const itemId = String(cell.dataset.itemId || "").trim();
+			if (!itemId) {
+				return;
+			}
+			const withinCardAction = target.closest(".presenter-card-actions");
+			if (!withinCardAction) {
+				this.openPresentation(itemId);
 			}
 		});
 

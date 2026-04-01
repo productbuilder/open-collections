@@ -66,6 +66,9 @@ export const accountShellStyles = `
   .account-section-content {
     display: grid;
     gap: 0.75rem;
+    width: min(100%, var(--oc-layout-panel-max));
+    margin-inline: auto;
+    padding-top: var(--oc-space-1);
   }
 
 

@@ -14,6 +14,13 @@ import {
 } from "../../../shared/runtime/app-mount-contract.js";
 import { createHostCapabilities } from "../../../shared/runtime/host-capabilities.js";
 import { createToastLayer } from "../../../shared/ui/app-runtime/primitives.js";
+import {
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
+	createConnectionsRuntime,
+	createConnectionsStartupRuntime,
+	makeConnectionId,
+} from "../../../shared/account/index.js";
+import { MANAGER_CONFIG } from "../../collection-manager/src/config.js";
 
 const DEFAULT_SECTION_KEY = "browse";
 
@@ -28,11 +35,25 @@ class OpenAppShellElement extends HTMLElement {
 		this.shadow = this.attachShadow({ mode: "open" });
 		this.sectionSessions = new Map();
 		this.toastLayer = null;
+		this.connectionsRuntime = createConnectionsRuntime({
+			defaultManifestPath: MANAGER_CONFIG.defaultLocalManifestPath,
+			storageKey: CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
+			makeConnectionId,
+		});
+		this.connectionsStartupRuntime = createConnectionsStartupRuntime({
+			connectionsRuntime: this.connectionsRuntime,
+		});
 
 		this.render();
 	}
 
 	connectedCallback() {
+		void this.connectionsStartupRuntime.bootstrap().catch((error) => {
+			console.warn(
+				"[open-app-shell] Shared connection startup bootstrap failed.",
+				error,
+			);
+		});
 		this.bindEvents();
 		this.ensureSectionMounted(this.state.activeSectionKey);
 		this.syncSectionVisibility();

@@ -1,0 +1,16 @@
+{
+  "name": "@open-collections/connector-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Open Collections connector application (connection management surface).",
+  "scripts": {
+    "start": "echo \"Serve repo root and open /src/apps/collection-connector/\""
+  },
+  "dependencies": {
+    "@open-collections/provider-github": "workspace:*",
+    "@open-collections/provider-local": "workspace:*",
+    "@open-collections/provider-s3": "workspace:*",
+    "@open-collections/shared-platform": "workspace:*"
+  }
+}

@@ -361,6 +361,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				}
 				this.dispatch("add-item");
 			});
+		this.shadowRoot
+			.getElementById("addTimeComparerBtn")
+			?.addEventListener("click", () => {
+				this.dispatch("add-time-comparer-item");
+			});
 		this.shadowRoot.addEventListener("click", (event) => {
 			const target =
 				event.target instanceof Element
@@ -519,6 +524,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.shadowRoot.getElementById("deleteSelectedBtn");
 		const clearSelectionBtn =
 			this.shadowRoot.getElementById("clearSelectionBtn");
+		const publishBtn = this.shadowRoot.getElementById(
+			"publishCollectionBtn",
+		);
+		const addTimeComparerBtn =
+			this.shadowRoot.getElementById("addTimeComparerBtn");
 		const managerModeToggle =
 			this.shadowRoot.getElementById("managerModeToggle");
 		if (
@@ -528,6 +538,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!selectionStatus ||
 			!deleteSelectedBtn ||
 			!clearSelectionBtn ||
+			!publishBtn ||
+			!addTimeComparerBtn
 			!managerModeToggle
 		) {
 			return;
@@ -557,6 +569,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.model.currentLevel === "collections"
 				? "Add collection"
 				: "Add item";
+		addTimeComparerBtn.hidden = this.model.currentLevel !== "items";
 		viewToggle.setAttribute("mode", this.getCurrentViewMode());
 		const managerMode = this.getManagerMode();
 		managerModeToggle
@@ -732,6 +745,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			<span id="selectionStatus" class="selection-status" hidden>#0</span>
           </div>
           <div class="viewport-actions viewport-toolbar-actions" slot="toolbar-actions">
+            <button class="btn" id="addTimeComparerBtn" type="button" hidden>Add time comparer</button>
             <button class="btn" id="addImagesBtn" type="button">Add item</button>
           </div>
           <div id="assetWrap" class="asset-wrap">

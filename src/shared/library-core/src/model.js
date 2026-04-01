@@ -13,7 +13,30 @@ export function normalizeCollection(collection) {
 
 	const items = asArray(collection.items).map((item, index) => {
 		const media = item && typeof item.media === "object" ? item.media : {};
+		const extraFields =
+			item && typeof item === "object"
+				? Object.fromEntries(
+						Object.entries(item).filter(
+							([key]) =>
+								![
+									"id",
+									"title",
+									"description",
+									"creator",
+									"date",
+									"location",
+									"license",
+									"attribution",
+									"source",
+									"tags",
+									"include",
+									"media",
+								].includes(key),
+						),
+					)
+				: {};
 		return {
+			...extraFields,
 			id: item?.id || `item_${index + 1}`,
 			title: item?.title || `Item ${index + 1}`,
 			description: item?.description || "",

@@ -62,6 +62,11 @@ Runtime selection happens in `src/shared/platform/index.js`:
 
 For mobile build/sync/run details, see `src/mobile/workbench/README.md`.
 
+## Key planning docs
+
+- Onboarding and connection flow: `docs/architecture/onboarding-and-connection-flow.md`
+- GitHub App onboarding flow: `docs/architecture/github-app-onboarding-flow.md`
+
 ## Website workflow
 
 1. Edit source in `src/site/` and `src/site/i18n/`.

@@ -170,7 +170,6 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			return;
 		}
 
-		body.classList.remove("is-time-comparer");
 		body.innerHTML = "";
 		const item = this.model.item;
 		if (!item) {
@@ -187,7 +186,6 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			String(item.presentationType || "").toLowerCase() ===
 			"time-comparer"
 		) {
-			body.classList.add("is-time-comparer");
 			const comparer = document.createElement("oc-time-comparer-item");
 			const compareItems = Array.isArray(item?.__collectionItems)
 				? item.__collectionItems
@@ -311,7 +309,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         * { box-sizing: border-box; }
         dialog {
           width: min(980px, 96vw);
-          height: min(96vh, 1100px);
+          max-height: min(96vh, 1100px);
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 12px;
           padding: 0;
@@ -321,7 +319,6 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         .dialog-shell {
           display: flex;
           flex-direction: column;
-          height: 100%;
           min-height: 0;
         }
         .dialog-header {
@@ -341,14 +338,6 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         .dialog-body {
           padding: 0.85rem;
           overflow: auto;
-          flex: 1;
-          min-height: 0;
-        }
-        .dialog-body.is-time-comparer {
-          display: flex;
-          overflow: hidden;
-        }
-        .dialog-body.is-time-comparer > oc-time-comparer-item {
           flex: 1;
           min-height: 0;
         }
@@ -444,12 +433,8 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         }
         @media (max-width: 760px) {
           dialog {
-            width: 100vw;
-            height: 100vh;
-            max-width: none;
-            max-height: none;
-            border-radius: 0;
-            border-width: 0;
+            width: min(980px, 96vw);
+            max-height: min(96vh, 1100px);
           }
           .viewer-media-shell {
             height: min(56vh, 480px);

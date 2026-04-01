@@ -207,13 +207,12 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
         :host {
           display: block;
           width: 100%;
-          height: 100%;
         }
         * { box-sizing: border-box; }
         .frame {
           position: relative;
           width: 100%;
-          height: 100%;
+          aspect-ratio: 16 / 9;
           border-radius: 12px;
           border: 1px solid #dbe3ec;
           background: #0f172a;

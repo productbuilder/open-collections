@@ -48,12 +48,27 @@ class OpenAppShellElement extends HTMLElement {
 	}
 
 	connectedCallback() {
-		void this.connectionsStartupRuntime.bootstrap().catch((error) => {
-			console.warn(
-				"[open-app-shell] Shared connection startup bootstrap failed.",
-				error,
-			);
-		});
+		void this.connectionsStartupRuntime
+			.bootstrap()
+			.then((result) => {
+				if (!result?.ok) {
+					console.warn(
+						"[open-app-shell] Shared connection startup bootstrap did not produce sources.",
+						{
+							initialization: result?.initialization || "unknown",
+							message:
+								result?.message ||
+								"Built-in example connection failed during startup.",
+						},
+					);
+				}
+			})
+			.catch((error) => {
+				console.warn(
+					"[open-app-shell] Shared connection startup bootstrap failed.",
+					error,
+				);
+			});
 		this.bindEvents();
 		this.ensureSectionMounted(this.state.activeSectionKey);
 		this.syncSectionVisibility();

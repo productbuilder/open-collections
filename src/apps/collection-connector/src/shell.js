@@ -40,13 +40,9 @@ function renderShell(shadowRoot) {
 					description="${header.subtitle}"
 				></open-collections-section-header>
 			</section>
-			<section class="account-section-content" id="connectionsSection" aria-labelledby="connectionsHeading">
+			<section class="account-section-content" id="connectionsSection" aria-label="Connections">
 				<div id="connectionsOverviewView">
-					<open-collections-section-panel
-						title="Connections"
-						heading-level="2"
-						id="connectionsHeading"
-					>
+					<div class="connections-overview-panel" id="connectionsOverviewPanel">
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
 
 						<div class="connections-body">
@@ -60,7 +56,7 @@ function renderShell(shadowRoot) {
 							</open-collections-action-row>
 							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						</div>
-					</open-collections-section-panel>
+					</div>
 				</div>
 				<div id="connectionsAddView" class="is-hidden">
 					<open-collections-add-connection-panel id="addConnectionPanel"></open-collections-add-connection-panel>

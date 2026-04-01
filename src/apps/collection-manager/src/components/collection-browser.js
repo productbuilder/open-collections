@@ -720,7 +720,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.shadowRoot.innerHTML = `
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
-        <open-collections-panel-chrome id="panelShell" title="Collections" show-back="false">
+        <open-collections-panel-chrome id="panelShell" show-back="false">
 		  <div class="manager-mode-toggle" id="managerModeToggle" role="toolbar" aria-label="Manager mode" slot="subheader">
 			<button type="button" class="mode-toggle" data-manager-mode="sources" data-active="false" aria-pressed="false">Sources</button>
 			<button type="button" class="mode-toggle" data-manager-mode="collections" data-active="true" aria-pressed="true">Collections</button>

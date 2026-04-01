@@ -50,6 +50,92 @@ export const presenterShellStyles = `
     min-width: 0;
   }
 
+  .presenter-card {
+    border: 1px solid var(--oc-border-muted);
+    border-radius: var(--oc-radius-md);
+    background: var(--oc-bg-surface);
+    display: grid;
+    gap: var(--oc-space-2);
+    padding: var(--oc-space-2);
+  }
+
+  .presenter-card-open {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    display: grid;
+    gap: var(--oc-space-2);
+    cursor: pointer;
+  }
+
+  .presenter-card-preview {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--oc-radius-sm);
+    border: 1px solid var(--oc-border-muted);
+    background: var(--oc-bg-subtle);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .presenter-card-preview img,
+  .presenter-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .presenter-card-preview img {
+    object-fit: cover;
+  }
+
+  .presenter-card-placeholder {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+  }
+
+  .presenter-card-meta {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .presenter-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--oc-text-primary);
+  }
+
+  .presenter-card-badge {
+    display: inline-flex;
+    width: fit-content;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--oc-text-muted);
+    border: 1px solid var(--oc-border-muted);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+  }
+
+  .presenter-card-summary {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--oc-text-muted);
+  }
+
+  .presenter-card-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .presenter-edit-btn {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.55rem;
+  }
+
   .btn {
     appearance: none;
     border: 1px solid var(--oc-border-control);

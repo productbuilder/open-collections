@@ -23,6 +23,18 @@ function derivePreviewUrl(item = {}) {
 	return String(item?.previewUrl || item?.media?.thumbnailUrl || item?.media?.url || "").trim();
 }
 
+function toLabelCase(value = "") {
+	const normalized = String(value || "").trim();
+	if (!normalized) {
+		return "Presentation";
+	}
+	return normalized
+		.split("-")
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(" ");
+}
+
 function isImageItem(item = {}) {
 	return String(item?.type || "").toLowerCase() === "image" && String(item?.media?.url || "").trim();
 }
@@ -50,6 +62,8 @@ class OpenCollectionsPresenterElement extends BaseElement {
 				open: false,
 				stage: "picker",
 				step: 1,
+				mode: "create",
+				editingItemId: "",
 				templateType: "",
 				pastItemId: "",
 				presentItemId: "",
@@ -119,26 +133,83 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		}
 		return this.state.presentationItems
 			.map((item) => {
-				const title = escapeHtml(item?.title || item?.id || "Presentation");
-				const description = escapeHtml(item?.description || "Presentation app item");
-				const previewUrl = escapeHtml(derivePreviewUrl(item));
+				const title = escapeHtml(this.derivePresentationTitle(item));
+				const summary = escapeHtml(item?.summary || item?.description || "");
+				const previewUrl = escapeHtml(this.derivePresentationPreviewUrl(item));
 				const id = escapeHtml(item?.id || "");
 				const presentationType = escapeHtml(item?.presentationType || "presentation");
+				const presentationTypeLabel = escapeHtml(
+					toLabelCase(item?.presentationType || "presentation"),
+				);
+				const summaryMarkup = summary
+					? `<p class="presenter-card-summary">${summary}</p>`
+					: "";
 				return `
 					<div class="presenter-cell" data-item-id="${id}">
-						<oc-card-item
-							data-item-id="${id}"
-							data-presentation-type="${presentationType}"
-							title="${title}"
-							subtitle="${description}"
-							preview-url="${previewUrl}"
-							action-label="Open"
-							action-value="${id}"
-						></oc-card-item>
+						<article class="presenter-card" data-item-id="${id}">
+							<button type="button" class="presenter-card-open" data-item-id="${id}" aria-label="Open ${title}">
+								<span class="presenter-card-preview">
+									${
+										previewUrl
+											? `<img src="${previewUrl}" alt="" loading="lazy" decoding="async" />`
+											: `<span class="presenter-card-placeholder" aria-hidden="true"></span>`
+									}
+								</span>
+								<span class="presenter-card-meta">
+									<span class="presenter-card-title">${title}</span>
+									<span class="presenter-card-badge">${presentationTypeLabel}</span>
+									${summaryMarkup}
+								</span>
+							</button>
+							<div class="presenter-card-actions">
+								<button
+									type="button"
+									class="btn btn-quiet presenter-edit-btn"
+									data-edit-item-id="${id}"
+									data-presentation-type="${presentationType}"
+								>
+									Edit
+								</button>
+							</div>
+						</article>
 					</div>
 				`;
 			})
 			.join("");
+	}
+
+	derivePresentationTitle(item = {}) {
+		const explicitTitle = String(item?.title || "").trim();
+		if (explicitTitle) {
+			return explicitTitle;
+		}
+		if (String(item?.presentationType || "").trim() === "time-comparer") {
+			const pastItem = this.state.items.find(
+				(entry) => entry.id === item?.compare?.pastItemId,
+			);
+			const presentItem = this.state.items.find(
+				(entry) => entry.id === item?.compare?.presentItemId,
+			);
+			const pastTitle = String(pastItem?.title || item?.settings?.pastLabel || "Past").trim();
+			const presentTitle = String(
+				presentItem?.title || item?.settings?.presentLabel || "Present",
+			).trim();
+			return `${pastTitle} vs ${presentTitle}`;
+		}
+		return String(item?.id || "Presentation");
+	}
+
+	derivePresentationPreviewUrl(item = {}) {
+		if (String(item?.presentationType || "").trim() === "time-comparer") {
+			const presentItem = this.state.items.find(
+				(entry) => entry.id === item?.compare?.presentItemId,
+			);
+			const pastItem = this.state.items.find(
+				(entry) => entry.id === item?.compare?.pastItemId,
+			);
+			return derivePreviewUrl(presentItem) || derivePreviewUrl(pastItem) || derivePreviewUrl(item);
+		}
+		return derivePreviewUrl(item);
 	}
 
 	getImageCandidates() {
@@ -150,6 +221,8 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			open: false,
 			stage: "picker",
 			step: 1,
+			mode: "create",
+			editingItemId: "",
 			templateType: "",
 			pastItemId: "",
 			presentItemId: "",
@@ -162,9 +235,31 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	}
 
 	openCreateFlow() {
+		this.resetCreateFlow();
 		this.state.createFlow.open = true;
-		this.state.createFlow.stage = "picker";
-		this.state.createFlow.errorText = "";
+		this.render();
+	}
+
+	openEditFlow(itemId = "") {
+		const item = this.state.presentationItems.find((entry) => entry.id === itemId);
+		if (!item || String(item.presentationType || "") !== "time-comparer") {
+			return;
+		}
+		this.state.createFlow = {
+			open: true,
+			stage: "wizard",
+			step: 1,
+			mode: "edit",
+			editingItemId: itemId,
+			templateType: "time-comparer",
+			pastItemId: String(item?.compare?.pastItemId || ""),
+			presentItemId: String(item?.compare?.presentItemId || ""),
+			pastLabel: String(item?.settings?.pastLabel || "Past"),
+			presentLabel: String(item?.settings?.presentLabel || "Present"),
+			initialSplit: clampSplit(item?.settings?.initialSplit),
+			showLabels: Boolean(item?.settings?.showLabels ?? true),
+			errorText: "",
+		};
 		this.render();
 	}
 
@@ -279,10 +374,11 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		}
 		const showBack = flow.stage === "wizard";
 		const nextLabel = flow.step >= 4 ? "Save app" : "Next";
+		const dialogTitle = flow.mode === "edit" ? "Edit app" : "Add app";
 		return `
 			<dialog id="presenterCreateDialog" class="presenter-dialog" open>
 				<div class="flow-head">
-					<h2>Add app</h2>
+					<h2>${dialogTitle}</h2>
 					<button type="button" class="btn btn-quiet" id="flowCancelBtn">Close</button>
 				</div>
 				${stepMarkup}
@@ -331,17 +427,28 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	saveTimeComparerItem() {
 		const flow = this.state.createFlow;
 		const presentItem = this.state.items.find((item) => item.id === flow.presentItemId);
-		const idSuffix = Date.now().toString(36);
-		const itemId = `presentation-time-comparer-${idSuffix}`;
 		const pastLabel = String(flow.pastLabel || "Past").trim() || "Past";
 		const presentLabel = String(flow.presentLabel || "Present").trim() || "Present";
-		const newItem = {
+		const isEditing = flow.mode === "edit";
+		const idSuffix = Date.now().toString(36);
+		const itemId = isEditing
+			? String(flow.editingItemId || "")
+			: `presentation-time-comparer-${idSuffix}`;
+		const existingItem = this.state.presentationItems.find((item) => item.id === itemId) || {};
+		const savedItem = {
+			...existingItem,
 			id: itemId,
 			type: "presentation",
 			presentationType: "time-comparer",
-			title: `${pastLabel} and ${presentLabel} comparison`,
-			description: "Time comparer presentation created in Present.",
-			tags: ["presentation", "time-comparer"],
+			title:
+				String(existingItem?.title || "").trim() ||
+				`${pastLabel} and ${presentLabel} comparison`,
+			description:
+				String(existingItem?.description || "").trim() ||
+				"Time comparer presentation created in Present.",
+			tags: Array.isArray(existingItem?.tags)
+				? existingItem.tags
+				: ["presentation", "time-comparer"],
 			compare: {
 				pastItemId: flow.pastItemId,
 				presentItemId: flow.presentItemId,
@@ -360,12 +467,23 @@ class OpenCollectionsPresenterElement extends BaseElement {
 					String(presentItem?.media?.url || "").trim(),
 			},
 		};
-		this.state.items = [...this.state.items, newItem];
-		this.state.presentationItems = [...this.state.presentationItems, newItem];
+		if (isEditing) {
+			this.state.items = this.state.items.map((item) =>
+				item.id === itemId ? savedItem : item,
+			);
+			this.state.presentationItems = this.state.presentationItems.map((item) =>
+				item.id === itemId ? savedItem : item,
+			);
+		} else {
+			this.state.items = [...this.state.items, savedItem];
+			this.state.presentationItems = [...this.state.presentationItems, savedItem];
+		}
 		if (this.state.collection && Array.isArray(this.state.collection.items)) {
 			this.state.collection.items = [...this.state.items];
 		}
-		this.state.statusText = `Saved presentation app: ${newItem.title}`;
+		this.state.statusText = isEditing
+			? `Updated presentation app: ${savedItem.title}`
+			: `Saved presentation app: ${savedItem.title}`;
 		this.state.statusTone = "ok";
 		this.closeCreateFlow();
 	}
@@ -511,6 +629,17 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		const grid = this.shadowRoot?.getElementById("presenterGrid");
 		grid?.addEventListener("click", (event) => {
 			const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+			for (const node of path) {
+				if (!(node instanceof HTMLElement)) {
+					continue;
+				}
+				const editItemId = String(node.dataset?.editItemId || "").trim();
+				if (!editItemId) {
+					continue;
+				}
+				this.openEditFlow(editItemId);
+				return;
+			}
 			for (const node of path) {
 				if (!(node instanceof HTMLElement)) {
 					continue;

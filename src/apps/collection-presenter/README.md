@@ -2,7 +2,7 @@
 
 Open Collections Presenter is the dedicated **Present** app mounted inside `app-shell`.
 
-## MVP status (grid-based Present surface)
+## MVP status (grid-based Present surface + create flow)
 
 The first MVP now provides a dedicated presentation area with:
 
@@ -10,6 +10,7 @@ The first MVP now provides a dedicated presentation area with:
 - a panel toolbar with an **Add app** action
 - a responsive grid of saved presentation items
 - dialog/viewer opening behavior for selected presentation items
+- a template picker and guided create flow for `time-comparer`
 
 ## Current data source
 
@@ -34,13 +35,33 @@ Clicking a presentation card opens the existing viewer dialog pattern (`open-bro
 
 For `presentationType: "time-comparer"`, the viewer renders `oc-time-comparer-item` and passes collection items for compare-target resolution.
 
-## Add app action (MVP)
+## Add app action (current MVP)
 
-`Add app` is intentionally scaffolded in this MVP and currently updates status text with a placeholder next-step message.
+`Add app` now opens a minimal but functional creation workflow:
+
+1. **Template picker** (currently one option: **Time comparer**)
+2. **Step 1:** pick a `past` image item
+3. **Step 2:** pick a `present` image item
+4. **Step 3:** configure labels (`pastLabel`, `presentLabel`) and initial split
+5. **Step 4:** review and save
+
+Saving creates a new in-memory presentation item in the loaded presentations model and refreshes the Present grid immediately.
+
+### Validation included in MVP
+
+- requires selecting both image items
+- prevents identical `past` and `present` refs
+- shows clear inline error text before allowing save
+
+### Current limitations
+
+- template picker only supports `time-comparer`
+- created items are saved to the app's current in-memory collection model (not persisted back to disk in this MVP)
+- editing existing presentation items is future work
 
 ## Next recommended step
 
-Implement a minimal template picker + guided create flow that creates new draft presentation items and refreshes the Present grid.
+Add persistence for newly created presentation items (for example OPFS/local draft save path aligned with manager/browser flows), then introduce edit flow reuse for existing items.
 
 ## Entry
 

@@ -63,7 +63,7 @@ export const browserStyles = `
 
   .header-top .back-btn {
     flex: 0 0 auto;
-    margin-top: -0.1rem;
+    margin-top: 0.05rem;
   }
 
   .title {
@@ -74,7 +74,7 @@ export const browserStyles = `
   }
 
   .subtitle {
-    margin: 0.25rem 0;
+    margin: 0.2rem 0 0;
     color: var(--oc-browser-text-muted, #6c6258);
     font-size: 0.85rem;
     line-height: 1.25;

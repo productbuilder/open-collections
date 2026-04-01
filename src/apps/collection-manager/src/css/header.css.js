@@ -10,7 +10,7 @@ export const headerStyles = `
   .topbar {
     background: var(--oc-header-bg);
     border-bottom: var(--oc-border-width-sm) solid var(--oc-header-border);
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;

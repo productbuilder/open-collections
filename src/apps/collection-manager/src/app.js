@@ -224,6 +224,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.renderEditor();
 		this.renderWorkspaceContext();
 		this.renderSourceContext();
+		this.applyEntryHeaderVisibility();
 		this.applyHeaderActionPresentation();
 		this.applyConnectionEntryPresentation();
 		this.setLocalDraftStatus("Checking local draft storage...", "neutral");
@@ -1568,6 +1569,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 	renderSourceContext() {
 		const activeSourceLabel = this.activeSourceLabel();
 		const workspaceContextText = this.workflowContextText();
+		this.applyEntryHeaderVisibility();
 		this.dom.managerHeader?.setHostLabel?.(activeSourceLabel);
 		this.dom.collectionBrowser?.update?.({
 			activeSourceLabel,
@@ -1579,6 +1581,14 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		});
 		this.applyConnectionEntryPresentation();
 		this.refreshWorkingStatus();
+	}
+
+	applyEntryHeaderVisibility() {
+		const isContextualView = this.state.currentLevel === "items";
+		this.dom.managerEntryHeaderWrap?.toggleAttribute(
+			"hidden",
+			isContextualView,
+		);
 	}
 
 	sourceIdentityKey(source) {

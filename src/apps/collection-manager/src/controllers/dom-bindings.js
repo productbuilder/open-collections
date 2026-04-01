@@ -2,6 +2,7 @@ import { MANAGER_CONFIG } from "../config.js";
 
 export function cacheDomElements(root) {
 	return {
+		managerEntryHeaderWrap: root.getElementById("managerEntryHeaderWrap"),
 		managerHeader: root.getElementById("managerHeader"),
 		paneLayout: root.getElementById("paneLayout"),
 		collectionBrowser: root.getElementById("collectionBrowser"),

@@ -8,7 +8,7 @@ export function renderShell(shadowRoot) {
     <style>${shellStyles}</style>
 
     <main class="manager-root" aria-label="Collection Manager workspace">
-      <section class="entry-view-header-wrap">
+      <section id="managerEntryHeaderWrap" class="entry-view-header-wrap">
         <open-collections-section-header
           id="managerEntryTitle"
           heading-level="1"

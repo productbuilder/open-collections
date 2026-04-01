@@ -30,6 +30,10 @@ export function createConnectionsStartupRuntime({
 					? [...sessionSources]
 					: [];
 				if (existingSessionSources.length > 0 && !force) {
+					console.info(
+						"[connections-startup-runtime] Using existing in-session sources.",
+						{ count: existingSessionSources.length },
+					);
 					return {
 						ok: true,
 						sources: existingSessionSources,
@@ -41,6 +45,10 @@ export function createConnectionsStartupRuntime({
 					connectionsRuntime.restoreRememberedSources();
 				if (Array.isArray(rememberedSources) && rememberedSources.length > 0) {
 					setSessionSources(rememberedSources);
+					console.info(
+						"[connections-startup-runtime] Restored remembered sources into session.",
+						{ count: rememberedSources.length },
+					);
 					return {
 						ok: true,
 						sources: rememberedSources,
@@ -56,6 +64,14 @@ export function createConnectionsStartupRuntime({
 					}),
 				);
 				if (!starterResult.ok || !starterResult.source) {
+					console.warn(
+						"[connections-startup-runtime] Built-in example bootstrap failed.",
+						{
+							message:
+								starterResult.message ||
+								"Built-in example connection failed during startup.",
+						},
+					);
 					return {
 						ok: false,
 						sources: [],
@@ -69,6 +85,10 @@ export function createConnectionsStartupRuntime({
 				const fallbackSources = [starterResult.source];
 				connectionsRuntime.persistSources(fallbackSources);
 				setSessionSources(fallbackSources);
+				console.info(
+					"[connections-startup-runtime] Bootstrapped built-in example source.",
+					{ sourceId: starterResult.source.id },
+				);
 				return {
 					ok: true,
 					sources: fallbackSources,

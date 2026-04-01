@@ -481,6 +481,9 @@ export function saveSourcesToStorage(app) {
 
 export async function restoreRememberedSources(app) {
 	const platformType = getPlatformType();
+	const preferSessionStartup =
+		typeof app.isEmbeddedRuntime === "function" &&
+		app.isEmbeddedRuntime();
 	const isTauriDesktop = platformType === PLATFORM_TYPES.TAURI;
 	const isWebLikeRuntime =
 		platformType === PLATFORM_TYPES.BROWSER ||
@@ -503,13 +506,15 @@ export async function restoreRememberedSources(app) {
 		: [];
 	const usingSessionSources = remembered.length > 0;
 
-	await mirrorNativePreferencesToLocalStorage([
-		SOURCES_STORAGE_KEY,
-		LEGACY_MANAGER_SOURCES_STORAGE_KEY,
-		WORKSPACE_SELECTION_STORAGE_KEY,
-	]);
+	if (!preferSessionStartup) {
+		await mirrorNativePreferencesToLocalStorage([
+			SOURCES_STORAGE_KEY,
+			LEGACY_MANAGER_SOURCES_STORAGE_KEY,
+			WORKSPACE_SELECTION_STORAGE_KEY,
+		]);
+	}
 
-	if (!usingSessionSources && app.state.opfsAvailable) {
+	if (!preferSessionStartup && !usingSessionSources && app.state.opfsAvailable) {
 		try {
 			remembered = await app.loadRememberedSourcesFromOpfs();
 		} catch (error) {
@@ -521,7 +526,7 @@ export async function restoreRememberedSources(app) {
 		!usingSessionSources &&
 		Array.isArray(remembered) &&
 		remembered.length > 0;
-	if (!usingSessionSources && !usingOpfsRemembered) {
+	if (!preferSessionStartup && !usingSessionSources && !usingOpfsRemembered) {
 		remembered = app.connectionsRuntime.restoreRememberedSources();
 		if (
 			(!Array.isArray(remembered) || remembered.length === 0) &&
@@ -735,7 +740,7 @@ export async function restoreRememberedSources(app) {
 		restored.push(source);
 	}
 
-	if (restored.length === 0) {
+	if (restored.length === 0 && !preferSessionStartup) {
 		const starterResult = await connectStarterExampleSource(app);
 		if (!starterResult.ok) {
 			app.setConnectionStatus(
@@ -773,6 +778,27 @@ export async function restoreRememberedSources(app) {
 		app.renderAssets();
 		app.renderEditor();
 		app.activatePreferredBrowserStartupSource();
+		return;
+	}
+	if (restored.length === 0) {
+		app.state.sources = [];
+		app.state.assets = [];
+		app.state.selectedItemId = null;
+		app.state.selectedItemIds = [];
+		app.state.selectedCollectionIds = [];
+		app.state.activeSourceFilter = "all";
+		app.state.selectedCollectionId = "all";
+		app.state.currentLevel = "collections";
+		app.state.openedCollectionId = null;
+		app.syncMetadataModeFromState();
+		app.closeMobileDetail();
+		app.refreshWorkingStatus();
+		app.setStatus("Awaiting in-session connections from Account.", "neutral");
+		app.setConnectionStatus("No in-session connections loaded yet.", "neutral");
+		app.renderSourcesList();
+		app.renderSourceFilter();
+		app.renderAssets();
+		app.renderEditor();
 		return;
 	}
 

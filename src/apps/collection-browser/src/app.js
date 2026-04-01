@@ -900,7 +900,7 @@ class TimemapBrowserElement extends ComponentBase {
         }
       </style>
       <div class="app-shell">
-        <header class="browser-header">
+        <header id="browserHeader" class="browser-header">
           <open-collections-section-header
             id="browserEntryTitle"
             heading-level="1"
@@ -977,6 +977,22 @@ class TimemapBrowserElement extends ComponentBase {
 	headerModel() {
 		const manifestText = this.state.currentManifestUrl || "";
 		return { manifestText };
+	}
+
+	isNestedContextualView() {
+		return (
+			this.canGoBackEmbeddedNav() &&
+			(this.state.viewMode === "collections" ||
+				this.state.viewMode === "items")
+		);
+	}
+
+	renderEntryHeaderVisibility() {
+		const browserHeader = this.dom?.browserHeader;
+		if (!browserHeader) {
+			return;
+		}
+		browserHeader.hidden = this.isNestedContextualView();
 	}
 
 	viewportModel() {
@@ -1226,6 +1242,7 @@ class TimemapBrowserElement extends ComponentBase {
 		const manifest = this.dom?.browserManifest;
 		const status = this.dom?.browserHeaderStatus;
 		const model = this.headerModel();
+		this.renderEntryHeaderVisibility();
 
 		if (manifest) {
 			const hasManifest = Boolean(model.manifestText);
@@ -1243,6 +1260,7 @@ class TimemapBrowserElement extends ComponentBase {
 
 	renderViewport() {
 		this.dom?.browserViewport?.update(this.viewportModel());
+		this.renderEntryHeaderVisibility();
 	}
 
 	renderMetadata() {

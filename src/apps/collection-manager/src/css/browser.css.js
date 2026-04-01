@@ -143,24 +143,6 @@ export const browserStyles = `
     stroke-linejoin: round;
   }
 
-  .icon {
-    font-family: 'Material Icons';
-    font-size: 1.1rem;
-    line-height: 1;
-    font-style: normal;
-    font-weight: 400;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: 'liga';
-  }
-
   .is-hidden {
     display: none;
   }

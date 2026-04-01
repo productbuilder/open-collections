@@ -1088,10 +1088,6 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		return AssetService.createEmptyDraftItem(this);
 	}
 
-	async createTimeComparerDraftItem() {
-		return AssetService.createTimeComparerDraftItem(this);
-	}
-
 	async attachUploadedMediaToItem(itemId, file) {
 		return AssetService.attachUploadedMediaToItem(this, itemId, file);
 	}

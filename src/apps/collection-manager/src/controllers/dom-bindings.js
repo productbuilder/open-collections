@@ -379,9 +379,6 @@ export function bindDomEvents(app) {
 		target.addEventListener("add-item", async () => {
 			await app.createEmptyDraftItem();
 		});
-		target.addEventListener("add-time-comparer-item", async () => {
-			await app.createTimeComparerDraftItem();
-		});
 		target.addEventListener("attach-media-upload", async (event) => {
 			const itemId = event.detail?.itemId || "";
 			if (!itemId) {

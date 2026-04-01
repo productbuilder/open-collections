@@ -1,4 +1,4 @@
-﻿{
+{
   "title": "Example collections",
   "collections": [
     {
@@ -12,6 +12,10 @@
     {
       "id": "collection",
       "manifest": "single-collection/collection.json"
+    },
+    {
+      "id": "presentations",
+      "manifest": "presentations/collection.json"
     }
   ]
 }

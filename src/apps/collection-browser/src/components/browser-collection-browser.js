@@ -192,10 +192,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			wrapper.setAttribute("data-span-rows", "2");
 		} else if (kind === "collection") {
 			wrapper.setAttribute("data-span-cols", "2");
-			wrapper.setAttribute("data-span-rows", "1");
+			wrapper.setAttribute("data-span-rows", "2");
 		} else {
 			wrapper.setAttribute("data-span-cols", "1");
-			wrapper.setAttribute("data-span-rows", "1");
+			wrapper.setAttribute("data-span-rows", "2");
 		}
 		wrapper.appendChild(this.buildCard(entity));
 		return wrapper;
@@ -344,6 +344,9 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			gap: "0.62rem",
 			squareCellsDesktop: false,
 		});
+		grid.style.setProperty("--oc-layout-row-size-desktop", "13rem");
+		grid.style.setProperty("--oc-layout-row-size-tablet", "11rem");
+		grid.style.setProperty("--oc-layout-row-size-mobile", "10rem");
 
 		for (const entity of this.renderCards()) {
 			// TODO(perf): Virtualize/window item cells so only in-viewport rows are mounted.

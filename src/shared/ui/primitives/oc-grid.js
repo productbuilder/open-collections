@@ -110,7 +110,7 @@ class OcGridElement extends HTMLElement {
         .layout {
           width: 100%;
           min-height: 0;
-          grid-auto-rows: minmax(0, auto);
+          grid-auto-rows: var(--oc-layout-row-size, 11rem);
         }
 
         .layout.is-grid {
@@ -119,7 +119,10 @@ class OcGridElement extends HTMLElement {
           gap: var(--oc-layout-gap, 0.875rem);
           align-items: stretch;
           align-content: start;
-          grid-auto-rows: minmax(0, auto);
+          grid-auto-rows: var(
+            --oc-layout-row-size-desktop,
+            var(--oc-layout-row-size, 11rem)
+          );
         }
 
         .layout.is-grid.is-square-desktop {
@@ -153,6 +156,10 @@ class OcGridElement extends HTMLElement {
         @media (max-width: 1040px) {
           .layout.is-grid {
             grid-template-columns: repeat(var(--oc-layout-columns-tablet, 4), minmax(0, 1fr));
+            grid-auto-rows: var(
+              --oc-layout-row-size-tablet,
+              var(--oc-layout-row-size, 10rem)
+            );
           }
 
           .layout.is-grid.is-square-desktop {
@@ -163,6 +170,10 @@ class OcGridElement extends HTMLElement {
         @media (max-width: 760px) {
           .layout.is-grid {
             grid-template-columns: repeat(var(--oc-layout-columns-mobile, 2), minmax(0, 1fr));
+            grid-auto-rows: var(
+              --oc-layout-row-size-mobile,
+              var(--oc-layout-row-size-tablet, var(--oc-layout-row-size, 9rem))
+            );
           }
 
           .layout.is-grid ::slotted(*) {

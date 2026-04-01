@@ -188,7 +188,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-strip {
           width: 100%;
-          height: 44px;
+          height: var(--oc-preview-row-height, 44px);
           display: flex;
           align-items: stretch;
           gap: 0.35rem;
@@ -198,7 +198,7 @@ class OpenCollectionsPreviewSummaryCardElement extends HTMLElement {
 
         .preview-slot {
           flex: 0 0 auto;
-          height: 44px;
+          height: var(--oc-preview-row-height, 44px);
           aspect-ratio: 3 / 2;
           display: block;
           overflow: hidden;

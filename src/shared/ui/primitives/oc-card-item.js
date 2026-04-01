@@ -226,7 +226,7 @@ class OcCardItemElement extends HTMLElement {
 
         .preview {
           width: 100%;
-          aspect-ratio: 1 / 1;
+          aspect-ratio: var(--oc-item-preview-ratio, 1 / 1);
           border-radius: 9px;
           overflow: hidden;
           border: 1px solid var(--oc-browser-border, #d9d5d0);
@@ -292,7 +292,7 @@ class OcCardItemElement extends HTMLElement {
           font-size: 0.86rem;
           font-weight: 700;
           line-height: 1.3;
-          min-height: 2.24rem;
+          min-height: var(--oc-item-title-min-height, 2.24rem);
           color: var(--oc-browser-text, #2e2924);
           overflow-wrap: anywhere;
           display: -webkit-box;
@@ -306,7 +306,7 @@ class OcCardItemElement extends HTMLElement {
           font-size: 0.76rem;
           color: var(--oc-browser-text-muted, #6c6258);
           line-height: 1.32;
-          min-height: 2.01rem;
+          min-height: var(--oc-item-subtitle-min-height, 2.01rem);
           overflow-wrap: anywhere;
           display: -webkit-box;
           -webkit-line-clamp: 2;

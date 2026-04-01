@@ -20,6 +20,7 @@ const MODE_EMPTY = {
 	},
 };
 
+
 class OpenBrowserBrowseGridElement extends HTMLElement {
 	constructor() {
 		super();
@@ -72,12 +73,22 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			.browse-cell {
 				display: block;
 				min-width: 0;
+				height: 100%;
+				min-height: 0;
 			}
 
 			.browse-cell > oc-card-collections,
 			.browse-cell > oc-card-collection,
 			.browse-cell > oc-card-item {
 				display: block;
+				height: 100%;
+				min-height: 0;
+			}
+
+			.browse-cell.kind-item {
+				--oc-item-preview-ratio: 4 / 3;
+				--oc-item-title-min-height: 1.38rem;
+				--oc-item-subtitle-min-height: 1.32rem;
 			}
 		`;
 	}
@@ -318,13 +329,13 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			wrapper.setAttribute("data-span-rows-mobile", "2");
 		} else if (kind === "collection") {
 			wrapper.setAttribute("data-span-cols", "2");
+			wrapper.setAttribute("data-span-rows", "2");
+			wrapper.setAttribute("data-span-cols-mobile", "2");
+			wrapper.setAttribute("data-span-rows-mobile", "2");
+		} else {
+			wrapper.setAttribute("data-span-cols", "2");
 			wrapper.setAttribute("data-span-rows", "1");
 			wrapper.setAttribute("data-span-cols-mobile", "2");
-			wrapper.setAttribute("data-span-rows-mobile", "1");
-		} else {
-			wrapper.setAttribute("data-span-cols", "1");
-			wrapper.setAttribute("data-span-rows", "1");
-			wrapper.setAttribute("data-span-cols-mobile", "1");
 			wrapper.setAttribute("data-span-rows-mobile", "1");
 		}
 		wrapper.appendChild(this.createCard(entity));
@@ -352,6 +363,9 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			gap: "0.62rem",
 			squareCellsDesktop: false,
 		});
+		grid?.style.setProperty("--oc-layout-row-size-desktop", "13rem");
+		grid?.style.setProperty("--oc-layout-row-size-tablet", "11rem");
+		grid?.style.setProperty("--oc-layout-row-size-mobile", "10rem");
 		this.bindScrollDebug();
 		this.bindGridInteractions();
 	}
@@ -402,6 +416,9 @@ class OpenBrowserBrowseGridElement extends HTMLElement {
 			gap: "0.62rem",
 			squareCellsDesktop: false,
 		});
+		grid.style.setProperty("--oc-layout-row-size-desktop", "13rem");
+		grid.style.setProperty("--oc-layout-row-size-tablet", "11rem");
+		grid.style.setProperty("--oc-layout-row-size-mobile", "10rem");
 		this.bindScrollDebug();
 		this.bindGridInteractions();
 		for (const entity of entities) {

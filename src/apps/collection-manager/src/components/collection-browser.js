@@ -181,8 +181,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("role", "button");
 		wrapper.setAttribute("tabindex", "0");
 		wrapper.setAttribute("data-span-cols", "1");
-		wrapper.setAttribute("data-span-rows", "1");
-		wrapper.setAttribute("data-span-cols-mobile", "1");
+		wrapper.setAttribute("data-span-rows", "2");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
 		wrapper.setAttribute("data-span-rows-mobile", "1");
 
 		const card = document.createElement("oc-card-item");

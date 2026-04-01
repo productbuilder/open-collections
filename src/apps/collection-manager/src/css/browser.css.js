@@ -186,6 +186,7 @@ export const browserStyles = `
     display: grid;
     gap: 0.45rem;
     min-width: 0;
+    min-height: 0;
     align-content: start;
   }
 

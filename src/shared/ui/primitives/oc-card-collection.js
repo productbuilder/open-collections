@@ -75,6 +75,7 @@ class OcCardCollectionElement extends HTMLElement {
         open-collections-preview-summary-card {
           display: block;
           pointer-events: auto;
+          --oc-preview-row-height: 56px;
         }
       </style>
       <open-collections-preview-summary-card id="card"></open-collections-preview-summary-card>

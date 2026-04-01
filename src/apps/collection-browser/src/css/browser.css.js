@@ -130,11 +130,21 @@ export const browserStyles = `
   .browse-cell {
     display: block;
     min-width: 0;
+    height: 100%;
+    min-height: 0;
   }
 
   .browse-cell > oc-card-collections,
   .browse-cell > oc-card-collection,
   .browse-cell > oc-card-item {
     display: block;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .browse-cell.kind-item {
+    --oc-item-preview-ratio: 4 / 3;
+    --oc-item-title-min-height: 1.38rem;
+    --oc-item-subtitle-min-height: 1.32rem;
   }
 `;

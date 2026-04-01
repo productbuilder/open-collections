@@ -2,16 +2,19 @@ function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
 }
 
-function derivePreviewImages(items = [], max = 3) {
+function derivePreviewImages(items = [], max = Number.POSITIVE_INFINITY) {
 	const previews = [];
 	const list = Array.isArray(items) ? items : [];
+	const maxCount = Number.isFinite(Number(max))
+		? Math.max(0, Number(max))
+		: Number.POSITIVE_INFINITY;
 	for (const item of list) {
 		const previewUrl = deriveItemPreviewUrl(item);
 		if (!previewUrl) {
 			continue;
 		}
 		previews.push(previewUrl);
-		if (previews.length >= max) {
+		if (previews.length >= maxCount) {
 			break;
 		}
 	}
@@ -83,7 +86,7 @@ export function buildCollectionBrowseCardModels(
 			title: entry.label || "Collection",
 			subtitle: entry.description || "Select to browse this collection.",
 			countLabel: `${itemCount} item${itemCount === 1 ? "" : "s"}`,
-			previewImages: derivePreviewImages(entry.collection?.items || [], 3),
+			previewImages: derivePreviewImages(entry.collection?.items || []),
 			actionLabel: "Open",
 			actionValue: manifestUrl,
 			active:

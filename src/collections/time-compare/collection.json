@@ -1,7 +1,7 @@
 {
-  "id": "col-timemap-mvp-test",
-  "title": "TimeMap Collector MVP Test Collection",
-  "description": "Example dataset for validating Collector MVP vertical slice.",
+  "id": "d2bdd9cf-3437-4c81-bea1-8c146915a404",
+  "title": "Time Compare",
+  "description": "Time Compare Example",
   "items": [
     {
       "id": "c382975a-187c-4510-976c-2dc67be2a99e",

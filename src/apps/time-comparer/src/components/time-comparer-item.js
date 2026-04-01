@@ -1,5 +1,12 @@
 import "./time-comparer.js";
 
+const DEMO_COMPARE_IMAGES = {
+	pastSrc:
+		"https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/1280px-OSIRIS_Mars_true_color.jpg",
+	presentSrc:
+		"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Blue_Marble_2002.png/1280px-Blue_Marble_2002.png",
+};
+
 function resolveImageUrl(item) {
 	return (
 		String(item?.media?.url || "").trim() ||
@@ -32,11 +39,38 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 	resolveCompareTargets() {
 		const item = this.model.item || {};
 		const items = Array.isArray(this.model.items) ? this.model.items : [];
-		const pastId = String(item?.compare?.pastItemId || "").trim();
-		const presentId = String(item?.compare?.presentItemId || "").trim();
+		const compare = item?.compare || {};
+		const pastId = String(compare?.pastItemId || "").trim();
+		const presentId = String(compare?.presentItemId || "").trim();
 		const pastItem = items.find((entry) => entry.id === pastId) || null;
-		const presentItem = items.find((entry) => entry.id === presentId) || null;
+		const presentItem =
+			items.find((entry) => entry.id === presentId) || null;
 		return { pastItem, presentItem };
+	}
+
+	resolveCompareSources() {
+		const { pastItem, presentItem } = this.resolveCompareTargets();
+		const pastSrc = resolveImageUrl(pastItem);
+		const presentSrc = resolveImageUrl(presentItem);
+		const hasResolvedSources = Boolean(
+			pastItem && presentItem && pastSrc && presentSrc,
+		);
+		if (hasResolvedSources) {
+			return {
+				pastItem,
+				presentItem,
+				pastSrc,
+				presentSrc,
+				demoMode: false,
+			};
+		}
+		return {
+			pastItem,
+			presentItem,
+			pastSrc: DEMO_COMPARE_IMAGES.pastSrc,
+			presentSrc: DEMO_COMPARE_IMAGES.presentSrc,
+			demoMode: true,
+		};
 	}
 
 	applyView() {
@@ -50,19 +84,25 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		const item = this.model.item || {};
 		const settings = item.settings || {};
 		title.textContent = item.title || item.id || "Time comparer";
-		const { pastItem, presentItem } = this.resolveCompareTargets();
-		const pastSrc = resolveImageUrl(pastItem);
-		const presentSrc = resolveImageUrl(presentItem);
+		const { pastItem, presentItem, pastSrc, presentSrc, demoMode } =
+			this.resolveCompareSources();
 		comparer.setAttribute("past-src", pastSrc);
 		comparer.setAttribute("present-src", presentSrc);
 		comparer.setAttribute("past-label", settings.pastLabel || "Past");
-		comparer.setAttribute("present-label", settings.presentLabel || "Present");
-		comparer.setAttribute("show-labels", settings.showLabels === false ? "false" : "true");
+		comparer.setAttribute(
+			"present-label",
+			settings.presentLabel || "Present",
+		);
+		comparer.setAttribute(
+			"show-labels",
+			settings.showLabels === false ? "false" : "true",
+		);
 		const split = Number(settings.initialSplit);
 		comparer.split = Number.isFinite(split) ? split : 0.5;
 
-		if (!pastItem || !presentItem || !pastSrc || !presentSrc) {
-			note.textContent = "Missing linked past/present image items or media URLs.";
+		if (demoMode) {
+			note.textContent =
+				"Using demo images for testing. Linked past/present image items or media URLs are missing.";
 			return;
 		}
 		note.textContent = `Comparing ${pastItem.title || pastItem.id} and ${presentItem.title || presentItem.id}.`;
@@ -86,7 +126,10 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 }
 
 if (!customElements.get("oc-time-comparer-item")) {
-	customElements.define("oc-time-comparer-item", OpenCollectionsTimeComparerItemElement);
+	customElements.define(
+		"oc-time-comparer-item",
+		OpenCollectionsTimeComparerItemElement,
+	);
 }
 
 export { OpenCollectionsTimeComparerItemElement };

@@ -48,26 +48,25 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 
 	resolveCompareSources() {
 		const { pastItem, presentItem } = this.resolveCompareTargets();
-		const pastSrc = resolveImageUrl(pastItem);
-		const presentSrc = resolveImageUrl(presentItem);
-		const hasResolvedSources = Boolean(
-			pastItem && presentItem && pastSrc && presentSrc,
-		);
-		if (hasResolvedSources) {
-			return {
-				pastItem,
-				presentItem,
-				pastSrc,
-				presentSrc,
-				demoMode: false,
-			};
+		const resolvedPastUrl = resolveImageUrl(pastItem);
+		const resolvedPresentUrl = resolveImageUrl(presentItem);
+
+		let pastSrc = resolvedPastUrl;
+		let presentSrc = resolvedPresentUrl;
+		let demoMode = false;
+
+		if (!pastSrc || !presentSrc) {
+			demoMode = true;
+			pastSrc = DEMO_PAST;
+			presentSrc = DEMO_PRESENT;
 		}
+
 		return {
 			pastItem,
 			presentItem,
-			pastSrc: DEMO_PAST,
-			presentSrc: DEMO_PRESENT,
-			demoMode: true,
+			pastSrc,
+			presentSrc,
+			demoMode,
 		};
 	}
 
@@ -84,8 +83,8 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		title.textContent = item.title || item.id || "Time comparer";
 		const { pastItem, presentItem, pastSrc, presentSrc, demoMode } =
 			this.resolveCompareSources();
-		comparer.setAttribute("past-src", pastSrc);
-		comparer.setAttribute("present-src", presentSrc);
+		comparer.pastSrc = pastSrc;
+		comparer.presentSrc = presentSrc;
 		comparer.setAttribute("past-label", settings.pastLabel || "Past");
 		comparer.setAttribute(
 			"present-label",

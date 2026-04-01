@@ -43,6 +43,7 @@ function renderShell(shadowRoot) {
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 
 				<open-collections-action-row
+					id="connectionsEntry"
 					data-account-entry="connections"
 					title="Connections"
 					subtitle="Connection management has moved to Connect."
@@ -237,10 +238,15 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	applyRuntimePresentation() {
+		const isEmbedded = this.isEmbeddedRuntime();
 		this.toggleAttribute(
 			"data-app-presentation-embedded",
-			this.isEmbeddedRuntime(),
+			isEmbedded,
 		);
+		this.dom?.connectionsEntry?.classList.toggle("is-hidden", isEmbedded);
+		if (isEmbedded && this.state.activePage === "connections") {
+			this.setActivePage("root");
+		}
 	}
 
 	cacheDom() {
@@ -250,6 +256,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			entryButtons: Array.from(
 				this.shadow.querySelectorAll("[data-account-entry]"),
 			),
+			connectionsEntry: this.shadow.getElementById("connectionsEntry"),
 			backButtons: [
 				this.shadow.getElementById("accountBackBtn"),
 				this.shadow.getElementById("settingsBackBtn"),
@@ -294,9 +301,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			button.addEventListener("click", () => {
 				const page = button.dataset.accountEntry || "";
 				if (page === "connections" && this.isEmbeddedRuntime()) {
-					if (!this.requestConnectNavigation()) {
-						this.setActivePage("connections");
-					}
+					this.requestConnectNavigation();
 					return;
 				}
 				if (page) {
@@ -462,9 +467,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			? pageId
 			: "root";
 		if (nextPage === "connections" && this.isEmbeddedRuntime()) {
-			if (this.requestConnectNavigation()) {
-				return;
-			}
+			this.requestConnectNavigation();
+			return;
 		}
 		if (nextPage !== "connections") {
 			this.setConnectionsViewState("list");

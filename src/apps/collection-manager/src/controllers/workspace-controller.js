@@ -746,6 +746,11 @@ export async function restoreRememberedSources(app) {
 		if (fallbackSources.length === 0) {
 			return;
 		}
+		try {
+			app.connectionsRuntime.persistSources(fallbackSources);
+		} catch (_error) {
+			// Ignore storage failures in restricted/private browser modes.
+		}
 		setSessionConnectionSources(fallbackSources);
 		app.state.sources = app.sortSourcesForDisplay(fallbackSources);
 		app.state.assets = [];

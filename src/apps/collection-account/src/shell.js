@@ -205,6 +205,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.setActivePage("root");
 		this.renderConnectionsListPanel();
 		this.restoreRememberedSources();
+		void this.ensureStarterExampleConnection();
 		this._unsubscribeSessionConnectionSources =
 			subscribeSessionConnectionSources((sources) => {
 				this.handleSessionConnectionSourcesChanged(sources);

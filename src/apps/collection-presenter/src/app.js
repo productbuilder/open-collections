@@ -56,8 +56,6 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			items: [],
 			presentationItems: [],
 			viewerItemId: "",
-			statusText: "Loading presentations…",
-			statusTone: "neutral",
 			loading: true,
 			createFlow: {
 				open: false,
@@ -87,8 +85,6 @@ class OpenCollectionsPresenterElement extends BaseElement {
 
 	async loadPresentations() {
 		this.state.loading = true;
-		this.state.statusText = "Loading presentations…";
-		this.state.statusTone = "neutral";
 		this.render();
 		try {
 			const response = await fetch(DEFAULT_PRESENTATIONS_URL);
@@ -104,17 +100,10 @@ class OpenCollectionsPresenterElement extends BaseElement {
 			this.state.collection = collection;
 			this.state.items = items;
 			this.state.presentationItems = presentationItems;
-			this.state.statusText =
-				presentationItems.length > 0
-					? `${presentationItems.length} presentation app${presentationItems.length === 1 ? "" : "s"} available.`
-					: "No presentation apps in this collection yet.";
-			this.state.statusTone = presentationItems.length > 0 ? "ok" : "warn";
-		} catch (error) {
+		} catch {
 			this.state.collection = null;
 			this.state.items = [];
 			this.state.presentationItems = [];
-			this.state.statusText = error instanceof Error ? error.message : "Could not load presentations.";
-			this.state.statusTone = "warn";
 		} finally {
 			this.state.loading = false;
 			this.render();
@@ -482,10 +471,6 @@ class OpenCollectionsPresenterElement extends BaseElement {
 		if (this.state.collection && Array.isArray(this.state.collection.items)) {
 			this.state.collection.items = [...this.state.items];
 		}
-		this.state.statusText = isEditing
-			? `Updated presentation app: ${savedItem.title}`
-			: `Saved presentation app: ${savedItem.title}`;
-		this.state.statusTone = "ok";
 		this.closeCreateFlow();
 	}
 

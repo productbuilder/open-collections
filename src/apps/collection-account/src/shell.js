@@ -209,7 +209,6 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			subscribeSessionConnectionSources((sources) => {
 				this.handleSessionConnectionSourcesChanged(sources);
 			});
-		void this.ensureStarterExampleConnection();
 	}
 
 	disconnectedCallback() {

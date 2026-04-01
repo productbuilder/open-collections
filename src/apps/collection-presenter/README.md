@@ -20,6 +20,10 @@ The first iteration is intentionally a scaffold. It includes presenter-oriented 
 
 Each section is marked as scaffold-only so future modules can replace these placeholders incrementally.
 
+## Product model reference
+
+- See `/docs/architecture/present-app-model.md` for the intended Present product and UX model (grid-based presentation items, template picker, configuration flow, and viewer behavior).
+
 ## Relationship to `app-shell`
 
 This app is designed to be mounted as the **Present** section inside `app-shell`.

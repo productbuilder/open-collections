@@ -17,7 +17,7 @@ export const presenterShellStyles = `
 
   .oc-app-viewport {
     min-height: 100%;
-    padding: 0 var(--oc-space-4) var(--oc-space-3);
+    padding: var(--oc-space-3) var(--oc-space-4);
   }
 
   .presenter-panel-wrap {
@@ -186,7 +186,7 @@ export const presenterShellStyles = `
   @media (max-width: 760px) {
     .oc-app-viewport {
       padding:
-        0 var(--oc-space-3)
+        var(--oc-space-3) var(--oc-space-3)
         calc(var(--oc-space-3) + var(--oc-layout-safe-bottom));
     }
   }

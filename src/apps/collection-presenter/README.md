@@ -2,15 +2,17 @@
 
 Open Collections Presenter is the dedicated **Present** app mounted inside `app-shell`.
 
-## MVP status (grid-based Present surface + create flow)
+## MVP status (grid-based Present surface + create/edit flow)
 
 The first MVP now provides a dedicated presentation area with:
 
 - a Present page header
 - a panel toolbar with an **Add app** action
 - a responsive grid of saved presentation items
+- richer `time-comparer` card metadata (title, type badge, descriptive summary, actionable card controls)
 - dialog/viewer opening behavior for selected presentation items
 - a template picker and guided create flow for `time-comparer`
+- guided edit flow for existing `time-comparer` items (reuses the same step UI as create)
 
 ## Current data source
 
@@ -47,6 +49,17 @@ For `presentationType: "time-comparer"`, the viewer renders `oc-time-comparer-it
 
 Saving creates a new in-memory presentation item in the loaded presentations model and refreshes the Present grid immediately.
 
+## Edit app action (MVP scaffold)
+
+`time-comparer` cards now include an **Edit** action. The edit path uses the same four-step wizard UI as create:
+
+1. preload current compare selections and settings
+2. adjust past/present source images
+3. update labels + split + show-labels setting
+4. review and save changes
+
+Saving in edit mode updates the existing in-memory presentation item and refreshes the grid.
+
 ### Validation included in MVP
 
 - requires selecting both image items
@@ -57,11 +70,11 @@ Saving creates a new in-memory presentation item in the loaded presentations mod
 
 - template picker only supports `time-comparer`
 - created items are saved to the app's current in-memory collection model (not persisted back to disk in this MVP)
-- editing existing presentation items is future work
+- edited items are saved to the same in-memory collection model (no disk persistence in this MVP)
 
 ## Next recommended step
 
-Add persistence for newly created presentation items (for example OPFS/local draft save path aligned with manager/browser flows), then introduce edit flow reuse for existing items.
+Add persistence for created/edited presentation items (for example OPFS/local draft save path aligned with manager/browser flows), then extend richer preview composition (for example explicit split-preview thumbnails).
 
 ## Entry
 

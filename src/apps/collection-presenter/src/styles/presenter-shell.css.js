@@ -48,6 +48,44 @@ export const presenterShellStyles = `
   .presenter-cell {
     display: block;
     min-width: 0;
+    padding-bottom: var(--oc-space-1);
+  }
+
+  .presenter-card-meta {
+    margin-top: var(--oc-space-1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--oc-space-1);
+    font-size: 0.74rem;
+    color: var(--oc-text-muted);
+  }
+
+  .presenter-type-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--oc-border-muted);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    color: var(--oc-text-primary);
+    background: var(--oc-bg-subtle);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: 0.68rem;
+  }
+
+  .presenter-card-id {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .presenter-card-actions {
+    margin-top: var(--oc-space-1);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--oc-space-1);
   }
 
   .btn {

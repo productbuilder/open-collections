@@ -7,7 +7,9 @@ import {
 	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 	createConnectionsRuntime,
 	createCredentialStore,
+	getSessionConnectionSources,
 	makeConnectionId,
+	subscribeSessionConnectionSources,
 	setSessionConnectionSources,
 	uniqueConnectionsForDisplay,
 } from "../../../shared/account/index.js";
@@ -201,7 +203,18 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.setActivePage("root");
 		this.renderConnectionsListPanel();
 		this.restoreRememberedSources();
+		this._unsubscribeSessionConnectionSources =
+			subscribeSessionConnectionSources((sources) => {
+				this.handleSessionConnectionSourcesChanged(sources);
+			});
 		void this.ensureStarterExampleConnection();
+	}
+
+	disconnectedCallback() {
+		if (typeof this._unsubscribeSessionConnectionSources === "function") {
+			this._unsubscribeSessionConnectionSources();
+		}
+		this._unsubscribeSessionConnectionSources = null;
 	}
 
 	isEmbeddedRuntime() {
@@ -528,6 +541,39 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		return (
 			this.state.sources.find((source) => source.id === sourceId) || null
 		);
+	}
+
+	handleSessionConnectionSourcesChanged(sources = []) {
+		if (!Array.isArray(sources) || sources.length === 0) {
+			return;
+		}
+		const incomingById = new Map();
+		for (const source of sources) {
+			const sourceId = String(source?.id || "").trim();
+			if (!sourceId) {
+				continue;
+			}
+			incomingById.set(sourceId, source);
+		}
+		if (incomingById.size === 0) {
+			return;
+		}
+		const existingById = new Map(
+			this.state.sources.map((entry) => [entry.id, entry]),
+		);
+		const nextSources = Array.from(incomingById.values()).map((source) => ({
+			...(existingById.get(source.id) || {}),
+			...source,
+		}));
+		this.state.sources = nextSources;
+		if (
+			!this.state.sources.some(
+				(source) => source.id === this.state.activeSourceId,
+			)
+		) {
+			this.state.activeSourceId = this.state.sources[0]?.id || "all";
+		}
+		this.renderConnectionsListPanel();
 	}
 
 	getSourceTitle(source) {
@@ -1004,7 +1050,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	restoreRememberedSources() {
-		const remembered = this.connectionsRuntime.restoreRememberedSources();
+		const sessionSources = getSessionConnectionSources();
+		const remembered = Array.isArray(sessionSources) && sessionSources.length
+			? sessionSources
+			: this.connectionsRuntime.restoreRememberedSources();
 		if (!remembered.length) {
 			return;
 		}

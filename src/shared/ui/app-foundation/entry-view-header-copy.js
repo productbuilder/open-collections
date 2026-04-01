@@ -16,7 +16,7 @@ export const ENTRY_VIEW_HEADERS = {
 		subtitle: "Build and run presentation apps from your collections.",
 	},
 	account: {
-		title: "Account",
+		title: "Account and settings",
 		subtitle: "Manage profile, preferences, and account access.",
 	},
 };

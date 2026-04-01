@@ -16,6 +16,10 @@
     {
       "id": "presentations",
       "manifest": "presentations/collection.json"
+    },
+    {
+      "id": "time-compare",
+      "manifest": "time-compare/collection.json"
     }
   ]
 }

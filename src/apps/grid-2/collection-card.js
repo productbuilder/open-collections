@@ -66,13 +66,23 @@ class Grid2CollectionCardElement extends HTMLElement {
           background:linear-gradient(180deg, #f7f5ff, #fff); padding:12px;
           display:grid; grid-template-rows:auto auto 1fr auto; gap:8px; cursor:pointer;
         }
-        h3 { margin:0; font-size:0.95rem; color:#1f2937; }
-        .subtitle { margin:0; color:#6b7280; font-size:0.75rem; }
-        .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-        .preview { border:1px solid #d8d0f0; border-radius:8px; height:48px; overflow:hidden; background:#f1ecff; }
+        h3 { margin:0; font-size:0.91rem; color:#1f2937; }
+        .subtitle { margin:0; color:#768093; font-size:0.72rem; }
+        .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:2px; }
+        .preview { border:1px solid #d3caef; border-radius:8px; height:52px; overflow:hidden; background:#f1ecff; }
         .preview img { width:100%; height:100%; object-fit:cover; display:block; }
         .placeholder { background:linear-gradient(120deg, #ece7ff, #f7f3ff); }
-        .foot { font-size:0.72rem; color:#5f4d90; display:flex; justify-content:space-between; }
+        .foot {
+          font-size:0.71rem;
+          color:#5f4d90;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:8px;
+          border-top:1px solid #e3dcf7;
+          padding-top:8px;
+          min-height:28px;
+        }
       </style>
       <article class="card" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <h3>${title}</h3>

@@ -539,7 +539,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!deleteSelectedBtn ||
 			!clearSelectionBtn ||
 			!publishBtn ||
-			!addTimeComparerBtn
 			!managerModeToggle
 		) {
 			return;
@@ -569,7 +568,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.model.currentLevel === "collections"
 				? "Add collection"
 				: "Add item";
-		addTimeComparerBtn.hidden = this.model.currentLevel !== "items";
+		if (addTimeComparerBtn) {
+			addTimeComparerBtn.hidden = this.model.currentLevel !== "items";
+		}
 		viewToggle.setAttribute("mode", this.getCurrentViewMode());
 		const managerMode = this.getManagerMode();
 		managerModeToggle

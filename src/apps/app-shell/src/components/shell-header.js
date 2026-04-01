@@ -1,6 +1,7 @@
 export const SHELL_SECTIONS = [
 	{ key: "browse", label: "Browse", icon: "search" },
 	{ key: "collect", label: "Collect", icon: "add" },
+	{ key: "connect", label: "Connect", icon: "link" },
 	{ key: "present", label: "Present", icon: "play_arrow" },
 	{ key: "account", label: "Account", icon: "account_circle" },
 ];
@@ -8,6 +9,7 @@ export const SHELL_SECTIONS = [
 const ICON_PATHS = {
 	search: '<circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path>',
 	add: '<path d="M12 5v14M5 12h14"></path>',
+	link: '<path d="M10 13.5 8.5 15a3 3 0 1 1-4.2-4.2L6 9.1M14 10.5 15.5 9a3 3 0 1 1 4.2 4.2L18 14.9M8.8 12.2l6.4-.4"></path>',
 	play_arrow:
 		'<path d="M8 6v12l10-6-10-6Z" fill="currentColor" stroke="none"></path>',
 	account_circle:

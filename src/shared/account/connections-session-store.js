@@ -67,6 +67,7 @@ export function subscribeSessionConnectionSources(listener) {
 		return () => {};
 	}
 	listeners.add(listener);
+	listener(getSessionConnectionSources());
 	return () => {
 		listeners.delete(listener);
 	};

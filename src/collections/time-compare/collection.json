@@ -1,0 +1,43 @@
+{
+  "id": "col-timemap-mvp-test",
+  "title": "TimeMap Collector MVP Test Collection",
+  "description": "Example dataset for validating Collector MVP vertical slice.",
+  "items": [
+    {
+      "id": "c382975a-187c-4510-976c-2dc67be2a99e",
+      "title": "Reichstag (Tiergarten)",
+      "media": {
+        "type": "image",
+        "url": "https://interaktiv.morgenpost.de/berlin-1945-2015/img/1945/reichstag.jpg",
+        "thumbnailUrl": "https://interaktiv.morgenpost.de/berlin-1945-2015/img/1945/reichstag.jpg"
+      },
+      "license": "",
+      "description": "Reichstag",
+      "creator": "Georgiy Samsonow",
+      "date": "1945",
+      "location": "Berlin",
+      "attribution": "",
+      "source": "https://interaktiv.morgenpost.de/berlin-1945-2015/",
+      "tags": ["war"],
+      "include": true
+    },
+	{
+      "id": "cf9bb7f1-3471-4945-ad3f-bed00f5de253",
+      "title": "Reichstag (Tiergarten)",
+      "media": {
+        "type": "image",
+        "url": "https://interaktiv.morgenpost.de/berlin-1945-2015/img/today/color/reichstag.jpg",
+        "thumbnailUrl": "https://interaktiv.morgenpost.de/berlin-1945-2015/img/today/color/reichstag.jpg"
+      },
+      "license": "",
+      "description": "Reichstag",
+      "creator": " Fabrizio Bensch",
+      "date": "2015",
+      "location": "Berlin",
+      "attribution": "",
+      "source": "https://interaktiv.morgenpost.de/berlin-1945-2015/",
+      "tags": ["war"],
+      "include": true
+    }
+  ]
+}

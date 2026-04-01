@@ -1,3 +1,5 @@
+import { resolveItemPreviewUrl } from "../utils/preview-utils.js";
+
 function mergeCollectionEntry(entry, sourceId = "") {
 	if (!entry || typeof entry !== "object") {
 		return null;
@@ -302,12 +304,7 @@ export function renderAssets(app) {
 				(item) => item?.collectionId === collection.id,
 			);
 			const previewImages = collectionAssets
-				.map((item) =>
-					app.resolveItemForDisplay(item)?.media?.thumbnailUrl ||
-					item?.media?.thumbnailUrl ||
-					item?.media?.url ||
-					"",
-				)
+				.map((item) => resolveItemPreviewUrl(app.resolveItemForDisplay(item)))
 				.filter(Boolean)
 				.slice(0, 6);
 			return {
@@ -324,12 +321,7 @@ export function renderAssets(app) {
 				(item) => item?.sourceId === source.id,
 			);
 			const previewImages = sourceAssets
-				.map((item) =>
-					app.resolveItemForDisplay(item)?.media?.thumbnailUrl ||
-					item?.media?.thumbnailUrl ||
-					item?.media?.url ||
-					"",
-				)
+				.map((item) => resolveItemPreviewUrl(app.resolveItemForDisplay(item)))
 				.filter(Boolean)
 				.slice(0, 12);
 			return {
@@ -372,7 +364,7 @@ export function renderAssets(app) {
 			selectedItemIds: [],
 			openedCollectionId: app.state.openedCollectionId,
 			viewModes: app.state.browserViewModes,
-			managerMode: app.state.managerBrowseMode || "collections",
+			managerMode: app.state.managerBrowseMode || "sources",
 			onboarding: {
 				visible:
 					app.state.sources.length === 0 && collectionsWithPreview.length === 0,

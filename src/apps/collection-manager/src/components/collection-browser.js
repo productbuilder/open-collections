@@ -37,7 +37,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				collections: "cards",
 				items: "cards",
 			},
-			managerMode: "collections",
+			managerMode: "sources",
 			onboarding: {
 				visible: false,
 			},
@@ -79,7 +79,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		const mode = String(this.model.managerMode || "").trim();
 		return ["sources", "collections", "items"].includes(mode)
 			? mode
-			: "collections";
+			: "sources";
 	}
 
 	detectDesktopFileDropSupport() {
@@ -481,7 +481,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 	setManagerMode(mode) {
 		const normalizedMode = ["sources", "collections", "items"].includes(mode)
 			? mode
-			: "collections";
+			: "sources";
 		if (normalizedMode === this.getManagerMode()) {
 			return;
 		}

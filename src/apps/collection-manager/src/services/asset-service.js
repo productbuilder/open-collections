@@ -170,7 +170,10 @@ function fileNameFromPath(path = "") {
 
 export async function hydrateLocalSourceAssetPreviews(manager, sourceId) {
 	const source = manager.getSourceById(sourceId);
-	if (!source || source.providerId !== "local") {
+	if (
+		!source ||
+		(source.providerId !== "local" && source.providerId !== "example")
+	) {
 		return;
 	}
 	const provider = source.provider;

@@ -204,13 +204,16 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 	render() {
 		this.shadowRoot.innerHTML = `
       <style>
-        :host { display: block; }
+        :host {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
         * { box-sizing: border-box; }
         .frame {
           position: relative;
           width: 100%;
-          aspect-ratio: 16 / 9;
-          min-height: 240px;
+          height: 100%;
           border-radius: 12px;
           border: 1px solid #dbe3ec;
           background: #0f172a;
@@ -234,7 +237,7 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
         .divider {
           position: absolute;
           top: 0;
-          bottom: 0;
+          height: 100%;
           width: 1px;
           background: rgba(255, 255, 255, 0.92);
           transform: translateX(-50%);

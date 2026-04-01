@@ -1,5 +1,5 @@
 export const MANAGER_CONFIG = {
-	defaultLocalManifestPath: "/src/collections/collections.json",
+	defaultLocalManifestPath: "/src/collections/source.json",
 	defaultCollectionMeta: {
 		id: "col-mvp-export",
 		title: "Open Collections Manager Export",

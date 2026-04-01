@@ -307,8 +307,8 @@ class OpenCollectionsRegistryWidgetElement extends HTMLElement {
 			id: `demo-${Date.now()}`,
 			title: `Demo: ${titleFallback}`,
 			url,
-			type: url.endsWith("collections.json")
-				? "collections"
+			type: url.endsWith("source.json")
+				? "source"
 				: "collection",
 			addedAt: now,
 			status: url.includes("warn") ? "warning" : "valid",

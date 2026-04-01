@@ -358,7 +358,7 @@ export function createGithubProvider() {
 	}
 
 	async function ensureCollectionsIndexInitialized(rootFolderPath) {
-		const indexPath = joinRepoPath(rootFolderPath, "collections.json");
+		const indexPath = joinRepoPath(rootFolderPath, "source.json");
 		const existingIndexEntry = await fetchRepoContents(indexPath, {
 			allowNotFound: true,
 		});

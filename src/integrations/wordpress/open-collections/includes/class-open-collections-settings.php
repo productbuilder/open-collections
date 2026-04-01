@@ -72,7 +72,7 @@ class Open_Collections_Settings {
 		$this->add_field('media_route_segment', 'Media route segment');
 		$this->add_field('dcd_enabled', 'DCD enabled', 'checkbox');
 		$this->add_field('dcd_route_mode', 'DCD route mode', 'select', array(
-			'well-known' => 'Well-known: /.well-known/collections.json',
+			'well-known' => 'Well-known: /.well-known/source.json',
 			'custom' => 'Custom path',
 		));
 		$this->add_field('dcd_custom_path', 'DCD custom path');

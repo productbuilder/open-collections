@@ -8,7 +8,7 @@ const RECENT_MANIFEST_STORAGE_KEY =
 	"open-collections-browser:recent-manifest-urls:v1";
 const MAX_RECENT_MANIFEST_URLS = 8;
 const EMBEDDED_SOURCE_TYPE_COLLECTION = "collection.json";
-const EMBEDDED_SOURCE_TYPE_COLLECTIONS = "collections.json";
+const EMBEDDED_SOURCE_TYPE_SOURCE = "source.json";
 
 export function readRecentManifestUrls() {
 	try {
@@ -130,8 +130,8 @@ export async function hydrateRecentManifestUrls(app) {
 
 function normalizeEmbeddedSourceType(value) {
 	const sourceType = String(value || "").trim().toLowerCase();
-	return sourceType === EMBEDDED_SOURCE_TYPE_COLLECTIONS
-		? EMBEDDED_SOURCE_TYPE_COLLECTIONS
+	return sourceType === EMBEDDED_SOURCE_TYPE_SOURCE
+		? EMBEDDED_SOURCE_TYPE_SOURCE
 		: EMBEDDED_SOURCE_TYPE_COLLECTION;
 }
 
@@ -159,8 +159,8 @@ export function normalizeEmbeddedSourceCatalog(entries = []) {
 		const label = String(
 			entry.label ||
 				entry.title ||
-				(sourceType === EMBEDDED_SOURCE_TYPE_COLLECTIONS
-					? "Collections source"
+				(sourceType === EMBEDDED_SOURCE_TYPE_SOURCE
+					? "Source catalog"
 					: "Collection source"),
 		).trim();
 		normalized.push({

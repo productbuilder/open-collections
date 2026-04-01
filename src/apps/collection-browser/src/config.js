@@ -4,20 +4,20 @@ export const BROWSER_CONFIG = {
 		{
 			id: "example-collections",
 			label: "Example collections",
-			sourceType: "collections.json",
-			sourceUrl: "../../collections/collections.json",
+			sourceType: "source.json",
+			sourceUrl: "../../collections/source.json",
 		},
 		{
 			id: "collectie-hilversum",
 			label: "Collectie Hilversum",
-			sourceType: "collections.json",
-			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/collectie-hilversum/collections.json",
+			sourceType: "source.json",
+			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/collectie-hilversum/source.json",
 		},
 		{
 			id: "dudok-architectuur-centrum",
 			label: "Dudok Architectuur Centrum",
-			sourceType: "collections.json",
-			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/dudok-architectuur-centrum/collections.json",
+			sourceType: "source.json",
+			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/dudok-architectuur-centrum/source.json",
 		}
 		// {
 		// 	id: "city-photos",

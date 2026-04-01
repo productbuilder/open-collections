@@ -217,7 +217,7 @@ class Open_Collections_Embed {
 						'collection' => rest_url('open-collections/v1/collection.json'),
 						'item' => rest_url('open-collections/v1/items/{itemId}'),
 						'media' => rest_url('open-collections/v1/media/{path}'),
-						'dcd' => home_url('/.well-known/collections.json'),
+						'dcd' => home_url('/.well-known/source.json'),
 					),
 				),
 			)

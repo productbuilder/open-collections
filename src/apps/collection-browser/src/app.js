@@ -267,7 +267,7 @@ class TimemapBrowserElement extends ComponentBase {
 		this.state.viewMode = nextMode;
 		if (
 			nextMode === "collections" &&
-			this.state.sourceType === "collections.json"
+			this.state.sourceType === "source.json"
 		) {
 			this.state.selectedItemId = null;
 		}
@@ -392,7 +392,7 @@ class TimemapBrowserElement extends ComponentBase {
 		const allEntries = [];
 		for (const source of sources) {
 			const descriptor = await resolveEmbeddedSourceDescriptor(source);
-			if (descriptor.sourceType === "collections.json") {
+			if (descriptor.sourceType === "source.json") {
 				const entries = Array.isArray(descriptor.collections)
 					? descriptor.collections
 					: [];
@@ -425,12 +425,12 @@ class TimemapBrowserElement extends ComponentBase {
 
 	async buildEmbeddedSourceCard(source) {
 		const fallbackSubtitle =
-			source.sourceType === "collections.json"
+			source.sourceType === "source.json"
 				? "Multi-collection source"
 				: "Single collection source";
 		try {
 			const descriptor = await resolveEmbeddedSourceDescriptor(source);
-			if (descriptor.sourceType === "collections.json") {
+			if (descriptor.sourceType === "source.json") {
 				const collections = Array.isArray(descriptor.collections)
 					? descriptor.collections
 					: [];
@@ -572,7 +572,7 @@ class TimemapBrowserElement extends ComponentBase {
 		);
 		this.state.embeddedSources = configuredSources;
 		const multiCollectionSources = configuredSources.filter(
-			(source) => source.sourceType === "collections.json",
+			(source) => source.sourceType === "source.json",
 		);
 		this.state.embeddedSourceCards = multiCollectionSources.map((source) => ({
 			id: source.id,

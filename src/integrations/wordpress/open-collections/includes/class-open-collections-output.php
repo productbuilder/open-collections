@@ -281,6 +281,6 @@ class Open_Collections_Output {
 			return home_url($settings['dcd_custom_path']);
 		}
 
-		return home_url('/.well-known/collections.json');
+		return home_url('/.well-known/source.json');
 	}
 }

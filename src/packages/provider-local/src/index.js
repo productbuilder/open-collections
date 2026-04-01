@@ -12,10 +12,10 @@ import {
 	providerNotConnectedError,
 } from "../../provider-core/src/provider.js";
 
-const DEFAULT_SOURCE_PATH = "/src/collections/collections.json";
+const DEFAULT_SOURCE_PATH = "/src/collections/source.json";
 
 export function createLocalProvider() {
-	// Host model: selected directory handle = host root containing collections.json.
+	// Host model: selected directory handle = host root containing source.json.
 	// Each collection lives in its own child directory with collection.json and files beside it.
 	let connected = false;
 	let sourcePath = DEFAULT_SOURCE_PATH;
@@ -411,7 +411,7 @@ export function createLocalProvider() {
 		const loaded = [];
 		const indexJson = await readJsonFileIfExists(
 			rootDirectoryHandle,
-			"collections.json",
+			"source.json",
 		);
 		const indexCollections = Array.isArray(indexJson)
 			? indexJson
@@ -511,7 +511,7 @@ export function createLocalProvider() {
 	async function ensureCollectionsIndexInitialized() {
 		const existingIndex = await readJsonFileIfExists(
 			rootDirectoryHandle,
-			"collections.json",
+			"source.json",
 		);
 		if (existingIndex !== null) {
 			rootCollectionsTitle = String(existingIndex?.title || "").trim();
@@ -519,7 +519,7 @@ export function createLocalProvider() {
 		}
 		const initialTitle = rootDirectoryLabel || "Local host";
 		rootCollectionsTitle = initialTitle;
-		await writeJsonFile(rootDirectoryHandle, "collections.json", {
+		await writeJsonFile(rootDirectoryHandle, "source.json", {
 			title: initialTitle,
 			collections: [],
 		});
@@ -594,7 +594,7 @@ export function createLocalProvider() {
 				manifest: collection.manifestPath,
 			})),
 		};
-		await writeJsonFile(rootDirectoryHandle, "collections.json", payload);
+		await writeJsonFile(rootDirectoryHandle, "source.json", payload);
 	}
 
 	function providerItemIdFor(collectionId, manifestItemId) {

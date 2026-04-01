@@ -171,13 +171,13 @@
   }
 }</code></pre>
 						<p class="code-label">Example host-root structure</p>
-						<pre><code>/collections.json
+						<pre><code>/source.json
 /collections/rotterdam/collection.json
 /collections/rotterdam/123.json
 /collections/rotterdam/123.jpg
 /collections/rotterdam/123.thumb.jpg</code></pre>
 						<p>
-							Use <code>collections.json</code> as the host index,
+							Use <code>source.json</code> as the host index,
 							then keep each collection folder flat:
 							<code>collection.json</code> plus the files it
 							references.
@@ -367,7 +367,7 @@
 						<h2>8. Domain discovery (DCD)</h2>
 						<p>
 							DCD is a small file at
-							<code>/.well-known/collections.json</code> that
+							<code>/.well-known/source.json</code> that
 							declares which collections a domain considers
 							authoritative.
 						</p>

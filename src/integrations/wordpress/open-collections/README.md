@@ -48,7 +48,7 @@ This scaffold does not reimplement Collection Manager inside WordPress.
   - `/wp-json/open-collections/v1/items/{itemId}`
   - `/wp-json/open-collections/v1/media/{path}`
 - Optional DCD output:
-  - `/.well-known/collections.json`, or
+  - `/.well-known/source.json`, or
   - custom DCD path when configured
 
 ## Not implemented yet

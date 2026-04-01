@@ -504,8 +504,6 @@ class OpenCollectionsPresenterElement extends BaseElement {
 
 				<section class="oc-page presenter-panel-wrap">
 					<open-collections-panel-chrome
-						title="Presentation apps"
-						subtitle="Open a saved presentation app item in the viewer dialog."
 						status-label="${escapeHtml(this.state.statusText)}"
 						status-tone="${escapeHtml(this.state.statusTone)}"
 					>

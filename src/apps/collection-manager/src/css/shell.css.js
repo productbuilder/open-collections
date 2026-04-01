@@ -49,7 +49,6 @@ export const shellStyles = `
 
   .entry-view-header-wrap {
     padding: 1rem 1rem 0.75rem;
-    border-bottom: var(--oc-border-width-sm) solid var(--oc-border-panel);
     background: var(--oc-bg-shell);
   }
 

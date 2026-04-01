@@ -48,13 +48,35 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
 		return this.model.split;
 	}
 
+	set pastSrc(value) {
+		const next = String(value || "").trim();
+		if (next) {
+			this.setAttribute("past-src", next);
+			return;
+		}
+		this.removeAttribute("past-src");
+	}
+
+	get pastSrc() {
+		return this.model.pastSrc;
+	}
+
+	set presentSrc(value) {
+		const next = String(value || "").trim();
+		if (next) {
+			this.setAttribute("present-src", next);
+			return;
+		}
+		this.removeAttribute("present-src");
+	}
+
+	get presentSrc() {
+		return this.model.presentSrc;
+	}
+
 	syncModelFromAttributes() {
-		if (this.hasAttribute("past-src")) {
-			this.model.pastSrc = this.getAttribute("past-src") || "";
-		}
-		if (this.hasAttribute("present-src")) {
-			this.model.presentSrc = this.getAttribute("present-src") || "";
-		}
+		this.model.pastSrc = this.getAttribute("past-src") || "";
+		this.model.presentSrc = this.getAttribute("present-src") || "";
 		if (this.hasAttribute("past-label")) {
 			this.model.pastLabel = this.getAttribute("past-label") || "Past";
 		}
@@ -297,7 +319,7 @@ class OpenCollectionsTimeComparerElement extends HTMLElement {
         }
       </style>
       <div class="frame" id="sliderTrack">
-        <div id="emptyState" class="empty">Provide both past and present image URLs.</div>
+        <div id="emptyState" class="empty">No images available. Provide past and present image URLs or linked compare items.</div>
         <div class="image-layer">
           <img id="pastImage" alt="Past image" />
         </div>

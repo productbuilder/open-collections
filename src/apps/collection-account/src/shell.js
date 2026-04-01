@@ -25,7 +25,10 @@ import "../../../shared/ui/primitives/action-row.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
 import "./components/connection-detail-panel.js";
-import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
+import {
+	APP_LIFECYCLE_EVENTS,
+	APP_RUNTIME_MODES,
+} from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "./css/shell.css.js";
 
 function renderShell(shadowRoot) {
@@ -42,7 +45,7 @@ function renderShell(shadowRoot) {
 				<open-collections-action-row
 					data-account-entry="connections"
 					title="Connections"
-					subtitle="Manage local and remote folders for your collections."
+					subtitle="Connection management has moved to Connect."
 				>
 					<span slot="leading">${renderDriveFolderUploadIcon()}</span>
 				</open-collections-action-row>
@@ -290,6 +293,12 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.entryButtons?.forEach((button) => {
 			button.addEventListener("click", () => {
 				const page = button.dataset.accountEntry || "";
+				if (page === "connections" && this.isEmbeddedRuntime()) {
+					if (!this.requestConnectNavigation()) {
+						this.setActivePage("connections");
+					}
+					return;
+				}
 				if (page) {
 					this.setActivePage(page);
 				}
@@ -452,6 +461,11 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		const nextPage = ["connections", "settings"].includes(pageId)
 			? pageId
 			: "root";
+		if (nextPage === "connections" && this.isEmbeddedRuntime()) {
+			if (this.requestConnectNavigation()) {
+				return;
+			}
+		}
 		if (nextPage !== "connections") {
 			this.setConnectionsViewState("list");
 		}
@@ -469,6 +483,19 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			"is-hidden",
 			nextPage !== "settings",
 		);
+	}
+
+	requestConnectNavigation() {
+		const navigateEvent = new CustomEvent(APP_LIFECYCLE_EVENTS.NAVIGATE, {
+			detail: {
+				targetAppId: "collection-connector",
+				reason: "account-connections-entry",
+			},
+			bubbles: true,
+			composed: true,
+			cancelable: true,
+		});
+		return this.dispatchEvent(navigateEvent) === false;
 	}
 
 	showConnectionsListView() {

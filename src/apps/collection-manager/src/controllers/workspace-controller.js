@@ -162,54 +162,53 @@ function startBackgroundRememberedSourceRehydrate(
 	void app.refreshSourcesInBackground(sourceIdsToRefresh);
 }
 
-function ensureStarterExampleSourceFallback(app, sources = []) {
-	const normalizedSources = Array.isArray(sources) ? sources : [];
-	const hasExampleSource = normalizedSources.some(
-		(source) => source?.providerId === "example",
-	);
-	if (hasExampleSource) {
-		return normalizedSources;
-	}
-
+async function connectStarterExampleSource(app) {
 	const providerId = "example";
-	const providerLabel =
-		app.providerCatalog.find((provider) => provider.id === providerId)
-			?.label || "Built-in example collections";
-	const config = app.sanitizeSourceConfig(providerId, {});
-	const displayLabel = app.sourceDisplayLabelFor(
+	const config = app.connectionsRuntime.collectProviderConfig(
+		providerId,
+		{},
+		app.selectedLocalDirectoryHandle,
+	);
+	const result = await app.connectionsRuntime.connectSource({
 		providerId,
 		config,
-		providerLabel,
-	);
-	const detailLabel = app.sourceDetailLabelFor(
-		providerId,
-		config,
-		providerLabel,
-	);
-	return [
-		...normalizedSources,
-		{
-			id: makeSourceId(providerId),
-			providerId,
-			providerLabel,
-			displayLabel,
-			detailLabel,
-			label: detailLabel || displayLabel || providerLabel,
-			config,
-			capabilities:
-				app.providerFactories[providerId]?.getCapabilities?.() || {},
-			status:
-				"Built-in example collections are available. Connect your own source to refresh or publish.",
-			authMode: "public",
-			itemCount: 0,
-			provider: null,
-			needsReconnect: false,
-			needsCredentials: false,
-			isBuiltIn: true,
-			isRemovable: false,
-			lastPublishResult: null,
-		},
-	];
+		sources: [],
+	});
+	if (!result.ok) {
+		return { ok: false, message: result.message || "Connection failed." };
+	}
+	const source = { ...result.source, lastPublishResult: null };
+	const loaded = Array.isArray(result.loadedAssets) ? result.loadedAssets : [];
+	const normalized = app.normalizeSourceAssets(source, loaded);
+	const providerCollections = Array.isArray(result.providerResult?.collections)
+		? app.normalizeCollectionsFromProvider(result.providerResult.collections)
+		: null;
+	const collections =
+		providerCollections || app.buildCollectionsForSource(source, normalized);
+	const assignmentAwareCollections = collections.map((entry) => ({
+		...entry,
+		connectionId:
+			typeof entry.connectionId === "string"
+				? entry.connectionId.trim() || source.id
+				: source.id,
+	}));
+	const defaultCollectionId = assignmentAwareCollections[0]?.id || null;
+	const normalizedWithCollections = normalized.map((item) => ({
+		...item,
+		collectionId: item.collectionId || defaultCollectionId,
+		collectionLabel:
+			item.collectionLabel ||
+			assignmentAwareCollections.find(
+				(entry) => entry.id === (item.collectionId || defaultCollectionId),
+			)?.title ||
+			"",
+	}));
+	source.collections = assignmentAwareCollections;
+	source.selectedCollectionId = defaultCollectionId;
+	if (providerId === "example") {
+		await app.hydrateLocalSourceAssetPreviews(source.id);
+	}
+	return { ok: true, source, assets: normalizedWithCollections };
 }
 
 export function currentWorkspaceSnapshot(app) {
@@ -739,13 +738,15 @@ export async function restoreRememberedSources(app) {
 	}
 
 	if (restored.length === 0) {
-		const fallbackSources = ensureStarterExampleSourceFallback(
-			app,
-			restored,
-		);
-		if (fallbackSources.length === 0) {
+		const starterResult = await connectStarterExampleSource(app);
+		if (!starterResult.ok) {
+			app.setConnectionStatus(
+				starterResult.message || "Built-in example connection failed.",
+				"warn",
+			);
 			return;
 		}
+		const fallbackSources = [starterResult.source];
 		try {
 			app.connectionsRuntime.persistSources(fallbackSources);
 		} catch (_error) {
@@ -753,19 +754,21 @@ export async function restoreRememberedSources(app) {
 		}
 		setSessionConnectionSources(fallbackSources);
 		app.state.sources = app.sortSourcesForDisplay(fallbackSources);
-		app.state.assets = [];
+		app.state.assets = starterResult.assets;
 		app.state.selectedItemId = null;
 		app.state.selectedItemIds = [];
 		app.state.selectedCollectionIds = [];
 		app.state.activeSourceFilter = "all";
+		app.state.selectedCollectionId =
+			starterResult.source.selectedCollectionId || "all";
 		app.state.currentLevel = "collections";
 		app.state.openedCollectionId = null;
 		app.syncMetadataModeFromState();
 		app.closeMobileDetail();
 		app.refreshWorkingStatus();
 		app.setConnectionStatus(
-			"Built-in example connection ready.",
-			"neutral",
+			starterResult.source.status || "Built-in example connection ready.",
+			"ok",
 		);
 		app.renderSourcesList();
 		app.renderSourceFilter();

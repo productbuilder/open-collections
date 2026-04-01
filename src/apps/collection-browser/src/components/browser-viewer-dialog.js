@@ -170,6 +170,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			return;
 		}
 
+		body.classList.remove("is-time-comparer");
 		body.innerHTML = "";
 		const item = this.model.item;
 		if (!item) {
@@ -186,6 +187,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			String(item.presentationType || "").toLowerCase() ===
 			"time-comparer"
 		) {
+			body.classList.add("is-time-comparer");
 			const comparer = document.createElement("oc-time-comparer-item");
 			const compareItems = Array.isArray(item?.__collectionItems)
 				? item.__collectionItems
@@ -309,6 +311,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         * { box-sizing: border-box; }
         dialog {
           width: min(980px, 96vw);
+          height: min(96vh, 1100px);
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 12px;
           padding: 0;
@@ -316,9 +319,10 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         }
         dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
         .dialog-shell {
-          display: grid;
-          grid-template-rows: auto 1fr;
-          max-height: min(85vh, 760px);
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 0;
         }
         .dialog-header {
           padding: 0.75rem 0.9rem;
@@ -334,7 +338,20 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           align-items: center;
           gap: 0.45rem;
         }
-        .dialog-body { padding: 0.85rem; overflow: auto; }
+        .dialog-body {
+          padding: 0.85rem;
+          overflow: auto;
+          flex: 1;
+          min-height: 0;
+        }
+        .dialog-body.is-time-comparer {
+          display: flex;
+          overflow: hidden;
+        }
+        .dialog-body.is-time-comparer > oc-time-comparer-item {
+          flex: 1;
+          min-height: 0;
+        }
         .viewer-media-shell {
           width: 100%;
           height: min(64vh, 720px);
@@ -426,6 +443,14 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           fill: currentColor;
         }
         @media (max-width: 760px) {
+          dialog {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+            border-width: 0;
+          }
           .viewer-media-shell {
             height: min(56vh, 480px);
             min-height: 220px;

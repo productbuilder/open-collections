@@ -1,11 +1,9 @@
 import "./time-comparer.js";
 
-const DEMO_COMPARE_IMAGES = {
-	pastSrc:
-		"https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/1280px-OSIRIS_Mars_true_color.jpg",
-	presentSrc:
-		"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Blue_Marble_2002.png/1280px-Blue_Marble_2002.png",
-};
+const DEMO_PAST =
+	"https://upload.wikimedia.org/wikipedia/commons/3/3a/Lower_Manhattan_1931.jpg";
+const DEMO_PRESENT =
+	"https://upload.wikimedia.org/wikipedia/commons/a/a1/Lower_Manhattan_2013.jpg";
 
 function resolveImageUrl(item) {
 	return (
@@ -67,8 +65,8 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 		return {
 			pastItem,
 			presentItem,
-			pastSrc: DEMO_COMPARE_IMAGES.pastSrc,
-			presentSrc: DEMO_COMPARE_IMAGES.presentSrc,
+			pastSrc: DEMO_PAST,
+			presentSrc: DEMO_PRESENT,
 			demoMode: true,
 		};
 	}

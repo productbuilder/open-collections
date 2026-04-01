@@ -6,3 +6,4 @@ export * from "./storage-keys.js";
 
 export * from "./connections-runtime.js";
 export * from "./built-in-example-source.js";
+export * from "./connections-startup-runtime.js";

@@ -1,43 +1,46 @@
 # Open Collections Presenter App
 
-Open Collections Presenter is the dedicated **Present** app that will be mounted inside `app-shell`.
+Open Collections Presenter is the dedicated **Present** app mounted inside `app-shell`.
 
-## Purpose
+## MVP status (grid-based Present surface)
 
-- Provide a focused presentation-area app without shell-owned navigation chrome.
-- Host presenter-specific workflows in a clean, shell-compatible content surface.
-- Start with a clear scaffold for future presenter capabilities.
+The first MVP now provides a dedicated presentation area with:
 
-## Current placeholder status
+- a Present page header
+- a panel toolbar with an **Add app** action
+- a responsive grid of saved presentation items
+- dialog/viewer opening behavior for selected presentation items
 
-The first iteration is intentionally a scaffold. It includes presenter-oriented placeholder sections for:
+## Current data source
 
-- presentation mode
-- display mode
-- curated collection presentation
-- screen/device presentation settings
-- public exhibit/storytelling flows
+Present currently loads a dedicated local sample collection:
 
-Each section is marked as scaffold-only so future modules can replace these placeholders incrementally.
+- `/src/collections/presentations/collection.json`
 
-## Product model reference
+This collection includes one example `time-comparer` presentation item and its linked image items.
 
-- See `/docs/architecture/present-app-model.md` for the intended Present product and UX model (grid-based presentation items, template picker, configuration flow, and viewer behavior).
+## Presentation item model in MVP
 
-## Relationship to `app-shell`
+The MVP follows the existing repository shape already used by `time-comparer` integration:
 
-This app is designed to be mounted as the **Present** section inside `app-shell`.
+- `type: "presentation"`
+- `presentationType: "time-comparer"`
+- `compare` for linked source items (`pastItemId`, `presentItemId`)
+- `settings` for template options (`initialSplit`, labels, etc.)
 
-- `app-shell` is expected to own top-level navigation/chrome.
-- `collection-presenter` keeps its outer layout minimal and content-focused.
-- The app uses shared foundation primitives to stay visually aligned with shell sections.
+## Viewer behavior
 
-## Likely future presenter responsibilities
+Clicking a presentation card opens the existing viewer dialog pattern (`open-browser-viewer-dialog`).
 
-- scene and layout composition for public-facing collection experiences
-- display and playback controls for kiosk/screen contexts
-- curated storytelling flows and exhibit-ready publishing surfaces
-- presentation-specific settings and output modes
+For `presentationType: "time-comparer"`, the viewer renders `oc-time-comparer-item` and passes collection items for compare-target resolution.
+
+## Add app action (MVP)
+
+`Add app` is intentionally scaffolded in this MVP and currently updates status text with a placeholder next-step message.
+
+## Next recommended step
+
+Implement a minimal template picker + guided create flow that creates new draft presentation items and refreshes the Present grid.
 
 ## Entry
 

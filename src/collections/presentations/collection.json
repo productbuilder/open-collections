@@ -1,0 +1,52 @@
+{
+  "id": "presentations",
+  "title": "Presentations",
+  "description": "Sample saved presentation app items for the Present MVP surface.",
+  "items": [
+    {
+      "id": "item-city-then",
+      "title": "City square (archive)",
+      "description": "Historic city square photo used as the past image.",
+      "type": "image",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1015/1200/800",
+        "thumbnailUrl": "https://picsum.photos/id/1015/800/530"
+      }
+    },
+    {
+      "id": "item-city-now",
+      "title": "City square (today)",
+      "description": "Recent city square photo used as the present image.",
+      "type": "image",
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1040/1200/800",
+        "thumbnailUrl": "https://picsum.photos/id/1040/800/530"
+      }
+    },
+    {
+      "id": "presentation-time-comparer-001",
+      "type": "presentation",
+      "presentationType": "time-comparer",
+      "title": "Then and now comparison",
+      "description": "Compare two moments in time using the time-comparer template.",
+      "tags": ["presentation", "time-comparer"],
+      "compare": {
+        "pastItemId": "item-city-then",
+        "presentItemId": "item-city-now"
+      },
+      "settings": {
+        "pastLabel": "Then",
+        "presentLabel": "Now",
+        "initialSplit": 0.5,
+        "showLabels": true
+      },
+      "media": {
+        "type": "image",
+        "url": "https://picsum.photos/id/1040/1200/800",
+        "thumbnailUrl": "https://picsum.photos/id/1040/800/530"
+      }
+    }
+  ]
+}

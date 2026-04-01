@@ -153,7 +153,7 @@ export const appShellStyles = `
     z-index: 20;
 
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: stretch;
     gap: 0.35rem;
 
@@ -183,15 +183,15 @@ export const appShellStyles = `
     min-height: 3.2rem;
 
     display: inline-flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.32rem;
+    gap: 0.2rem;
 
     padding: 0.3rem 0.2rem;
     border: 0;
     border-radius: var(--oc-radius-md);
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     font-weight: 600;
   }
 

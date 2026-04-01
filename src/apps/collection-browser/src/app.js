@@ -708,9 +708,9 @@ class TimemapBrowserElement extends ComponentBase {
         .browser-header {
           background: var(--oc-browser-bg-card, #fffdfa);
           border-bottom: 1px solid var(--oc-browser-divider, #e2d8cd);
-          padding: 0.85rem 1rem 0.65rem;
+          padding: 1rem 1rem 0.75rem;
           display: grid;
-          gap: 0.6rem;
+          gap: 0.75rem;
         }
 
         .manifest {

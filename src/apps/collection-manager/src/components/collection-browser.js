@@ -520,9 +520,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			this.shadowRoot.getElementById("deleteSelectedBtn");
 		const clearSelectionBtn =
 			this.shadowRoot.getElementById("clearSelectionBtn");
-		const publishBtn = this.shadowRoot.getElementById(
-			"publishCollectionBtn",
-		);
 		const managerModeToggle =
 			this.shadowRoot.getElementById("managerModeToggle");
 		if (
@@ -531,8 +528,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!viewToggle ||
 			!selectionStatus ||
 			!deleteSelectedBtn ||
-			!clearSelectionBtn ||
-			!publishBtn
+			!clearSelectionBtn
 		) {
 			return;
 		}

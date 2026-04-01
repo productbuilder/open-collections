@@ -187,10 +187,14 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			"time-comparer"
 		) {
 			const comparer = document.createElement("oc-time-comparer-item");
-			comparer.update({
-				item,
-				items: this.model.item?.__collectionItems || [],
-			});
+			if (typeof comparer.update === "function") {
+				comparer.update({
+					item,
+					items: Array.isArray(item.__collectionItems)
+						? item.__collectionItems
+						: [],
+				});
+			}
 			body.appendChild(comparer);
 			return;
 		}

@@ -41,7 +41,10 @@ function renderShell(shadowRoot) {
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">
-			<section class="entry-view-header-wrap">
+			<section
+				class="entry-view-header-wrap"
+				id="accountEntryHeaderWrap"
+			>
 				<open-collections-section-header
 					id="accountEntryTitle"
 					heading-level="1"
@@ -261,6 +264,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 	cacheDom() {
 		this.dom = {
+			accountEntryHeaderWrap: this.shadow.getElementById(
+				"accountEntryHeaderWrap",
+			),
 			accountRootView: this.shadow.getElementById("accountRootView"),
 			accountStatus: this.shadow.getElementById("accountStatus"),
 			entryButtons: Array.from(
@@ -486,6 +492,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.state.activePage = nextPage;
 
 		this.dom.accountRootView?.classList.toggle(
+			"is-hidden",
+			nextPage !== "root",
+		);
+		this.dom.accountEntryHeaderWrap?.classList.toggle(
 			"is-hidden",
 			nextPage !== "root",
 		);

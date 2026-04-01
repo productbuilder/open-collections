@@ -32,7 +32,10 @@ function renderShell(shadowRoot) {
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">
-			<section class="entry-view-header-wrap">
+			<section
+				class="entry-view-header-wrap"
+				id="connectEntryHeaderWrap"
+			>
 				<open-collections-section-header
 					id="connectEntryTitle"
 					heading-level="1"
@@ -190,6 +193,9 @@ class OpenCollectionsConnectorElement extends HTMLElement {
 
 	cacheDom() {
 		this.dom = {
+			connectEntryHeaderWrap: this.shadow.getElementById(
+				"connectEntryHeaderWrap",
+			),
 			connectionsAddBtn: this.shadow.getElementById("connectionsAddBtn"),
 			connectionsOverviewView:
 				this.shadow.getElementById("connectionsOverviewView"),
@@ -343,6 +349,10 @@ class OpenCollectionsConnectorElement extends HTMLElement {
 		const nextView =
 			view === "add" ? "add" : view === "detail" ? "detail" : "list";
 		this.state.view = nextView;
+		this.dom.connectEntryHeaderWrap?.classList.toggle(
+			"is-hidden",
+			nextView !== "list",
+		);
 		this.dom.connectionsOverviewView?.classList.toggle(
 			"is-hidden",
 			nextView !== "list",

@@ -93,7 +93,7 @@ class OpenAppShellElement extends HTMLElement {
 		this._isBound = true;
 		this.shadow.addEventListener("click", (event) => {
 			const button =
-				event.target instanceof HTMLElement
+				event.target instanceof Element
 					? event.target.closest("button[data-section-key]")
 					: null;
 			const sectionKey = button?.dataset.sectionKey;

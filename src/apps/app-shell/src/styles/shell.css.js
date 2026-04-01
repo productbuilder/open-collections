@@ -76,6 +76,7 @@ export const appShellStyles = `
     padding: 0.45rem 0.55rem;
     cursor: pointer;
     white-space: nowrap;
+    touch-action: manipulation;
   }
 
   .shell-nav-icon {
@@ -99,9 +100,11 @@ export const appShellStyles = `
     outline-offset: 2px;
   }
 
-  .shell-nav-btn:hover {
-    border-color: #b6c4d2;
-    background: #f8fbff;
+  @media (hover: hover) and (pointer: fine) {
+    .shell-nav-btn:hover {
+      border-color: #b6c4d2;
+      background: #f8fbff;
+    }
   }
 
   .shell-nav-btn[aria-current="page"] {
@@ -193,6 +196,7 @@ export const appShellStyles = `
     border-radius: var(--oc-radius-md);
     font-size: 0.7rem;
     font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .shell-nav-btn[aria-current="page"] {

@@ -1,7 +1,7 @@
 export const SHELL_SECTIONS = [
+	{ key: "connect", label: "Connect", icon: "link" },
 	{ key: "browse", label: "Browse", icon: "search" },
 	{ key: "collect", label: "Collect", icon: "add" },
-	{ key: "connect", label: "Connect", icon: "link" },
 	{ key: "present", label: "Present", icon: "play_arrow" },
 	{ key: "account", label: "Account", icon: "account_circle" },
 ];

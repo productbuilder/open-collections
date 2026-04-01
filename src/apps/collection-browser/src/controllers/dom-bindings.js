@@ -1,5 +1,6 @@
 export function cacheDomElements(root) {
 	return {
+		browserHeader: root.getElementById("browserHeader"),
 		browserManifest: root.getElementById("browserManifest"),
 		browserHeaderStatus: root.getElementById("browserHeaderStatus"),
 		browserViewport: root.getElementById("browserViewport"),

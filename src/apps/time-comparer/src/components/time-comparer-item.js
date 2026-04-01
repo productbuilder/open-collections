@@ -1,7 +1,31 @@
 import "./time-comparer.js";
 
-const DEMO_PAST = "https://picsum.photos/id/1015/1200/800";
-const DEMO_PRESENT = "https://picsum.photos/id/1016/1200/800";
+const DEMO_SETS = {
+	heritage: {
+		id: "heritage-demo",
+		pastSrc: "https://picsum.photos/id/1039/1200/800",
+		presentSrc: "https://picsum.photos/id/1040/1200/800",
+	},
+	genericFallback: {
+		id: "generic-fallback-demo",
+		pastSrc: "https://picsum.photos/id/1015/1200/800",
+		presentSrc: "https://picsum.photos/id/1016/1200/800",
+	},
+};
+
+function resolveDemoSet() {
+	// TODO: Replace the heritage demo URLs with a curated collection-linked
+	// heritage pair when available, without changing compare rendering logic.
+	const preferredDemo = DEMO_SETS.heritage;
+	const technicalFallbackDemo = DEMO_SETS.genericFallback;
+	const hasPreferredPair =
+		Boolean(preferredDemo?.pastSrc) && Boolean(preferredDemo?.presentSrc);
+
+	if (hasPreferredPair) {
+		return preferredDemo;
+	}
+	return technicalFallbackDemo;
+}
 
 function resolveImageUrl(item) {
 	return (
@@ -55,8 +79,9 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 
 		if (!pastSrc || !presentSrc) {
 			demoMode = true;
-			pastSrc = DEMO_PAST;
-			presentSrc = DEMO_PRESENT;
+			const demoSet = resolveDemoSet();
+			pastSrc = demoSet.pastSrc;
+			presentSrc = demoSet.presentSrc;
 		}
 
 		return {
@@ -97,7 +122,7 @@ class OpenCollectionsTimeComparerItemElement extends HTMLElement {
 
 		if (demoMode) {
 			note.textContent =
-				"Using demo images for testing. Linked past/present image items or media URLs are missing.";
+				"Using demo images for testing. These are temporary sample images.";
 			return;
 		}
 		note.textContent = `Comparing ${pastItem.title || pastItem.id} and ${presentItem.title || presentItem.id}.`;

@@ -5,3 +5,4 @@ export * from "./connections-session-store.js";
 export * from "./storage-keys.js";
 
 export * from "./connections-runtime.js";
+export * from "./built-in-example-source.js";

@@ -14,6 +14,7 @@ import {
 	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
 	getSessionConnectionSources,
 	setSessionConnectionSources,
+	buildBuiltInExampleSourceRequest,
 } from "../../../../shared/account/index.js";
 
 const LEGACY_MANAGER_SOURCES_STORAGE_KEY = "timemap_manager_sources_v1";
@@ -164,16 +165,13 @@ function startBackgroundRememberedSourceRehydrate(
 
 async function connectStarterExampleSource(app) {
 	const providerId = "example";
-	const config = app.connectionsRuntime.collectProviderConfig(
-		providerId,
-		{},
-		app.selectedLocalDirectoryHandle,
+	const result = await app.connectionsRuntime.connectSource(
+		buildBuiltInExampleSourceRequest({
+			connectionsRuntime: app.connectionsRuntime,
+			selectedLocalDirectoryHandle: app.selectedLocalDirectoryHandle,
+			sources: [],
+		}),
 	);
-	const result = await app.connectionsRuntime.connectSource({
-		providerId,
-		config,
-		sources: [],
-	});
 	if (!result.ok) {
 		return { ok: false, message: result.message || "Connection failed." };
 	}

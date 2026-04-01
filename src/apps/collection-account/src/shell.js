@@ -12,6 +12,8 @@ import {
 	subscribeSessionConnectionSources,
 	setSessionConnectionSources,
 	uniqueConnectionsForDisplay,
+	buildBuiltInExampleSourceRequest,
+	isBuiltInExampleSource,
 } from "../../../shared/account/index.js";
 import { renderBackButton } from "../../../shared/components/back-button.js";
 import {
@@ -731,9 +733,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	async ensureStarterExampleConnection() {
-		const starterExampleSource = this.state.sources.find(
-			(source) =>
-				source.providerId === "example" && source.isBuiltIn !== false,
+		const starterExampleSource = this.state.sources.find((source) =>
+			isBuiltInExampleSource(source),
 		);
 		if (starterExampleSource) {
 			if (this.state.sources.length === 1) {
@@ -752,16 +753,13 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			return;
 		}
 
-		const config = this.connectionsRuntime.collectProviderConfig(
-			"example",
-			{},
-			this.selectedLocalDirectoryHandle,
+		const result = await this.connectionsRuntime.connectSource(
+			buildBuiltInExampleSourceRequest({
+				connectionsRuntime: this.connectionsRuntime,
+				selectedLocalDirectoryHandle: this.selectedLocalDirectoryHandle,
+				sources: this.state.sources,
+			}),
 		);
-		const result = await this.connectionsRuntime.connectSource({
-			providerId: "example",
-			config,
-			sources: this.state.sources,
-		});
 		if (!result.ok) {
 			this.setStatus(result.message || "Starter connection failed.", "warn");
 			return;

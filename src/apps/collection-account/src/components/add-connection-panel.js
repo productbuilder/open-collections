@@ -2,8 +2,11 @@ import { sourceManagerStyles } from "../../../collection-manager/src/css/source-
 import { renderBackButton } from "../../../../shared/components/back-button.js";
 import {
 	renderCloseIcon,
+	renderDriveFolderUploadIcon,
+	renderFolderIcon,
 	renderInfoIcon,
 } from "../../../../shared/components/icons.js";
+import "../../../../shared/ui/primitives/action-row.js";
 
 const DESKTOP_APP_URL =
 	"https://github.com/productbuilder/open-collections/tree/main/src/desktop/workbench";
@@ -23,6 +26,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 			supportsLocalFolderPicker: true,
 			connectionStatusText: "Not connected.",
 			connectionStatusTone: "neutral",
+			isConnecting: false,
 			localFolderStatusText: "No folder selected.",
 			localFolderStatusTone: "neutral",
 			configValues: {
@@ -72,7 +76,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
 		this.shadowRoot
 			.getElementById("addLocalFolderConnectionBtn")
-			?.addEventListener("click", () => {
+			?.addEventListener("action", () => {
 				if (!this.model.supportsLocalFolderPicker) {
 					this.openLocalFolderInfoDialog();
 					return;
@@ -97,7 +101,7 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 
 		this.shadowRoot
 			.getElementById("addRemoteConnectionBtn")
-			?.addEventListener("click", () => {
+			?.addEventListener("action", () => {
 				this.model.flowMode = "add";
 				this.model.repairProviderId = "";
 				this.model.addHostLevel = "remote-subtypes";
@@ -160,14 +164,22 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		this.shadowRoot
 			.getElementById("openStorageOptionsBtn")
 			?.addEventListener("click", () => {
-				this.dispatch("open-storage-options");
+				this.openStorageOptionsDialog();
 			});
 
 		this.shadowRoot
 			.getElementById("connectBtn")
 			?.addEventListener("click", () => {
+				if (this.model.isConnecting) {
+					return;
+				}
 				this.dispatch("connect-provider");
 			});
+	}
+
+	setBusy(isBusy = false) {
+		this.model.isConnecting = Boolean(isBusy);
+		this.renderProviderVisibility();
 	}
 
 	applyState() {
@@ -452,19 +464,24 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		}
 
 		if (connectBtn) {
-			connectBtn.textContent = isRepairFlow
-				? "Reconnect"
-				: "Add connection";
+			connectBtn.textContent = this.model.isConnecting
+				? isRepairFlow
+					? "Reconnecting..."
+					: "Connecting..."
+				: isRepairFlow
+					? "Reconnect"
+					: "Add connection";
 			connectBtn.disabled =
+				this.model.isConnecting ||
 				selected?.enabled === false ||
 				!["github", "s3"].includes(this.model.selectedProviderId);
 		}
 	}
 
 	renderRemoteFlow() {
+		const rootHeader = this.shadowRoot?.getElementById("rootHeader");
 		const rootActions = this.shadowRoot?.getElementById("rootActions");
 		const remoteFlow = this.shadowRoot?.getElementById("remoteFlow");
-		const backBtn = this.shadowRoot?.getElementById("remoteBackBtn");
 		const breadcrumb = this.shadowRoot?.getElementById(
 			"remoteFlowBreadcrumb",
 		);
@@ -476,9 +493,9 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		);
 		const configPanel = this.shadowRoot?.getElementById("providerConfig");
 		if (
+			!rootHeader ||
 			!rootActions ||
 			!remoteFlow ||
-			!backBtn ||
 			!breadcrumb ||
 			!subtypePanel ||
 			!providerPanel ||
@@ -490,38 +507,10 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		const inRoot =
 			this.model.addHostLevel === "root" &&
 			this.model.flowMode !== "repair";
+		rootHeader.classList.toggle("is-hidden", !inRoot);
 		rootActions.classList.toggle("is-hidden", !inRoot);
 		remoteFlow.classList.toggle("is-hidden", inRoot);
-		backBtn.classList.toggle("is-hidden", inRoot);
-
-		if (inRoot) {
-			breadcrumb.textContent = "";
-			return;
-		}
-
-		const subtitleByType = {
-			git: "Remote / Git repository / Provider",
-			s3: "Remote / Object storage / Provider",
-			domain: "Remote / Custom domain",
-		};
-		if (this.model.addHostLevel === "remote-subtypes") {
-			breadcrumb.textContent = "Remote";
-		} else if (
-			this.model.addHostLevel === "remote-config" &&
-			this.model.remoteSubtype === "git"
-		) {
-			breadcrumb.textContent =
-				"Remote / Git repository / GitHub configuration";
-		} else if (
-			this.model.addHostLevel === "remote-config" &&
-			this.model.remoteSubtype === "s3"
-		) {
-			breadcrumb.textContent =
-				"Remote / Object storage / S3-compatible configuration";
-		} else {
-			breadcrumb.textContent =
-				subtitleByType[this.model.remoteSubtype] || "Remote";
-		}
+		breadcrumb.textContent = "";
 
 		const showingSubtypes = this.model.addHostLevel === "remote-subtypes";
 		const showingProviders = this.model.addHostLevel === "remote-providers";
@@ -611,6 +600,33 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
 		dialog.removeAttribute("open");
 	}
 
+	openStorageOptionsDialog() {
+		const dialog = this.shadowRoot?.getElementById("storageOptionsDialog");
+		if (!dialog) {
+			return;
+		}
+		if (dialog.open) {
+			return;
+		}
+		if (typeof dialog.showModal === "function") {
+			dialog.showModal();
+			return;
+		}
+		dialog.setAttribute("open", "open");
+	}
+
+	closeStorageOptionsDialog() {
+		const dialog = this.shadowRoot?.getElementById("storageOptionsDialog");
+		if (!dialog || !dialog.open) {
+			return;
+		}
+		if (typeof dialog.close === "function") {
+			dialog.close();
+			return;
+		}
+		dialog.removeAttribute("open");
+	}
+
 	render() {
 		this.shadowRoot.innerHTML = `
       <style>
@@ -620,9 +636,49 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           align-items: center;
           flex-wrap: nowrap;
         }
+
+        .remote-flow-header {
+          align-items: center;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          gap: 0.5rem;
+          margin-bottom: 0.35rem;
+        }
+
+        .remote-flow-title {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .remote-flow-info {
+          margin-left: auto;
+          width: 1.8rem;
+          min-height: 1.8rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .connection-type-row {
+          width: 100%;
+        }
+
+        .connection-type-row [slot='secondary'] {
+          width: 1.8rem;
+          min-height: 1.8rem;
+        }
+
+        .connection-type-row .provider-card-info {
+          position: static;
+        }
+
+        .remote-flow-intro {
+          margin: 0 0 0.45rem;
+        }
       </style>
       <div class="source-manager">
-        <div class="dialog-actions add-connection-header">
+        <div id="rootHeader" class="dialog-actions add-connection-header">
           ${renderBackButton({ id: "backToConnectionsBtn" })}
           <h3 class="root-actions-title">Add connection</h3>
         </div>
@@ -632,29 +688,45 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
               <p class="config-section-title">Choose a connection type</p>
             </div>
             <div class="provider-list">
-              <div class="provider-card-wrap">
-                <button class="provider-card provider-card-has-info" id="addLocalFolderConnectionBtn" type="button">
-                  <div class="provider-card-label-row"><strong>Local folder</strong></div>
-                  <span class="panel-subtext">Pick a folder on this device as a writable local connection.</span>
-                </button>
-                <button class="icon-btn provider-card-info" id="openLocalFolderInfoBtn" type="button" aria-label="Local folder support details">
+              <open-collections-action-row
+                class="connection-type-row"
+                id="addLocalFolderConnectionBtn"
+                title="Local folder"
+                subtitle="Pick a folder on this device as a writable local connection."
+              >
+                <span slot="leading">${renderFolderIcon()}</span>
+                <button
+                  slot="secondary"
+                  class="icon-btn provider-card-info"
+                  id="openLocalFolderInfoBtn"
+                  type="button"
+                  aria-label="Local folder support details"
+                >
                   ${renderInfoIcon()}
                 </button>
-              </div>
+              </open-collections-action-row>
               <p id="localFolderSupportNote" class="panel-subtext provider-card-support-note is-hidden">Requires a supported browser or the desktop app.</p>
-              <button class="provider-card" id="addRemoteConnectionBtn" type="button">
-                <div class="provider-card-label-row"><strong>Remote</strong></div>
-                <span class="panel-subtext">Connect a remote publish target and choose a remote connection type next.</span>
-              </button>
+              <open-collections-action-row
+                class="connection-type-row"
+                id="addRemoteConnectionBtn"
+                title="Remote"
+                subtitle="Connect a remote publish target and choose a remote connection type next."
+              >
+                <span slot="leading">${renderDriveFolderUploadIcon()}</span>
+              </open-collections-action-row>
             </div>
           </div>
 
           <div id="remoteFlow" class="is-hidden">
-            <div class="dialog-actions">
+            <div class="dialog-actions remote-flow-header">
               ${renderBackButton({ id: "remoteBackBtn" })}
-              <button class="btn" id="openStorageOptionsBtn" type="button">Storage options</button>
+              <h3 class="remote-flow-title">Add remote connection</h3>
+              <button class="icon-btn remote-flow-info" id="openStorageOptionsBtn" type="button" aria-label="Storage options details">
+                ${renderInfoIcon()}
+              </button>
             </div>
-            <p id="remoteFlowBreadcrumb" class="panel-subtext"></p>
+            <p class="config-section-title remote-flow-intro">Choose a remote connection type</p>
+            <p id="remoteFlowBreadcrumb" class="panel-subtext is-hidden"></p>
             <div id="remoteSubtypeCatalog" class="provider-list is-hidden">
               <button class="provider-card" type="button" data-remote-subtype="git">
                 <div class="provider-card-label-row"><strong>Git repository</strong></div>
@@ -706,7 +778,6 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           </div>
         </div>
 
-        <p id="connectionStatus" class="panel-subtext">Not connected.</p>
       </div>
 
       <dialog id="localFolderInfoDialog" class="support-dialog" aria-label="Local folder support">
@@ -735,11 +806,43 @@ class OpenCollectionsAddConnectionPanelElement extends HTMLElement {
           </div>
         </div>
       </dialog>
+
+      <dialog id="storageOptionsDialog" class="support-dialog" aria-label="Storage options guidance">
+        <div class="dialog-shell">
+          <div class="dialog-header">
+            <h2 class="dialog-title">Storage options</h2>
+            <button class="icon-btn" id="closeStorageOptionsBtn" type="button" aria-label="Close storage options dialog">
+              ${renderCloseIcon()}
+            </button>
+          </div>
+          <div class="dialog-body">
+            <p class="panel-subtext">Recommended options for open hosting:</p>
+            <ul class="storage-list">
+              <li><strong>GitHub</strong> for open manifests and transparent version history.</li>
+              <li><strong>Cloudflare Pages / R2</strong> for static/browser delivery of JSON and media.</li>
+              <li><strong>S3-compatible storage</strong> for durable institutional publishing workflows.</li>
+            </ul>
+            <div class="dialog-actions">
+              <button class="btn" id="closeStorageOptionsBtnSecondary" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+      </dialog>
     `;
 		this.shadowRoot
 			.getElementById("closeLocalFolderInfoBtnSecondary")
 			?.addEventListener("click", () => {
 				this.closeLocalFolderInfoDialog();
+			});
+		this.shadowRoot
+			.getElementById("closeStorageOptionsBtn")
+			?.addEventListener("click", () => {
+				this.closeStorageOptionsDialog();
+			});
+		this.shadowRoot
+			.getElementById("closeStorageOptionsBtnSecondary")
+			?.addEventListener("click", () => {
+				this.closeStorageOptionsDialog();
 			});
 		this.renderLocalFolderCardState();
 	}

@@ -1,11 +1,10 @@
 import { browserStyles } from "../css/browser.css.js?v=20260322-titlebar-center";
 import "./view-toggle.js";
-import "./collection-card-grid.js";
 import "./collection-row-list.js";
-import "./item-card-grid.js";
 import "./item-row-list.js";
 import "../../../../shared/ui/panels/index.js";
 import "../../../../shared/ui/primitives/index.js";
+import { resolveItemPreviewUrl } from "../utils/preview-utils.js";
 import {
 	getPlatformType,
 	PLATFORM_TYPES,
@@ -22,30 +21,23 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.model = {
 			currentLevel: "collections",
 			viewportTitle: "Collections",
-			workingStatus: {
-				label: "Draft",
-				tone: "neutral",
-			},
 			assetCountText: "No assets loaded.",
 			collections: [],
 			items: [],
+			sourceCards: [],
 			selectedCollectionId: null,
 			selectedCollectionIds: [],
 			deletableSelectedCollectionCount: 0,
 			focusedItemId: null,
 			selectedItemIds: [],
+			openedCollectionId: null,
 			dropTargetActive: false,
 			desktopFileDropEnabled: true,
-			publishAction: {
-				label: "Publish collection",
-				visible: false,
-				disabled: true,
-				reason: "Select a collection to publish.",
-			},
 			viewModes: {
 				collections: "cards",
 				items: "cards",
 			},
+			managerMode: "collections",
 			onboarding: {
 				visible: false,
 			},
@@ -55,6 +47,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			workspaceContextText: "",
 			statusText: "No connections yet.",
 			statusTone: "neutral",
+			isLoading: false,
 		};
 	}
 
@@ -74,11 +67,201 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		);
 		this.renderFrame();
 		this.renderBody();
+		this.installScrollDiagnostics();
+		this.reportScrollDiagnostics("connected");
 		this.setDropTargetActive(this.model.dropTargetActive);
+	}
+
+	getManagerMode() {
+		if (this.model.currentLevel === "items") {
+			return "items";
+		}
+		const mode = String(this.model.managerMode || "").trim();
+		return ["sources", "collections", "items"].includes(mode)
+			? mode
+			: "collections";
 	}
 
 	detectDesktopFileDropSupport() {
 		return getPlatformType() !== PLATFORM_TYPES.CAPACITOR;
+	}
+
+	requiredFieldScore(item) {
+		const checks = [
+			Boolean(item?.id),
+			Boolean(item?.title),
+			Boolean(item?.media?.url),
+			Boolean(item?.license),
+		];
+		return `${checks.filter(Boolean).length}/${checks.length}`;
+	}
+
+	buildSourceGridCell(source = {}) {
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-source";
+		wrapper.dataset.actionType = "source";
+		wrapper.dataset.actionValue = source.id || "";
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "2");
+		wrapper.setAttribute("data-span-rows", "2");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-rows-mobile", "2");
+		const card = document.createElement("oc-card-collections");
+		card.update({
+			title: source.title || "Source",
+			subtitle: source.subtitle || "",
+			countLabel: source.countLabel || "",
+			previewRows: Array.isArray(source.previewRows) ? source.previewRows : [],
+			previewImages: Array.isArray(source.previewImages)
+				? source.previewImages
+				: [],
+			actionLabel: "Browse",
+			actionValue: source.id || "",
+			active: source.active === true,
+		});
+		wrapper.append(card);
+		return wrapper;
+	}
+
+	buildCollectionGridCell(collection = {}, selectedCollectionIds = new Set()) {
+		const isSelected = selectedCollectionIds.has(collection.id);
+		const isFocused = this.model.selectedCollectionId === collection.id;
+		const isUnassigned = collection.assignmentState === "unassigned";
+		const canAssign = (this.model.availableConnections || []).length > 0;
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-collection";
+		wrapper.dataset.actionType = "collection";
+		wrapper.dataset.actionValue = collection.id || "";
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "2");
+		wrapper.setAttribute("data-span-rows", "1");
+		wrapper.setAttribute("data-span-cols-mobile", "2");
+		wrapper.setAttribute("data-span-rows-mobile", "1");
+
+		const card = document.createElement("oc-card-collection");
+		card.update({
+			title: collection.title || collection.id || "Collection",
+			subtitle:
+				collection.assignmentLabel || "Select to browse this collection.",
+			countLabel: collection.countLabel || "",
+			previewImages: Array.isArray(collection.previewImages)
+				? collection.previewImages
+				: [],
+			actionLabel: "",
+			actionValue: collection.id || "",
+			active: isFocused || isSelected,
+		});
+
+		const controls = document.createElement("div");
+		controls.className = "browse-cell-controls";
+		controls.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true">
+				<input type="checkbox" data-select-collection-id="${collection.id || ""}" ${isSelected ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+			<button type="button" class="btn ${isUnassigned ? "btn-primary" : ""}" data-assign-id="${collection.id || ""}" ${canAssign ? "" : "disabled"}>
+				${isUnassigned ? "Assign connection" : "Reassign connection"}
+			</button>
+		`;
+
+		wrapper.append(card, controls);
+		return wrapper;
+	}
+
+	buildItemGridCell(item = {}, selectedItemIds = new Set()) {
+		const workspaceId = String(item.workspaceId || "").trim();
+		const hasMedia = Boolean(String(item?.media?.url || "").trim());
+		const isSelected = selectedItemIds.has(workspaceId);
+		const wrapper = document.createElement("article");
+		wrapper.className = "browse-cell kind-item";
+		wrapper.dataset.actionType = "item";
+		wrapper.dataset.actionValue = workspaceId;
+		wrapper.setAttribute("role", "button");
+		wrapper.setAttribute("tabindex", "0");
+		wrapper.setAttribute("data-span-cols", "1");
+		wrapper.setAttribute("data-span-rows", "1");
+		wrapper.setAttribute("data-span-cols-mobile", "1");
+		wrapper.setAttribute("data-span-rows-mobile", "1");
+
+		const card = document.createElement("oc-card-item");
+		card.update({
+			title: item.title || item.id || "Item",
+			subtitle: item.license ? `License: ${item.license}` : "",
+			countLabel: `Completeness ${this.requiredFieldScore(item)}`,
+			previewUrl: resolveItemPreviewUrl(item),
+			previewImages: [],
+			actionLabel: "Select",
+			actionValue: workspaceId,
+			active: false,
+			disabled: false,
+		});
+
+		const controls = document.createElement("div");
+		controls.className = "browse-cell-controls";
+		controls.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true">
+				<input type="checkbox" data-select-item-id="${workspaceId}" ${isSelected ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+			${
+				hasMedia
+					? `<button type="button" class="btn" data-open-id="${workspaceId}">View</button>`
+					: `<button type="button" class="btn" data-upload-id="${workspaceId}">Upload image</button>
+               <button type="button" class="btn" data-url-id="${workspaceId}">Use image URL</button>`
+			}
+		`;
+
+		wrapper.append(card, controls);
+		return wrapper;
+	}
+
+	renderCardGrid(browserScroll, managerMode) {
+		browserScroll.innerHTML =
+			`<div class="grid-host"><oc-grid id="managerGrid"></oc-grid></div>`;
+		const grid = browserScroll.querySelector("#managerGrid");
+		grid?.update({
+			mode: "grid",
+			columnsDesktop: 6,
+			columnsTablet: 4,
+			columnsMobile: 2,
+			gap: "0.62rem",
+		});
+
+		if (managerMode === "sources") {
+			for (const source of Array.isArray(this.model.sourceCards)
+				? this.model.sourceCards
+				: []) {
+				grid?.append(this.buildSourceGridCell(source));
+			}
+			return;
+		}
+
+		if (managerMode === "collections") {
+			const selectedCollectionIds = new Set(
+				Array.isArray(this.model.selectedCollectionIds)
+					? this.model.selectedCollectionIds
+					: [],
+			);
+			for (const collection of Array.isArray(this.model.collections)
+				? this.model.collections
+				: []) {
+				grid?.append(
+					this.buildCollectionGridCell(collection, selectedCollectionIds),
+				);
+			}
+			return;
+		}
+
+		const selectedItemIds = new Set(
+			Array.isArray(this.model.selectedItemIds)
+				? this.model.selectedItemIds
+				: [],
+		);
+		for (const item of Array.isArray(this.model.items) ? this.model.items : []) {
+			grid?.append(this.buildItemGridCell(item, selectedItemIds));
+		}
 	}
 
 	disconnectedCallback() {
@@ -86,6 +269,80 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			"change",
 			this.handleViewportChange,
 		);
+		this.removeScrollDiagnostics();
+	}
+
+	collectElementScrollState(element) {
+		if (!(element instanceof Element)) {
+			return null;
+		}
+		const style = window.getComputedStyle(element);
+		return {
+			id: element.id || "",
+			tag: element.tagName?.toLowerCase() || "",
+			className:
+				typeof element.className === "string" ? element.className : "",
+			overflowY: style.overflowY,
+			overflowX: style.overflowX,
+			clientHeight: element.clientHeight,
+			scrollHeight: element.scrollHeight,
+			scrollTop: element.scrollTop ?? 0,
+		};
+	}
+
+	collectAncestorStates(element, maxDepth = 6) {
+		const states = [];
+		let current = element instanceof Element ? element.parentElement : null;
+		let depth = 0;
+		while (current && depth < maxDepth) {
+			states.push(this.collectElementScrollState(current));
+			current = current.parentElement;
+			depth += 1;
+		}
+		return states.filter(Boolean);
+	}
+
+	reportScrollDiagnostics(trigger = "manual") {
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		const assetWrap = this.shadowRoot?.getElementById("assetWrap");
+		const panelShell = this.shadowRoot?.getElementById("panelShell");
+		const panelContent = panelShell?.shadowRoot?.querySelector(".panel-content");
+		const viewportPanel = this.shadowRoot?.querySelector(".viewport-panel");
+		const payload = {
+			trigger,
+			managerMode: this.getManagerMode(),
+			viewMode: this.getCurrentViewMode(),
+			scrollOwnerCandidate: this.collectElementScrollState(browserScroll),
+			assetWrap: this.collectElementScrollState(assetWrap),
+			viewportPanel: this.collectElementScrollState(viewportPanel),
+			panelContent: this.collectElementScrollState(panelContent),
+			ancestorsOfBrowserScroll: this.collectAncestorStates(browserScroll),
+		};
+		console.info("[collection-browser][scroll-diag]", payload);
+	}
+
+	installScrollDiagnostics() {
+		if (this._scrollDiagnosticsInstalled) {
+			return;
+		}
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		if (!browserScroll) {
+			return;
+		}
+		this._scrollDiagnosticsInstalled = true;
+		this._handleBrowserScroll = () => this.reportScrollDiagnostics("browserScroll:scroll");
+		browserScroll.addEventListener("scroll", this._handleBrowserScroll, {
+			passive: true,
+		});
+	}
+
+	removeScrollDiagnostics() {
+		const browserScroll = this.shadowRoot?.getElementById("browserScroll");
+		if (browserScroll && this._handleBrowserScroll) {
+			browserScroll.removeEventListener("scroll", this._handleBrowserScroll);
+		}
+		this._scrollDiagnosticsInstalled = false;
+		this._handleBrowserScroll = null;
 	}
 
 	bindEvents() {
@@ -125,11 +382,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				this.dispatch("add-collection");
 			}
 		});
-		this.shadowRoot
-			.getElementById("publishCollectionBtn")
-			?.addEventListener("click", () => {
-				this.dispatch("publish-collection");
-			});
 
 		this.shadowRoot
 			.getElementById("viewToggle")
@@ -153,16 +405,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 					return;
 				}
 				this.dispatch("clear-item-selection");
-			});
-
-		this.shadowRoot
-			.getElementById("imageFileInput")
-			?.addEventListener("change", (event) => {
-				const files = Array.from(event.target?.files || []);
-				if (files.length > 0) {
-					this.dispatch("files-selected", { files });
-				}
-				event.target.value = "";
 			});
 
 		const assetWrap = this.shadowRoot.getElementById("assetWrap");
@@ -221,22 +463,6 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		}
 	}
 
-	setPublishActionState(action = {}) {
-		this.model.publishAction = {
-			...this.model.publishAction,
-			...action,
-		};
-		this.renderFrame();
-	}
-
-	setWorkingStatus(status = {}) {
-		this.model.workingStatus = {
-			...this.model.workingStatus,
-			...status,
-		};
-		this.renderFrame();
-	}
-
 	getCurrentViewMode() {
 		const level =
 			this.model.currentLevel === "items" ? "items" : "collections";
@@ -256,6 +482,20 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		this.renderFrame();
 	}
 
+	setManagerMode(mode) {
+		const normalizedMode = ["sources", "collections", "items"].includes(mode)
+			? mode
+			: "collections";
+		if (normalizedMode === this.getManagerMode()) {
+			return;
+		}
+		this.model.managerMode = normalizedMode;
+		this.dispatch("manager-mode-change", { mode: normalizedMode });
+		this.renderFrame();
+		this.renderBody();
+		this.reportScrollDiagnostics(`manager-mode:${normalizedMode}`);
+	}
+
 	update(data = {}) {
 		const viewModes = data.viewModes
 			? { ...this.model.viewModes, ...data.viewModes }
@@ -270,6 +510,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		}
 		this.renderFrame();
 		this.renderBody();
+		this.reportScrollDiagnostics("update");
 		this.setDropTargetActive(this.model.dropTargetActive);
 	}
 
@@ -288,6 +529,8 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		);
 		const addTimeComparerBtn =
 			this.shadowRoot.getElementById("addTimeComparerBtn");
+		const managerModeToggle =
+			this.shadowRoot.getElementById("managerModeToggle");
 		if (
 			!panelShell ||
 			!addBtn ||
@@ -297,6 +540,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			!clearSelectionBtn ||
 			!publishBtn ||
 			!addTimeComparerBtn
+			!managerModeToggle
 		) {
 			return;
 		}
@@ -319,40 +563,23 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			}
 			panelShell.setAttribute("show-back", "true");
 		}
-		if (isCollectionsView && this.model.workingStatus?.label) {
-			panelShell.setAttribute(
-				"status-label",
-				this.model.workingStatus.label,
-			);
-			panelShell.setAttribute(
-				"status-tone",
-				this.model.workingStatus.tone || "neutral",
-			);
-		} else {
-			panelShell.removeAttribute("status-label");
-			panelShell.removeAttribute("status-tone");
-		}
+		panelShell.removeAttribute("status-label");
+		panelShell.removeAttribute("status-tone");
 		addBtn.textContent =
 			this.model.currentLevel === "collections"
 				? "Add collection"
 				: "Add item";
 		addTimeComparerBtn.hidden = this.model.currentLevel !== "items";
 		viewToggle.setAttribute("mode", this.getCurrentViewMode());
-		const publishAction = this.model.publishAction || {};
-		publishBtn.textContent = publishAction.label || "Publish collection";
-		publishBtn.hidden = publishAction.visible === false;
-		publishBtn.disabled = publishAction.disabled !== false;
-		const publishReason = publishAction.reason || "";
-		if (publishReason) {
-			publishBtn.title = publishReason;
-			publishBtn.setAttribute(
-				"aria-label",
-				`${publishBtn.textContent}. ${publishReason}`,
-			);
-		} else {
-			publishBtn.removeAttribute("title");
-			publishBtn.setAttribute("aria-label", publishBtn.textContent);
-		}
+		const managerMode = this.getManagerMode();
+		managerModeToggle
+			.querySelectorAll("button[data-manager-mode]")
+			.forEach((button) => {
+				const isActive =
+					button.getAttribute("data-manager-mode") === managerMode;
+				button.setAttribute("data-active", isActive ? "true" : "false");
+				button.setAttribute("aria-pressed", isActive ? "true" : "false");
+			});
 		const overlay = this.shadowRoot.getElementById("assetDropOverlay");
 		if (overlay) {
 			overlay.hidden = !this.model.desktopFileDropEnabled;
@@ -379,8 +606,22 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			deleteSelectedBtn.hidden = !showSelectionToolbar;
 			clearSelectionBtn.hidden = !showSelectionToolbar;
 			selectionStatus.textContent = `${selectedItemCount} selected`;
-			deleteSelectedBtn.textContent = "Delete selected";
-			clearSelectionBtn.textContent = "Clear selection";
+			deleteSelectedBtn.innerHTML = renderTrashIcon(
+				"icon icon-trash delete-icon",
+			);
+			deleteSelectedBtn.setAttribute(
+				"aria-label",
+				"Delete selected items",
+			);
+			deleteSelectedBtn.setAttribute("title", "Delete selected items");
+			clearSelectionBtn.innerHTML = renderDeselectIcon(
+				"icon icon-deselect clear-selection-icon",
+			);
+			clearSelectionBtn.setAttribute(
+				"aria-label",
+				"Clear selected items",
+			);
+			clearSelectionBtn.setAttribute("title", "Clear selected items");
 			deleteSelectedBtn.disabled = false;
 			return;
 		}
@@ -406,14 +647,14 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 	}
 
 	renderBody() {
-		const host = this.shadowRoot.getElementById("browserHost");
-		if (!host) {
+		const browserScroll = this.shadowRoot.getElementById("browserScroll");
+		if (!browserScroll) {
 			return;
 		}
-		host.innerHTML = "";
+		browserScroll.innerHTML = "";
 
 		if (this.model.onboarding?.visible) {
-			host.innerHTML = `
+			browserScroll.innerHTML = `
         <open-collections-section-panel
           class="onboarding-panel"
           title="Start your first collection workspace"
@@ -437,17 +678,35 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			return;
 		}
 
-		const level =
-			this.model.currentLevel === "items" ? "items" : "collections";
+		const managerMode = this.getManagerMode();
+		const level = managerMode === "items" ? "items" : "collections";
 		const mode = this.getCurrentViewMode();
+		const sourceCards = Array.isArray(this.model.sourceCards)
+			? this.model.sourceCards
+			: [];
+
+		if (managerMode === "sources") {
+			if (sourceCards.length === 0) {
+				browserScroll.innerHTML = `<open-collections-empty-state title="No sources available" message="Add or connect a source to start managing collections."></open-collections-empty-state>`;
+				return;
+			}
+		}
+
+		if (managerMode === "items" && !this.model.openedCollectionId) {
+			browserScroll.innerHTML = `<open-collections-empty-state title="No collection open" message="Open a collection first to manage its items."></open-collections-empty-state>`;
+			return;
+		}
+
+		if (mode === "cards") {
+			this.renderCardGrid(browserScroll, managerMode);
+			this.reportScrollDiagnostics("render-body");
+			return;
+		}
+
 		const componentTag =
 			level === "collections"
-				? mode === "rows"
-					? "open-collection-row-list"
-					: "open-collection-card-grid"
-				: mode === "rows"
-					? "open-item-row-list"
-					: "open-item-card-grid";
+				? "open-collection-row-list"
+				: "open-item-row-list";
 
 		const renderer = document.createElement(componentTag);
 		if (level === "collections") {
@@ -456,15 +715,18 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 				selectedCollectionId: this.model.selectedCollectionId,
 				selectedCollectionIds: this.model.selectedCollectionIds,
 				availableConnections: this.model.availableConnections,
+				isLoading: this.model.isLoading,
 			});
 		} else {
 			renderer.update({
 				items: this.model.items,
 				focusedItemId: this.model.focusedItemId,
 				selectedItemIds: this.model.selectedItemIds,
+				isLoading: this.model.isLoading,
 			});
 		}
-		host.appendChild(renderer);
+		browserScroll.appendChild(renderer);
+		this.reportScrollDiagnostics("render-body");
 	}
 
 	render() {
@@ -472,15 +734,15 @@ class OpenCollectionsBrowserElement extends HTMLElement {
       <style>${browserStyles}</style>
       <section class="viewport-panel" aria-label="Collection browser">
         <open-collections-panel-chrome id="panelShell" title="Collections" show-back="false">
-          <div class="viewport-actions viewport-title-actions" slot="header-actions">
-            <button class="btn btn-primary" id="publishCollectionBtn" type="button" hidden disabled>Publish collection</button>
-            <input id="imageFileInput" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple hidden />
-          </div>
+		  <div class="manager-mode-toggle" id="managerModeToggle" role="toolbar" aria-label="Manager mode" slot="subheader">
+			<button type="button" class="mode-toggle" data-manager-mode="sources" data-active="false" aria-pressed="false">Sources</button>
+			<button type="button" class="mode-toggle" data-manager-mode="collections" data-active="true" aria-pressed="true">Collections</button>
+		  </div>
           <div class="viewport-actions viewport-toolbar-main" slot="toolbar">
             <open-view-toggle id="viewToggle" mode="cards"></open-view-toggle>
             <button class="icon-btn delete-action-btn" id="deleteSelectedBtn" type="button" hidden aria-label="Delete selected collections"></button>
-            <span id="selectionStatus" class="selection-status" hidden>#0</span>
 			<button class="btn clear-selection-btn" id="clearSelectionBtn" type="button" hidden>Clear selection</button>
+			<span id="selectionStatus" class="selection-status" hidden>#0</span>
           </div>
           <div class="viewport-actions viewport-toolbar-actions" slot="toolbar-actions">
             <button class="btn" id="addTimeComparerBtn" type="button" hidden>Add time comparer</button>
@@ -488,11 +750,140 @@ class OpenCollectionsBrowserElement extends HTMLElement {
           </div>
           <div id="assetWrap" class="asset-wrap">
             <div id="assetDropOverlay" class="drop-overlay">Drop image files to add them to this collection draft</div>
-            <div id="browserHost" class="browser-host"></div>
+			<div id="browserScroll" class="scroll-container">
+			</div>
           </div>
         </open-collections-panel-chrome>
       </section>
     `;
+
+		this.shadowRoot
+			.querySelectorAll("button[data-manager-mode]")
+			.forEach((button) => {
+				button.addEventListener("click", () => {
+					this.setManagerMode(button.getAttribute("data-manager-mode"));
+				});
+			});
+
+		this.shadowRoot
+			.getElementById("browserScroll")
+			?.addEventListener("click", (event) => {
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target) {
+					return;
+				}
+				const assignBtn = target.closest("button[data-assign-id]");
+				if (assignBtn) {
+					event.stopPropagation();
+					this.dispatch("collection-assign-connection", {
+						collectionId: assignBtn.getAttribute("data-assign-id") || "",
+					});
+					return;
+				}
+				const openBtn = target.closest("button[data-open-id]");
+				if (openBtn) {
+					event.stopPropagation();
+					this.dispatch("item-view", {
+						workspaceId: openBtn.getAttribute("data-open-id") || "",
+					});
+					return;
+				}
+				const uploadBtn = target.closest("button[data-upload-id]");
+				if (uploadBtn) {
+					event.stopPropagation();
+					this.dispatch("attach-media-upload", {
+						itemId: uploadBtn.getAttribute("data-upload-id") || "",
+					});
+					return;
+				}
+				const urlBtn = target.closest("button[data-url-id]");
+				if (urlBtn) {
+					event.stopPropagation();
+					this.dispatch("attach-media-url", {
+						itemId: urlBtn.getAttribute("data-url-id") || "",
+					});
+					return;
+				}
+				const selectWrap = target.closest("[data-select-wrap]");
+				if (selectWrap) {
+					event.stopPropagation();
+					return;
+				}
+				const cell = target.closest(".browse-cell[data-action-type]");
+				if (!cell) {
+					return;
+				}
+				const actionType = String(cell.dataset.actionType || "").trim();
+				const actionValue = String(cell.dataset.actionValue || "").trim();
+				if (actionType === "source" && actionValue) {
+					this.dispatch("source-open", { sourceId: actionValue });
+					return;
+				}
+				if (actionType === "collection" && actionValue) {
+					this.dispatch("collection-open", { collectionId: actionValue });
+					return;
+				}
+				if (actionType === "item" && actionValue) {
+					this.dispatch("item-select", { workspaceId: actionValue });
+				}
+			});
+
+		this.shadowRoot
+			.getElementById("browserScroll")
+			?.addEventListener("change", (event) => {
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target) {
+					return;
+				}
+				const collectionInput = target.closest("input[data-select-collection-id]");
+				if (collectionInput) {
+					event.stopPropagation();
+					this.dispatch("collection-toggle-selected", {
+						collectionId:
+							collectionInput.getAttribute("data-select-collection-id") || "",
+						selected: collectionInput.checked === true,
+					});
+					return;
+				}
+				const itemInput = target.closest("input[data-select-item-id]");
+				if (itemInput) {
+					event.stopPropagation();
+					this.dispatch("item-toggle-selected", {
+						workspaceId: itemInput.getAttribute("data-select-item-id") || "",
+						selected: itemInput.checked === true,
+					});
+				}
+			});
+
+		this.shadowRoot
+			.getElementById("browserScroll")
+			?.addEventListener("keydown", (event) => {
+				if (event.key !== "Enter" && event.key !== " ") {
+					return;
+				}
+				const target = event.target instanceof Element ? event.target : null;
+				if (!target || target.closest("button, input, label")) {
+					return;
+				}
+				const cell = target.closest(".browse-cell[data-action-type]");
+				if (!cell) {
+					return;
+				}
+				event.preventDefault();
+				const actionType = String(cell.dataset.actionType || "").trim();
+				const actionValue = String(cell.dataset.actionValue || "").trim();
+				if (actionType === "source" && actionValue) {
+					this.dispatch("source-open", { sourceId: actionValue });
+					return;
+				}
+				if (actionType === "collection" && actionValue) {
+					this.dispatch("collection-open", { collectionId: actionValue });
+					return;
+				}
+				if (actionType === "item" && actionValue) {
+					this.dispatch("item-select", { workspaceId: actionValue });
+				}
+			});
 	}
 }
 

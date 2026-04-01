@@ -8,17 +8,19 @@ export const appShellStyles = `
   :host {
     display: block;
     width: 100%;
-    height: 100%;
+    height: 100dvh;
     min-height: 100dvh;
+    overflow: hidden;
   }
 
   .oc-app-frame {
     display: flex;
     flex-direction: column;
 	height: 100%;
-    min-height: 100dvh;
+    min-height: 0;
     background: var(--oc-bg-canvas);
     color: var(--oc-text-primary);
+    overflow: hidden;
   }
 
   .oc-app-bar {
@@ -111,18 +113,27 @@ export const appShellStyles = `
   .oc-app-viewport {
     flex: 1 1 auto;
     min-height: 0;
+	height: 100%;
 	display: flex;
+	overflow: hidden;
   }
 
 .shell-section-mount {
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   width: 100%;
   display: flex;
+  overflow: hidden;
+}
+
+.shell-section-mount[hidden] {
+  display: none !important;
 }
 
 .shell-section-mount > * {
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   width: 100%;
 }
@@ -195,7 +206,7 @@ export const appShellStyles = `
 
   .oc-app-viewport {
     flex: 1 1 auto;
-    padding-bottom: calc(4.5rem + var(--oc-space-3) + env(safe-area-inset-bottom));
+    <!-- padding-bottom: calc(4.5rem + var(--oc-space-3) + env(safe-area-inset-bottom)); -->
   }
 }
 

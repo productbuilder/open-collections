@@ -121,6 +121,7 @@ import {
 	createDefaultConnectionProviderCatalog,
 	createDefaultConnectionProviderFactories,
 	createDefaultConnectionProviders,
+	subscribeSessionConnectionSources,
 } from "../../../shared/account/index.js";
 const COLLECTIONS_DIR_PATH = "collections";
 const SOURCES_DIR_PATH = "sources";
@@ -154,6 +155,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.objectUrls = new Set();
 		this.selectedLocalDirectoryHandle = null;
 		this.pendingSourceRepair = null;
+		this._unsubscribeSessionConnectionSources = null;
+		this._isApplyingSessionSources = false;
+		this._assetSurfaceLoadingBatchCount = 0;
 		this.localFolderPickerSupported = supportsLocalHostDirectoryPicker();
 
 		this.providerFactories = createDefaultConnectionProviderFactories();
@@ -223,11 +227,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		this.applyConnectionEntryPresentation();
 		this.setLocalDraftStatus("Checking local draft storage...", "neutral");
 		this.setLocalDraftControlsEnabled(false);
-		this.initializeLocalDraftState();
+		void this.initializeLocalDraftState().finally(() => {
+			this.state.assetSurfaceLoading = false;
+			this.renderAssets();
+		});
 		this.syncResponsivePanels();
 		this._handleWindowResize = () => this.syncResponsivePanels();
 		window.addEventListener("resize", this._handleWindowResize);
 		this.initializePlatformFileDrops();
+		this._unsubscribeSessionConnectionSources =
+			subscribeSessionConnectionSources((sources) => {
+				this.handleSessionConnectionSourcesChanged(sources);
+			});
 	}
 
 	disconnectedCallback() {
@@ -240,6 +251,129 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			this._platformDropCleanup = null;
 		}
 		this._platformDropReady = null;
+		if (typeof this._unsubscribeSessionConnectionSources === "function") {
+			this._unsubscribeSessionConnectionSources();
+		}
+		this._unsubscribeSessionConnectionSources = null;
+	}
+
+	handleSessionConnectionSourcesChanged(sources = []) {
+		if (this._isApplyingSessionSources || !Array.isArray(sources)) {
+			return;
+		}
+		const previousActiveSourceFilter =
+			this.state.activeSourceFilter || "all";
+		const previousActiveSource =
+			previousActiveSourceFilter !== "all"
+				? this.getSourceById(previousActiveSourceFilter)
+				: null;
+		const incomingById = new Map();
+		for (const source of sources) {
+			const sourceId = String(source?.id || "").trim();
+			if (!sourceId) {
+				continue;
+			}
+			incomingById.set(sourceId, source);
+		}
+		const currentSourceIds = new Set(this.state.sources.map((entry) => entry.id));
+		const addedSourceIds = [];
+		for (const sourceId of incomingById.keys()) {
+			if (!currentSourceIds.has(sourceId)) {
+				addedSourceIds.push(sourceId);
+			}
+		}
+		this._isApplyingSessionSources = true;
+		try {
+			const existingById = new Map(
+				this.state.sources.map((entry) => [entry.id, entry]),
+			);
+			const nextSources = Array.from(incomingById.values()).map((source) => {
+				const existing = existingById.get(source.id);
+				const hasIncomingCollections = Array.isArray(source.collections);
+				return {
+					...(existing || {}),
+					...source,
+					collections: hasIncomingCollections
+						? source.collections
+						: existing?.collections || [],
+					selectedCollectionId:
+						source.selectedCollectionId ??
+						existing?.selectedCollectionId ??
+						null,
+				};
+			});
+			const validSourceIds = new Set(nextSources.map((entry) => entry.id));
+			this.state.sources = this.sortSourcesForDisplay(nextSources);
+			this.state.assets = this.state.assets.filter((entry) =>
+				validSourceIds.has(entry.sourceId),
+			);
+			const nextActiveSourceFilter = this.state.activeSourceFilter || "all";
+			if (
+				nextActiveSourceFilter !== "all" &&
+				!validSourceIds.has(nextActiveSourceFilter)
+			) {
+				this.state.activeSourceFilter = "all";
+			}
+			const addedNonExampleSource = addedSourceIds.some((sourceId) => {
+				const source = incomingById.get(sourceId);
+				return source && !this.isExampleSource(source);
+			});
+			if (
+				addedNonExampleSource &&
+				this.isExampleSource(previousActiveSource)
+			) {
+				this.state.activeSourceFilter = "all";
+				this.state.selectedCollectionId = "all";
+			}
+			this.renderSourcesList();
+			this.renderSourceFilter();
+			this.renderAssets();
+			this.renderEditor();
+			this.refreshWorkingStatus();
+		} finally {
+			this._isApplyingSessionSources = false;
+		}
+		void this.refreshSourcesInBackground(addedSourceIds);
+	}
+
+	beginAssetSurfaceBackgroundLoading() {
+		this._assetSurfaceLoadingBatchCount += 1;
+		if (this._assetSurfaceLoadingBatchCount === 1) {
+			this.state.assetSurfaceLoading = true;
+			this.renderAssets();
+		}
+	}
+
+	endAssetSurfaceBackgroundLoading() {
+		this._assetSurfaceLoadingBatchCount = Math.max(
+			0,
+			this._assetSurfaceLoadingBatchCount - 1,
+		);
+		if (this._assetSurfaceLoadingBatchCount === 0) {
+			this.state.assetSurfaceLoading = false;
+			this.renderAssets();
+		}
+	}
+
+	async refreshSourcesInBackground(sourceIds = []) {
+		const queuedSourceIds = (Array.isArray(sourceIds) ? sourceIds : []).filter(
+			(sourceId) => typeof sourceId === "string" && sourceId.trim(),
+		);
+		if (queuedSourceIds.length === 0) {
+			return;
+		}
+		this.beginAssetSurfaceBackgroundLoading();
+		try {
+			await Promise.allSettled(
+				queuedSourceIds.map((sourceId) =>
+					this.refreshSource(sourceId, {
+						backgroundRestore: true,
+					}),
+				),
+			);
+		} finally {
+			this.endAssetSurfaceBackgroundLoading();
+		}
 	}
 
 	renderShell() {
@@ -1044,6 +1178,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			return false;
 		}
 
+		const hasNonExampleSource = this.state.sources.some(
+			(source) => !this.isExampleSource(source),
+		);
+		if (hasNonExampleSource) {
+			return false;
+		}
+
 		const exampleSource = this.getExampleSource();
 		if (!exampleSource) {
 			return false;
@@ -1063,8 +1204,8 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const hasAccessibleContent = this.sourceHasAccessibleContent(source);
 		if (source.providerId === "local" && source.needsReconnect) {
 			return hasAccessibleContent
-				? "Folder access must be re-selected to refresh or publish. Previously loaded content remains available locally."
-				: "Folder access must be re-selected. Publish remains blocked until reconnect succeeds.";
+				? "Remembered local folder. Re-select it in this browser session to refresh or publish. Previously loaded content remains available locally."
+				: "Remembered local folder. Re-select it in this browser session to reconnect before publish.";
 		}
 		if (source.needsCredentials) {
 			return "Missing credentials. Update credentials to reconnect and unblock publish.";
@@ -2138,18 +2279,51 @@ class OpenCollectionsManagerElement extends HTMLElement {
 
 	getAssignableConnections() {
 		return (this.state.sources || []).filter(
-			(source) => source && source.enabled !== false,
+			(source) =>
+				source &&
+				source.enabled !== false &&
+				!source.needsReconnect &&
+				!source.needsCredentials &&
+				Boolean(source.provider),
 		);
 	}
 
-	chooseConnectionForAssignment(collection, availableConnections = []) {
-		if (!availableConnections.length) {
+	chooseConnectionForAssignment(
+		collection,
+		availableConnections = [],
+		options = {},
+	) {
+		const {
+			actionLabel = "Assign",
+			currentConnectionId = "",
+			requireAlternative = false,
+		} = options;
+		const normalizedCurrentConnectionId = String(
+			currentConnectionId || "",
+		).trim();
+		const selectableConnections = requireAlternative
+			? availableConnections.filter(
+					(source) => source.id !== normalizedCurrentConnectionId,
+				)
+			: availableConnections;
+		if (
+			requireAlternative &&
+			normalizedCurrentConnectionId &&
+			!selectableConnections.length
+		) {
+			this.setStatus(
+				"No other available connection found for reassignment.",
+				"warn",
+			);
 			return null;
 		}
-		if (availableConnections.length === 1) {
-			return availableConnections[0];
+		if (!selectableConnections.length) {
+			return null;
 		}
-		const choiceList = availableConnections
+		if (selectableConnections.length === 1) {
+			return selectableConnections[0];
+		}
+		const choiceList = selectableConnections
 			.map(
 				(source, index) =>
 					`${index + 1}. ${
@@ -2161,7 +2335,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			)
 			.join("\n");
 		const promptValue = window.prompt(
-			`Assign "${collection.title || collection.id}" to a connection:\n${choiceList}\n\nEnter the number of the connection to use.`,
+			`${actionLabel} connection for "${collection.title || collection.id}":\n${choiceList}\n\nEnter the number of the connection to use.`,
 			"1",
 		);
 		if (promptValue == null) {
@@ -2171,15 +2345,18 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		if (
 			Number.isNaN(selectedIndex) ||
 			selectedIndex < 0 ||
-			selectedIndex >= availableConnections.length
+			selectedIndex >= selectableConnections.length
 		) {
-			this.setStatus("Assignment canceled: invalid connection choice.", "warn");
+			this.setStatus(
+				"Assignment canceled: choose a listed connection number.",
+				"warn",
+			);
 			return null;
 		}
-		return availableConnections[selectedIndex];
+		return selectableConnections[selectedIndex];
 	}
 
-	async assignUnassignedDraftCollection(collectionId) {
+	async assignCollectionConnection(collectionId) {
 		const normalizedCollectionId = String(collectionId || "").trim();
 		if (!normalizedCollectionId || normalizedCollectionId === "all") {
 			return;
@@ -2189,13 +2366,13 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			this.setStatus("Could not find the selected collection draft.", "warn");
 			return;
 		}
-		if (this.resolveCollectionConnectionId(normalizedCollectionId)) {
-			return;
-		}
+		const currentConnectionId =
+			this.resolveCollectionConnectionId(normalizedCollectionId);
+		const isAssigned = Boolean(currentConnectionId);
 		const availableConnections = this.getAssignableConnections();
 		if (!availableConnections.length) {
 			this.setStatus(
-				"No available connections to assign. Manage connections in Account first.",
+				"No available connections. Add or reconnect one in Account first.",
 				"warn",
 			);
 			return;
@@ -2203,11 +2380,23 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		const selectedSource = this.chooseConnectionForAssignment(
 			collection,
 			availableConnections,
+			{
+				actionLabel: isAssigned ? "Reassign" : "Assign",
+				currentConnectionId,
+				requireAlternative: isAssigned,
+			},
 		);
 		if (!selectedSource) {
 			return;
 		}
 		const connectionId = selectedSource.id;
+		if (isAssigned && connectionId === currentConnectionId) {
+			this.setStatus(
+				"No changes made: collection is already assigned to that connection.",
+				"info",
+			);
+			return;
+		}
 		this.state.localDraftCollections = (this.state.localDraftCollections || []).map(
 			(entry) =>
 				entry.id === normalizedCollectionId
@@ -2230,12 +2419,27 @@ class OpenCollectionsManagerElement extends HTMLElement {
 		selectedSource.collections = (selectedSource.collections || []).some(
 			(entry) => entry.id === normalizedCollectionId,
 		)
-			? (selectedSource.collections || []).map((entry) =>
-					entry.id === normalizedCollectionId
-						? { ...entry, ...sourceCollectionEntry }
-						: entry,
-				)
+				? (selectedSource.collections || []).map((entry) =>
+						entry.id === normalizedCollectionId
+							? { ...entry, ...sourceCollectionEntry }
+							: entry,
+					)
 			: [...(selectedSource.collections || []), sourceCollectionEntry];
+		if (isAssigned && currentConnectionId !== connectionId) {
+			const previousSource = this.getSourceById(currentConnectionId);
+			if (previousSource) {
+				previousSource.collections = (previousSource.collections || []).filter(
+					(entry) => entry.id !== normalizedCollectionId,
+				);
+			}
+		}
+		if (
+			this.state.activeSourceFilter !== "all" &&
+			this.state.activeSourceFilter !== connectionId
+		) {
+			this.state.activeSourceFilter = "all";
+		}
+		this.state.selectedCollectionId = normalizedCollectionId;
 		this.renderSourceFilter();
 		this.renderCollectionFilter();
 		this.renderAssets();
@@ -2246,7 +2450,9 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			await this.saveLocalDraft();
 		}
 		this.setStatus(
-			`Assigned draft "${collection.title || normalizedCollectionId}" to ${
+			`${isAssigned ? "Reassigned" : "Assigned"} collection "${
+				collection.title || normalizedCollectionId
+			}" to ${
 				selectedSource.displayLabel ||
 				selectedSource.label ||
 				selectedSource.providerLabel ||
@@ -2255,6 +2461,10 @@ class OpenCollectionsManagerElement extends HTMLElement {
 			"ok",
 		);
 		this.markDirty();
+	}
+
+	async assignUnassignedDraftCollection(collectionId) {
+		await this.assignCollectionConnection(collectionId);
 	}
 
 	resolveItemMetadata(item) {
@@ -2377,7 +2587,7 @@ class OpenCollectionsManagerElement extends HTMLElement {
 				visible: true,
 				disabled: true,
 				reason: assignedConnectionId
-					? "The assigned connection for this collection is not currently available."
+					? "This collection’s assigned connection is not currently available."
 					: "Assign this collection to a connection before publishing.",
 			};
 		}

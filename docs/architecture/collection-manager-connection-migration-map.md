@@ -8,6 +8,21 @@ This note audits where connection/account management currently lives in `collect
 
 This is **not** a rewrite plan and does **not** introduce a duplicate `collection-manager-v2`.
 
+## Terminology guardrail for this migration
+
+To reduce connection/collection ambiguity during migration:
+
+- Use **connection** for the saved runtime/app link (state/actions managed canonically through Account + shared runtime).
+- Use **source** for the consumable entry path/URL (`collections.json` or `collection.json`) a connection targets.
+- Use **host** for the storage location/root/provider location behind a source.
+- Use **collection** for curated content data, not for the saved runtime link.
+
+Protocol filenames are unchanged in this migration:
+
+- `collections.json` remains the multi-collection index/root manifest.
+- `collection.json` remains the single collection manifest.
+- `connection.json` is not introduced as a protocol filename in this phase.
+
 ## Migration status update (current cleanup step)
 
 The manager cleanup has advanced to an account-first posture for connection entry points in embedded/shell mode:

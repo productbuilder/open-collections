@@ -14,6 +14,8 @@ export const appFoundationTokenStyles = `
     --oc-color-blue-700: #0f6cc6;
     --oc-color-blue-800: #0f4f8a;
 
+    --oc-color-brown-700: #8d8a88;
+
     /* Shared spacing + radius */
     --oc-space-1: 0.25rem;
     --oc-space-2: 0.5rem;
@@ -46,7 +48,7 @@ export const appFoundationTokenStyles = `
 
     --oc-border-default: var(--oc-color-slate-200);
     --oc-border-strong: var(--oc-color-slate-300);
-    --oc-border-accent: var(--oc-color-blue-700);
+    --oc-border-accent: var(--oc-color-brown-700);
 
     /* Backward-compatible aliases for manager/account usage */
     --oc-bg-panel: var(--oc-bg-surface);

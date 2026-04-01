@@ -71,6 +71,10 @@ Use Shadow DOM by default for app-shell family components.
 
 Use light DOM only when there is a clear requirement (for example host-level slot/layout integration that cannot be handled cleanly in shadow DOM).
 
+For a composition-focused refinement (Shadow DOM default for reusable/shared components, light DOM acceptable for unique app-level composition-heavy views), see:
+
+- `docs/architecture/app-shell-family-composition-pattern.md`
+
 ## Public component API
 
 Treat attributes, properties, and events as the component public API.
@@ -130,6 +134,51 @@ Design app-shell family components so apps can run in both:
 - embedded mode inside `app-shell`
 
 Keep host/runtime seams explicit and avoid hard-coding one host context.
+
+## Shell/session lifecycle rule
+
+Within one active `app-shell` session, section switching should behave like SPA navigation, not full app teardown/restart.
+
+- Prefer keeping embedded sub-app instances mounted during normal section switching.
+- For intra-session navigation, hide/show section hosts instead of unmounting/remounting sub-app roots by default.
+- Preserve in-memory workflow state and live session state unless an explicit reset/reload is requested.
+- Keep business logic ownership inside each app; shell lifecycle orchestration must not absorb app domain behavior.
+
+Unmount/remount is still valid for explicit session boundary changes (for example full shell teardown, hard reload, or host-directed reset).
+
+## Desktop scroll behavior rule
+
+For desktop app/work surfaces that act as multi-panel viewing or workflow environments, prefer panel-local or app-local scroll regions over whole-page/document scrolling when that improves stability.
+
+- Keep shell/header/nav chrome visually stable during normal workspace interaction.
+- Avoid page-level scrollbar churn that causes header/nav jump or layout shift.
+- Keep independent panels usable without forcing one global document scroll position.
+
+This is a preference for data/work surfaces, not a blanket rule for every screen. Use normal page scrolling when the screen is simpler and panel-local scrolling does not improve usability.
+
+## Performance + lazy-loading rule
+
+Performance is a core architectural requirement for this app family, not optional polish.
+
+- Assume large local/remote datasets (many collections, items, files, connected sources).
+- Prefer incremental loading over eager full hydration.
+- Load and render only what the current view needs; defer non-visible or non-critical work.
+- Keep memory bounded across long-running sessions; avoid unbounded retention of list/detail payloads.
+- Use local loading states for async surfaces (panel/section-level), not only global blocking states.
+- Prefer skeletons or local loading affordances over blank surfaces when that improves continuity.
+- Virtualization/windowing is allowed where justified by measured list size/render cost, but avoid heavyweight abstractions before they are needed.
+
+## Browser vs manager interaction intent
+
+`collection-manager` and `collection-browser` are intentionally different surfaces:
+
+- `collection-manager` is workflow/management-first (collections, assignment, editing, metadata, settings).
+- `collection-browser` is viewing/discovery-first (items/media/presentation and exploration).
+
+As a result:
+
+- Manager views may keep persistent detail/metadata/editor panels when they support active management workflows.
+- Browser views should generally keep metadata/details secondary and reveal them through explicit user action unless a specific browser use case clearly needs always-visible detail.
 
 ## Reuse rule
 

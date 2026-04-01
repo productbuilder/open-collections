@@ -11,6 +11,7 @@
 		selectedCollectionId: "all",
 		selectedCollectionIds: [],
 		currentLevel: "collections",
+		managerBrowseMode: "collections",
 		metadataMode: "collection",
 		mobileView: "browse",
 		openedCollectionId: null,
@@ -33,5 +34,6 @@
 		},
 		inspectorPlacement: "right",
 		connectionsDialogView: "list",
+		assetSurfaceLoading: true,
 	};
 }

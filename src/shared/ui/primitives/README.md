@@ -8,6 +8,21 @@ This folder holds the first modest set of app-shell family shared primitives.
   - Low-level section/page heading row with optional leading/actions slots.
 - `open-collections-empty-state`
   - Low-level empty/placeholder callout with optional title and message.
+- `open-collections-action-row`
+  - Reusable full-width navigation/action row with leading icon, title/subtitle, optional trailing arrow, and optional secondary trailing slot control.
+- `oc-grid`
+  - Reusable slotted layout container only (grid/list mode, responsive columns, gaps).
+  - Parent/view-layer code provides light-DOM children (for example card components) and `oc-grid` lays them out.
+  - Optional per-item span vars are supported via `data-span-cols` and `data-span-rows` on slotted children.
+  - Backward-compatible alias: `open-collections-card-layout` (to support incremental migration).
+- `open-collections-preview-summary-card`
+  - Reusable whole-card action surface with title/subtitle, thumbnail preview strip, and summary count label for browse/discovery cards.
+- `oc-card-collections`
+  - Semantic shared card for multi-collection roots (collections source card surface).
+- `oc-card-collection`
+  - Semantic shared card for a collection browse surface.
+- `oc-card-item`
+  - Semantic shared card for an item browse surface.
 
 ## Why these first
 

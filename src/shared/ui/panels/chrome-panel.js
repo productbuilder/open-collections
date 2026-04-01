@@ -26,7 +26,7 @@ const panelChromeStyles = `
 
   .panel-shell {
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -34,6 +34,7 @@ const panelChromeStyles = `
   }
 
   .panel-titlebar,
+  .panel-subheader-row,
   .panel-toolbar-row {
     display: flex;
     align-items: center;
@@ -141,12 +142,18 @@ const panelChromeStyles = `
     padding: var(--oc-space-2) 0;
   }
 
+  .panel-subheader-row {
+    padding: 0 0 var(--oc-space-1);
+  }
+
   .panel-toolbar-main {
     flex: 1 1 auto;
   }
 
   .panel-content {
     display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     height: 100%;
     overflow: hidden;
@@ -154,15 +161,20 @@ const panelChromeStyles = `
 
   .panel-content > slot {
     display: block;
+    flex: 1 1 auto;
     width: 100%;
     height: 100%;
     min-height: 0;
+    min-width: 0;
   }
 
-  ::slotted(*) {
+  .panel-content > slot::slotted(*) {
     display: block;
+    height: 100%;
     width: 100%;
     min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   ${backButtonStyles}
@@ -230,6 +242,8 @@ class OpenCollectionsPanelChromeElement extends BaseElement {
           </div>
           <div class="panel-titlebar-actions"><slot name="header-actions"></slot></div>
         </header>
+
+        <div class="panel-subheader-row"><slot name="subheader"></slot></div>
 
         <header>
           <div class="panel-toolbar-row">

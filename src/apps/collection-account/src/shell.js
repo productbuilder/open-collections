@@ -8,18 +8,19 @@ import {
 	createConnectionsRuntime,
 	createCredentialStore,
 	makeConnectionId,
+	setSessionConnectionSources,
 	uniqueConnectionsForDisplay,
 } from "../../../shared/account/index.js";
+import { renderBackButton } from "../../../shared/components/back-button.js";
 import {
-	renderArrowIcon,
-	renderBackButton,
-} from "../../../shared/components/back-button.js";
-import {
+	renderCreateNewFolderIcon,
 	renderDriveFolderUploadIcon,
 	renderProfileIcon,
 } from "../../../shared/components/icons.js";
+import "../../../shared/ui/primitives/action-row.js";
 import "./components/connections-list-panel.js";
 import "./components/add-connection-panel.js";
+import "./components/connection-detail-panel.js";
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 import { accountShellStyles } from "./css/shell.css.js";
 
@@ -34,23 +35,21 @@ function renderShell(shadowRoot) {
 
 			<section class="account-root-view" id="accountRootView" aria-label="Account areas">
 
-				<button type="button" class="account-entry-button" data-account-entry="connections">
-					<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
-					<span class="account-entry-content">
-						<span class="account-entry-label">Connections</span>
-						<span class="account-entry-subtitle">Manage local and remote folders for your collections.</span>
-					</span>
-					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-				</button>
+				<open-collections-action-row
+					data-account-entry="connections"
+					title="Connections"
+					subtitle="Manage local and remote folders for your collections."
+				>
+					<span slot="leading">${renderDriveFolderUploadIcon()}</span>
+				</open-collections-action-row>
 
-				<button type="button" class="account-entry-button" data-account-entry="settings">
-					<span class="account-entry-leading-icon" aria-hidden="true">${renderProfileIcon()}</span>
-					<span class="account-entry-content">
-						<span class="account-entry-label">Profile</span>
-						<span class="account-entry-subtitle">Update personal and account profile preferences.</span>
-					</span>
-					<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-				</button>
+				<open-collections-action-row
+					data-account-entry="settings"
+					title="Profile"
+					subtitle="Update personal and account profile preferences."
+				>
+					<span slot="leading">${renderProfileIcon()}</span>
+				</open-collections-action-row>
 				
 			</section>
 
@@ -70,20 +69,45 @@ function renderShell(shadowRoot) {
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
 
 						<div class="connections-body">
-							<button type="button" id="connectionsAddBtn" class="account-entry-button account-entry-button-action-row">
-								<span class="account-entry-leading-icon" aria-hidden="true">${renderDriveFolderUploadIcon()}</span>
-								<span class="account-entry-content">
-									<span class="account-entry-label">Add connection</span>
-									<span class="account-entry-subtitle">Connect a local or remote source.</span>
-								</span>
-								<span class="account-entry-icon" aria-hidden="true">${renderArrowIcon({ className: "icon icon-forward", direction: "right" })}</span>
-							</button>
+							<open-collections-action-row
+								id="connectionsAddBtn"
+								variant="placeholder"
+								title="Add new connection"
+								subtitle="Connect a local or remote source."
+							>
+								<span slot="leading">${renderCreateNewFolderIcon()}</span>
+							</open-collections-action-row>
 							<open-collections-connections-list id="connectionsListPanel"></open-collections-connections-list>
 						</div>
 					</open-collections-section-panel>
 				</div>
 				<div id="connectionsAddView" class="is-hidden">
 					<open-collections-add-connection-panel id="addConnectionPanel"></open-collections-add-connection-panel>
+				</div>
+				<div id="connectionsDetailView" class="is-hidden">
+					<open-collections-section-panel
+						title="Connection settings"
+						heading-level="2"
+						id="connectionDetailHeading"
+					>
+						${renderBackButton({
+							id: "connectionDetailBackBtn",
+							label: "Back to connections",
+							className: "back-btn",
+							slot: "leading",
+						})}
+						<button
+							class="btn btn-primary connection-detail-save-btn"
+							slot="actions"
+							type="button"
+							id="connectionDetailSaveBtn"
+							disabled
+						>
+							Save
+						</button>
+						<p class="status-note detail-save-status" id="connectionDetailSaveStatus">No pending changes.</p>
+						<open-collections-connection-detail-panel id="connectionDetailPanel"></open-collections-connection-detail-panel>
+					</open-collections-section-panel>
 				</div>
 			</section>
 
@@ -124,6 +148,11 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			selectedProviderId: "local",
 			view: "list",
 			activePage: "root",
+			connectionDetailDraftTitle: "",
+			connectionDetailSavedTitle: "",
+			connectionDetailSaveState: "idle",
+			connectionDetailSaveError: "",
+			connectionDetailStateSourceId: "",
 		};
 
 		this.pendingSourceRepair = null;
@@ -212,9 +241,23 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				this.shadow.getElementById("connectionsOverviewView"),
 			connectionsAddView:
 				this.shadow.getElementById("connectionsAddView"),
+			connectionsDetailView:
+				this.shadow.getElementById("connectionsDetailView"),
 			settingsSection: this.shadow.getElementById("settingsSection"),
 			connectionsListPanel: this.shadow.getElementById(
 				"connectionsListPanel",
+			),
+			connectionDetailPanel: this.shadow.getElementById(
+				"connectionDetailPanel",
+			),
+			connectionDetailSaveBtn: this.shadow.getElementById(
+				"connectionDetailSaveBtn",
+			),
+			connectionDetailSaveStatus: this.shadow.getElementById(
+				"connectionDetailSaveStatus",
+			),
+			connectionDetailBackBtn: this.shadow.getElementById(
+				"connectionDetailBackBtn",
 			),
 			addConnectionPanel:
 				this.shadow.getElementById("addConnectionPanel"),
@@ -238,6 +281,12 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.backButtons?.forEach((button) => {
 			button.addEventListener("click", () => this.setActivePage("root"));
 		});
+		this.dom.connectionDetailBackBtn?.addEventListener("click", () => {
+			this.showConnectionsListView();
+		});
+		this.dom.connectionDetailSaveBtn?.addEventListener("click", async () => {
+			await this.saveConnectionDetailTitle();
+		});
 		this.dom.connectionsAddBtn?.addEventListener("click", () => {
 			this.openAddConnectionView();
 		});
@@ -250,6 +299,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 					return;
 				}
 				this.state.activeSourceId = source.id;
+				this.setConnectionsViewState("detail");
+				this.renderConnectionDetailPanel();
 				this.renderConnectionsListPanel();
 				this.setStatus(
 					`Selected connection ${source.displayLabel || source.providerLabel || source.id}.`,
@@ -257,7 +308,24 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				);
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
+			"connection-title-draft-changed",
+			(event) => {
+				const sourceId = event.detail?.sourceId || "";
+				if (!sourceId || sourceId !== this.state.activeSourceId) {
+					return;
+				}
+				this.state.connectionDetailDraftTitle = String(
+					event.detail?.title || "",
+				);
+				this.state.connectionDetailSaveState = this.isConnectionDetailDirty()
+					? "dirty"
+					: "idle";
+				this.state.connectionDetailSaveError = "";
+				this.renderConnectionDetailSaveState();
+			},
+		);
+		this.dom.connectionDetailPanel?.addEventListener(
 			"refresh-connection",
 			async (event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -266,7 +334,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				}
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"repair-connection",
 			async (event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -295,7 +363,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				await this.refreshSource(sourceId);
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"remove-connection",
 			(event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -304,7 +372,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 				}
 			},
 		);
-		this.dom.connectionsListPanel?.addEventListener(
+		this.dom.connectionDetailPanel?.addEventListener(
 			"toggle-example-connection",
 			(event) => {
 				const sourceId = event.detail?.sourceId || "";
@@ -390,6 +458,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.setActivePage("connections");
 		this.setConnectionsViewState("list");
 		this.renderConnectionsListPanel();
+		this.renderConnectionDetailPanel();
 	}
 
 	openAddConnectionView() {
@@ -404,7 +473,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	setConnectionsViewState(view) {
-		const nextView = view === "add" ? "add" : "list";
+		const nextView =
+			view === "add" ? "add" : view === "detail" ? "detail" : "list";
 		this.state.view = nextView;
 		this.dom.connectionsOverviewView?.classList.toggle(
 			"is-hidden",
@@ -413,6 +483,10 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionsAddView?.classList.toggle(
 			"is-hidden",
 			nextView !== "add",
+		);
+		this.dom.connectionsDetailView?.classList.toggle(
+			"is-hidden",
+			nextView !== "detail",
 		);
 	}
 
@@ -456,6 +530,126 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		);
 	}
 
+	getSourceTitle(source) {
+		if (!source) {
+			return "";
+		}
+		return (
+			source.displayLabel || source.label || source.providerLabel || "Connection"
+		);
+	}
+
+	isConnectionDetailDirty() {
+		return (
+			String(this.state.connectionDetailDraftTitle || "").trim() !==
+			String(this.state.connectionDetailSavedTitle || "").trim()
+		);
+	}
+
+	syncConnectionDetailState(source) {
+		if (!source) {
+			this.state.connectionDetailStateSourceId = "";
+			this.state.connectionDetailDraftTitle = "";
+			this.state.connectionDetailSavedTitle = "";
+			this.state.connectionDetailSaveState = "idle";
+			this.state.connectionDetailSaveError = "";
+			return;
+		}
+		if (this.state.connectionDetailStateSourceId === source.id) {
+			return;
+		}
+		const nextTitle = this.getSourceTitle(source);
+		this.state.connectionDetailStateSourceId = source.id;
+		this.state.connectionDetailDraftTitle = nextTitle;
+		this.state.connectionDetailSavedTitle = nextTitle;
+		this.state.connectionDetailSaveState = "idle";
+		this.state.connectionDetailSaveError = "";
+	}
+
+	renderConnectionDetailSaveState() {
+		const saveBtn = this.dom.connectionDetailSaveBtn;
+		const saveStatus = this.dom.connectionDetailSaveStatus;
+		if (!saveBtn || !saveStatus) {
+			return;
+		}
+		const hasSource = Boolean(this.getSourceById(this.state.activeSourceId));
+		const isDirty = this.isConnectionDetailDirty();
+		const state = hasSource
+			? this.state.connectionDetailSaveState
+			: "idle";
+		saveBtn.disabled = !hasSource || !isDirty || state === "saving";
+		saveBtn.textContent = state === "saving" ? "Saving…" : "Save";
+
+		if (!hasSource) {
+			saveStatus.textContent = "";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		if (state === "saving") {
+			saveStatus.textContent = "Saving changes…";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		if (state === "saved") {
+			saveStatus.textContent = "Saved.";
+			saveStatus.dataset.tone = "ok";
+			return;
+		}
+		if (state === "error") {
+			saveStatus.textContent =
+				this.state.connectionDetailSaveError ||
+				"Unable to save connection settings.";
+			saveStatus.dataset.tone = "warn";
+			return;
+		}
+		if (isDirty || state === "dirty") {
+			saveStatus.textContent = "Unsaved changes.";
+			saveStatus.dataset.tone = "neutral";
+			return;
+		}
+		saveStatus.textContent = "No pending changes.";
+		saveStatus.dataset.tone = "neutral";
+	}
+
+	async saveConnectionDetailTitle() {
+		const sourceId = this.state.activeSourceId || "";
+		const source = this.getSourceById(sourceId);
+		if (!source || !this.isConnectionDetailDirty()) {
+			this.renderConnectionDetailSaveState();
+			return;
+		}
+		const title = String(this.state.connectionDetailDraftTitle || "").trim();
+		this.state.connectionDetailSaveState = "saving";
+		this.state.connectionDetailSaveError = "";
+		this.renderConnectionDetailSaveState();
+		const result = await this.connectionsRuntime.updateSourceSettings({
+			sourceId,
+			sources: this.state.sources,
+			patch: { title },
+		});
+		if (!result.ok) {
+			this.state.connectionDetailSaveState = "error";
+			this.state.connectionDetailSaveError =
+				result.message || "Unable to save connection settings.";
+			this.renderConnectionDetailSaveState();
+			this.setStatus(this.state.connectionDetailSaveError, "warn");
+			return;
+		}
+		this.state.sources = result.sources;
+		this.state.activeSourceId = result.source.id;
+		const savedTitle = this.getSourceTitle(result.source);
+		this.state.connectionDetailSavedTitle = savedTitle;
+		this.state.connectionDetailDraftTitle = savedTitle;
+		this.state.connectionDetailSaveState = "saved";
+		this.state.connectionDetailSaveError = "";
+		this.persistSources();
+		this.renderConnectionsListPanel();
+		this.setStatus(
+			`Saved connection settings for ${result.source.displayLabel || result.source.id}.`,
+			"ok",
+		);
+	}
+
 	clearPendingSourceRepair() {
 		this.pendingSourceRepair = null;
 	}
@@ -478,6 +672,16 @@ class OpenCollectionsAccountElement extends HTMLElement {
 		this.dom.connectionsListPanel?.setActiveSourceId(
 			this.state.activeSourceId || "all",
 		);
+		this.renderConnectionDetailPanel();
+	}
+
+	renderConnectionDetailPanel() {
+		const source = this.getSourceById(this.state.activeSourceId);
+		this.syncConnectionDetailState(source);
+		this.dom.connectionDetailPanel?.setSource(source, {
+			titleDraft: this.state.connectionDetailDraftTitle,
+		});
+		this.renderConnectionDetailSaveState();
 	}
 
 	async ensureStarterExampleConnection() {
@@ -733,6 +937,8 @@ class OpenCollectionsAccountElement extends HTMLElement {
 	}
 
 	async removeSource(sourceId) {
+		const removedWhileInspecting =
+			this.state.view === "detail" && this.state.activeSourceId === sourceId;
 		const result = await this.connectionsRuntime.removeSource({
 			sourceId,
 			sources: this.state.sources,
@@ -752,6 +958,9 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 		this.persistSources();
 		this.renderConnectionsListPanel();
+		if (removedWhileInspecting) {
+			this.showConnectionsListView();
+		}
 		if (this.state.sources.length === 0) {
 			await this.ensureStarterExampleConnection();
 		} else {
@@ -791,6 +1000,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 
 	persistSources() {
 		this.connectionsRuntime.persistSources(this.state.sources);
+		setSessionConnectionSources(this.state.sources);
 	}
 
 	restoreRememberedSources() {
@@ -799,6 +1009,7 @@ class OpenCollectionsAccountElement extends HTMLElement {
 			return;
 		}
 		this.state.sources = remembered;
+		setSessionConnectionSources(this.state.sources);
 		this.state.activeSourceId = this.state.sources[0]?.id || "all";
 		this.renderConnectionsListPanel();
 		this.setStatus(

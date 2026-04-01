@@ -38,83 +38,6 @@ export const accountShellStyles = `
     margin-inline: auto;
   }
 
-  .account-entry-button {
-    width: 100%;
-    min-height: 4.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--oc-space-3);
-    border: 1px solid var(--oc-border-subtle);
-    background: var(--oc-bg-surface);
-    color: var(--oc-text-primary);
-    border-radius: var(--oc-radius-md);
-    padding: 0.9rem var(--oc-space-4);
-    text-align: left;
-    font: inherit;
-    cursor: pointer;
-    transition: border-color 120ms ease, background-color 120ms ease;
-  }
-
-  .account-entry-button:hover {
-    border-color: var(--oc-border-strong);
-    background: var(--oc-bg-surface);
-  }
-
-  .account-entry-leading-icon {
-    width: 2.35rem;
-    height: 2.35rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    color: var(--oc-text-muted);
-  }
-
-  .account-entry-leading-icon .icon {
-    width: 2.2rem;
-    height: 2.2rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .account-entry-content {
-    min-width: 0;
-    display: grid;
-    gap: 0.2rem;
-    flex: 1;
-  }
-
-  .account-entry-label {
-    text-align: left;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  .account-entry-subtitle {
-    color: var(--oc-text-muted);
-    font-size: 0.82rem;
-    line-height: 1.3;
-    font-weight: 500;
-  }
-
-  .account-entry-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: var(--oc-text-muted);
-  }
-
-  .account-entry-icon .icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    fill: currentColor;
-  }
-
   .account-description,
   .account-note,
   .status-note {
@@ -144,24 +67,19 @@ export const accountShellStyles = `
   /* Reuse shared back button styling for account subpage navigation. */
   ${backButtonStyles}
 
-  .account-entry-button-action-row {
-    min-height: 3.7rem;
-  }
-
-  .account-entry-button-action-row .account-entry-leading-icon {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  .account-entry-button-action-row .account-entry-leading-icon .icon {
-    width: 1.85rem;
-    height: 1.85rem;
-  }
-
   .connections-body {
     display: grid;
     gap: 0.75rem;
   }
+
+  .connection-detail-save-btn[slot='actions'] {
+    margin-left: auto;
+  }
+
+  .detail-save-status {
+    margin-bottom: var(--oc-space-1);
+  }
+
 
   @media (max-width: 47.99rem) {
     :host(:not([data-app-presentation-embedded])) .account-shell {
@@ -170,14 +88,6 @@ export const accountShellStyles = `
         calc(var(--oc-space-3) + var(--oc-layout-safe-right))
         calc(var(--oc-space-3) + var(--oc-layout-safe-bottom))
         calc(var(--oc-space-3) + var(--oc-layout-safe-left));
-    }
-
-    .account-entry-button {
-      padding-inline: var(--oc-space-4);
-    }
-
-    .account-entry-subtitle {
-      font-size: 0.79rem;
     }
   }
 

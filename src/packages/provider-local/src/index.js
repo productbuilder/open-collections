@@ -22,6 +22,7 @@ export function createLocalProvider() {
 	let connectionMode = "http";
 	let rootDirectoryHandle = null;
 	let rootDirectoryLabel = "";
+	let rootCollectionsTitle = "";
 	let collections = [];
 	let itemsById = new Map();
 	let itemLocations = new Map();
@@ -204,6 +205,7 @@ export function createLocalProvider() {
 
 	function resetState() {
 		connected = false;
+		rootCollectionsTitle = "";
 		collections = [];
 		itemsById = new Map();
 		itemLocations = new Map();
@@ -506,6 +508,24 @@ export function createLocalProvider() {
 		return loaded;
 	}
 
+	async function ensureCollectionsIndexInitialized() {
+		const existingIndex = await readJsonFileIfExists(
+			rootDirectoryHandle,
+			"collections.json",
+		);
+		if (existingIndex !== null) {
+			rootCollectionsTitle = String(existingIndex?.title || "").trim();
+			return { created: false };
+		}
+		const initialTitle = rootDirectoryLabel || "Local host";
+		rootCollectionsTitle = initialTitle;
+		await writeJsonFile(rootDirectoryHandle, "collections.json", {
+			title: initialTitle,
+			collections: [],
+		});
+		return { created: true };
+	}
+
 	function extensionForFileName(name = "", fallback = ".jpg") {
 		const match = String(name)
 			.toLowerCase()
@@ -568,6 +588,7 @@ export function createLocalProvider() {
 
 	async function writeCollectionsIndex() {
 		const payload = {
+			title: rootCollectionsTitle || rootDirectoryLabel || "Local host",
 			collections: collections.map((collection) => ({
 				id: collection.id,
 				manifest: collection.manifestPath,
@@ -675,6 +696,8 @@ export function createLocalProvider() {
 					rootDirectoryHandle = nextDirectoryHandle;
 					rootDirectoryLabel =
 						sourceLabel || nextDirectoryHandle.name || "Local host";
+					const directoryPath = String(nextDirectoryHandle.path || "").trim();
+					const initialization = await ensureCollectionsIndexInitialized();
 					collections = await loadCollectionsFromFilesystem();
 					rebuildIndex();
 					connected = true;
@@ -683,9 +706,12 @@ export function createLocalProvider() {
 					return {
 						ok: true,
 						message: `Connected to local host ${rootDirectoryLabel}.`,
-						sourceDisplayLabel: rootDirectoryLabel,
-						sourceDetailLabel: `${rootDirectoryLabel} (host root)`,
+						sourceDisplayLabel:
+							rootCollectionsTitle || rootDirectoryLabel,
+						sourceDetailLabel:
+							directoryPath || `${rootDirectoryLabel} (host root)`,
 						capabilities,
+						initialization,
 						collections: collections.map((collection) =>
 							toCollectionSummary(collection),
 						),
@@ -709,6 +735,8 @@ export function createLocalProvider() {
 
 			try {
 				const { json, url } = await fetchJson(sourcePath);
+				const indexTitle = String(json?.title || "").trim();
+				rootCollectionsTitle = indexTitle;
 
 				if (Array.isArray(json.collections)) {
 					const loadedCollections = [];
@@ -748,7 +776,7 @@ export function createLocalProvider() {
 					return {
 						ok: true,
 						message: `Connected to ${sourcePath}`,
-						sourceDisplayLabel: sourceLabel,
+						sourceDisplayLabel: indexTitle || sourceLabel,
 						sourceDetailLabel: sourcePath,
 						capabilities,
 						collections: collections.map((collection) =>
@@ -1143,6 +1171,23 @@ export function createLocalProvider() {
 
 		getCapabilities() {
 			return capabilities;
+		},
+
+		async saveConnectionSettings(patch = {}) {
+			if (!connected) {
+				throw providerNotConnectedError("local");
+			}
+			if (connectionMode !== "filesystem") {
+				return { ok: false, message: "Connection settings are read-only." };
+			}
+			ensureWritableLocalHost();
+			const nextTitle = String(patch.title || "").trim();
+			if (!nextTitle) {
+				return { ok: false, message: "Connection title cannot be empty." };
+			}
+			rootCollectionsTitle = nextTitle;
+			await writeCollectionsIndex();
+			return { ok: true, title: rootCollectionsTitle };
 		},
 	};
 }

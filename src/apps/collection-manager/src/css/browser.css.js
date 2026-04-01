@@ -25,6 +25,12 @@ export const browserStyles = `
     background: transparent;
   }
 
+  .viewport-panel > open-collections-panel-chrome {
+    display: block;
+    height: 100%;
+    min-height: 0;
+  }
+
   .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -72,15 +78,39 @@ export const browserStyles = `
     gap: 0.22rem;
   }
 
+  .manager-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding-bottom: var(--oc-space-1);
+  }
+
+  .mode-toggle {
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    border-radius: var(--oc-radius-pill);
+    background: var(--oc-bg-panel);
+    color: var(--oc-text-secondary);
+    font: inherit;
+    font-size: 0.78rem;
+    line-height: 1;
+    padding: 0.34rem 0.62rem;
+    cursor: pointer;
+  }
+
+  .mode-toggle[data-active="true"] {
+    border-color: var(--oc-border-accent);
+    color: var(--oc-color-blue-800);
+    font-weight: 700;
+  }
+
   .delete-action-btn {
-    color: #b42318;
     border: var(--oc-border-width-sm) solid var(--oc-border-control);
     border-radius: var(--oc-radius-control);
     background: var(--oc-bg-panel);
   }
 
   .delete-action-btn:hover {
-    color: #912018;
     background: rgba(180, 35, 24, 0.1);
   }
 
@@ -145,22 +175,66 @@ export const browserStyles = `
     padding: 0;
     overflow: hidden;
     position: relative;
-    overscroll-behavior: contain;
   }
 
-  .browser-host {
-    display: flex;
-    flex: 1 1 auto;
-    min-height: 0;
-    width: 100%;
-    overflow: auto;
-    overscroll-behavior: contain;
-  }
-
-  .browser-host > * {
-    flex: 1 1 auto;
+  .scroll-container > * {
+    display: block;
     min-width: 0;
+  }
+
+  .scroll-container > :last-child {
+    padding-bottom: var(--oc-space-2);
+  }
+
+  .scroll-container {
+    flex: 1 1 auto;
+    height: 100%;
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .grid-host {
+    min-height: 0;
+  }
+
+  .browse-cell {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 0;
+    align-content: start;
+  }
+
+  .browse-cell > oc-card-collections,
+  .browse-cell > oc-card-collection,
+  .browse-cell > oc-card-item {
+    display: block;
+  }
+
+  .browse-cell-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .selection-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--oc-radius-pill);
+    border: var(--oc-border-width-sm) solid var(--oc-border-control);
+    background: var(--oc-bg-panel);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--oc-text-secondary);
+  }
+
+  .selection-toggle input {
+    margin: 0;
   }
 
   .onboarding-panel {
@@ -266,6 +340,10 @@ export const browserStyles = `
 
     .asset-wrap {
       padding: 0;
+    }
+
+    .browse-cell.kind-item .browse-cell-controls button[data-open-id] {
+      display: none;
     }
 
   }

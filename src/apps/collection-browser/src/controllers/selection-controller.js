@@ -5,20 +5,37 @@ export function isMobileViewport() {
 	);
 }
 
+function currentItems(app) {
+	return Array.isArray(app.getCurrentItems?.())
+		? app.getCurrentItems()
+		: app.state.collection?.items || [];
+}
+
+function resolveItemById(app, itemId) {
+	const id = String(itemId || "").trim();
+	if (!id) {
+		return null;
+	}
+	const scopedItems = currentItems(app);
+	const scopedMatch = scopedItems.find((item) => item?.id === id) || null;
+	if (scopedMatch) {
+		return scopedMatch;
+	}
+	if (app.isEmbeddedRuntime?.()) {
+		const sourceItems = Array.isArray(app.state.sourceItems)
+			? app.state.sourceItems
+			: [];
+		return sourceItems.find((item) => item?.id === id) || null;
+	}
+	return null;
+}
+
 export function findSelectedItem(app) {
-	return (
-		(app.state.collection?.items || []).find(
-			(item) => item.id === app.state.selectedItemId,
-		) || null
-	);
+	return resolveItemById(app, app.state.selectedItemId);
 }
 
 export function findViewerItem(app) {
-	return (
-		(app.state.collection?.items || []).find(
-			(item) => item.id === app.state.viewerItemId,
-		) || null
-	);
+	return resolveItemById(app, app.state.viewerItemId);
 }
 
 export function selectItem(app, itemId) {
@@ -36,9 +53,7 @@ export function selectItem(app, itemId) {
 }
 
 export function openViewer(app, itemId) {
-	const item = (app.state.collection?.items || []).find(
-		(entry) => entry.id === itemId,
-	);
+	const item = resolveItemById(app, itemId);
 	if (!item) {
 		return;
 	}

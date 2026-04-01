@@ -5,6 +5,12 @@ export function cacheDomElements(root) {
 		browserHeaderStatus: root.getElementById("browserHeaderStatus"),
 		browserViewport: root.getElementById("browserViewport"),
 		manifestControls: root.getElementById("manifestControls"),
+		embeddedViewAllBtn: root.getElementById("embeddedViewAllBtn"),
+		embeddedViewSourcesBtn: root.getElementById("embeddedViewSourcesBtn"),
+		embeddedViewCollectionsBtn: root.getElementById(
+			"embeddedViewCollectionsBtn",
+		),
+		embeddedViewItemsBtn: root.getElementById("embeddedViewItemsBtn"),
 		metadataPanel: root.getElementById("metadataPanel"),
 		viewerDialog: root.getElementById("viewerDialog"),
 	};
@@ -47,12 +53,38 @@ export function bindDomEvents(app) {
 		);
 		app.renderManifestControls();
 	});
-
-	app.dom.browserViewport?.addEventListener("item-select", (event) => {
-		app.selectItem(event.detail?.itemId || "");
+	app.dom.embeddedViewSourcesBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("sources");
 	});
-	app.dom.browserViewport?.addEventListener("item-view", (event) => {
-		app.openViewer(event.detail?.itemId || "");
+	app.dom.embeddedViewAllBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("all");
+	});
+	app.dom.embeddedViewCollectionsBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("collections");
+	});
+	app.dom.embeddedViewItemsBtn?.addEventListener("click", () => {
+		app.setEmbeddedViewMode("items");
+	});
+	app.dom.browserViewport?.addEventListener("panel-back", () => {
+		app.goBackInEmbeddedNav();
+	});
+
+	app.dom.browserViewport?.addEventListener("item-open", (event) => {
+		app.openItemFromCard(event.detail?.itemId || "");
+	});
+	app.dom.browserViewport?.addEventListener("collection-open", async (event) => {
+		const manifestUrl = String(event.detail?.manifestUrl || "").trim();
+		if (!manifestUrl) {
+			return;
+		}
+		await app.openCollectionFromBrowse(manifestUrl);
+	});
+	app.dom.browserViewport?.addEventListener("source-open", async (event) => {
+		const sourceId = String(event.detail?.sourceId || "").trim();
+		if (!sourceId) {
+			return;
+		}
+		await app.openSourceFromBrowse(sourceId);
 	});
 
 	app.dom.metadataPanel?.addEventListener("close-metadata", () => {
@@ -61,4 +93,5 @@ export function bindDomEvents(app) {
 	app.dom.viewerDialog?.addEventListener("close-viewer", () => {
 		app.state.viewerItemId = null;
 	});
+	// Details action intentionally hidden in viewer header for now.
 }

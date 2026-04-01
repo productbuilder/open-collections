@@ -85,4 +85,14 @@ export const primitiveStyles = `
     background: var(--oc-bg-subtle);
     color: var(--oc-text-primary);
   }
+
+  .icon-btn .icon {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 `;

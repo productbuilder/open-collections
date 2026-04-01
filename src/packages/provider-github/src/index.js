@@ -357,6 +357,30 @@ export function createGithubProvider() {
 		};
 	}
 
+	async function ensureCollectionsIndexInitialized(rootFolderPath) {
+		const indexPath = joinRepoPath(rootFolderPath, "collections.json");
+		const existingIndexEntry = await fetchRepoContents(indexPath, {
+			allowNotFound: true,
+		});
+		if (
+			existingIndexEntry &&
+			!Array.isArray(existingIndexEntry) &&
+			existingIndexEntry.type === "file"
+		) {
+			return { created: false, path: indexPath };
+		}
+
+		const payload = {
+			message: "Initialize collections index for writable connection",
+			content: encodeBase64Utf8(
+				`${JSON.stringify({ collections: [] }, null, 2)}\n`,
+			),
+			branch,
+		};
+		await putRepoContent(indexPath, payload);
+		return { created: true, path: indexPath };
+	}
+
 	function mergeItemPatch(item, patch) {
 		return {
 			...item,
@@ -528,6 +552,13 @@ export function createGithubProvider() {
 					hasWriteAccess = await detectWriteAccess();
 				}
 
+				let initialization = { created: false };
+				if (hasWriteAccess) {
+					initialization = await ensureCollectionsIndexInitialized(
+						contentPath,
+					);
+				}
+
 				connected = true;
 				updateCapabilities();
 				const where = contentPath
@@ -544,6 +575,7 @@ export function createGithubProvider() {
 					ok: true,
 					message,
 					capabilities,
+					initialization,
 				};
 			} catch (error) {
 				connected = false;

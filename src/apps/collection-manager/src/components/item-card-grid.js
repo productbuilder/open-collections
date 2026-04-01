@@ -1,11 +1,23 @@
 import { browserRendererStyles } from "../css/browser-renderers.css.js";
 import { resolveItemPreviewUrl } from "../utils/preview-utils.js";
+import "../../../../shared/ui/primitives/index.js";
+
+const RENDER_CHUNK_SIZE = 30;
 
 class OpenItemCardGridElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
-		this.model = { items: [], focusedItemId: null, selectedItemIds: [] };
+		this.model = {
+			items: [],
+			focusedItemId: null,
+			selectedItemIds: [],
+			isLoading: false,
+		};
+		this._renderFrame = 0;
+		this._renderToken = 0;
+		this._mobileMediaQuery = null;
+		this._handleMobileMediaChange = null;
 	}
 
 	update(data = {}) {
@@ -14,13 +26,44 @@ class OpenItemCardGridElement extends HTMLElement {
 	}
 
 	connectedCallback() {
+		if (
+			typeof window !== "undefined" &&
+			typeof window.matchMedia === "function"
+		) {
+			this._mobileMediaQuery = window.matchMedia("(max-width: 760px)");
+			this._handleMobileMediaChange = () => this.render();
+			this._mobileMediaQuery.addEventListener(
+				"change",
+				this._handleMobileMediaChange,
+			);
+		}
 		this.render();
+	}
+
+	disconnectedCallback() {
+		if (this._mobileMediaQuery && this._handleMobileMediaChange) {
+			this._mobileMediaQuery.removeEventListener(
+				"change",
+				this._handleMobileMediaChange,
+			);
+		}
+		this._mobileMediaQuery = null;
+		this._handleMobileMediaChange = null;
+		this.cancelChunkedRender();
 	}
 
 	dispatch(name, detail = {}) {
 		this.dispatchEvent(
 			new CustomEvent(name, { detail, bubbles: true, composed: true }),
 		);
+	}
+
+	cancelChunkedRender() {
+		this._renderToken += 1;
+		if (this._renderFrame) {
+			window.cancelAnimationFrame(this._renderFrame);
+			this._renderFrame = 0;
+		}
 	}
 
 	requiredFieldScore(item) {
@@ -50,21 +93,43 @@ class OpenItemCardGridElement extends HTMLElement {
 		return Boolean(String(item?.media?.url || "").trim());
 	}
 
-	render() {
-		const items = Array.isArray(this.model.items) ? this.model.items : [];
-		const selectedIds = new Set(
-			Array.isArray(this.model.selectedItemIds)
-				? this.model.selectedItemIds
-				: [],
-		);
-		if (items.length === 0) {
-			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">This collection has no items yet. Add item to begin.</div>`;
-			return;
-		}
+	usesSharedMobileCard() {
+		return this._mobileMediaQuery?.matches === true;
+	}
 
-		const cards = items
-			.map(
-				(item) => `
+	buildSharedMobileCard(item, selectedIds) {
+		const workspaceId = String(item.workspaceId || "").trim();
+		const card = document.createElement("article");
+		card.className = "asset-card asset-card-mobile-shared";
+		card.setAttribute("role", "button");
+		card.setAttribute("tabindex", "0");
+		card.dataset.id = workspaceId;
+		card.innerHTML = `
+			<label class="selection-toggle" data-select-wrap="true" aria-label="Select ${item.title || item.id}">
+				<input type="checkbox" data-select-id="${workspaceId}" ${selectedIds.has(item.workspaceId) ? "checked" : ""} />
+				<span>Select</span>
+			</label>
+		`;
+
+		const sharedCard = document.createElement("oc-card-item");
+		sharedCard.className = "shared-item-card";
+		sharedCard.update({
+			title: item.title || item.id || "Item",
+			subtitle: item.license ? `License: ${item.license}` : "",
+			countLabel: `Completeness ${this.requiredFieldScore(item)}`,
+			previewUrl: resolveItemPreviewUrl(item),
+			previewImages: [],
+			actionLabel: "Select",
+			actionValue: workspaceId,
+			active: false,
+			disabled: false,
+		});
+		card.append(sharedCard);
+		return card;
+	}
+
+	cardMarkup(item, selectedIds) {
+		return `
       <article
         class="asset-card ${this.model.focusedItemId === item.workspaceId ? "is-focused" : ""} ${selectedIds.has(item.workspaceId) ? "is-selected" : ""}"
         role="button"
@@ -87,72 +152,129 @@ class OpenItemCardGridElement extends HTMLElement {
 			}
         </div>
       </article>
-    `,
-			)
-			.join("");
+    `;
+	}
 
-		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="asset-grid">${cards}</div>`;
+	bindDelegatedEvents() {
+		const grid = this.shadowRoot.querySelector(".asset-grid");
+		if (!grid || grid.dataset.bound === "true") {
+			return;
+		}
+		grid.dataset.bound = "true";
 
-		this.shadowRoot
-			.querySelectorAll(".asset-card[data-id]")
-			.forEach((card) => {
-				card.addEventListener("click", () => {
-					this.dispatch("item-select", {
-						workspaceId: card.getAttribute("data-id"),
-					});
+		grid.addEventListener("click", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const selectWrap = target?.closest("[data-select-wrap]");
+			if (selectWrap) {
+				event.stopPropagation();
+				return;
+			}
+			const openButton = target?.closest("button[data-open-id]");
+			if (openButton) {
+				event.stopPropagation();
+				this.dispatch("item-view", {
+					workspaceId: openButton.getAttribute("data-open-id"),
 				});
+				return;
+			}
+			const uploadButton = target?.closest("button[data-upload-id]");
+			if (uploadButton) {
+				event.stopPropagation();
+				this.dispatch("attach-media-upload", {
+					itemId: uploadButton.getAttribute("data-upload-id"),
+				});
+				return;
+			}
+			const urlButton = target?.closest("button[data-url-id]");
+			if (urlButton) {
+				event.stopPropagation();
+				this.dispatch("attach-media-url", {
+					itemId: urlButton.getAttribute("data-url-id"),
+				});
+				return;
+			}
+			const card = target?.closest(".asset-card[data-id]");
+			if (!card) {
+				return;
+			}
+			this.dispatch("item-select", {
+				workspaceId: card.getAttribute("data-id"),
 			});
-		this.shadowRoot
-			.querySelectorAll("[data-select-wrap]")
-			.forEach((label) => {
-				label.addEventListener("click", (event) => {
-					event.stopPropagation();
-				});
+		});
+
+		grid.addEventListener("change", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const input = target?.closest("input[data-select-id]");
+			if (!input) {
+				return;
+			}
+			event.stopPropagation();
+			this.dispatch("item-toggle-selected", {
+				workspaceId: input.getAttribute("data-select-id"),
+				selected: input.checked === true,
 			});
-		this.shadowRoot
-			.querySelectorAll("input[data-select-id]")
-			.forEach((input) => {
-				input.addEventListener("click", (event) => {
-					event.stopPropagation();
-				});
-				input.addEventListener("change", (event) => {
-					event.stopPropagation();
-					this.dispatch("item-toggle-selected", {
-						workspaceId: input.getAttribute("data-select-id"),
-						selected: event.target?.checked === true,
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-open-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("item-view", {
-						workspaceId: button.getAttribute("data-open-id"),
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-upload-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("attach-media-upload", {
-						itemId: button.getAttribute("data-upload-id"),
-					});
-				});
-			});
-		this.shadowRoot
-			.querySelectorAll("button[data-url-id]")
-			.forEach((button) => {
-				button.addEventListener("click", (event) => {
-					event.stopPropagation();
-					this.dispatch("attach-media-url", {
-						itemId: button.getAttribute("data-url-id"),
-					});
-				});
-			});
+		});
+	}
+
+	renderItemsInChunks(items = [], selectedIds) {
+		const host = this.shadowRoot.querySelector(".asset-grid");
+		if (!host) {
+			return;
+		}
+		this.cancelChunkedRender();
+		const token = this._renderToken;
+		let index = 0;
+		const useSharedMobileCard = this.usesSharedMobileCard();
+
+		const renderChunk = () => {
+			if (token !== this._renderToken) {
+				return;
+			}
+			const next = items.slice(index, index + RENDER_CHUNK_SIZE);
+			if (useSharedMobileCard) {
+				const fragment = document.createDocumentFragment();
+				for (const item of next) {
+					fragment.append(this.buildSharedMobileCard(item, selectedIds));
+				}
+				host.append(fragment);
+			} else {
+				host.insertAdjacentHTML(
+					"beforeend",
+					next.map((item) => this.cardMarkup(item, selectedIds)).join(""),
+				);
+			}
+			index += RENDER_CHUNK_SIZE;
+			if (index < items.length) {
+				this._renderFrame = window.requestAnimationFrame(renderChunk);
+			}
+		};
+
+		renderChunk();
+	}
+
+	render() {
+		const items = Array.isArray(this.model.items) ? this.model.items : [];
+		const selectedIds = new Set(
+			Array.isArray(this.model.selectedItemIds)
+				? this.model.selectedItemIds
+				: [],
+		);
+		this.cancelChunkedRender();
+		if (this.model.isLoading) {
+			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><open-collections-loading-skeleton variant="card-grid" count="10"></open-collections-loading-skeleton>`;
+			return;
+		}
+		if (items.length === 0) {
+			this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="empty">This collection has no items yet. Add item to begin.</div>`;
+			return;
+		}
+
+		const mobileGridClass = this.usesSharedMobileCard()
+			? "asset-grid mobile-shared-cards"
+			: "asset-grid";
+		this.shadowRoot.innerHTML = `<style>${browserRendererStyles}</style><div class="${mobileGridClass}"></div>`;
+		this.bindDelegatedEvents();
+		this.renderItemsInChunks(items, selectedIds);
 	}
 }
 

@@ -17,12 +17,12 @@ export const browserRendererStyles = `
   }
 
   .asset-card {
-    border: 1px solid #dbe3ec;
+    border: 1px solid var(--oc-browser-border, #d9d5d0);
     border-radius: 9px;
     padding: 0.55rem;
-    background: #ffffff;
+    background: var(--oc-browser-bg-card, #fffdfa);
     display: grid;
-    grid-template-rows: auto minmax(2.4rem, auto) auto auto;
+    grid-template-rows: auto minmax(2.4rem, auto) auto;
     align-content: start;
     gap: 0.5rem;
     height: 100%;
@@ -31,15 +31,15 @@ export const browserRendererStyles = `
   }
 
   .asset-card:hover {
-    border-color: #93c5fd;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-    background: #f8fbff;
+    border-color: var(--oc-browser-border-strong, #c8c1b8);
+    box-shadow: 0 1px 3px rgba(46, 41, 36, 0.08);
+    background: var(--oc-browser-bg-card-soft, #f8f3ed);
   }
 
   .asset-card.is-focused {
-    border-color: #0f6cc6;
-    box-shadow: 0 0 0 1px #66a6e8 inset, 0 3px 10px rgba(15, 108, 198, 0.16);
-    background: #f5faff;
+    border-color: var(--oc-browser-accent, #756c64);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--oc-browser-accent, #756c64) 44%, #ffffff 56%) inset, 0 3px 10px rgba(77, 64, 50, 0.16);
+    background: var(--oc-browser-accent-soft, #ece7e1);
   }
 
   .thumb-frame {
@@ -48,9 +48,9 @@ export const browserRendererStyles = `
     display: block;
     flex-shrink: 0;
     border-radius: 7px;
-    border: 1px solid #dbe3ec;
+    border: 1px solid var(--oc-browser-border, #d9d5d0);
     overflow: hidden;
-    background: #eef2f7;
+    background: var(--oc-browser-surface-muted, #eee5dc);
   }
 
   .thumb {
@@ -68,8 +68,8 @@ export const browserRendererStyles = `
     height: 100%;
     display: grid;
     place-items: center;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--oc-browser-text-muted, #6c6258);
+    background: var(--oc-browser-placeholder-fill, #e8e4de);
     font-size: 0.82rem;
   }
 
@@ -88,7 +88,7 @@ export const browserRendererStyles = `
   .meta {
     margin: 0;
     font-size: 0.82rem;
-    color: #475569;
+    color: var(--oc-browser-text-muted, #6c6258);
     line-height: 1.45;
   }
 
@@ -98,9 +98,9 @@ export const browserRendererStyles = `
   }
 
   .btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0f172a;
+    border: 1px solid var(--oc-browser-border, #d9d5d0);
+    background: var(--oc-browser-bg-card, #fffdfa);
+    color: var(--oc-browser-text, #2e2924);
     border-radius: 8px;
     padding: 0.42rem 0.7rem;
     cursor: pointer;
@@ -114,12 +114,12 @@ export const browserRendererStyles = `
   }
 
   .empty {
-    border: 1px dashed #cbd5e1;
+    border: 1px solid var(--oc-browser-border, #d9d5d0);
     border-radius: 8px;
     padding: 1rem;
     text-align: center;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--oc-browser-text-muted, #6c6258);
+    background: var(--oc-browser-surface-muted, #eee5dc);
     font-size: 0.9rem;
   }
 

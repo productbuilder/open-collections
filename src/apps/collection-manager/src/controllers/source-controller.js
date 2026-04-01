@@ -387,6 +387,7 @@ export async function refreshSource(app, sourceId, options = {}) {
 	if (!source) {
 		return;
 	}
+	const isBackgroundRestore = options.backgroundRestore === true;
 
 	try {
 		const result = await app.connectionsRuntime.refreshSource({
@@ -402,11 +403,19 @@ export async function refreshSource(app, sourceId, options = {}) {
 			);
 			app.renderSourcesList();
 			app.saveSourcesToStorage();
-			app.setConnectionStatus(result.message || "Refresh failed.", false);
-			app.setStatus(
-				`Refresh failed: ${result.message || "Connection failed."}`,
-				"warn",
+			app.setConnectionStatus(
+				isBackgroundRestore
+					? result.message ||
+							"Background reconnect failed. Connection remains remembered."
+					: result.message || "Refresh failed.",
+				false,
 			);
+			if (!isBackgroundRestore) {
+				app.setStatus(
+					`Refresh failed: ${result.message || "Connection failed."}`,
+					"warn",
+				);
+			}
 			app.refreshWorkingStatus();
 			return;
 		}
@@ -528,17 +537,26 @@ export async function refreshSource(app, sourceId, options = {}) {
 		}
 
 		app.setConnectionStatus(
-			`Refreshed storage source ${updatedSource.label}.`,
+			isBackgroundRestore
+				? `Reconnected remembered source ${updatedSource.label}.`
+				: `Refreshed storage source ${updatedSource.label}.`,
 			true,
 		);
-		app.setStatus(`Refreshed storage source ${updatedSource.label}.`, "ok");
+		if (!isBackgroundRestore) {
+			app.setStatus(
+				`Refreshed storage source ${updatedSource.label}.`,
+				"ok",
+			);
+		}
 		app.refreshWorkingStatus();
 		app.renderSourcesList();
 		app.renderSourceFilter();
 		app.renderAssets();
 		app.renderEditor();
 		app.saveSourcesToStorage();
-		app.clearPendingSourceRepair();
+		if (!isBackgroundRestore) {
+			app.clearPendingSourceRepair();
+		}
 	} catch (error) {
 		const next = {
 			...source,
@@ -555,10 +573,19 @@ export async function refreshSource(app, sourceId, options = {}) {
 		);
 		app.renderSourcesList();
 		app.saveSourcesToStorage();
-		app.setConnectionStatus(`Refresh error: ${error.message}`, false);
-		app.setStatus(`Refresh error: ${error.message}`, "warn");
+		app.setConnectionStatus(
+			isBackgroundRestore
+				? `Background reconnect error: ${error.message}`
+				: `Refresh error: ${error.message}`,
+			false,
+		);
+		if (!isBackgroundRestore) {
+			app.setStatus(`Refresh error: ${error.message}`, "warn");
+		}
 		app.refreshWorkingStatus();
-		app.clearPendingSourceRepair();
+		if (!isBackgroundRestore) {
+			app.clearPendingSourceRepair();
+		}
 	}
 }
 

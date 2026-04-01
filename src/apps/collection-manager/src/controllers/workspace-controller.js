@@ -10,7 +10,11 @@ import {
 	persistLocalStateStringSoon,
 	readLocalStorageString,
 } from "../../../../shared/platform/mobile-persistence.js";
-import { CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY } from "../../../../shared/account/index.js";
+import {
+	CANONICAL_AVAILABLE_CONNECTIONS_STORAGE_KEY,
+	getSessionConnectionSources,
+	setSessionConnectionSources,
+} from "../../../../shared/account/index.js";
 
 const LEGACY_MANAGER_SOURCES_STORAGE_KEY = "timemap_manager_sources_v1";
 export const SOURCES_STORAGE_KEY =
@@ -86,7 +90,7 @@ function logCredentialRestore(stage, payload = {}) {
 	}
 }
 
-function shouldAutoReconnectRememberedSource(
+function isReconnectEligibleRememberedSource(
 	source,
 	platformType = PLATFORM_TYPES.BROWSER,
 ) {
@@ -94,15 +98,35 @@ function shouldAutoReconnectRememberedSource(
 		return false;
 	}
 
+	const isSessionUsableLocalDirectoryHandle = () => {
+		const handle = source.config?.localDirectoryHandle;
+		return Boolean(
+			handle &&
+				typeof handle === "object" &&
+				handle.kind === "directory" &&
+				typeof handle.queryPermission === "function" &&
+				typeof handle.requestPermission === "function",
+		);
+	};
+
 	if (
 		platformType === PLATFORM_TYPES.BROWSER ||
 		platformType === PLATFORM_TYPES.CAPACITOR
 	) {
-		return source.providerId === "example";
+		if (source.providerId === "example") {
+			return true;
+		}
+		if (source.providerId === "github" || source.providerId === "s3") {
+			return !source.needsCredentials;
+		}
+		if (source.providerId === "local") {
+			return isSessionUsableLocalDirectoryHandle();
+		}
+		return false;
 	}
 
 	if (source.providerId === "local") {
-		return Boolean(source.config?.localDirectoryHandle);
+		return isSessionUsableLocalDirectoryHandle();
 	}
 
 	if (source.providerId === "github" || source.providerId === "s3") {
@@ -111,6 +135,31 @@ function shouldAutoReconnectRememberedSource(
 	}
 
 	return true;
+}
+
+function startBackgroundRememberedSourceRehydrate(
+	app,
+	sources,
+	platformType,
+) {
+	const eligibleSourceIds = (Array.isArray(sources) ? sources : [])
+		.filter((source) =>
+			isReconnectEligibleRememberedSource(source, platformType),
+		)
+		.map((source) => source.id)
+		.filter((sourceId) => typeof sourceId === "string" && sourceId.trim());
+
+	if (eligibleSourceIds.length === 0) {
+		return;
+	}
+
+	const sourceIdsToRefresh = eligibleSourceIds.filter((sourceId) =>
+		app.state.sources.some((source) => source.id === sourceId),
+	);
+	if (sourceIdsToRefresh.length === 0) {
+		return;
+	}
+	void app.refreshSourcesInBackground(sourceIdsToRefresh);
 }
 
 export function currentWorkspaceSnapshot(app) {
@@ -210,6 +259,20 @@ export function applyWorkspaceSnapshot(app, snapshot = {}) {
 			))
 	) {
 		app.state.activeSourceFilter = snapshot.selectedSourceId;
+	}
+	const hasNonExampleSource = app.state.sources.some(
+		(source) => !app.isExampleSource(source),
+	);
+	const activeFilteredSource =
+		app.state.activeSourceFilter !== "all"
+			? app.getSourceById(app.state.activeSourceFilter)
+			: null;
+	if (
+		hasNonExampleSource &&
+		activeFilteredSource &&
+		app.isExampleSource(activeFilteredSource)
+	) {
+		app.state.activeSourceFilter = "all";
 	}
 	app.renderSourceFilter();
 
@@ -341,6 +404,7 @@ export function saveSourcesToStorage(app) {
 	const payload = app.state.sources.map((source) =>
 		app.toPersistedSource(source),
 	);
+	setSessionConnectionSources(app.state.sources);
 
 	try {
 		app.connectionsRuntime.persistSources(app.state.sources);
@@ -374,11 +438,23 @@ export async function restoreRememberedSources(app) {
 	const isWebLikeRuntime =
 		platformType === PLATFORM_TYPES.BROWSER ||
 		platformType === PLATFORM_TYPES.CAPACITOR;
+	const isSessionUsableLocalDirectoryHandle = (handle) =>
+		Boolean(
+			handle &&
+				typeof handle === "object" &&
+				handle.kind === "directory" &&
+				typeof handle.queryPermission === "function" &&
+				typeof handle.requestPermission === "function",
+		);
 	const isFilesystemLikePath = (value) =>
 		/^[a-z]:[\\/]/i.test(value) ||
 		value.startsWith("\\\\") ||
 		value.includes("\\");
-	let remembered = [];
+	const sessionSources = getSessionConnectionSources();
+	let remembered = Array.isArray(sessionSources)
+		? [...sessionSources]
+		: [];
+	const usingSessionSources = remembered.length > 0;
 
 	await mirrorNativePreferencesToLocalStorage([
 		SOURCES_STORAGE_KEY,
@@ -386,7 +462,7 @@ export async function restoreRememberedSources(app) {
 		WORKSPACE_SELECTION_STORAGE_KEY,
 	]);
 
-	if (app.state.opfsAvailable) {
+	if (!usingSessionSources && app.state.opfsAvailable) {
 		try {
 			remembered = await app.loadRememberedSourcesFromOpfs();
 		} catch (error) {
@@ -395,8 +471,10 @@ export async function restoreRememberedSources(app) {
 	}
 
 	const usingOpfsRemembered =
-		Array.isArray(remembered) && remembered.length > 0;
-	if (!usingOpfsRemembered) {
+		!usingSessionSources &&
+		Array.isArray(remembered) &&
+		remembered.length > 0;
+	if (!usingSessionSources && !usingOpfsRemembered) {
 		remembered = app.connectionsRuntime.restoreRememberedSources();
 		if (
 			(!Array.isArray(remembered) || remembered.length === 0) &&
@@ -484,7 +562,7 @@ export async function restoreRememberedSources(app) {
 			).trim();
 			const revived = revivePlatformHandle(
 				rawHandle ||
-					(fallbackPath
+					(!isWebLikeRuntime && fallbackPath
 						? {
 								kind: "directory",
 								path: fallbackPath,
@@ -505,6 +583,18 @@ export async function restoreRememberedSources(app) {
 					path:
 						source.config?.path ||
 						String(revived.path || fallbackPath).trim(),
+				};
+			}
+			const hasSessionUsableHandle = isSessionUsableLocalDirectoryHandle(
+				source.config?.localDirectoryHandle,
+			);
+			source.needsReconnect = isWebLikeRuntime
+				? !hasSessionUsableHandle
+				: source.needsReconnect !== false;
+			if (isWebLikeRuntime && !hasSessionUsableHandle) {
+				source.config = {
+					...source.config,
+					localDirectoryHandle: null,
 				};
 			}
 		}
@@ -586,13 +676,13 @@ export async function restoreRememberedSources(app) {
 		) {
 			source.status = isTauriDesktop
 				? "Remembered local host. Restoring folder access from desktop workspace state."
-				: "Remembered local host. Attempting reconnect with stored folder handle.";
+				: "Remembered local host. Folder access is available for this browser session.";
 		} else if (
 			source.providerId === "local" &&
 			source.config?.localDirectoryName
 		) {
 			source.status =
-				"Remembered local host. Re-select the folder before refresh because browser folder handles are session-scoped.";
+				"Remembered local host. Reconnect needed: re-select the folder in this browser session.";
 		}
 
 		restored.push(source);
@@ -601,6 +691,8 @@ export async function restoreRememberedSources(app) {
 	if (restored.length === 0) {
 		return;
 	}
+
+	setSessionConnectionSources(restored);
 
 	let desiredActiveSourceId = "all";
 	try {
@@ -617,7 +709,11 @@ export async function restoreRememberedSources(app) {
 		app.state.sources.find(
 			(source) =>
 				source.providerId === "local" &&
-				source.config?.localDirectoryHandle,
+				source.config?.localDirectoryHandle &&
+				(!isWebLikeRuntime ||
+					isSessionUsableLocalDirectoryHandle(
+						source.config.localDirectoryHandle,
+					)),
 		)?.config?.localDirectoryHandle || null;
 	app.selectedLocalDirectoryHandle = firstLocalHandle;
 	app.state.assets = [];
@@ -636,13 +732,22 @@ export async function restoreRememberedSources(app) {
 	app.syncMetadataModeFromState();
 	app.closeMobileDetail();
 
-	app.setStatus(
-		`Restored ${app.state.sources.length} remembered storage source definitions.`,
-		"neutral",
-	);
+	if (usingSessionSources) {
+		app.setStatus(
+			`Loaded ${app.state.sources.length} in-session connection${app.state.sources.length === 1 ? "" : "s"} from Account.`,
+			"neutral",
+		);
+	} else {
+		app.setStatus(
+			`Restored ${app.state.sources.length} remembered storage source definitions.`,
+			"neutral",
+		);
+	}
 	app.refreshWorkingStatus();
 	app.setConnectionStatus(
-		"Remembered storage sources loaded. Refresh to reconnect.",
+		usingSessionSources
+			? "In-session connections loaded."
+			: "Remembered storage sources loaded. Refresh to reconnect.",
 		"neutral",
 	);
 	app.renderSourcesList();
@@ -651,17 +756,11 @@ export async function restoreRememberedSources(app) {
 	app.renderEditor();
 
 	app.activatePreferredBrowserStartupSource();
-
-	for (const source of app.state.sources) {
-		const shouldAutoRefresh = shouldAutoReconnectRememberedSource(
-			source,
-			platformType,
-		);
-		if (!shouldAutoRefresh) {
-			continue;
-		}
-		await app.refreshSource(source.id);
-	}
+	startBackgroundRememberedSourceRehydrate(
+		app,
+		app.state.sources,
+		platformType,
+	);
 }
 
 export async function initializeLocalDraftState(app) {

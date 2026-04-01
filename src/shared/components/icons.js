@@ -87,6 +87,18 @@ export function renderDriveFolderUploadIcon(
   `;
 }
 
+export function renderCreateNewFolderIcon(
+	className = "icon icon-create-new-folder",
+) {
+	return `
+    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+      <path d="M12 11v6" />
+      <path d="M9 14h6" />
+    </svg>
+  `;
+}
+
 export function renderProfileIcon(className = "icon icon-profile") {
 	return `
     <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

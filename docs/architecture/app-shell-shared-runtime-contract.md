@@ -106,6 +106,17 @@ To reduce manager-ownership of account/connection foundations:
 `collection-manager` keeps compatibility through a re-export at
 `src/apps/collection-manager/src/services/credential-store.js`.
 
+### Connection terminology boundary
+
+Within runtime contracts/docs:
+
+- **Connection** means the saved runtime/app link to a host/source (id, config, credential relationship, status).
+- **Source** means the app-consumable entry point resolved from that link (`collections.json` or `collection.json`).
+- **Host** means the underlying storage location/provider root.
+- **Collection** means content data described by protocol manifests.
+
+Connection runtime/state is not itself a protocol manifest file. Protocol filenames remain `collections.json` (multi-collection index) and `collection.json` (single collection manifest); `connection.json` is not introduced in this contract phase.
+
 ---
 
 ## 5) Shell vs shared runtime vs app-specific boundaries
@@ -128,6 +139,44 @@ To reduce manager-ownership of account/connection foundations:
 - domain logic (browse, collect, account workflows, presenter workflows)
 - provider-specific integration behavior
 - app-local rendering details and workflow state
+
+### Shell/session lifecycle rule (embedded mode)
+
+During normal section switching inside `app-shell`, treat mounted apps as one continuous shell session:
+
+- Keep section app instances mounted by default and switch visibility/presentation per active section.
+- Do not unmount/remount apps for routine intra-session navigation.
+- Preserve in-memory workflow/live session state across section switches.
+- Reserve unmount/remount for explicit session-boundary events (shell teardown, hard reload, explicit reset).
+
+This rule is about host lifecycle orchestration only; app-specific business logic ownership remains with each embedded app.
+
+### Desktop work-surface scroll guidance
+
+For desktop embedded app/work surfaces that behave like multi-panel workspaces, prefer panel-local or app-local scroll regions over whole-document scrolling when that improves interaction stability.
+
+- Keep shell/header/nav presentation stable while users work inside app surfaces.
+- Avoid page-level scrollbar changes that can produce header/nav jump.
+- Preserve independent panel usability where parallel workflows are expected.
+
+This is guidance for workspace-like surfaces, not a blanket requirement for every embedded screen.
+
+### Performance + lazy-loading rule
+
+Shared runtime integrations should assume high-volume datasets and async hydration paths.
+
+- Prefer incremental hydration/loading paths over loading full collection/source state up front.
+- Wire host/app seams so screens can render partial data early and continue filling asynchronously.
+- Keep async loading feedback local to the surface being hydrated (panel/view), using loading UI primitives where appropriate.
+- Avoid host/runtime patterns that force rendering or retaining data that is outside the current user view.
+- Use virtualization/windowing where justified by observed volume/cost, without mandating heavyweight abstractions for all views.
+
+### Browser vs manager surface intent
+
+`collection-manager` and `collection-browser` intentionally optimize for different primary tasks.
+
+- Manager is management/workflow-first, so persistent detail/metadata/editor panels are valid when they actively support editing, assignment, and settings tasks.
+- Browser is viewing/discovery-first, so metadata/details should generally remain available but secondary, revealed via explicit action unless a browser use case clearly requires persistent visibility.
 
 ---
 

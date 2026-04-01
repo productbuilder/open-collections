@@ -47,10 +47,18 @@ Notes:
 
 - `collection-manager` can create a draft time-comparer item from the current collection.
 - `collection-browser` opens and renders `presentationType: "time-comparer"` items in the viewer dialog.
-- Viewer wrapper resolves linked collection images first; if links/media are missing it falls back to built-in public demo images so slider behavior can be tested immediately.
+- Viewer wrapper resolves linked collection images first.
+- If links/media are missing, renderer falls back to a demo set so slider behavior can be tested immediately.
+- Current demo fallback is technical/demo-only behavior and is not intended as production content.
+- Demo structure now separates:
+    - a preferred heritage-themed demo set (current default demo experience)
+    - a generic external fallback demo set (last-resort technical fallback)
+- A TODO-ready resolver is in place so a curated heritage demo pair can replace current temporary demo URLs without changing component logic.
 
 ## MVP limitations
 
 - No dedicated editor UI yet for selecting/changing linked past/present items.
 - No zoom/pan sync, alignment correction, or annotations.
-- Demo fallback mode is for testing/development only; real linked collection image references remain the intended production path.
+- Demo fallback mode is for testing/development only.
+- Intended production use remains real collection-linked heritage imagery.
+- Curated heritage demo imagery should replace temporary generic/demo sources when available.

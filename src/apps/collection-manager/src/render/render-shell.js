@@ -1,11 +1,21 @@
 import { shellStyles } from "../css/shell.css.js";
 import { renderCloseIcon } from "../../../../shared/components/icons.js";
+import { ENTRY_VIEW_HEADERS } from "../../../../shared/ui/app-foundation/entry-view-header-copy.js";
 
 export function renderShell(shadowRoot) {
+	const header = ENTRY_VIEW_HEADERS.collect;
 	shadowRoot.innerHTML = `
     <style>${shellStyles}</style>
 
     <main class="manager-root" aria-label="Collection Manager workspace">
+      <section class="entry-view-header-wrap">
+        <open-collections-section-header
+          id="managerEntryTitle"
+          heading-level="1"
+          title="${header.title}"
+          description="${header.subtitle}"
+        ></open-collections-section-header>
+      </section>
       <open-collections-header id="managerHeader" hidden></open-collections-header>
       <open-pane-layout id="paneLayout" inspector-placement="right">
         <open-collections-browser id="collectionBrowser" slot="main"></open-collections-browser>

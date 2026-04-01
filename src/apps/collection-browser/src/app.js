@@ -2,6 +2,8 @@ import {
 	ComponentBase,
 	normalizeCollection,
 } from "../../../shared/library-core/src/index.js";
+import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
+import "../../../shared/ui/primitives/section-header.js";
 import { BROWSER_CONFIG } from "./config.js";
 import { bindDomEvents, cacheDomElements } from "./controllers/dom-bindings.js";
 import {
@@ -648,6 +650,7 @@ class TimemapBrowserElement extends ComponentBase {
 
 	renderShell() {
 		const isEmbedded = this.isEmbeddedRuntime();
+		const entryHeader = ENTRY_VIEW_HEADERS.browse;
 		const toolbarTemplate = isEmbedded
 			? `
             <div class="embedded-view-toggle" slot="toolbar">
@@ -705,34 +708,9 @@ class TimemapBrowserElement extends ComponentBase {
         .browser-header {
           background: var(--oc-browser-bg-card, #fffdfa);
           border-bottom: 1px solid var(--oc-browser-divider, #e2d8cd);
-          padding: 0.85rem 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
-        }
-
-        .brand {
+          padding: 0.85rem 1rem 0.65rem;
           display: grid;
-          gap: 0.35rem;
-          min-width: 0;
-        }
-
-        .title {
-          margin: 0;
-          font-size: 1rem;
-          font-weight: 700;
-          color: var(--oc-browser-text, #2e2924);
-        }
-
-        .context {
-          margin: 0;
-          font-size: 0.83rem;
-          color: var(--oc-browser-text-muted, #6c6258);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 100%;
+          gap: 0.6rem;
         }
 
         .manifest {
@@ -746,7 +724,7 @@ class TimemapBrowserElement extends ComponentBase {
         }
 
         .header-meta {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           flex-wrap: wrap;
@@ -884,14 +862,6 @@ class TimemapBrowserElement extends ComponentBase {
             align-items: center;
           }
 
-          .title {
-            font-size: 0.9rem;
-          }
-
-          .context {
-            font-size: 0.78rem;
-          }
-
           .manifest {
             display: none;
           }
@@ -931,15 +901,18 @@ class TimemapBrowserElement extends ComponentBase {
       </style>
       <div class="app-shell">
         <header class="browser-header">
-          <div class="brand">
-            <h1 class="title">Open Collections Browser</h1>
-            <p id="browserContext" class="context">Read-only browsing for Open Collections manifests.</p>
-            <p id="browserManifest" class="manifest" hidden></p>
-          </div>
-          <div class="header-meta">
-            <span class="mode-chip">Read-only</span>
-            <span id="browserHeaderStatus" class="header-status" data-tone="neutral">Load a collection manifest to browse.</span>
-          </div>
+          <open-collections-section-header
+            id="browserEntryTitle"
+            heading-level="1"
+            title="${entryHeader.title}"
+            description="${entryHeader.subtitle}"
+          >
+            <div slot="actions" class="header-meta">
+              <span class="mode-chip">Read-only</span>
+              <span id="browserHeaderStatus" class="header-status" data-tone="neutral">Load a collection manifest to browse.</span>
+            </div>
+          </open-collections-section-header>
+          <p id="browserManifest" class="manifest" hidden></p>
         </header>
         <div class="shell">
           <open-browser-collection-browser id="browserViewport">
@@ -1002,13 +975,8 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	headerModel() {
-		const collectionTitle = this.state.collection?.title?.trim();
-		const itemCount = this.state.collection?.items?.length || 0;
-		const contextText = collectionTitle
-			? `${collectionTitle} (${itemCount} item${itemCount === 1 ? "" : "s"})`
-			: "Read-only browsing for Open Collections manifests.";
 		const manifestText = this.state.currentManifestUrl || "";
-		return { contextText, manifestText };
+		return { manifestText };
 	}
 
 	viewportModel() {
@@ -1255,14 +1223,9 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	renderHeader() {
-		const context = this.dom?.browserContext;
 		const manifest = this.dom?.browserManifest;
 		const status = this.dom?.browserHeaderStatus;
 		const model = this.headerModel();
-
-		if (context) {
-			context.textContent = model.contextText;
-		}
 
 		if (manifest) {
 			const hasManifest = Boolean(model.manifestText);

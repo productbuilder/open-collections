@@ -2,6 +2,7 @@ import {
 	normalizeCollection,
 } from "../../../shared/library-core/src/index.js";
 import { BaseElement } from "../../../shared/ui/app-foundation/base-element.js";
+import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
 import "../../collection-browser/src/components/browser-viewer-dialog.js";
 import { presenterShellStyles } from "./styles/presenter-shell.css.js";
 
@@ -489,14 +490,15 @@ class OpenCollectionsPresenterElement extends BaseElement {
 	}
 
 	renderTemplate() {
+		const header = ENTRY_VIEW_HEADERS.present;
 		return `
 			<main class="oc-app-viewport" aria-labelledby="presenterTitle">
 				<section class="oc-page">
 					<open-collections-section-header
 						id="presenterTitle"
 						heading-level="1"
-						title="Present"
-						description="Grid-based presentation area for saved presentation app items."
+						title="${escapeHtml(header.title)}"
+						description="${escapeHtml(header.subtitle)}"
 					></open-collections-section-header>
 				</section>
 

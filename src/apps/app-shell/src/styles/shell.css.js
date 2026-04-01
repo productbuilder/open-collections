@@ -200,8 +200,8 @@ export const appShellStyles = `
   }
 
   .shell-nav-btn[aria-current="page"] {
-    background: #e9f2ff;
-    color: var(--oc-border-accent);
+    background: var(--oc-border-accent);
+    color: var(--oc-color-white);
   }
 
   .shell-nav--account .shell-nav-label {

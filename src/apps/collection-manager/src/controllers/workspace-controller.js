@@ -162,6 +162,56 @@ function startBackgroundRememberedSourceRehydrate(
 	void app.refreshSourcesInBackground(sourceIdsToRefresh);
 }
 
+function ensureStarterExampleSourceFallback(app, sources = []) {
+	const normalizedSources = Array.isArray(sources) ? sources : [];
+	const hasExampleSource = normalizedSources.some(
+		(source) => source?.providerId === "example",
+	);
+	if (hasExampleSource) {
+		return normalizedSources;
+	}
+
+	const providerId = "example";
+	const providerLabel =
+		app.providerCatalog.find((provider) => provider.id === providerId)
+			?.label || "Built-in example collections";
+	const config = app.sanitizeSourceConfig(providerId, {});
+	const displayLabel = app.sourceDisplayLabelFor(
+		providerId,
+		config,
+		providerLabel,
+	);
+	const detailLabel = app.sourceDetailLabelFor(
+		providerId,
+		config,
+		providerLabel,
+	);
+	return [
+		...normalizedSources,
+		{
+			id: makeSourceId(providerId),
+			providerId,
+			providerLabel,
+			displayLabel,
+			detailLabel,
+			label: detailLabel || displayLabel || providerLabel,
+			config,
+			capabilities:
+				app.providerFactories[providerId]?.getCapabilities?.() || {},
+			status:
+				"Built-in example collections are available. Connect your own source to refresh or publish.",
+			authMode: "public",
+			itemCount: 0,
+			provider: null,
+			needsReconnect: false,
+			needsCredentials: false,
+			isBuiltIn: true,
+			isRemovable: false,
+			lastPublishResult: null,
+		},
+	];
+}
+
 export function currentWorkspaceSnapshot(app) {
 	return {
 		selectedSourceId: app.state.activeSourceFilter || "all",
@@ -689,6 +739,34 @@ export async function restoreRememberedSources(app) {
 	}
 
 	if (restored.length === 0) {
+		const fallbackSources = ensureStarterExampleSourceFallback(
+			app,
+			restored,
+		);
+		if (fallbackSources.length === 0) {
+			return;
+		}
+		setSessionConnectionSources(fallbackSources);
+		app.state.sources = app.sortSourcesForDisplay(fallbackSources);
+		app.state.assets = [];
+		app.state.selectedItemId = null;
+		app.state.selectedItemIds = [];
+		app.state.selectedCollectionIds = [];
+		app.state.activeSourceFilter = "all";
+		app.state.currentLevel = "collections";
+		app.state.openedCollectionId = null;
+		app.syncMetadataModeFromState();
+		app.closeMobileDetail();
+		app.refreshWorkingStatus();
+		app.setConnectionStatus(
+			"Built-in example connection ready.",
+			"neutral",
+		);
+		app.renderSourcesList();
+		app.renderSourceFilter();
+		app.renderAssets();
+		app.renderEditor();
+		app.activatePreferredBrowserStartupSource();
 		return;
 	}
 

@@ -133,7 +133,6 @@ class Grid5CollectionCardElement extends HTMLElement {
         }
         .preview-viewport {
           overflow:hidden;
-          border-radius:10px;
           height:100%;
         }
         .image-grid {

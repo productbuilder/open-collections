@@ -110,28 +110,32 @@ class Grid3CollectionsCardElement extends HTMLElement {
         }
         .card__header {
           padding: 12px 14px;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-          background: #eef3f8;
+          border-bottom: 1px solid rgba(40, 60, 90, 0.11);
+          background: #e6edf6;
         }
         .head {
           display:grid;
           grid-template-columns:56px 1fr;
           gap:10px;
         }
-        .header-title {
+        .card__titleRow {
           margin: 0 0 8px;
-          font-size: 0.91rem;
-          color: #1f2937;
           display: flex;
           align-items: center;
           gap: 8px;
+        }
+        .card__title {
+          margin: 0;
+          font-size: 0.91rem;
+          color: #1f2937;
           line-height: 1.3;
+          font-weight: 600;
           display: -webkit-box;
           -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        .type-icon {
+        .card__icon {
           width: 16px;
           height: 16px;
           color: #5f6d80;
@@ -152,22 +156,7 @@ class Grid3CollectionsCardElement extends HTMLElement {
           padding: 0 14px;
           min-height: 0;
         }
-        .image-grid {
-          position: relative;
-          overflow: hidden;
-          display:grid;
-          gap:6px;
-        }
-        .image-grid::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          height: 24px;
-          background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff);
-          pointer-events: none;
-        }
+        .image-grid { display:grid; gap:6px; }
         .image-grid-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
         .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:36px; background:#eaf2ff; }
         .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -186,13 +175,13 @@ class Grid3CollectionsCardElement extends HTMLElement {
       </style>
       <article class="card card--source" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__header">
-          <h3 class="header-title">
-            <svg class="type-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <div class="card__titleRow">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M3.75 20.25h16.5v-9.5L12 4.25l-8.25 6.5v9.5Z" stroke="currentColor" stroke-width="1.5"/>
               <path d="M8 20.25v-6h8v6" stroke="currentColor" stroke-width="1.5"/>
             </svg>
-            <span>${title}</span>
-          </h3>
+            <h3 class="card__title">${title}</h3>
+          </div>
           <div class="head">
             <div class="logo">${logoLabel}</div>
             <div>

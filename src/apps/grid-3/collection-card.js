@@ -54,8 +54,8 @@ class Grid3CollectionCardElement extends HTMLElement {
   }
 
   renderGrid() {
-    const images = Array.isArray(this.model.previewImages) ? this.model.previewImages.slice(0, 4) : [];
-    return Array.from({ length: 4 })
+    const images = Array.isArray(this.model.previewImages) ? this.model.previewImages.slice(0, 6) : [];
+    return Array.from({ length: 6 })
       .map((_, i) => {
         const url = images[i];
         return url
@@ -88,10 +88,10 @@ class Grid3CollectionCardElement extends HTMLElement {
         }
         .card__header {
           padding: 12px 14px;
-          border-bottom: 1px solid rgba(0,0,0,0.05);
-          background: #f7f7f8;
+          border-bottom: 1px solid rgba(40, 40, 60, 0.08);
+          background: #efeff4;
         }
-        .header-title {
+        .card__titleRow {
           margin:0;
           font-size:0.91rem;
           color:#1f2937;
@@ -100,43 +100,44 @@ class Grid3CollectionCardElement extends HTMLElement {
           gap:8px;
           line-height:1.3;
         }
-        .title-text {
+        .card__title {
+          margin: 0;
+          font-size: inherit;
+          font-weight: 600;
           display: -webkit-box;
           -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        .type-icon {
+        .card__icon {
           width:16px;
           height:16px;
-          opacity:0.6;
+          opacity:0.58;
           color:#687287;
           flex:none;
         }
-        .subtitle { margin:6px 0 0; color:#80889a; font-size:0.7rem; }
+        .subtitle { margin:6px 0 0; color:#70798b; font-size:0.7rem; }
         .card__body {
           padding: 0 14px;
           min-height: 0;
         }
         .image-grid {
-          position: relative;
-          overflow: hidden;
           display:grid;
           grid-template-columns:1fr 1fr;
-          gap:7px;
+          row-gap:9px;
+          column-gap:5px;
           margin-top:2px;
         }
-        .image-grid::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          height: 24px;
-          background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff);
-          pointer-events: none;
+        .preview {
+          border:1px solid #d3caef;
+          border-radius:8px;
+          height:36px;
+          overflow:hidden;
+          background:#f1ecff;
         }
-        .preview { border:1px solid #d3caef; border-radius:8px; height:56px; overflow:hidden; background:#f1ecff; }
+        .image-grid .preview:nth-child(odd) {
+          border-right: 1px solid rgba(79, 63, 129, 0.2);
+        }
         .preview img { width:100%; height:100%; object-fit:cover; display:block; }
         .placeholder { background:linear-gradient(120deg, #ece7ff, #f7f3ff); }
         .card__footer {
@@ -153,12 +154,12 @@ class Grid3CollectionCardElement extends HTMLElement {
       </style>
       <article class="card card--collection" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__header">
-          <h3 class="header-title">
-            <svg class="type-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <div class="card__titleRow">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M3.75 6.75h6l1.5 2h9v8.5a1 1 0 0 1-1 1H4.75a1 1 0 0 1-1-1V6.75Z" stroke="currentColor" stroke-width="1.5"/>
             </svg>
-            <span class="title-text">${title}</span>
-          </h3>
+            <h3 class="card__title">${title}</h3>
+          </div>
           <p class="subtitle">${subtitle}</p>
         </div>
         <div class="card__body">

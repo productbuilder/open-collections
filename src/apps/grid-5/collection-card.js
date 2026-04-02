@@ -110,10 +110,9 @@ class Grid5CollectionCardElement extends HTMLElement {
           font-weight: 620;
           line-height: 1.2;
           color:#1f2937;
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
           overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
         .subtitle {
           margin:2px 0 0;

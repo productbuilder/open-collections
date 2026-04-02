@@ -120,7 +120,15 @@ class Grid5ItemCardElement extends HTMLElement {
           -webkit-box-orient:vertical;
           overflow:hidden;
         }
-        .meta { margin:0; font-size:0.7rem; color:#6b7280; }
+        .meta {
+          margin:0;
+          font-size:0.7rem;
+          color:#6b7280;
+          display:-webkit-box;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          overflow:hidden;
+        }
         .card__footer {
           display:flex;
           justify-content:flex-end;

@@ -91,8 +91,8 @@ class Grid5SourceCardElement extends HTMLElement {
   render() {
     const sourceTitle = this.model.organizationName || this.model.curatorName || this.model.subtitle || this.model.title || "Source";
     const locationPlace = this.model.placeName || "";
-    const locationCountry = this.model.countryCode || this.model.countryName || this.model.country || "";
-    const locationLine = [locationPlace, locationCountry].filter(Boolean).join(", ") || locationCountry || locationPlace;
+    const locationCountry = this.model.countryName || this.model.countryCode || this.model.country || "";
+    const locationLine = [locationPlace, locationCountry].filter(Boolean).join(" · ") || locationPlace || locationCountry;
     const title = escapeHtml(sourceTitle);
     const subtitle = escapeHtml(locationLine);
     const countLabel = escapeHtml(this.model.countLabel || "");
@@ -157,20 +157,18 @@ class Grid5SourceCardElement extends HTMLElement {
           color:#1f2937;
           line-height:1.25;
           font-weight:620;
-          display:-webkit-box;
-          -webkit-line-clamp:1;
-          -webkit-box-orient:vertical;
           overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
         }
         .sourceHeader__subtitle {
           color:#46596f;
           font-size:0.72rem;
           font-weight:590;
           line-height:1.22;
-          display:-webkit-box;
-          -webkit-line-clamp:1;
-          -webkit-box-orient:vertical;
           overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
         }
         .sourceHeader__meta {
           font-size:0.69rem;

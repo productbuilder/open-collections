@@ -98,20 +98,19 @@ class Grid3CollectionsCardElement extends HTMLElement {
         * { box-sizing:border-box; }
         .card {
           height: 100%;
-          border: 1px solid #c8d5e5;
+          border: 1px solid #c6d2e2;
           border-radius: 14px;
-          background: linear-gradient(180deg, #f2f7ff, #ffffff);
+          background: linear-gradient(180deg, #f3f7fd, #ffffff);
           display: grid;
           grid-template-rows: auto 1fr auto;
-          gap: 10px;
           cursor: pointer;
           box-shadow: 0 1px 1px rgba(55, 75, 99, 0.06);
           overflow: hidden;
         }
         .card__header {
           padding: 12px 14px;
-          border-bottom: 1px solid rgba(40, 60, 90, 0.11);
-          background: #e6edf6;
+          border-bottom: 1px solid rgba(40, 60, 90, 0.14);
+          background: #e1eaf5;
         }
         .head {
           display:grid;
@@ -138,8 +137,8 @@ class Grid3CollectionsCardElement extends HTMLElement {
         .card__icon {
           width: 16px;
           height: 16px;
-          color: #5f6d80;
-          opacity: 0.62;
+          color: #55667f;
+          opacity: 0.68;
           flex: none;
         }
         .logo {
@@ -153,8 +152,10 @@ class Grid3CollectionsCardElement extends HTMLElement {
         .meta.country { color:#607187; }
         .meta.descriptor { color:#4b6483; }
         .card__body {
-          padding: 0 14px;
+          margin-top: -1px;
+          padding: 10px 14px 0;
           min-height: 0;
+          overflow: hidden;
         }
         .image-grid { display:grid; gap:6px; }
         .image-grid-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
@@ -167,10 +168,14 @@ class Grid3CollectionsCardElement extends HTMLElement {
           align-items:center;
           gap: 8px;
           padding: 8px 14px 12px;
-          border-top: 1px solid #dde7f4;
+          border-top: 1px solid #dde6f2;
           min-height: 28px;
         }
-        .pill { font-size:0.68rem; border:1px solid #bad0ea; background:#eaf4ff; color:#35577f; border-radius:999px; padding:3px 8px; }
+        .count {
+          font-size:0.7rem;
+          color:#4e627b;
+          font-weight:600;
+        }
         .action { font-size:0.71rem; color:#44556a; font-weight:500; }
       </style>
       <article class="card card--source" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
@@ -195,7 +200,7 @@ class Grid3CollectionsCardElement extends HTMLElement {
           <div class="image-grid">${this.renderRows()}</div>
         </div>
         <div class="card__footer">
-          <span class="pill">${countLabel}</span>
+          <span class="count">${countLabel}</span>
           <span class="action">${actionLabel}</span>
         </div>
       </article>

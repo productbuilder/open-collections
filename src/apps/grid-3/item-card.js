@@ -68,10 +68,10 @@ class Grid3ItemCardElement extends HTMLElement {
           background:linear-gradient(180deg, #f8fafc, #ffffff);
           display:grid;
           grid-template-rows:1fr auto;
-          gap:8px;
           cursor:pointer;
           overflow:hidden;
-          padding:10px;
+          padding:9px;
+          gap:8px;
         }
         .card__body {
           min-height:0;
@@ -81,7 +81,7 @@ class Grid3ItemCardElement extends HTMLElement {
           align-items:center;
         }
         .image {
-          height:76px;
+          height:78px;
           border-radius:10px;
           border:1px solid #ccd3dc;
           overflow:hidden;
@@ -89,21 +89,8 @@ class Grid3ItemCardElement extends HTMLElement {
         }
         .image img { width:100%; height:100%; object-fit:cover; display:block; }
         .content { min-width: 0; }
-        .card__titleRow {
-          margin:0 0 4px;
-          display:flex;
-          align-items:center;
-          gap:7px;
-        }
-        .card__icon {
-          width:15px;
-          height:15px;
-          opacity:0.58;
-          color:#738195;
-          flex:none;
-        }
         .card__title {
-          margin:0;
+          margin:0 0 3px;
           font-size:0.83rem;
           font-weight:600;
           color:#1f2937;
@@ -115,15 +102,15 @@ class Grid3ItemCardElement extends HTMLElement {
         }
         .meta { margin:0; font-size:0.7rem; color:#6b7280; }
         .card__footer {
-          min-height:20px;
+          min-height:18px;
           display:flex;
           justify-content:flex-end;
           align-items:center;
-          font-size:0.68rem;
-          color:#556171;
-          border-top:1px solid #e4e9ef;
-          padding-top:6px;
+          font-size:0.67rem;
+          color:#5b6778;
+          padding-top:2px;
         }
+
         :host(.tile-1x1) .card {
           border-radius: 10px;
           gap: 7px;
@@ -139,22 +126,36 @@ class Grid3ItemCardElement extends HTMLElement {
         :host(.tile-1x1) .card__title { font-size:0.76rem; }
         :host(.tile-1x1) .meta { font-size:0.66rem; }
         :host(.tile-1x1) .card__footer {
-          min-height:18px;
-          padding-top:5px;
+          min-height:16px;
+          padding-top:1px;
           font-size:0.63rem;
+        }
+
+        :host(.tile-1x2) .card {
+          padding:8px;
+          gap:8px;
+          grid-template-rows: 1fr auto;
+        }
+        :host(.tile-1x2) .card__body {
+          grid-template-columns:1fr;
+          grid-template-rows:1fr auto;
+          gap:8px;
+          align-items:stretch;
+        }
+        :host(.tile-1x2) .image {
+          height:100%;
+          min-height:128px;
+        }
+        :host(.tile-1x2) .card__title {
+          -webkit-line-clamp:2;
+          font-size:0.8rem;
         }
       </style>
       <article class="card card--item" tabindex="0" role="button" aria-label="${title}">
         <div class="card__body">
           <div class="image">${previewUrl ? `<img src="${previewUrl}" alt="" loading="lazy" decoding="async"/>` : ""}</div>
           <div class="content">
-            <div class="card__titleRow">
-              <svg class="card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3.75" y="5.75" width="16.5" height="12.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-                <path d="m7.5 14 3-3 2.25 2.25L15.75 10l2.5 4" stroke="currentColor" stroke-width="1.5"/>
-              </svg>
-              <h4 class="card__title">${title}</h4>
-            </div>
+            <h4 class="card__title">${title}</h4>
             <p class="meta">${subtitle || "&nbsp;"}</p>
           </div>
         </div>

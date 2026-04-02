@@ -181,12 +181,11 @@ class Grid5CollectionsCardElement extends HTMLElement {
         }
         .image-grid-viewport {
           overflow:hidden;
-          border-radius:10px;
           height:100%;
         }
         .image-grid { display:grid; gap:6px; }
         .image-grid-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
-        .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:36px; background:#eaf2ff; }
+        .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:42px; background:#eaf2ff; }
         .image-grid-row:last-child .thumb {
           border-bottom-left-radius: 0;
           border-bottom-right-radius: 0;

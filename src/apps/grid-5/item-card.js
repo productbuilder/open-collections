@@ -72,8 +72,7 @@ class Grid5ItemCardElement extends HTMLElement {
           overflow:hidden;
           padding:9px;
           display:grid;
-          grid-template-rows: 1fr auto;
-          gap:7px;
+          grid-template-rows: 1fr;
         }
         .card__body {
           min-height:0;
@@ -98,19 +97,17 @@ class Grid5ItemCardElement extends HTMLElement {
           gap:4px;
           padding:2px 0;
         }
+        .textSection {
+          min-width:0;
+          display:grid;
+          grid-template-rows:1fr auto;
+          min-height:0;
+          gap:7px;
+        }
         .card__titleRow {
           display:flex;
           align-items:flex-start;
-          gap:6px;
           min-width:0;
-        }
-        .card__icon {
-          width:14px;
-          height:14px;
-          color:#5e6f84;
-          opacity:0.74;
-          margin-top:1px;
-          flex:none;
         }
         .card__title {
           margin:0;
@@ -131,6 +128,18 @@ class Grid5ItemCardElement extends HTMLElement {
           min-height:20px;
           padding-top:2px;
         }
+        .actionWrap {
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+        }
+        .actionIcon {
+          width:13px;
+          height:13px;
+          color:#5e6f84;
+          opacity:0.78;
+          flex:none;
+        }
         .action {
           font-size:0.7rem;
           color:#52647b;
@@ -140,11 +149,10 @@ class Grid5ItemCardElement extends HTMLElement {
         :host(.tile-1x1) .card {
           border-radius: 10px;
           padding: 8px;
-          gap:6px;
         }
         :host(.tile-1x1) .card__body {
           grid-template-columns:1fr;
-          grid-template-rows:1fr auto;
+          grid-template-rows:auto 1fr;
           gap:7px;
           align-items:stretch;
         }
@@ -157,16 +165,19 @@ class Grid5ItemCardElement extends HTMLElement {
           gap:2px;
           padding:0;
         }
+        :host(.tile-1x1) .textSection {
+          grid-template-rows:1fr auto;
+          gap:6px;
+        }
         :host(.tile-1x1) .card__title { font-size:0.76rem; -webkit-line-clamp:1; }
         :host(.tile-1x1) .meta { font-size:0.66rem; }
 
         :host(.tile-1x2) .card {
           padding:8px;
-          gap:6px;
         }
         :host(.tile-1x2) .card__body {
           grid-template-columns:1fr;
-          grid-template-rows:auto auto;
+          grid-template-rows:auto 1fr;
           gap:8px;
           align-items:start;
         }
@@ -180,6 +191,9 @@ class Grid5ItemCardElement extends HTMLElement {
           gap:3px;
           padding:0;
         }
+        :host(.tile-1x2) .textSection {
+          gap:6px;
+        }
         :host(.tile-1x2) .card__title {
           -webkit-line-clamp:2;
           font-size:0.8rem;
@@ -188,18 +202,24 @@ class Grid5ItemCardElement extends HTMLElement {
       <article class="card card--item" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__body">
           <div class="image">${previewUrl ? `<img src="${previewUrl}" alt="" loading="lazy" decoding="async"/>` : ""}</div>
-          <div class="content">
-            <div class="card__titleRow">
-              <svg class="card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6.5 5.75h11a1.5 1.5 0 0 1 1.5 1.5v9.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 16.75v-9.5a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M8 14.25 10.75 11.5l2.25 2.25 1.75-1.75L16 13.25" stroke="currentColor" stroke-width="1.5"/>
-              </svg>
-              <h4 class="card__title">${title}</h4>
+          <div class="textSection">
+            <div class="content">
+              <div class="card__titleRow">
+                <h4 class="card__title">${title}</h4>
+              </div>
+              <p class="meta">${subtitle || "&nbsp;"}</p>
             </div>
-            <p class="meta">${subtitle || "&nbsp;"}</p>
+            <div class="card__footer">
+              <span class="actionWrap">
+                <svg class="actionIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6.5 5.75h11a1.5 1.5 0 0 1 1.5 1.5v9.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 16.75v-9.5a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M8 14.25 10.75 11.5l2.25 2.25 1.75-1.75L16 13.25" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <span class="action">${actionLabel}</span>
+              </span>
+            </div>
           </div>
         </div>
-        <div class="card__footer"><span class="action">${actionLabel}</span></div>
       </article>
     `;
   }

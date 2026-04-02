@@ -1,5 +1,7 @@
 const ALL_MODE_WINDOW_SIZE = 20;
-const ALL_MODE_MAX_WINDOWS = 3;
+const ALL_MODE_MAX_WINDOWS = 6;
+const ALL_MODE_SOURCE_SCAN_LIMIT = 6;
+const ALL_MODE_RECENT_SOURCE_SPAN = 3;
 
 const ALL_MODE_TYPE_QUOTAS = {
 	source: 1,
@@ -36,14 +38,69 @@ function normalizePool(value) {
 	return Array.isArray(value) ? value : [];
 }
 
-function pickCandidate(type, pools, indices) {
+function getCandidateSourceId(candidate) {
+	const sourceId = String(candidate?.sourceId ?? "").trim();
+	return sourceId || "";
+}
+
+function countRecentSourceUses(sourceId, recentSourceIds) {
+	if (!sourceId) {
+		return 0;
+	}
+	return recentSourceIds.reduce(
+		(total, recentSourceId) => total + (recentSourceId === sourceId ? 1 : 0),
+		0,
+	);
+}
+
+function isLocallyDiverseSource(candidate, recentSourceIds) {
+	const sourceId = getCandidateSourceId(candidate);
+	if (!sourceId || !recentSourceIds.length) {
+		return true;
+	}
+
+	const lastSourceId = recentSourceIds[recentSourceIds.length - 1] || "";
+	if (sourceId === lastSourceId) {
+		return false;
+	}
+
+	return countRecentSourceUses(sourceId, recentSourceIds) < 2;
+}
+
+function pickCandidate(type, pools, indices, recentSourceIds = []) {
 	const typePool = pools[type];
-	const index = indices[type] || 0;
-	if (index >= typePool.length) {
+	const startIndex = indices[type] || 0;
+	if (startIndex >= typePool.length) {
 		return null;
 	}
-	indices[type] = index + 1;
-	return typePool[index] || null;
+
+	let selectedIndex = startIndex;
+	const currentCandidate = typePool[startIndex] || null;
+	const recentWindow = recentSourceIds.slice(-ALL_MODE_RECENT_SOURCE_SPAN);
+	const shouldSeekAlternative = !isLocallyDiverseSource(currentCandidate, recentWindow);
+	if (shouldSeekAlternative) {
+		const endIndex = Math.min(
+			typePool.length,
+			startIndex + 1 + ALL_MODE_SOURCE_SCAN_LIMIT,
+		);
+		for (let index = startIndex + 1; index < endIndex; index += 1) {
+			const candidate = typePool[index] || null;
+			if (!isLocallyDiverseSource(candidate, recentWindow)) {
+				continue;
+			}
+			selectedIndex = index;
+			break;
+		}
+	}
+
+	if (selectedIndex !== startIndex) {
+		const candidateAtStart = typePool[startIndex];
+		typePool[startIndex] = typePool[selectedIndex];
+		typePool[selectedIndex] = candidateAtStart;
+	}
+
+	indices[type] = startIndex + 1;
+	return typePool[startIndex] || null;
 }
 
 function hasRemaining(type, pools, indices) {
@@ -62,7 +119,12 @@ function findFallbackType(types, pools, indices, pickedByType, predicate) {
 	return "";
 }
 
-function assembleAllModeWindow({ pools, indices, windowSize }) {
+function assembleAllModeWindow({
+	pools,
+	indices,
+	windowSize,
+	recentSourceIds = [],
+}) {
 	const pickedByType = { source: 0, collection: 0, item: 0 };
 	const assembledCandidates = [];
 
@@ -95,13 +157,22 @@ function assembleAllModeWindow({ pools, indices, windowSize }) {
 			break;
 		}
 
-		const candidate = pickCandidate(selectedType, pools, indices);
+		const candidate = pickCandidate(
+			selectedType,
+			pools,
+			indices,
+			recentSourceIds,
+		);
 		if (!candidate) {
 			continue;
 		}
 
 		pickedByType[selectedType] += 1;
 		assembledCandidates.push(candidate);
+		recentSourceIds.push(getCandidateSourceId(candidate));
+		if (recentSourceIds.length > ALL_MODE_RECENT_SOURCE_SPAN) {
+			recentSourceIds.shift();
+		}
 	}
 
 	return assembledCandidates;
@@ -127,6 +198,9 @@ function assembleAllModeFeed(scoredPools = {}) {
 			pools,
 			indices,
 			windowSize,
+			recentSourceIds: assembledCandidates
+				.slice(-ALL_MODE_RECENT_SOURCE_SPAN)
+				.map((candidate) => getCandidateSourceId(candidate)),
 		});
 		if (!windowCandidates.length) {
 			break;

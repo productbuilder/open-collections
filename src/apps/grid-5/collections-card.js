@@ -110,7 +110,7 @@ class Grid5CollectionsCardElement extends HTMLElement {
         .card__header {
           padding: 9px 12px;
           border-bottom: 1px solid rgba(40, 60, 90, 0.14);
-          background: #e1eaf5;
+          background: #e6e2de;
         }
         .sourceHeader {
           display:grid;
@@ -124,9 +124,9 @@ class Grid5CollectionsCardElement extends HTMLElement {
           border-radius:10px;
           display:grid;
           place-items:center;
-          border:1px solid #8fb0d9;
+          border:1px solid #c9c0a6;
           color:#2f4f78;
-          background:linear-gradient(180deg, #dbeaff, #ebf3ff);
+          background:linear-gradient(180deg, #f5f4ee, #f3f2ee);
           box-shadow: inset 0 1px 0 #f4f9ff;
           font-size:0.78rem;
           font-weight:700;

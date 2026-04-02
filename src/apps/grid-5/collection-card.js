@@ -78,7 +78,7 @@ class Grid5CollectionCardElement extends HTMLElement {
         * { box-sizing:border-box; }
         .card {
           height:100%;
-          border:1px solid #d6d1e8;
+           border: 1px solid rgba(70, 90, 120, 0.16);
           border-radius:14px;
           background:linear-gradient(180deg, #f8f6ff, #fff);
           display:grid;
@@ -89,7 +89,7 @@ class Grid5CollectionCardElement extends HTMLElement {
         .card__header {
           padding: 7px 12px;
           border-bottom: 1px solid rgba(40, 40, 60, 0.11);
-          background: #eceaf7;
+          background: #e6e2de;
         }
         .card__headerMain {
           display:flex;
@@ -97,8 +97,8 @@ class Grid5CollectionCardElement extends HTMLElement {
           gap:9px;
         }
         .card__icon {
-          width:22px;
-          height:22px;
+          width:32px;
+          height:32px;
           opacity:0.74;
           color:#606983;
           flex:none;
@@ -134,16 +134,18 @@ class Grid5CollectionCardElement extends HTMLElement {
         .preview-viewport {
           overflow:hidden;
           border-radius:10px;
+          height:100%;
         }
         .image-grid {
           display:grid;
           grid-template-columns:repeat(2, minmax(0, 1fr));
           gap:7px;
+          align-content:start;
         }
         .preview {
           border:1px solid #d3caef;
           border-radius:8px;
-          aspect-ratio:1 / 1;
+          aspect-ratio:3 / 2;
           overflow:hidden;
           background:#f1ecff;
         }

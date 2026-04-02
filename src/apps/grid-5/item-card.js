@@ -200,6 +200,33 @@ class Grid5ItemCardElement extends HTMLElement {
           -webkit-line-clamp:2;
           font-size:0.8rem;
         }
+
+        @media (max-width: 760px) {
+          :host(.tile-2x1) .card {
+            border-radius: 10px;
+            padding: 8px;
+          }
+          :host(.tile-2x1) .card__body {
+            grid-template-columns: minmax(72px, 46%) 1fr;
+            gap: 8px;
+            align-items: stretch;
+          }
+          :host(.tile-2x1) .image {
+            aspect-ratio: 1 / 1;
+            height: auto;
+          }
+          :host(.tile-2x1) .content {
+            align-content: center;
+            gap: 3px;
+            padding: 1px 0;
+          }
+          :host(.tile-2x1) .textSection {
+            grid-template-rows: 1fr auto;
+            gap: 6px;
+          }
+          :host(.tile-2x1) .card__title { font-size: 0.78rem; -webkit-line-clamp: 2; }
+          :host(.tile-2x1) .meta { font-size: 0.66rem; }
+        }
       </style>
       <article class="card card--item" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__body">

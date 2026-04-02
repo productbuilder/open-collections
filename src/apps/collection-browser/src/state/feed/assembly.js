@@ -1,9 +1,10 @@
 const ALL_MODE_WINDOW_SIZE = 20;
+const ALL_MODE_MAX_WINDOWS = 3;
 
 const ALL_MODE_TYPE_QUOTAS = {
-	source: 3,
-	collection: 7,
-	item: 10,
+	source: 1,
+	collection: 3,
+	item: 16,
 };
 
 const ALL_MODE_TYPE_RHYTHM = [
@@ -61,18 +62,9 @@ function findFallbackType(types, pools, indices, pickedByType, predicate) {
 	return "";
 }
 
-function assembleAllModeWindow(scoredPools = {}) {
-	const pools = {
-		source: normalizePool(scoredPools.sources),
-		collection: normalizePool(scoredPools.collections),
-		item: normalizePool(scoredPools.items),
-	};
-	const indices = { source: 0, collection: 0, item: 0 };
+function assembleAllModeWindow({ pools, indices, windowSize }) {
 	const pickedByType = { source: 0, collection: 0, item: 0 };
 	const assembledCandidates = [];
-	const totalCandidates =
-		pools.source.length + pools.collection.length + pools.item.length;
-	const windowSize = Math.min(ALL_MODE_WINDOW_SIZE, totalCandidates);
 
 	for (let index = 0; index < windowSize; index += 1) {
 		const preferredType = ALL_MODE_TYPE_RHYTHM[index] || "item";
@@ -112,6 +104,36 @@ function assembleAllModeWindow(scoredPools = {}) {
 		assembledCandidates.push(candidate);
 	}
 
+	return assembledCandidates;
+}
+
+function assembleAllModeFeed(scoredPools = {}) {
+	const pools = {
+		source: normalizePool(scoredPools.sources),
+		collection: normalizePool(scoredPools.collections),
+		item: normalizePool(scoredPools.items),
+	};
+	const indices = { source: 0, collection: 0, item: 0 };
+	const assembledCandidates = [];
+	const totalCandidates =
+		pools.source.length + pools.collection.length + pools.item.length;
+	const maxCandidatesByWindowCount = ALL_MODE_WINDOW_SIZE * ALL_MODE_MAX_WINDOWS;
+	const targetCandidateCount = Math.min(totalCandidates, maxCandidatesByWindowCount);
+
+	while (assembledCandidates.length < targetCandidateCount) {
+		const remainingCount = targetCandidateCount - assembledCandidates.length;
+		const windowSize = Math.min(ALL_MODE_WINDOW_SIZE, remainingCount);
+		const windowCandidates = assembleAllModeWindow({
+			pools,
+			indices,
+			windowSize,
+		});
+		if (!windowCandidates.length) {
+			break;
+		}
+		assembledCandidates.push(...windowCandidates);
+	}
+
 	return assembledCandidates
 		.map((candidate) => candidate?.entity)
 		.filter(Boolean);
@@ -124,5 +146,5 @@ export function assembleFeedWindow(
 	if (mode !== "all") {
 		return [];
 	}
-	return assembleAllModeWindow(scoredPools);
+	return assembleAllModeFeed(scoredPools);
 }

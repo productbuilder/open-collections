@@ -97,8 +97,8 @@ class Grid5CollectionCardElement extends HTMLElement {
           gap:9px;
         }
         .card__icon {
-          width:20px;
-          height:20px;
+          width:22px;
+          height:22px;
           opacity:0.74;
           color:#606983;
           flex:none;

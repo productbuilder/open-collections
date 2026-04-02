@@ -179,7 +179,7 @@ class Grid5ItemCardElement extends HTMLElement {
           grid-template-columns:1fr;
           grid-template-rows:auto 1fr;
           gap:8px;
-          align-items:start;
+          align-items:stretch;
         }
         :host(.tile-1x2) .image {
           aspect-ratio:auto;
@@ -192,6 +192,8 @@ class Grid5ItemCardElement extends HTMLElement {
           padding:0;
         }
         :host(.tile-1x2) .textSection {
+          min-height:100%;
+          grid-template-rows:1fr auto;
           gap:6px;
         }
         :host(.tile-1x2) .card__title {

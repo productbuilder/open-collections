@@ -53,7 +53,13 @@ export function buildSourceBrowseCardModels(
 		browseKind: "source",
 		id: String(entry.id || ""),
 		title: entry.label || "Source",
-		subtitle: entry.subtitle || "Browse source collections",
+		organizationName: entry.organizationName || entry.label || "Source",
+		curatorName: entry.curatorName || "",
+		placeName: entry.placeName || "",
+		countryName: entry.countryName || "",
+		countryCode: entry.countryCode || "",
+		descriptor: "Source",
+		subtitle: entry.subtitle || "",
 		countLabel: entry.countLabel || "",
 		previewRows: Array.isArray(entry.previewRows)
 			? entry.previewRows
@@ -61,7 +67,7 @@ export function buildSourceBrowseCardModels(
 		previewImages: Array.isArray(entry.previewImages)
 			? entry.previewImages
 			: [],
-		actionLabel: "Browse",
+		actionLabel: "Open source",
 		actionValue: String(entry.id || ""),
 		active:
 			useActiveState &&
@@ -87,7 +93,7 @@ export function buildCollectionBrowseCardModels(
 			subtitle: entry.description || "Select to browse this collection.",
 			countLabel: `${itemCount} item${itemCount === 1 ? "" : "s"}`,
 			previewImages: derivePreviewImages(entry.collection?.items || []),
-			actionLabel: "Open",
+			actionLabel: "Open collection",
 			actionValue: manifestUrl,
 			active:
 				Boolean(selectedManifestUrl) &&
@@ -109,6 +115,7 @@ export function buildItemBrowseCardModels(
 		const resolvedId = String(item?.id || `item-${index + 1}`);
 		const previewUrl = deriveItemPreviewUrl(item);
 		const mediaType = String(item?.media?.type || "").toLowerCase();
+		const itemTileVariant = (index + 1) % 9 === 0 ? "1x2" : "";
 		return {
 			browseKind: "item",
 			id: resolvedId,
@@ -116,7 +123,9 @@ export function buildItemBrowseCardModels(
 			subtitle: deriveItemSubtitle(item),
 			previewUrl,
 			mediaType,
+			actionLabel: "View item",
 			actionValue: resolvedId,
+			itemTileVariant,
 			active: selectedItemId === resolvedId,
 			item,
 		};

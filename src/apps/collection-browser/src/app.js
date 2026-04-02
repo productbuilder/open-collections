@@ -424,10 +424,6 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	async buildEmbeddedSourceCard(source) {
-		const fallbackSubtitle =
-			source.sourceType === "source.json"
-				? "Multi-collection source"
-				: "Single collection source";
 		try {
 			const descriptor = await resolveEmbeddedSourceDescriptor(source);
 			if (descriptor.sourceType === "source.json") {
@@ -462,7 +458,13 @@ class TimemapBrowserElement extends ComponentBase {
 				return {
 					id: source.id,
 					label: source.label,
-					subtitle: fallbackSubtitle,
+					organizationName:
+						descriptor.organizationName || descriptor.title || source.label || "",
+					curatorName: descriptor.curatorName || "",
+					placeName: descriptor.placeName || "",
+					countryName: descriptor.countryName || "",
+					countryCode: descriptor.countryCode || "",
+					subtitle: "",
 					countLabel: `${collections.length} collection${collections.length === 1 ? "" : "s"}`,
 					previewRows,
 					previewImages,
@@ -477,7 +479,12 @@ class TimemapBrowserElement extends ComponentBase {
 			return {
 				id: source.id,
 				label: source.label,
-				subtitle: collection.title || fallbackSubtitle,
+				organizationName: source.organizationName || source.label || "",
+				curatorName: source.curatorName || "",
+				placeName: source.placeName || "",
+				countryName: source.countryName || "",
+				countryCode: source.countryCode || "",
+				subtitle: "",
 				countLabel: `${items.length} item${items.length === 1 ? "" : "s"}`,
 				previewRows: [],
 				previewImages: derivePreviewImages(items, 3),
@@ -487,7 +494,12 @@ class TimemapBrowserElement extends ComponentBase {
 			return {
 				id: source.id,
 				label: source.label,
-				subtitle: fallbackSubtitle,
+				organizationName: source.organizationName || source.label || "",
+				curatorName: source.curatorName || "",
+				placeName: source.placeName || "",
+				countryName: source.countryName || "",
+				countryCode: source.countryCode || "",
+				subtitle: "",
 				countLabel: "",
 				previewRows: [],
 				previewImages: [],
@@ -577,7 +589,12 @@ class TimemapBrowserElement extends ComponentBase {
 		this.state.embeddedSourceCards = multiCollectionSources.map((source) => ({
 			id: source.id,
 			label: source.label,
-			subtitle: "Multi-collection source",
+			organizationName: source.organizationName || source.label || "",
+			curatorName: source.curatorName || "",
+			placeName: source.placeName || "",
+			countryName: source.countryName || "",
+			countryCode: source.countryCode || "",
+			subtitle: "",
 			countLabel: "",
 			previewRows: [],
 			previewImages: [],

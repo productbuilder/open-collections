@@ -1,6 +1,8 @@
 import { browserStyles } from "../css/browser.css.js";
 import { backButtonStyles, renderBackButton } from "../../../../shared/components/back-button.js";
-import "../../../../shared/ui/primitives/index.js";
+import "../../../grid-5/source-card.js";
+import "../../../grid-5/collection-card.js";
+import "../../../grid-5/item-card.js";
 
 const VALID_MODES = ["all", "sources", "collections", "items"];
 
@@ -130,50 +132,118 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		});
 	}
 
+	firstTextPart(value = "") {
+		const text = String(value || "").trim();
+		if (!text) {
+			return "";
+		}
+		return (
+			text
+				.split(/\s*[\u00B7,|]\s*/)
+				.map((part) => part.trim())
+				.find(Boolean) || ""
+		);
+	}
+
+	secondTextPart(value = "") {
+		const text = String(value || "").trim();
+		if (!text) {
+			return "";
+		}
+		const parts = text
+			.split(/\s*[\u00B7,|]\s*/)
+			.map((part) => part.trim())
+			.filter(Boolean);
+		return parts.length > 1 ? parts[1] : "";
+	}
+
+	normalizeSourcePreviewRows(previewRows = []) {
+		const rows = Array.isArray(previewRows) ? previewRows.slice(0, 3) : [];
+		return rows.map((row) => {
+			if (Array.isArray(row)) {
+				return row.filter(Boolean);
+			}
+			if (row && typeof row === "object" && Array.isArray(row.images)) {
+				return row.images.filter(Boolean);
+			}
+			return [];
+		});
+	}
+
+	itemTileConfig(entity = {}) {
+		const variant = String(entity.itemTileVariant || entity.tileVariant || "").trim();
+		if (variant === "1x2" || variant === "tile-1x2") {
+			return { className: "tile-1x2", cols: 1, rows: 2, colsMobile: 1, rowsMobile: 2 };
+		}
+		if (variant === "1x1" || variant === "tile-1x1") {
+			return { className: "tile-1x1", cols: 1, rows: 1, colsMobile: 1, rowsMobile: 1 };
+		}
+		return { className: "tile-2x1", cols: 2, rows: 1, colsMobile: 2, rowsMobile: 1 };
+	}
+
 	buildCard(entity = {}) {
 		const kind = this.entityKind(entity);
 		if (kind === "source") {
-			const card = document.createElement("oc-card-collections");
+			const card = document.createElement("grid5-card-source");
+			const sourceTitle = String(
+				entity.organizationName || entity.title || "",
+			).trim();
+			const subtitleText = String(entity.subtitle || "").trim();
+			const placeName = String(
+				entity.placeName || this.firstTextPart(subtitleText) || "",
+			).trim();
+			const countryName = String(
+				entity.countryName || this.secondTextPart(subtitleText) || "",
+			).trim();
+			const sourceId = String(entity.actionValue || entity.id || "").trim();
 			card.update({
-				title: entity.title || "Source",
-				subtitle: entity.subtitle || "Source",
+				organizationName: sourceTitle || "Source",
+				curatorName: String(entity.curatorName || "").trim(),
+				placeName,
+				countryName,
+				countryCode: String(entity.countryCode || "").trim(),
+				descriptor: String(entity.descriptor || "Source").trim() || "Source",
 				countLabel: entity.countLabel || "",
-				previewRows: Array.isArray(entity.previewRows) ? entity.previewRows : [],
-				previewImages: Array.isArray(entity.previewImages)
-					? entity.previewImages
-					: [],
-				actionLabel: entity.actionLabel || "Browse",
+				actionLabel: "Open source",
+				actionValue: sourceId,
+				logoLabel: String(entity.logoLabel || sourceTitle || "").trim(),
+				previewRows: this.normalizeSourcePreviewRows(entity.previewRows),
+				disabled: Boolean(entity.disabled),
 			});
+			card.classList.add("tile-2x2");
 			return card;
 		}
 
 		if (kind === "collection") {
-			const card = document.createElement("oc-card-collection");
+			const card = document.createElement("grid5-card-collection");
+			const manifestUrl = String(
+				entity.actionValue || entity.manifestUrl || "",
+			).trim();
 			card.update({
 				title: entity.title || "Collection",
-				subtitle: entity.subtitle || "Select to browse this collection.",
 				countLabel: entity.countLabel || "",
 				previewImages: Array.isArray(entity.previewImages)
 					? entity.previewImages
 					: [],
-				placeholderLabel: "Collection",
-				actionLabel: entity.actionLabel || "Open",
+				actionLabel: "Open collection",
+				actionValue: manifestUrl,
+				disabled: Boolean(entity.disabled),
 			});
+			card.classList.add("tile-2x2");
 			return card;
 		}
 
-		const card = document.createElement("oc-card-item");
+		const card = document.createElement("grid5-card-item");
 		const actionValue = String(entity.actionValue || entity.id || "").trim();
 		card.update({
 			title: entity.title || entity.id || "Item",
 			subtitle: entity.subtitle || "",
-			previewImages: Array.isArray(entity.previewImages)
-				? entity.previewImages
-				: [],
 			previewUrl: entity.previewUrl || entity.item?.media?.thumbnailUrl || "",
-			actionLabel: entity.actionLabel || "",
+			actionLabel: "View item",
 			actionValue,
+			disabled: Boolean(entity.disabled),
 		});
+		card.classList.add(this.itemTileConfig(entity).className);
 		return card;
 	}
 
@@ -188,14 +258,21 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		wrapper.dataset.actionType = kind;
 		wrapper.dataset.actionValue = actionValue;
 		if (kind === "source") {
-			wrapper.setAttribute("data-span-cols", "2");
-			wrapper.setAttribute("data-span-rows", "2");
+			wrapper.style.setProperty("--oc-span-cols", "2");
+			wrapper.style.setProperty("--oc-span-rows", "2");
+			wrapper.style.setProperty("--oc-span-cols-mobile", "2");
+			wrapper.style.setProperty("--oc-span-rows-mobile", "2");
 		} else if (kind === "collection") {
-			wrapper.setAttribute("data-span-cols", "2");
-			wrapper.setAttribute("data-span-rows", "2");
+			wrapper.style.setProperty("--oc-span-cols", "2");
+			wrapper.style.setProperty("--oc-span-rows", "2");
+			wrapper.style.setProperty("--oc-span-cols-mobile", "2");
+			wrapper.style.setProperty("--oc-span-rows-mobile", "2");
 		} else {
-			wrapper.setAttribute("data-span-cols", "1");
-			wrapper.setAttribute("data-span-rows", "2");
+			const tile = this.itemTileConfig(entity);
+			wrapper.style.setProperty("--oc-span-cols", String(tile.cols));
+			wrapper.style.setProperty("--oc-span-rows", String(tile.rows));
+			wrapper.style.setProperty("--oc-span-cols-mobile", String(tile.colsMobile));
+			wrapper.style.setProperty("--oc-span-rows-mobile", String(tile.rowsMobile));
 		}
 		wrapper.appendChild(this.buildCard(entity));
 		return wrapper;
@@ -325,7 +402,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
         <div class="scroll-container-wrapper">
           <div id="scrollContainer" class="scroll-container">
             <div class="grid-host">
-              <oc-grid id="browseGrid"></oc-grid>
+              <div id="browseGrid" class="browse-grid"></div>
             </div>
           </div>
         </div>
@@ -336,17 +413,6 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		if (!grid) {
 			return;
 		}
-		grid.update({
-			mode: "grid",
-			columnsDesktop: 6,
-			columnsTablet: 4,
-			columnsMobile: 2,
-			gap: "0.62rem",
-			squareCellsDesktop: false,
-		});
-		grid.style.setProperty("--oc-layout-row-size-desktop", "13rem");
-		grid.style.setProperty("--oc-layout-row-size-tablet", "11rem");
-		grid.style.setProperty("--oc-layout-row-size-mobile", "10rem");
 
 		for (const entity of this.renderCards()) {
 			// TODO(perf): Virtualize/window item cells so only in-viewport rows are mounted.

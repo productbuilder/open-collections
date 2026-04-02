@@ -168,6 +168,11 @@ export function normalizeEmbeddedSourceCatalog(entries = []) {
 			label: label || `Source ${index + 1}`,
 			sourceType,
 			sourceUrl,
+			organizationName: String(entry.organizationName || "").trim(),
+			curatorName: String(entry.curatorName || "").trim(),
+			placeName: String(entry.placeName || "").trim(),
+			countryName: String(entry.countryName || "").trim(),
+			countryCode: String(entry.countryCode || "").trim(),
 		});
 	}
 	return normalized;
@@ -240,6 +245,12 @@ export async function resolveEmbeddedSourceDescriptor(source) {
 		sourceUrl: sourceCatalogUrl.href,
 		manifestUrl: "",
 		collections,
+		organizationName: String(json?.organizationName || source.organizationName || "").trim(),
+		curatorName: String(json?.curatorName || source.curatorName || "").trim(),
+		placeName: String(json?.placeName || source.placeName || "").trim(),
+		countryName: String(json?.countryName || source.countryName || "").trim(),
+		countryCode: String(json?.countryCode || source.countryCode || "").trim(),
+		title: String(json?.title || source.label || "").trim(),
 	};
 }
 

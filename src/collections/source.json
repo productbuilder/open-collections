@@ -1,5 +1,11 @@
 {
-  "title": "Example collections",
+  "id": "",
+  "organizationName": "Open Colections",
+  "curatorName": "JBM Tangelder",
+  "placeName": "Hilversum",
+  "countryName": "The Netherlands",
+  "countryCode": "NL",
+  "title": "Example source",
   "collections": [
     {
       "id": "example-dataset",

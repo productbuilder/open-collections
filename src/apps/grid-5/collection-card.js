@@ -68,7 +68,7 @@ class Grid5CollectionCardElement extends HTMLElement {
 
   render() {
     const title = escapeHtml(this.model.title || "Collection");
-    const subtitle = escapeHtml(this.model.subtitle || "Curated set of items");
+    const subtitle = "Collection";
     const countLabel = escapeHtml(this.model.countLabel || "");
     const actionLabel = escapeHtml(this.model.actionLabel || "Open collection");
 
@@ -146,10 +146,10 @@ class Grid5CollectionCardElement extends HTMLElement {
           border-radius:8px;
           aspect-ratio:3 / 2;
           overflow:hidden;
-          background:#f1ecff;
+          background:#e6e2de;
         }
         .preview img { width:100%; height:100%; object-fit:cover; display:block; }
-        .placeholder { background:linear-gradient(120deg, #ece7ff, #f7f3ff); }
+        .placeholder { background:#e6e2de; }
         .card__footer {
           font-size:0.7rem;
           color:#665b8a;

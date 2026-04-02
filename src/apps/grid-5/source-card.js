@@ -7,7 +7,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-class Grid5CollectionsCardElement extends HTMLElement {
+class Grid5SourceCardElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -15,6 +15,11 @@ class Grid5CollectionsCardElement extends HTMLElement {
       title: "",
       subtitle: "",
       country: "",
+      organizationName: "",
+      curatorName: "",
+      placeName: "",
+      countryName: "",
+      countryCode: "",
       descriptor: "Multi-collection source",
       countLabel: "",
       actionLabel: "Open source",
@@ -84,10 +89,12 @@ class Grid5CollectionsCardElement extends HTMLElement {
   }
 
   render() {
-    const title = escapeHtml(this.model.title || "Source");
-    const subtitle = escapeHtml(this.model.subtitle || "Organization");
-    const country = escapeHtml(this.model.country || "");
-    const descriptor = escapeHtml(this.model.descriptor || "Multi-collection source");
+    const sourceTitle = this.model.organizationName || this.model.curatorName || this.model.subtitle || this.model.title || "Source";
+    const locationPlace = this.model.placeName || "";
+    const locationCountry = this.model.countryCode || this.model.countryName || this.model.country || "";
+    const locationLine = [locationPlace, locationCountry].filter(Boolean).join(", ") || locationCountry || locationPlace;
+    const title = escapeHtml(sourceTitle);
+    const subtitle = escapeHtml(locationLine);
     const countLabel = escapeHtml(this.model.countLabel || "");
     const actionLabel = escapeHtml(this.model.actionLabel || "Open source");
     const logoLabel = escapeHtml((this.model.logoLabel || title).slice(0, 2).toUpperCase());
@@ -185,13 +192,13 @@ class Grid5CollectionsCardElement extends HTMLElement {
         }
         .image-grid { display:grid; gap:6px; }
         .image-grid-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
-        .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:42px; background:#eaf2ff; }
+        .thumb { border:1px solid #cfdae8; border-radius:7px; overflow:hidden; height:42px; background:#e6e2de; }
         .image-grid-row:last-child .thumb {
           border-bottom-left-radius: 0;
           border-bottom-right-radius: 0;
         }
         .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-        .placeholder { background:linear-gradient(120deg, #dbe7f9, #edf4ff); }
+        .placeholder { background:#e6e2de; }
         .card__footer {
           display:flex;
           justify-content:space-between;
@@ -230,8 +237,7 @@ class Grid5CollectionsCardElement extends HTMLElement {
               </div>
               <div class="sourceHeader__subtitle">${subtitle}</div>
               <div class="sourceHeader__meta">
-                <div>${country}</div>
-                <div>${descriptor}</div>
+                <div>Source</div>
               </div>
             </div>
           </div>
@@ -256,8 +262,8 @@ class Grid5CollectionsCardElement extends HTMLElement {
   }
 }
 
-if (!customElements.get("grid5-card-collections")) {
-  customElements.define("grid5-card-collections", Grid5CollectionsCardElement);
+if (!customElements.get("grid5-card-source")) {
+  customElements.define("grid5-card-source", Grid5SourceCardElement);
 }
 
-export { Grid5CollectionsCardElement };
+export { Grid5SourceCardElement };

@@ -57,7 +57,7 @@
         .tile-2x1 { grid-column: span 1; grid-row: span 1; }
         .tile-1x1 { grid-column: span 1; grid-row: span 1; }
         .tile-1x2 { grid-column: span 1; grid-row: span 2; }
-        grid5-card-collections,
+        grid5-card-source,
         grid5-card-collection {
           grid-column: span 2;
         }
@@ -76,7 +76,7 @@
     </main>
 
     <script type="module">
-      import './collections-card.js';
+      import './source-card.js';
       import './collection-card.js';
       import './item-card.js';
 
@@ -98,7 +98,7 @@
       ];
 
       const tagByType = {
-        source: 'grid5-card-collections',
+        source: 'grid5-card-source',
         collection: 'grid5-card-collection',
         item: 'grid5-card-item',
       };

@@ -87,7 +87,7 @@ class Grid5ItemCardElement extends HTMLElement {
           border-radius:10px;
           border:1px solid #ccd3dc;
           overflow:hidden;
-          background:#e8edf2;
+          background:#e6e2de;
         }
         .image img { width:100%; height:100%; object-fit:cover; display:block; }
         .content {

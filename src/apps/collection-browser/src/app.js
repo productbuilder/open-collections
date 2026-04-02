@@ -25,11 +25,11 @@ import {
 	selectItem,
 } from "./controllers/selection-controller.js";
 import {
-	buildAllBrowseEntities,
 	buildCollectionBrowseCardModels,
 	buildItemBrowseCardModels,
 	buildSourceBrowseCardModels,
 } from "./state/browse-model-builders.js";
+import { buildBrowseFeedEntities } from "./state/feed/index.js";
 import "./components/browser-collection-browser.js";
 import "./components/browser-manifest-controls.js";
 import "./components/browser-metadata-panel.js";
@@ -1039,7 +1039,8 @@ class TimemapBrowserElement extends ComponentBase {
 		const allItemCards = buildItemBrowseCardModels(allItems, {
 			selectedItemId: this.state.selectedItemId,
 		});
-		const allBrowseEntities = buildAllBrowseEntities({
+		const allBrowseEntities = buildBrowseFeedEntities({
+			mode: "all",
 			sourceCards,
 			collectionCards: allCollectionCards,
 			itemCards: allItemCards,

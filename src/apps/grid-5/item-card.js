@@ -17,7 +17,6 @@ class Grid5ItemCardElement extends HTMLElement {
       previewUrl: "",
       actionLabel: "View item",
       actionValue: "",
-      active: false,
       disabled: false,
     };
   }
@@ -58,6 +57,7 @@ class Grid5ItemCardElement extends HTMLElement {
     const subtitle = escapeHtml(this.model.subtitle || "");
     const previewUrl = escapeHtml(this.model.previewUrl || "");
     const actionLabel = escapeHtml(this.model.actionLabel || "View item");
+    const isDisabled = Boolean(this.model.disabled);
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -236,7 +236,7 @@ class Grid5ItemCardElement extends HTMLElement {
           :host(.tile-2x1) .meta { font-size: 0.66rem; }
         }
       </style>
-      <article class="card card--item" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
+      <article class="card card--item" tabindex="${isDisabled ? "-1" : "0"}" role="button" aria-disabled="${isDisabled ? "true" : "false"}" aria-label="${actionLabel} ${title}">
         <div class="card__body">
           <div class="image">${previewUrl ? `<img src="${previewUrl}" alt="" loading="lazy" decoding="async"/>` : ""}</div>
           <div class="textSection">

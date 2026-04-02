@@ -13,12 +13,10 @@ class Grid5CollectionCardElement extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.model = {
       title: "",
-      subtitle: "",
       countLabel: "",
       previewImages: [],
       actionLabel: "Open collection",
       actionValue: "",
-      active: false,
       disabled: false,
     };
   }
@@ -71,6 +69,7 @@ class Grid5CollectionCardElement extends HTMLElement {
     const subtitle = "Collection";
     const countLabel = escapeHtml(this.model.countLabel || "");
     const actionLabel = escapeHtml(this.model.actionLabel || "Open collection");
+    const isDisabled = Boolean(this.model.disabled);
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -173,7 +172,7 @@ class Grid5CollectionCardElement extends HTMLElement {
           flex:none;
         }
       </style>
-      <article class="card card--collection" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
+      <article class="card card--collection" tabindex="${isDisabled ? "-1" : "0"}" role="button" aria-disabled="${isDisabled ? "true" : "false"}" aria-label="${actionLabel} ${title}">
         <div class="card__header">
           <div class="card__headerMain">
             <svg class="card__icon card__icon--collection" viewBox="0 0 24 24" fill="none" aria-hidden="true">

@@ -12,21 +12,17 @@ class Grid5SourceCardElement extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.model = {
-      title: "",
-      subtitle: "",
-      country: "",
       organizationName: "",
       curatorName: "",
       placeName: "",
       countryName: "",
       countryCode: "",
-      descriptor: "Multi-collection source",
+      descriptor: "Source",
       countLabel: "",
       actionLabel: "Open source",
       actionValue: "",
       logoLabel: "",
       previewRows: [],
-      active: false,
       disabled: false,
     };
   }
@@ -89,15 +85,18 @@ class Grid5SourceCardElement extends HTMLElement {
   }
 
   render() {
-    const sourceTitle = this.model.organizationName || this.model.curatorName || this.model.subtitle || this.model.title || "Source";
+    const sourceTitleRaw = this.model.organizationName || this.model.curatorName || "Source";
     const locationPlace = this.model.placeName || "";
-    const locationCountry = this.model.countryName || this.model.countryCode || this.model.country || "";
-    const locationLine = [locationPlace, locationCountry].filter(Boolean).join(" · ") || locationPlace || locationCountry;
-    const title = escapeHtml(sourceTitle);
+    const locationCountry = this.model.countryName || this.model.countryCode || "";
+    const locationLine = [locationPlace, locationCountry].filter(Boolean).join(" \u00B7 ") || locationPlace || locationCountry;
+    const title = escapeHtml(sourceTitleRaw);
     const subtitle = escapeHtml(locationLine);
+    const descriptor = escapeHtml(this.model.descriptor || "Source");
     const countLabel = escapeHtml(this.model.countLabel || "");
     const actionLabel = escapeHtml(this.model.actionLabel || "Open source");
-    const logoLabel = escapeHtml((this.model.logoLabel || title).slice(0, 2).toUpperCase());
+    const logoSource = String(this.model.logoLabel || sourceTitleRaw || "");
+    const logoLabel = escapeHtml(logoSource.slice(0, 2).toUpperCase());
+    const isDisabled = Boolean(this.model.disabled);
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -225,7 +224,7 @@ class Grid5SourceCardElement extends HTMLElement {
           flex:none;
         }
       </style>
-      <article class="card card--source" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
+      <article class="card card--source" tabindex="${isDisabled ? "-1" : "0"}" role="button" aria-disabled="${isDisabled ? "true" : "false"}" aria-label="${actionLabel} ${title}">
         <div class="card__header card__header--source">
           <div class="sourceHeader">
             <div class="sourceHeader__logo">${logoLabel}</div>
@@ -235,7 +234,7 @@ class Grid5SourceCardElement extends HTMLElement {
               </div>
               <div class="sourceHeader__subtitle">${subtitle}</div>
               <div class="sourceHeader__meta">
-                <div>Source</div>
+                <div>${descriptor}</div>
               </div>
             </div>
           </div>
@@ -265,3 +264,4 @@ if (!customElements.get("grid5-card-source")) {
 }
 
 export { Grid5SourceCardElement };
+

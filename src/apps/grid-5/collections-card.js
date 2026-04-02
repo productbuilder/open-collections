@@ -141,16 +141,8 @@ class Grid5CollectionsCardElement extends HTMLElement {
         .sourceHeader__titleRow {
           display:flex;
           align-items:center;
-          gap:7px;
           min-width:0;
           margin:0;
-        }
-        .sourceHeader__icon {
-          width:15px;
-          height:15px;
-          color:#55667f;
-          opacity:0.72;
-          flex:none;
         }
         .sourceHeader__title {
           margin:0;
@@ -190,7 +182,7 @@ class Grid5CollectionsCardElement extends HTMLElement {
         .image-grid-viewport {
           overflow:hidden;
           border-radius:10px;
-          height:93px;
+          height:100%;
         }
         .image-grid { display:grid; gap:6px; }
         .image-grid-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
@@ -212,6 +204,18 @@ class Grid5CollectionsCardElement extends HTMLElement {
           font-weight:600;
         }
         .action { font-size:0.71rem; color:#44556a; font-weight:500; }
+        .actionWrap {
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+        }
+        .actionIcon {
+          width:13px;
+          height:13px;
+          color:#55667f;
+          opacity:0.78;
+          flex:none;
+        }
       </style>
       <article class="card card--source" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__header card__header--source">
@@ -219,10 +223,6 @@ class Grid5CollectionsCardElement extends HTMLElement {
             <div class="sourceHeader__logo">${logoLabel}</div>
             <div class="sourceHeader__textBlock">
               <div class="sourceHeader__titleRow">
-                <svg class="sourceHeader__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3.75 20.25h16.5v-9.5L12 4.25l-8.25 6.5v9.5Z" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M8 20.25v-6h8v6" stroke="currentColor" stroke-width="1.5"/>
-                </svg>
                 <h3 class="sourceHeader__title">${title}</h3>
               </div>
               <div class="sourceHeader__subtitle">${subtitle}</div>
@@ -240,7 +240,13 @@ class Grid5CollectionsCardElement extends HTMLElement {
         </div>
         <div class="card__footer">
           <span class="count">${countLabel}</span>
-          <span class="action">${actionLabel}</span>
+          <span class="actionWrap">
+            <svg class="actionIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.75 20.25h16.5v-9.5L12 4.25l-8.25 6.5v9.5Z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 20.25v-6h8v6" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span class="action">${actionLabel}</span>
+          </span>
         </div>
       </article>
     `;

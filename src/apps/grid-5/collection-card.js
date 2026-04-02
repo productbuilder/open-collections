@@ -160,6 +160,18 @@ class Grid5CollectionCardElement extends HTMLElement {
           padding:7px 12px 10px;
           min-height:26px;
         }
+        .footerAction {
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+        }
+        .footerIcon {
+          width:14px;
+          height:14px;
+          color:#606983;
+          opacity:0.74;
+          flex:none;
+        }
       </style>
       <article class="card card--collection" tabindex="0" role="button" aria-label="${actionLabel} ${title}">
         <div class="card__header">
@@ -178,7 +190,15 @@ class Grid5CollectionCardElement extends HTMLElement {
             <div class="image-grid">${this.renderGrid()}</div>
           </div>
         </div>
-        <div class="card__footer"><span>${countLabel}</span><span>${actionLabel}</span></div>
+        <div class="card__footer">
+          <span>${countLabel}</span>
+          <span class="footerAction">
+            <svg class="footerIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.75 6.75h6l1.5 2h9v8.5a1 1 0 0 1-1 1H4.75a1 1 0 0 1-1-1V6.75Z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span>${actionLabel}</span>
+          </span>
+        </div>
       </article>
     `;
   }

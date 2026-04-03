@@ -1,5 +1,6 @@
 export const BROWSER_CONFIG = {
 	defaultManifestUrl: "../../collections/city-photos/collection.json",
+	enableBrowseDiagnostics: false,
 	embeddedSourceCatalog: [
 		{
 			id: "example-collections",

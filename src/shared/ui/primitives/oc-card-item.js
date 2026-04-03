@@ -1,3 +1,4 @@
+// Deprecated: superseded by grid5-card-* components in shared/ui/primitives.
 function escapeHtml(value) {
 	return String(value ?? "")
 		.replaceAll("&", "&amp;")

@@ -1,3 +1,4 @@
+// Deprecated: superseded by grid5-card-* components in shared/ui/primitives.
 import { renderArrowIcon } from "../../components/back-button.js";
 
 function escapeHtml(value) {

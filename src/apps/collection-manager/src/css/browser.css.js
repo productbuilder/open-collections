@@ -190,9 +190,9 @@ export const browserStyles = `
     align-content: start;
   }
 
-  .browse-cell > oc-card-collections,
-  .browse-cell > oc-card-collection,
-  .browse-cell > oc-card-item {
+  .browse-cell > grid5-card-source,
+  .browse-cell > grid5-card-collection,
+  .browse-cell > grid5-card-item {
     display: block;
   }
 

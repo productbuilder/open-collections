@@ -107,19 +107,22 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("data-span-rows", "2");
 		wrapper.setAttribute("data-span-cols-mobile", "2");
 		wrapper.setAttribute("data-span-rows-mobile", "2");
-		const card = document.createElement("oc-card-collections");
+		const card = document.createElement("grid5-card-source");
 		card.update({
-			title: source.title || "Source",
-			subtitle: source.subtitle || "",
+			organizationName: source.title || "Source",
+			curatorName: source.curatorName || "",
+			placeName: source.placeName || "",
+			countryName: source.countryName || "",
+			countryCode: source.countryCode || "",
+			descriptor: source.descriptor || "Source",
 			countLabel: source.countLabel || "",
-			previewRows: Array.isArray(source.previewRows) ? source.previewRows : [],
-			previewImages: Array.isArray(source.previewImages)
-				? source.previewImages
-				: [],
 			actionLabel: "Browse",
 			actionValue: source.id || "",
-			active: source.active === true,
+			logoLabel: source.logoLabel || source.title || "",
+			previewRows: Array.isArray(source.previewRows) ? source.previewRows : [],
+			disabled: Boolean(source.disabled),
 		});
+		card.classList.add("tile-2x2");
 		wrapper.append(card);
 		return wrapper;
 	}
@@ -140,19 +143,26 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("data-span-cols-mobile", "2");
 		wrapper.setAttribute("data-span-rows-mobile", "1");
 
-		const card = document.createElement("oc-card-collection");
+		const card = document.createElement("grid5-card-collection");
 		card.update({
 			title: collection.title || collection.id || "Collection",
-			subtitle:
-				collection.assignmentLabel || "Select to browse this collection.",
 			countLabel: collection.countLabel || "",
 			previewImages: Array.isArray(collection.previewImages)
 				? collection.previewImages
 				: [],
-			actionLabel: "",
+			actionLabel: "Open collection",
 			actionValue: collection.id || "",
-			active: isFocused || isSelected,
+			disabled: false,
 		});
+		const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
+		if (subtitleElement) {
+			subtitleElement.textContent =
+				collection.assignmentLabel || "Select to browse this collection.";
+		}
+		if (isFocused || isSelected) {
+			card.style.setProperty("--oc-browser-border-strong", "#756c64");
+		}
+		card.classList.add("tile-2x2");
 
 		const controls = document.createElement("div");
 		controls.className = "browse-cell-controls";
@@ -185,18 +195,16 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("data-span-cols-mobile", "2");
 		wrapper.setAttribute("data-span-rows-mobile", "1");
 
-		const card = document.createElement("oc-card-item");
+		const card = document.createElement("grid5-card-item");
 		card.update({
 			title: item.title || item.id || "Item",
-			subtitle: item.license ? `License: ${item.license}` : "",
-			countLabel: `Completeness ${this.requiredFieldScore(item)}`,
+			subtitle: item.license ? `License: ${item.license}` : `Completeness ${this.requiredFieldScore(item)}`,
 			previewUrl: resolveItemPreviewUrl(item),
-			previewImages: [],
-			actionLabel: "Select",
+			actionLabel: "View item",
 			actionValue: workspaceId,
-			active: false,
 			disabled: false,
 		});
+		card.classList.add("tile-1x2");
 
 		const controls = document.createElement("div");
 		controls.className = "browse-cell-controls";

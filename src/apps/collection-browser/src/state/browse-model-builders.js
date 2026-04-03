@@ -101,6 +101,9 @@ export function buildCollectionBrowseCardModels(
 			manifestUrl,
 			sourceId: entry.sourceId || "",
 			sourceLabel: entry.sourceLabel || "",
+			sourceDisplayName: entry.sourceDisplayName || "",
+			sourceOrganizationName: entry.sourceOrganizationName || "",
+			sourceCuratorName: entry.sourceCuratorName || "",
 			collection: entry.collection || null,
 		};
 	});

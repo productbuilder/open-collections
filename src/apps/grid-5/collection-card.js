@@ -88,7 +88,7 @@ class Grid5CollectionCardElement extends HTMLElement {
         .card__header {
           padding: 7px 12px;
           border-bottom: 1px solid rgba(40, 40, 60, 0.11);
-          background: #e6e2de;
+          background: #c5bfb9;
         }
         .card__headerMain {
           display:flex;

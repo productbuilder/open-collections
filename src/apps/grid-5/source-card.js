@@ -116,7 +116,7 @@ class Grid5SourceCardElement extends HTMLElement {
         .card__header {
           padding: 9px 12px;
           border-bottom: 1px solid rgba(40, 60, 90, 0.14);
-          background: #e6e2de;
+          background: #c5bfb9;
         }
         .sourceHeader {
           display:grid;

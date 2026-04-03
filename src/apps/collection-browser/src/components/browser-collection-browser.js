@@ -177,6 +177,16 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		});
 	}
 
+	resolveCollectionSubtitle(entity = {}) {
+		return (
+			String(entity.sourceDisplayName || "").trim() ||
+			String(entity.sourceLabel || "").trim() ||
+			String(entity.sourceOrganizationName || "").trim() ||
+			String(entity.sourceCuratorName || "").trim() ||
+			"Collection"
+		);
+	}
+
 	itemTileConfig(entity = {}) {
 		const variant = String(entity.itemTileVariant || entity.tileVariant || "").trim();
 		if (variant === "1x2" || variant === "tile-1x2") {
@@ -236,6 +246,11 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 				actionValue: manifestUrl,
 				disabled: Boolean(entity.disabled),
 			});
+			const subtitle = this.resolveCollectionSubtitle(entity);
+			const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
+			if (subtitleElement) {
+				subtitleElement.textContent = subtitle;
+			}
 			card.classList.add("tile-2x2");
 			return card;
 		}

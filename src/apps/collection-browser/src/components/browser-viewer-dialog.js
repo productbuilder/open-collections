@@ -91,6 +91,79 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 		return String(item?.media?.url || item?.media?.thumbnailUrl || "").trim();
 	}
 
+	resolveSubtitle(item) {
+		return String(item?.summary || "").trim();
+	}
+
+	resolveDescription(item) {
+		return String(item?.description || "").trim();
+	}
+
+	resolveSourceUrl(item) {
+		const direct = String(item?.source?.url || item?.sourceUrl || "").trim();
+		if (direct) {
+			return direct;
+		}
+		const sourceText = String(item?.source || "").trim();
+		return /^https?:\/\//i.test(sourceText) ? sourceText : "";
+	}
+
+	appendItemDetails(body, item) {
+		const titleText = String(item?.title || item?.id || "").trim();
+		const subtitleText = this.resolveSubtitle(item);
+		const descriptionText = this.resolveDescription(item);
+		const sourceUrl = this.resolveSourceUrl(item);
+		const subtitleMatchesDescription =
+			subtitleText &&
+			descriptionText &&
+			subtitleText.toLowerCase() === descriptionText.toLowerCase();
+		const effectiveSubtitle = subtitleMatchesDescription ? "" : subtitleText;
+		const hasDetails =
+			Boolean(titleText) ||
+			Boolean(effectiveSubtitle) ||
+			Boolean(descriptionText) ||
+			Boolean(sourceUrl);
+		if (!hasDetails) {
+			return;
+		}
+
+		const details = document.createElement("section");
+		details.className = "viewer-details";
+
+		if (titleText) {
+			const heading = document.createElement("h3");
+			heading.className = "viewer-item-title";
+			heading.textContent = titleText;
+			details.appendChild(heading);
+		}
+
+		if (effectiveSubtitle) {
+			const subtitle = document.createElement("p");
+			subtitle.className = "viewer-item-subtitle";
+			subtitle.textContent = effectiveSubtitle;
+			details.appendChild(subtitle);
+		}
+
+		if (descriptionText) {
+			const description = document.createElement("p");
+			description.className = "viewer-item-description";
+			description.textContent = descriptionText;
+			details.appendChild(description);
+		}
+
+		if (sourceUrl) {
+			const sourceAction = document.createElement("a");
+			sourceAction.className = "viewer-source-link";
+			sourceAction.href = sourceUrl;
+			sourceAction.target = "_blank";
+			sourceAction.rel = "noopener noreferrer";
+			sourceAction.textContent = "Open original source";
+			details.appendChild(sourceAction);
+		}
+
+		body.appendChild(details);
+	}
+
 	parseRatioFromMetadata(item) {
 		const width = Number(item?.media?.width || item?.width || 0);
 		const height = Number(item?.media?.height || item?.height || 0);
@@ -197,6 +270,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 				});
 			}
 			body.appendChild(comparer);
+			this.appendItemDetails(body, item);
 			return;
 		}
 		const mediaType = (item.media?.type || "").toLowerCase();
@@ -214,6 +288,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			empty.textContent = "No media URL available.";
 			shell.appendChild(empty);
 			body.appendChild(shell);
+			this.appendItemDetails(body, item);
 			return;
 		}
 
@@ -244,6 +319,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			});
 			shell.appendChild(video);
 			body.appendChild(shell);
+			this.appendItemDetails(body, item);
 			return;
 		}
 
@@ -288,6 +364,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 		});
 		shell.appendChild(image);
 		body.appendChild(shell);
+		this.appendItemDetails(body, item);
 	}
 
 	render() {
@@ -353,6 +430,51 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
   			justify-content: center;
           overflow: hidden;
           position: relative;
+        }
+        .viewer-details {
+          margin-top: 0.85rem;
+          border-top: 1px solid var(--oc-browser-divider, #e2d8cd);
+          padding-top: 0.8rem;
+          display: grid;
+          gap: 0.5rem;
+        }
+        .viewer-item-title {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          line-height: 1.25;
+          color: var(--oc-browser-text, #2e2924);
+        }
+        .viewer-item-subtitle {
+          margin: 0;
+          font-size: 0.84rem;
+          line-height: 1.35;
+          color: var(--oc-browser-text-muted, #6c6258);
+        }
+        .viewer-item-description {
+          margin: 0;
+          font-size: 0.88rem;
+          line-height: 1.45;
+          color: var(--oc-browser-text, #2e2924);
+          white-space: pre-wrap;
+        }
+        .viewer-source-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: fit-content;
+          min-height: 2rem;
+          border: 1px solid var(--oc-browser-border, #d9d5d0);
+          border-radius: 8px;
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-text, #2e2924);
+          font-size: 0.82rem;
+          font-weight: 600;
+          text-decoration: none;
+          padding: 0.34rem 0.62rem;
+        }
+        .viewer-source-link:hover {
+          background: var(--oc-browser-bg-card-soft, #f7f4f1);
         }
         .viewer-media-skeleton {
           position: absolute;

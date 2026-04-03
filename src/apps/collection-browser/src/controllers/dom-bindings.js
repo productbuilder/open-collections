@@ -86,6 +86,9 @@ export function bindDomEvents(app) {
 		}
 		await app.openSourceFromBrowse(sourceId);
 	});
+	app.dom.browserViewport?.addEventListener("all-feed-append-request", () => {
+		app.appendNextAllModeFeedChunk();
+	});
 
 	app.dom.metadataPanel?.addEventListener("close-metadata", () => {
 		app.closeMobileMetadataPanel();

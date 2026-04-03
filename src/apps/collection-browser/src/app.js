@@ -29,11 +29,18 @@ import {
 	buildItemBrowseCardModels,
 	buildSourceBrowseCardModels,
 } from "./state/browse-model-builders.js";
-import { buildBrowseFeedEntities } from "./state/feed/index.js";
+import {
+	appendBrowseFeedStreamChunk,
+	buildBrowseFeedEntities,
+	createBrowseFeedStreamSession,
+} from "./state/feed/index.js";
 import "./components/browser-collection-browser.js";
 import "./components/browser-manifest-controls.js";
 import "./components/browser-metadata-panel.js";
 import "./components/browser-viewer-dialog.js";
+
+const ALL_MODE_INITIAL_CHUNK_SIZE = 24;
+const ALL_MODE_APPEND_CHUNK_SIZE = 24;
 
 function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
@@ -83,6 +90,8 @@ class TimemapBrowserElement extends ComponentBase {
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
 			isLoadingCollection: false,
+			allModeFeedSession: null,
+			isAppendingAllModeFeedChunk: false,
 		};
 		this.shadow = this.attachShadow({ mode: "open" });
 	}
@@ -123,6 +132,99 @@ class TimemapBrowserElement extends ComponentBase {
 			this._handleWindowResize = null;
 		}
 		this._eventsBound = false;
+	}
+
+	buildAllModeFeedSessionKey({
+		browseContext = {},
+		sourceCards = [],
+		collectionCards = [],
+		itemCards = [],
+	} = {}) {
+		const sourceKeys = sourceCards.map((card) => String(card?.actionValue || card?.id || "").trim());
+		const collectionKeys = collectionCards.map((card) =>
+			String(card?.actionValue || card?.manifestUrl || card?.id || "").trim(),
+		);
+		const itemKeys = itemCards.map((card) => String(card?.actionValue || card?.id || "").trim());
+		return JSON.stringify({
+			scope: String(browseContext.scope || "").trim(),
+			sourceScopeId: String(browseContext.sourceScopeId || "").trim(),
+			selectedCollectionManifestUrl: String(
+				browseContext.selectedCollectionManifestUrl || "",
+			).trim(),
+			sourceKeys,
+			collectionKeys,
+			itemKeys,
+		});
+	}
+
+	resolveAllModeFeedEntities({
+		browseContext = {},
+		sourceCards = [],
+		collectionCards = [],
+		itemCards = [],
+	} = {}) {
+		const sessionKey = this.buildAllModeFeedSessionKey({
+			browseContext,
+			sourceCards,
+			collectionCards,
+			itemCards,
+		});
+		const hasMatchingSession =
+			this.state.allModeFeedSession &&
+			String(this.state.allModeFeedSession.key || "") === sessionKey;
+		if (!hasMatchingSession) {
+			const session = createBrowseFeedStreamSession({
+				mode: "all",
+				sourceCards,
+				collectionCards,
+				itemCards,
+			});
+			const initialChunk = appendBrowseFeedStreamChunk(session, {
+				count: ALL_MODE_INITIAL_CHUNK_SIZE,
+			});
+			this.state.allModeFeedSession = {
+				key: sessionKey,
+				session,
+				renderedEntities: initialChunk,
+				exhausted: Boolean(session?.exhausted),
+			};
+		}
+
+		return {
+			sessionKey,
+			entities: Array.isArray(this.state.allModeFeedSession?.renderedEntities)
+				? this.state.allModeFeedSession.renderedEntities
+				: [],
+			exhausted: Boolean(this.state.allModeFeedSession?.exhausted),
+		};
+	}
+
+	appendNextAllModeFeedChunk() {
+		const activeSession = this.state.allModeFeedSession;
+		if (
+			!activeSession ||
+			!activeSession.session ||
+			activeSession.exhausted ||
+			this.state.viewMode !== "all" ||
+			this.state.isAppendingAllModeFeedChunk
+		) {
+			return;
+		}
+		this.state.isAppendingAllModeFeedChunk = true;
+		const nextChunk = appendBrowseFeedStreamChunk(activeSession.session, {
+			count: ALL_MODE_APPEND_CHUNK_SIZE,
+		});
+		if (nextChunk.length > 0) {
+			activeSession.renderedEntities = [
+				...(activeSession.renderedEntities || []),
+				...nextChunk,
+			];
+		}
+		activeSession.exhausted = Boolean(activeSession.session.exhausted);
+		this.state.isAppendingAllModeFeedChunk = false;
+		if (nextChunk.length > 0 || activeSession.exhausted) {
+			this.renderViewport();
+		}
 	}
 
 	bindEvents() {
@@ -1124,12 +1226,29 @@ class TimemapBrowserElement extends ComponentBase {
 		const itemCards = buildItemBrowseCardModels(items, {
 			selectedItemId: this.state.selectedItemId,
 		});
-		const allBrowseEntities = buildBrowseFeedEntities({
+		const fullAllBrowseEntities = buildBrowseFeedEntities({
 			mode: "all",
 			sourceCards,
 			collectionCards,
 			itemCards,
 		});
+		let allBrowseEntities = fullAllBrowseEntities;
+		let allFeedSessionKey = "";
+		let allFeedExhausted = false;
+		if (this.state.viewMode === "all") {
+			const allFeed = this.resolveAllModeFeedEntities({
+				browseContext,
+				sourceCards,
+				collectionCards,
+				itemCards,
+			});
+			allBrowseEntities = allFeed.entities;
+			allFeedSessionKey = allFeed.sessionKey;
+			allFeedExhausted = allFeed.exhausted;
+		} else {
+			this.state.allModeFeedSession = null;
+			this.state.isAppendingAllModeFeedChunk = false;
+		}
 		const showBackInViewport =
 			this.canGoBackEmbeddedNav() &&
 			(this.state.viewMode === "collections" ||
@@ -1151,6 +1270,10 @@ class TimemapBrowserElement extends ComponentBase {
 				collectionCards,
 				itemCards,
 				allBrowseEntities,
+				fullAllBrowseEntities,
+				allFeedSessionKey,
+				allFeedExhausted,
+				isAppendingAllFeedChunk: this.state.isAppendingAllModeFeedChunk,
 				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections,
 				selectedCollectionManifestUrl:
@@ -1174,6 +1297,7 @@ class TimemapBrowserElement extends ComponentBase {
 				collectionCards: [],
 				itemCards: [],
 				allBrowseEntities,
+				fullAllBrowseEntities,
 				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections: [],
 				selectedCollectionManifestUrl: "",
@@ -1206,6 +1330,7 @@ class TimemapBrowserElement extends ComponentBase {
 				collectionCards,
 				itemCards: [],
 				allBrowseEntities,
+				fullAllBrowseEntities,
 				activeSourceId: this.state.activeEmbeddedSourceId || "",
 				collections,
 				selectedCollectionManifestUrl:
@@ -1245,6 +1370,7 @@ class TimemapBrowserElement extends ComponentBase {
 			collectionCards: [],
 			itemCards,
 			allBrowseEntities,
+			fullAllBrowseEntities,
 			activeSourceId: this.state.activeEmbeddedSourceId || "",
 			collections: [],
 			selectedCollectionManifestUrl:

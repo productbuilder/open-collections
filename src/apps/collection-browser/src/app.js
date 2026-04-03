@@ -33,6 +33,7 @@ import {
 	appendBrowseFeedStreamChunk,
 	buildBrowseFeedEntities,
 	createBrowseFeedStreamSession,
+	orderBrowseModeCards,
 } from "./state/feed/index.js";
 import "./components/browser-collection-browser.js";
 import "./components/browser-manifest-controls.js";
@@ -1298,14 +1299,25 @@ class TimemapBrowserElement extends ComponentBase {
 		const itemCards = buildItemBrowseCardModels(items, {
 			selectedItemId: this.state.selectedItemId,
 		});
+		const allModeExposureNamespace = this.buildAllModeExposureNamespace({
+			browseContext,
+		});
+		const orderedCollectionCards = orderBrowseModeCards({
+			mode: "collections",
+			collectionCards,
+			exposureNamespace: allModeExposureNamespace,
+		});
+		const orderedItemCards = orderBrowseModeCards({
+			mode: "items",
+			itemCards,
+			exposureNamespace: allModeExposureNamespace,
+		});
 		const fullAllBrowseEntities = buildBrowseFeedEntities({
 			mode: "all",
 			sourceCards,
-			collectionCards,
-			itemCards,
-			exposureNamespace: this.buildAllModeExposureNamespace({
-				browseContext,
-			}),
+			collectionCards: orderedCollectionCards,
+			itemCards: orderedItemCards,
+			exposureNamespace: allModeExposureNamespace,
 		});
 		let allBrowseEntities = fullAllBrowseEntities;
 		let allFeedSessionKey = "";
@@ -1314,8 +1326,8 @@ class TimemapBrowserElement extends ComponentBase {
 			const allFeed = this.resolveAllModeFeedEntities({
 				browseContext,
 				sourceCards,
-				collectionCards,
-				itemCards,
+				collectionCards: orderedCollectionCards,
+				itemCards: orderedItemCards,
 			});
 			allBrowseEntities = allFeed.entities;
 			allFeedSessionKey = allFeed.sessionKey;
@@ -1342,8 +1354,8 @@ class TimemapBrowserElement extends ComponentBase {
 				viewMode: "all",
 				sources,
 				sourceCards,
-				collectionCards,
-				itemCards,
+				collectionCards: orderedCollectionCards,
+				itemCards: orderedItemCards,
 				allBrowseEntities,
 				fullAllBrowseEntities,
 				allFeedSessionKey,
@@ -1402,7 +1414,7 @@ class TimemapBrowserElement extends ComponentBase {
 				viewMode: "collections",
 				sources: [],
 				sourceCards: [],
-				collectionCards,
+				collectionCards: orderedCollectionCards,
 				itemCards: [],
 				allBrowseEntities,
 				fullAllBrowseEntities,
@@ -1443,7 +1455,7 @@ class TimemapBrowserElement extends ComponentBase {
 			sources: [],
 			sourceCards: [],
 			collectionCards: [],
-			itemCards,
+			itemCards: orderedItemCards,
 			allBrowseEntities,
 			fullAllBrowseEntities,
 			activeSourceId: this.state.activeEmbeddedSourceId || "",

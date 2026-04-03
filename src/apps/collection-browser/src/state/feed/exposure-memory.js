@@ -43,6 +43,7 @@ function createEmptyState() {
 	return {
 		version: EXPOSURE_MEMORY_VERSION,
 		seq: 0,
+		sessionSeq: 0,
 		entries: {},
 	};
 }
@@ -53,6 +54,9 @@ function toValidState(value) {
 	}
 	const seq = Number.isFinite(Number(value.seq))
 		? Math.max(0, Math.floor(Number(value.seq)))
+		: 0;
+	const sessionSeq = Number.isFinite(Number(value.sessionSeq))
+		? Math.max(0, Math.floor(Number(value.sessionSeq)))
 		: 0;
 	const incomingEntries =
 		value.entries && typeof value.entries === "object" ? value.entries : {};
@@ -72,6 +76,7 @@ function toValidState(value) {
 	return {
 		version: EXPOSURE_MEMORY_VERSION,
 		seq,
+		sessionSeq,
 		entries,
 	};
 }
@@ -146,6 +151,11 @@ export function createExposureMemory({ namespace = "" } = {}) {
 	return {
 		namespace: normalizedNamespace,
 		storageKey,
+		beginSession() {
+			state.sessionSeq = Math.max(0, Math.floor(Number(state.sessionSeq) || 0)) + 1;
+			writeState(storage, storageKey, state);
+			return state.sessionSeq;
+		},
 		markSeen,
 		markSeenEntity(entity = {}, type = "") {
 			markSeen({
@@ -179,8 +189,38 @@ export function createExposureMemory({ namespace = "" } = {}) {
 			}
 			return Math.max(0, state.seq - record.seenSeq);
 		},
+		getMostRecentIds({ type = "", limit = 12 } = {}) {
+			const normalizedType = normalizeEntityType(type);
+			if (!normalizedType) {
+				return [];
+			}
+			const maxCount = Number.isFinite(Number(limit))
+				? Math.max(0, Math.floor(Number(limit)))
+				: 0;
+			if (maxCount === 0) {
+				return [];
+			}
+			const prefix = `${normalizedType}:`;
+			const ranked = [];
+			for (const [entryKey, entry] of Object.entries(state.entries)) {
+				if (!entryKey.startsWith(prefix) || !Array.isArray(entry)) {
+					continue;
+				}
+				const seenSeq = Number(entry[0] || 0);
+				if (!Number.isFinite(seenSeq) || seenSeq <= 0) {
+					continue;
+				}
+				ranked.push({
+					id: entryKey.slice(prefix.length),
+					seenSeq,
+				});
+			}
+			ranked.sort((left, right) => right.seenSeq - left.seenSeq);
+			return ranked.slice(0, maxCount).map((entry) => entry.id);
+		},
 		reset() {
 			state.seq = 0;
+			state.sessionSeq = 0;
 			state.entries = {};
 			writeState(storage, storageKey, state);
 		},

@@ -16,6 +16,9 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			viewportSubtitle: "Browse available entities.",
 			viewMode: "items",
 			allBrowseEntities: [],
+			allFeedSessionKey: "",
+			allFeedExhausted: false,
+			isAppendingAllFeedChunk: false,
 			sourceCards: [],
 			collectionCards: [],
 			itemCards: [],
@@ -31,12 +34,16 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		if (this._grid && this._boundGridClickHandler) {
 			this._grid.removeEventListener("click", this._boundGridClickHandler);
 		}
+		this.teardownAllModeAppendObserver();
 		this._grid = null;
 		this._boundGridClickHandler = null;
 	}
 
 	update(data = {}) {
 		this.model = { ...this.model, ...data };
+		if (!this.model.isAppendingAllFeedChunk) {
+			this._allModeAppendRequestPending = false;
+		}
 		this.render();
 	}
 
@@ -335,6 +342,52 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		grid.addEventListener("click", this._boundGridClickHandler);
 	}
 
+	teardownAllModeAppendObserver() {
+		if (this._allModeAppendObserver) {
+			this._allModeAppendObserver.disconnect();
+		}
+		this._allModeAppendObserver = null;
+		this._allModeSentinel = null;
+	}
+
+	bindAllModeAppendObserver() {
+		this.teardownAllModeAppendObserver();
+		const mode = this.normalizedMode();
+		if (mode !== "all" || this.model.allFeedExhausted) {
+			return;
+		}
+		const root = this.shadowRoot?.getElementById("scrollContainer");
+		const sentinel = this.shadowRoot?.getElementById("allModeFeedSentinel");
+		if (!root || !sentinel || typeof IntersectionObserver !== "function") {
+			return;
+		}
+
+		this._allModeSentinel = sentinel;
+		this._allModeAppendObserver = new IntersectionObserver(
+			(entries) => {
+				const isVisible = entries.some((entry) => entry.isIntersecting);
+				if (!isVisible) {
+					return;
+				}
+				if (
+					this._allModeAppendRequestPending ||
+					this.model.isAppendingAllFeedChunk ||
+					this.model.allFeedExhausted
+				) {
+					return;
+				}
+				this._allModeAppendRequestPending = true;
+				this.dispatch("all-feed-append-request");
+			},
+			{
+				root,
+				rootMargin: "0px 0px 480px 0px",
+				threshold: 0,
+			},
+		);
+		this._allModeAppendObserver.observe(sentinel);
+	}
+
 	modeButtonLabel(mode) {
 		if (mode === "all") {
 			return "All";
@@ -383,6 +436,19 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	}
 
 	render() {
+		const previousMode = this._lastRenderMode || "";
+		const previousSessionKey = this._lastAllFeedSessionKey || "";
+		const currentMode = this.normalizedMode();
+		const currentSessionKey = String(this.model.allFeedSessionKey || "").trim();
+		const shouldPreserveScroll =
+			currentMode === "all" &&
+			previousMode === "all" &&
+			currentSessionKey &&
+			currentSessionKey === previousSessionKey;
+		const priorScrollTop = shouldPreserveScroll
+			? Number(this.shadowRoot?.getElementById("scrollContainer")?.scrollTop || 0)
+			: 0;
+
 		this.shadowRoot.innerHTML = `
       <style>${backButtonStyles}</style>
       <style>${browserStyles}</style>
@@ -403,6 +469,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
           <div id="scrollContainer" class="scroll-container">
             <div class="grid-host">
               <div id="browseGrid" class="browse-grid"></div>
+              <div id="allModeFeedSentinel" aria-hidden="true"></div>
             </div>
           </div>
         </div>
@@ -418,6 +485,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			// TODO(perf): Virtualize/window item cells so only in-viewport rows are mounted.
 			grid.appendChild(this.buildGridCell(entity));
 		}
+		this.shadowRoot.getElementById("scrollContainer").scrollTop = priorScrollTop;
 
 		const backBtn = this.shadowRoot.getElementById("panelBackBtn");
 		backBtn?.addEventListener("click", () => {
@@ -426,6 +494,9 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 		this.bindToggleEvents();
 		this.bindGridInteractions();
+		this.bindAllModeAppendObserver();
+		this._lastRenderMode = currentMode;
+		this._lastAllFeedSessionKey = currentSessionKey;
 	}
 }
 

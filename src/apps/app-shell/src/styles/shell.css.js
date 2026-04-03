@@ -6,6 +6,9 @@ export const appShellStyles = `
   ${appRuntimeStyles}
 
   :host {
+    --oc-shell-mobile-nav-height: 4.5rem;
+    --oc-shell-mobile-nav-offset: 0px;
+
     display: block;
     width: 100%;
     height: 100dvh;
@@ -208,9 +211,16 @@ export const appShellStyles = `
     display: inline;
   }
 
+  :host {
+    --oc-shell-mobile-nav-offset: calc(
+      var(--oc-shell-mobile-nav-height) + env(safe-area-inset-bottom)
+    );
+  }
+
   .oc-app-viewport {
     flex: 1 1 auto;
-    <!-- padding-bottom: calc(4.5rem + var(--oc-space-3) + env(safe-area-inset-bottom)); -->
+    box-sizing: border-box;
+    padding-bottom: var(--oc-shell-mobile-nav-offset);
   }
 }
 

@@ -429,6 +429,16 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 				if (!VALID_MODES.includes(mode) || mode === this.normalizedMode()) {
 					return;
 				}
+				const modeChangeEvent = new CustomEvent("view-mode-change", {
+					bubbles: true,
+					composed: true,
+					cancelable: true,
+					detail: { mode },
+				});
+				const shouldApplyLocally = this.dispatchEvent(modeChangeEvent);
+				if (!shouldApplyLocally) {
+					return;
+				}
 				this.model.viewMode = mode;
 				this.render();
 			});

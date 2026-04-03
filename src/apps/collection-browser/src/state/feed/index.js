@@ -16,8 +16,9 @@ export function buildBrowseFeedEntities({
 	collectionCards = [],
 	itemCards = [],
 	exposureMemory = null,
+	exposureNamespace = "",
 } = {}) {
-	const memory = exposureMemory || createExposureMemory();
+	const memory = exposureMemory || createExposureMemory({ namespace: exposureNamespace });
 	const candidatePools = buildCandidatePools({
 		sourceCards,
 		collectionCards,
@@ -33,11 +34,12 @@ export function createBrowseFeedStreamSession({
 	collectionCards = [],
 	itemCards = [],
 	exposureMemory = null,
+	exposureNamespace = "",
 } = {}) {
 	if (mode !== "all") {
 		return null;
 	}
-	const memory = exposureMemory || createExposureMemory();
+	const memory = exposureMemory || createExposureMemory({ namespace: exposureNamespace });
 	const candidatePools = buildCandidatePools({
 		sourceCards,
 		collectionCards,
@@ -49,7 +51,9 @@ export function createBrowseFeedStreamSession({
 	});
 	return {
 		mode,
-		streamState: createAllModeFeedStreamState(scoredPools),
+		streamState: createAllModeFeedStreamState(scoredPools, {
+			exposureMemory: memory,
+		}),
 		exhausted: false,
 	};
 }

@@ -9,6 +9,11 @@ const ALL_MODE_RECENT_SOURCE_WINDOW = 8;
 const ALL_MODE_COLLECTION_REUSE_GAP = 10;
 const ALL_MODE_SOURCE_REUSE_GAP = 24;
 const ALL_MODE_ITEM_SOURCE_RECENT_WINDOW = 6;
+const ALL_MODE_EXPOSURE_RECENCY_BUCKETS = {
+	source: [12, 36, 80],
+	collection: [10, 30, 72],
+	item: [6, 18, 48],
+};
 
 const ALL_MODE_COLLECTION_PACING_STEPS = [5, 6, 7, 6, 8];
 const ALL_MODE_SOURCE_PACING_STEPS = [14, 16, 18, 15, 20];
@@ -36,6 +41,41 @@ function getCandidateKey(candidate, index, type) {
 		return `${type}:${entityId}`;
 	}
 	return `${type}:index:${index}`;
+}
+
+function getCandidateEntityId(candidate) {
+	return String(candidate?.entity?.id ?? candidate?.id ?? "").trim();
+}
+
+function getExposurePenaltyTier(type, recencyRank) {
+	if (recencyRank === null || recencyRank === undefined) {
+		return 0;
+	}
+	const thresholds = ALL_MODE_EXPOSURE_RECENCY_BUCKETS[type] || ALL_MODE_EXPOSURE_RECENCY_BUCKETS.item;
+	if (recencyRank < thresholds[0]) {
+		return 4;
+	}
+	if (recencyRank < thresholds[1]) {
+		return 3;
+	}
+	if (recencyRank < thresholds[2]) {
+		return 2;
+	}
+	return 1;
+}
+
+function getCandidateExposurePenalty(type, candidate, exposureMemory) {
+	if (!exposureMemory) {
+		return 0;
+	}
+	const entityId = getCandidateEntityId(candidate);
+	if (!entityId) {
+		return 0;
+	}
+	return getExposurePenaltyTier(
+		type,
+		exposureMemory.getRecencyRank({ type, id: entityId }),
+	);
 }
 
 function getRecentSourceUseCount(sourceId, recentSourceIds) {
@@ -145,6 +185,7 @@ function pickBestCandidate({
 	anchorLastSeenByKey,
 	usedAnchorSourceIds,
 	usedAnchorEntityKeys,
+	exposureMemory = null,
 }) {
 	if (!pool.length) {
 		return null;
@@ -179,8 +220,10 @@ function pickBestCandidate({
 		const anchorEntitySeen = usedAnchorEntityKeys.has(option.key) ? 1 : 0;
 		const emittedEntityId = String(option.candidate?.entity?.id ?? "").trim();
 		const emittedEntitySeen = emittedEntityId && emittedEntityKeys.has(emittedEntityId) ? 1 : 0;
+		const exposurePenalty = getCandidateExposurePenalty(type, option.candidate, exposureMemory);
 
 		const score = [
+			type === "item" ? Math.min(exposurePenalty, 2) : exposurePenalty,
 			type === "item" ? 0 : option.isReuse ? 1 : 0,
 			type === "source" ? anchorSourceSeen : 0,
 			type !== "item" ? anchorEntitySeen : 0,
@@ -274,8 +317,15 @@ function pickItemCandidateFromSourceBuckets(state) {
 		const itemUseCount = state.itemSourceUseCounts.get(sourceId) ?? 0;
 		const sameAsLastItemSource = sourceId === lastItemSourceId ? 1 : 0;
 		const sourceOrderIndex = getSourceOrderIndex(sourceId, sourceOrderById);
+		const nextItem = bucket.items[bucket.cursor];
+		const itemExposurePenalty = getCandidateExposurePenalty(
+			"item",
+			nextItem?.candidate,
+			state.exposureMemory,
+		);
 
 		const score = [
+			Math.min(itemExposurePenalty, 2),
 			sameAsLastItemSource,
 			recentItemUseCount,
 			recentOverallUseCount,
@@ -380,6 +430,7 @@ function selectCandidateForType(type, state, feedIndex) {
 			anchorLastSeenByKey: state.anchorLastSeen.source,
 			usedAnchorSourceIds: state.usedSourceAnchorSourceIds,
 			usedAnchorEntityKeys: state.usedSourceAnchorKeys,
+			exposureMemory: state.exposureMemory,
 		});
 	}
 
@@ -397,6 +448,7 @@ function selectCandidateForType(type, state, feedIndex) {
 			anchorLastSeenByKey: state.anchorLastSeen.collection,
 			usedAnchorSourceIds: new Set(),
 			usedAnchorEntityKeys: state.usedCollectionAnchorKeys,
+			exposureMemory: state.exposureMemory,
 		});
 	}
 
@@ -456,7 +508,10 @@ function pickNextCandidate(state) {
 	return null;
 }
 
-export function createAllModeFeedStreamState(scoredPools = {}, { maxCards = ALL_MODE_MAX_CARDS } = {}) {
+export function createAllModeFeedStreamState(
+	scoredPools = {},
+	{ maxCards = ALL_MODE_MAX_CARDS, exposureMemory = null } = {},
+) {
 	const pools = {
 		source: normalizePool(scoredPools.sources),
 		collection: normalizePool(scoredPools.collections),
@@ -484,6 +539,7 @@ export function createAllModeFeedStreamState(scoredPools = {}, { maxCards = ALL_
 		usedSourceAnchorSourceIds: new Set(),
 		usedSourceAnchorKeys: new Set(),
 		usedCollectionAnchorKeys: new Set(),
+		exposureMemory,
 		pacing: {
 			collection: createPacingState(ALL_MODE_COLLECTION_PACING_STEPS, 4),
 			source: createPacingState(ALL_MODE_SOURCE_PACING_STEPS, 12),
@@ -508,6 +564,8 @@ export function appendNextFeedChunk(
 		const entity = selection?.candidate?.entity;
 		if (entity) {
 			chunkEntities.push(entity);
+			// Exposure memory is frontend-only v1 and records cards when they are emitted.
+			streamState.exposureMemory?.markSeenEntity(entity, selection?.candidate?.type);
 		}
 	}
 

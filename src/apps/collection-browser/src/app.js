@@ -157,6 +157,16 @@ class TimemapBrowserElement extends ComponentBase {
 		});
 	}
 
+	buildAllModeExposureNamespace({ browseContext = {} } = {}) {
+		return JSON.stringify({
+			scope: String(browseContext.scope || "").trim(),
+			sourceScopeId: String(browseContext.sourceScopeId || "").trim(),
+			selectedCollectionManifestUrl: String(
+				browseContext.selectedCollectionManifestUrl || "",
+			).trim(),
+		});
+	}
+
 	resolveAllModeFeedEntities({
 		browseContext = {},
 		sourceCards = [],
@@ -173,11 +183,15 @@ class TimemapBrowserElement extends ComponentBase {
 			this.state.allModeFeedSession &&
 			String(this.state.allModeFeedSession.key || "") === sessionKey;
 		if (!hasMatchingSession) {
+			const exposureNamespace = this.buildAllModeExposureNamespace({
+				browseContext,
+			});
 			const session = createBrowseFeedStreamSession({
 				mode: "all",
 				sourceCards,
 				collectionCards,
 				itemCards,
+				exposureNamespace,
 			});
 			const initialChunk = appendBrowseFeedStreamChunk(session, {
 				count: ALL_MODE_INITIAL_CHUNK_SIZE,
@@ -1289,6 +1303,9 @@ class TimemapBrowserElement extends ComponentBase {
 			sourceCards,
 			collectionCards,
 			itemCards,
+			exposureNamespace: this.buildAllModeExposureNamespace({
+				browseContext,
+			}),
 		});
 		let allBrowseEntities = fullAllBrowseEntities;
 		let allFeedSessionKey = "";

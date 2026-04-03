@@ -94,6 +94,8 @@ class TimemapBrowserElement extends ComponentBase {
 			allModeFeedSession: null,
 			isAppendingAllModeFeedChunk: false,
 		};
+		// Temporary feed diagnostics: tracks last payload signature to avoid noisy logs.
+		this.lastBrowseDiagnosticsSignature = "";
 		this.shadow = this.attachShadow({ mode: "open" });
 	}
 
@@ -1277,6 +1279,72 @@ class TimemapBrowserElement extends ComponentBase {
 		browserHeader.hidden = this.isNestedContextualView();
 	}
 
+	resolveEntityId(entity = {}) {
+		return String(
+			entity?.id ||
+				entity?.actionValue ||
+				entity?.manifestUrl ||
+				entity?.sourceCollectionManifestUrl ||
+				"",
+		).trim();
+	}
+
+	computeUniqueEntityCount(entities = []) {
+		const uniqueIds = new Set();
+		for (const entity of Array.isArray(entities) ? entities : []) {
+			const entityId = this.resolveEntityId(entity);
+			if (entityId) {
+				uniqueIds.add(entityId);
+			}
+		}
+		return uniqueIds.size;
+	}
+
+	buildAllModeEntityKey(entity = {}) {
+		const entityType = String(entity?.entityType || entity?.type || "unknown").trim();
+		const entityId = this.resolveEntityId(entity) || "__missing_id__";
+		return `${entityType}::${entityId}`;
+	}
+
+	logBrowseDiagnostics({
+		browseContext = {},
+		sourceCards = [],
+		collectionCards = [],
+		itemCards = [],
+		allBrowseEntities = [],
+		allFeedSessionKey = "",
+		allFeedExhausted = false,
+	} = {}) {
+		const allEntities = Array.isArray(allBrowseEntities) ? allBrowseEntities : [];
+		const allRenderedCount = allEntities.length;
+		const allUniqueKeys = new Set(allEntities.map((entity) => this.buildAllModeEntityKey(entity)));
+		const allUniqueRenderedCount = allUniqueKeys.size;
+		const diagnostics = {
+			scope: String(browseContext.scope || "").trim(),
+			sourceScopeId: String(browseContext.sourceScopeId || "").trim(),
+			selectedCollectionManifestUrl: String(
+				browseContext.selectedCollectionManifestUrl || "",
+			).trim(),
+			sourceCount: this.computeUniqueEntityCount(sourceCards),
+			collectionCount: this.computeUniqueEntityCount(collectionCards),
+			itemCount: this.computeUniqueEntityCount(itemCards),
+			allModeRenderedCount: allRenderedCount,
+			allModeUniqueRenderedCount: allUniqueRenderedCount,
+			allModeDuplicateCount: Math.max(0, allRenderedCount - allUniqueRenderedCount),
+			allModeHasDuplicates: allRenderedCount > allUniqueRenderedCount,
+			allModeFeedExhausted: Boolean(allFeedExhausted),
+		};
+		const signature = JSON.stringify({
+			...diagnostics,
+			allFeedSessionKey: String(allFeedSessionKey || "").trim(),
+		});
+		if (signature === this.lastBrowseDiagnosticsSignature) {
+			return;
+		}
+		this.lastBrowseDiagnosticsSignature = signature;
+		console.info("[collection-browser] temporary feed diagnostics", diagnostics);
+	}
+
 	viewportModel() {
 		// Resolve one current browse context and derive all mode slices from it.
 		const browseContext = this.resolveBrowseContext();
@@ -1320,6 +1388,7 @@ class TimemapBrowserElement extends ComponentBase {
 			exposureNamespace: allModeExposureNamespace,
 		});
 		let allBrowseEntities = fullAllBrowseEntities;
+		let allModeRenderedEntities = [];
 		let allFeedSessionKey = "";
 		let allFeedExhausted = false;
 		if (this.state.viewMode === "all") {
@@ -1330,12 +1399,22 @@ class TimemapBrowserElement extends ComponentBase {
 				itemCards: orderedItemCards,
 			});
 			allBrowseEntities = allFeed.entities;
+			allModeRenderedEntities = allFeed.entities;
 			allFeedSessionKey = allFeed.sessionKey;
 			allFeedExhausted = allFeed.exhausted;
 		} else {
 			this.state.allModeFeedSession = null;
 			this.state.isAppendingAllModeFeedChunk = false;
 		}
+		this.logBrowseDiagnostics({
+			browseContext,
+			sourceCards,
+			collectionCards: orderedCollectionCards,
+			itemCards: orderedItemCards,
+			allBrowseEntities: allModeRenderedEntities,
+			allFeedSessionKey,
+			allFeedExhausted,
+		});
 		const showBackInViewport =
 			this.canGoBackEmbeddedNav() &&
 			(this.state.viewMode === "collections" ||

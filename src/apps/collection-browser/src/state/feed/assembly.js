@@ -1,4 +1,5 @@
 const ALL_MODE_MAX_CARDS = 180;
+const ALL_MODE_DEFAULT_CHUNK_SIZE = 36;
 const ALL_MODE_SCAN_LIMITS = {
 	source: 12,
 	collection: 16,
@@ -137,6 +138,7 @@ function pickBestCandidate({
 	feedIndex,
 	recentSourceIds,
 	sourceUseCounts,
+	emittedEntityKeys,
 	allowReuse = false,
 	anchorReuseGap = 0,
 	anchorLastSeenByKey,
@@ -174,11 +176,14 @@ function pickBestCandidate({
 		const sameAsLastSource = sourceId && sourceId === lastSourceId ? 1 : 0;
 		const anchorSourceSeen = usedAnchorSourceIds.has(sourceId) ? 1 : 0;
 		const anchorEntitySeen = usedAnchorEntityKeys.has(option.key) ? 1 : 0;
+		const emittedEntityId = String(option.candidate?.entity?.id ?? "").trim();
+		const emittedEntitySeen = emittedEntityId && emittedEntityKeys.has(emittedEntityId) ? 1 : 0;
 
 		const score = [
-			option.isReuse ? 1 : 0,
+			type === "item" ? 0 : option.isReuse ? 1 : 0,
 			type === "source" ? anchorSourceSeen : 0,
 			type !== "item" ? anchorEntitySeen : 0,
+			emittedEntitySeen,
 			recentUseCount,
 			sameAsLastSource,
 			globalUseCount,
@@ -214,10 +219,10 @@ function createPacingState(steps, firstOffset = 0) {
 	};
 }
 
-function advancePacing(pacingState) {
+function advancePacing(pacingState, feedIndex) {
 	const interval = pacingState.steps[pacingState.stepIndex] || pacingState.steps[0] || 1;
 	pacingState.stepIndex = (pacingState.stepIndex + 1) % pacingState.steps.length;
-	pacingState.nextInsertAt += interval;
+	pacingState.nextInsertAt = feedIndex + interval;
 }
 
 function updateSourceTracking(sourceId, recentSourceIds, sourceUseCounts) {
@@ -231,7 +236,130 @@ function updateSourceTracking(sourceId, recentSourceIds, sourceUseCounts) {
 	sourceUseCounts.set(sourceId, (sourceUseCounts.get(sourceId) ?? 0) + 1);
 }
 
-function assembleAllModeFeed(scoredPools = {}) {
+function getAnchorTimingState(feedIndex, pacingState) {
+	const overdueBy = feedIndex - pacingState.nextInsertAt;
+	return {
+		due: overdueBy >= 0,
+		overdueBy,
+	};
+}
+
+function getTypeAttemptOrder(state) {
+	const feedIndex = state.emittedCandidates.length;
+	const sourceTiming = getAnchorTimingState(feedIndex, state.pacing.source);
+	const collectionTiming = getAnchorTimingState(feedIndex, state.pacing.collection);
+
+	if (sourceTiming.due && collectionTiming.due) {
+		if (sourceTiming.overdueBy >= collectionTiming.overdueBy) {
+			return ["source", "collection", "item"];
+		}
+		return ["collection", "source", "item"];
+	}
+
+	if (sourceTiming.due) {
+		return ["source", "item", "collection"];
+	}
+
+	if (collectionTiming.due) {
+		return ["collection", "item", "source"];
+	}
+
+	return ["item", "collection", "source"];
+}
+
+function selectCandidateForType(type, state, feedIndex) {
+	if (type === "source") {
+		return pickBestCandidate({
+			type,
+			pool: state.pools.source,
+			cursorState: state.cursorState,
+			feedIndex,
+			recentSourceIds: state.recentSourceIds,
+			sourceUseCounts: state.sourceUseCounts,
+			emittedEntityKeys: state.emittedEntityKeys,
+			allowReuse: true,
+			anchorReuseGap: ALL_MODE_SOURCE_REUSE_GAP,
+			anchorLastSeenByKey: state.anchorLastSeen.source,
+			usedAnchorSourceIds: state.usedSourceAnchorSourceIds,
+			usedAnchorEntityKeys: state.usedSourceAnchorKeys,
+		});
+	}
+
+	if (type === "collection") {
+		return pickBestCandidate({
+			type,
+			pool: state.pools.collection,
+			cursorState: state.cursorState,
+			feedIndex,
+			recentSourceIds: state.recentSourceIds,
+			sourceUseCounts: state.sourceUseCounts,
+			emittedEntityKeys: state.emittedEntityKeys,
+			allowReuse: true,
+			anchorReuseGap: ALL_MODE_COLLECTION_REUSE_GAP,
+			anchorLastSeenByKey: state.anchorLastSeen.collection,
+			usedAnchorSourceIds: new Set(),
+			usedAnchorEntityKeys: state.usedCollectionAnchorKeys,
+		});
+	}
+
+	return pickBestCandidate({
+		type: "item",
+		pool: state.pools.item,
+		cursorState: state.cursorState,
+		feedIndex,
+		recentSourceIds: state.recentSourceIds,
+		sourceUseCounts: state.sourceUseCounts,
+		emittedEntityKeys: state.emittedEntityKeys,
+		allowReuse: false,
+		anchorLastSeenByKey: new Map(),
+		usedAnchorSourceIds: new Set(),
+		usedAnchorEntityKeys: new Set(),
+	});
+}
+
+function commitCandidateSelection(type, selection, state, feedIndex) {
+	state.emittedCandidates.push(selection.candidate);
+	const entityId = String(selection?.candidate?.entity?.id ?? "").trim();
+	if (entityId) {
+		state.emittedEntityKeys.add(entityId);
+	}
+	updateSourceTracking(selection.sourceId, state.recentSourceIds, state.sourceUseCounts);
+
+	if (type === "source") {
+		state.anchorLastSeen.source.set(selection.key, feedIndex);
+		state.usedSourceAnchorSourceIds.add(selection.sourceId);
+		state.usedSourceAnchorKeys.add(selection.key);
+		advancePacing(state.pacing.source, feedIndex);
+	}
+
+	if (type === "collection") {
+		state.anchorLastSeen.collection.set(selection.key, feedIndex);
+		state.usedCollectionAnchorKeys.add(selection.key);
+		advancePacing(state.pacing.collection, feedIndex);
+	}
+}
+
+function pickNextCandidate(state) {
+	if (state.emittedCandidates.length >= state.maxCards) {
+		return null;
+	}
+
+	const feedIndex = state.emittedCandidates.length;
+	const typeAttemptOrder = getTypeAttemptOrder(state);
+
+	for (const type of typeAttemptOrder) {
+		const selection = selectCandidateForType(type, state, feedIndex);
+		if (!selection) {
+			continue;
+		}
+		commitCandidateSelection(type, selection, state, feedIndex);
+		return selection;
+	}
+
+	return null;
+}
+
+export function createAllModeFeedStreamState(scoredPools = {}, { maxCards = ALL_MODE_MAX_CARDS } = {}) {
 	const pools = {
 		source: normalizePool(scoredPools.sources),
 		collection: normalizePool(scoredPools.collections),
@@ -239,111 +367,72 @@ function assembleAllModeFeed(scoredPools = {}) {
 	};
 	const totalCandidateCount =
 		pools.source.length + pools.collection.length + pools.item.length;
-	const targetCount = Math.min(totalCandidateCount, ALL_MODE_MAX_CARDS);
-	if (!targetCount) {
+
+	return {
+		maxCards: Math.min(maxCards, Math.max(0, totalCandidateCount)),
+		pools,
+		cursorState: { source: 0, collection: 0, item: 0 },
+		recentSourceIds: [],
+		sourceUseCounts: new Map(),
+		emittedEntityKeys: new Set(),
+		emittedCandidates: [],
+		anchorLastSeen: {
+			source: new Map(),
+			collection: new Map(),
+		},
+		usedSourceAnchorSourceIds: new Set(),
+		usedSourceAnchorKeys: new Set(),
+		usedCollectionAnchorKeys: new Set(),
+		pacing: {
+			collection: createPacingState(ALL_MODE_COLLECTION_PACING_STEPS, 4),
+			source: createPacingState(ALL_MODE_SOURCE_PACING_STEPS, 12),
+		},
+	};
+}
+
+export function appendNextFeedChunk(
+	streamState,
+	{ count = ALL_MODE_DEFAULT_CHUNK_SIZE } = {},
+) {
+	if (!streamState || count <= 0) {
 		return [];
 	}
 
-	const cursorState = { source: 0, collection: 0, item: 0 };
-	const recentSourceIds = [];
-	const sourceUseCounts = new Map();
-	const sourceAnchorLastSeenByKey = new Map();
-	const collectionAnchorLastSeenByKey = new Map();
-	const usedSourceAnchorSourceIds = new Set();
-	const usedSourceAnchorKeys = new Set();
-	const usedCollectionAnchorKeys = new Set();
-	const assembledCandidates = [];
-
-	const collectionPacing = createPacingState(ALL_MODE_COLLECTION_PACING_STEPS, 4);
-	const sourcePacing = createPacingState(ALL_MODE_SOURCE_PACING_STEPS, 12);
-
-	while (assembledCandidates.length < targetCount) {
-		const feedIndex = assembledCandidates.length;
-		let selectedType = "item";
-
-		if (feedIndex >= sourcePacing.nextInsertAt && pools.source.length > 0) {
-			selectedType = "source";
-		} else if (
-			feedIndex >= collectionPacing.nextInsertAt &&
-			pools.collection.length > 0
-		) {
-			selectedType = "collection";
-		}
-
-		const candidateSelection =
-			(selectedType === "source" &&
-				pickBestCandidate({
-					type: "source",
-					pool: pools.source,
-					cursorState,
-					feedIndex,
-					recentSourceIds,
-					sourceUseCounts,
-					allowReuse: true,
-					anchorReuseGap: ALL_MODE_SOURCE_REUSE_GAP,
-					anchorLastSeenByKey: sourceAnchorLastSeenByKey,
-					usedAnchorSourceIds: usedSourceAnchorSourceIds,
-					usedAnchorEntityKeys: usedSourceAnchorKeys,
-				})) ||
-			(selectedType === "collection" &&
-				pickBestCandidate({
-					type: "collection",
-					pool: pools.collection,
-					cursorState,
-					feedIndex,
-					recentSourceIds,
-					sourceUseCounts,
-					allowReuse: true,
-					anchorReuseGap: ALL_MODE_COLLECTION_REUSE_GAP,
-					anchorLastSeenByKey: collectionAnchorLastSeenByKey,
-					usedAnchorSourceIds: new Set(),
-					usedAnchorEntityKeys: usedCollectionAnchorKeys,
-				})) ||
-			pickBestCandidate({
-				type: "item",
-				pool: pools.item,
-				cursorState,
-				feedIndex,
-				recentSourceIds,
-				sourceUseCounts,
-				allowReuse: false,
-				anchorLastSeenByKey: new Map(),
-				usedAnchorSourceIds: new Set(),
-				usedAnchorEntityKeys: new Set(),
-			});
-
-		if (!candidateSelection) {
+	const chunkEntities = [];
+	while (chunkEntities.length < count) {
+		const selection = pickNextCandidate(streamState);
+		if (!selection) {
 			break;
 		}
-
-		assembledCandidates.push(candidateSelection.candidate);
-		updateSourceTracking(
-			candidateSelection.sourceId,
-			recentSourceIds,
-			sourceUseCounts,
-		);
-
-		if (selectedType === "source") {
-			sourceAnchorLastSeenByKey.set(candidateSelection.key, feedIndex);
-			usedSourceAnchorSourceIds.add(candidateSelection.sourceId);
-			usedSourceAnchorKeys.add(candidateSelection.key);
-			advancePacing(sourcePacing);
-		} else if (selectedType === "collection") {
-			collectionAnchorLastSeenByKey.set(candidateSelection.key, feedIndex);
-			usedCollectionAnchorKeys.add(candidateSelection.key);
-			advancePacing(collectionPacing);
+		const entity = selection?.candidate?.entity;
+		if (entity) {
+			chunkEntities.push(entity);
 		}
 	}
 
-	return assembledCandidates
-		.map((candidate) => candidate?.entity)
-		.filter(Boolean);
+	return chunkEntities;
 }
 
-export function assembleFeedWindow(
-	scoredPools = {},
-	{ mode = "all" } = {},
-) {
+function assembleAllModeFeed(scoredPools = {}) {
+	const streamState = createAllModeFeedStreamState(scoredPools, {
+		maxCards: ALL_MODE_MAX_CARDS,
+	});
+	const entities = [];
+
+	while (entities.length < streamState.maxCards) {
+		const nextChunk = appendNextFeedChunk(streamState, {
+			count: Math.min(ALL_MODE_DEFAULT_CHUNK_SIZE, streamState.maxCards - entities.length),
+		});
+		if (!nextChunk.length) {
+			break;
+		}
+		entities.push(...nextChunk);
+	}
+
+	return entities;
+}
+
+export function assembleFeedWindow(scoredPools = {}, { mode = "all" } = {}) {
 	if (mode !== "all") {
 		return [];
 	}

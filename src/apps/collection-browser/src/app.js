@@ -528,19 +528,7 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	getVisibleCollections() {
-		const collections = Array.isArray(this.state.collectionsIndex)
-			? this.state.collectionsIndex
-			: [];
-		if (!this.isEmbeddedRuntime()) {
-			return collections;
-		}
-		const scopedSourceId = this.resolveExplicitEmbeddedSourceId();
-		if (!scopedSourceId) {
-			return collections;
-		}
-		return collections.filter(
-			(entry) => String(entry.sourceId || "").trim() === scopedSourceId,
-		);
+		return this.buildBrowseCandidatePools().collections;
 	}
 
 	resolveExplicitEmbeddedSourceId() {
@@ -565,30 +553,84 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	getCurrentItems() {
-		if (this.isEmbeddedRuntime()) {
-			if (this.state.selectedCollectionManifestUrl) {
-				const focusedCollection = this.state.collectionsIndex.find(
-					(entry) =>
-						entry.manifestUrl ===
-						this.state.selectedCollectionManifestUrl,
-				);
-				return focusedCollection?.collection?.items || [];
-			}
-			const sourceItems = Array.isArray(this.state.sourceItems)
-				? this.state.sourceItems
-				: [];
-			const scopedSourceId = this.resolveExplicitEmbeddedSourceId();
-			if (!scopedSourceId) {
-				return sourceItems;
-			}
-			return sourceItems.filter(
-				(item) =>
-					String(item.sourceCollectionId || "").startsWith(
-						`${scopedSourceId}::`,
-					),
-			);
+		return this.buildBrowseCandidatePools().items;
+	}
+
+	resolveBrowseContext() {
+		if (!this.isEmbeddedRuntime()) {
+			return {
+				scope: "collection",
+				sourceScopeId: "",
+				selectedCollectionManifestUrl: "",
+				selectedCollection: null,
+			};
 		}
-		return this.state.collection?.items || [];
+
+		const selectedManifestUrl = String(
+			this.state.selectedCollectionManifestUrl || "",
+		).trim();
+		const selectedCollection = selectedManifestUrl
+			? this.state.collectionsIndex.find(
+					(entry) => String(entry?.manifestUrl || "").trim() === selectedManifestUrl,
+				) || null
+			: null;
+		const selectedCollectionSourceId = String(
+			selectedCollection?.sourceId || "",
+		).trim();
+		const sourceScopeId =
+			selectedCollectionSourceId || this.resolveExplicitEmbeddedSourceId();
+		const scope = selectedManifestUrl
+			? "collection"
+			: sourceScopeId
+				? "source"
+				: "all";
+		return {
+			scope,
+			sourceScopeId,
+			selectedCollectionManifestUrl: selectedManifestUrl,
+			selectedCollection,
+		};
+	}
+
+	buildBrowseCandidatePools(context = this.resolveBrowseContext()) {
+		const collectionsIndex = Array.isArray(this.state.collectionsIndex)
+			? this.state.collectionsIndex
+			: [];
+		const sourceItems = Array.isArray(this.state.sourceItems)
+			? this.state.sourceItems
+			: [];
+		const sourceCards = Array.isArray(this.state.embeddedSourceCards)
+			? this.state.embeddedSourceCards
+			: [];
+
+		if (!this.isEmbeddedRuntime()) {
+			return {
+				sources: [],
+				collections: collectionsIndex,
+				items: this.state.collection?.items || [],
+			};
+		}
+
+		const collections = context.sourceScopeId
+			? collectionsIndex.filter(
+					(entry) => String(entry.sourceId || "").trim() === context.sourceScopeId,
+				)
+			: collectionsIndex;
+		const items =
+			context.scope === "collection"
+				? context.selectedCollection?.collection?.items || []
+				: context.sourceScopeId
+					? sourceItems.filter((item) =>
+							String(item.sourceCollectionId || "").startsWith(
+								`${context.sourceScopeId}::`,
+							),
+						)
+					: sourceItems;
+		return {
+			sources: sourceCards,
+			collections,
+			items,
+		};
 	}
 
 	openItemFromCard(itemId) {
@@ -1069,17 +1111,10 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	viewportModel() {
-		const items = this.getCurrentItems();
-		const collections = this.getVisibleCollections();
-		const allCollections = Array.isArray(this.state.collectionsIndex)
-			? this.state.collectionsIndex
-			: [];
-		const allItems = Array.isArray(this.state.sourceItems)
-			? this.state.sourceItems
-			: [];
-		const sources = Array.isArray(this.state.embeddedSourceCards)
-			? this.state.embeddedSourceCards
-			: [];
+		// Resolve one current browse context and derive all mode slices from it.
+		const browseContext = this.resolveBrowseContext();
+		const candidatePools = this.buildBrowseCandidatePools(browseContext);
+		const { sources, collections, items } = candidatePools;
 		const sourceCards = buildSourceBrowseCardModels(sources, {
 			activeSourceId: this.state.activeEmbeddedSourceId || "",
 		});
@@ -1089,23 +1124,17 @@ class TimemapBrowserElement extends ComponentBase {
 		const itemCards = buildItemBrowseCardModels(items, {
 			selectedItemId: this.state.selectedItemId,
 		});
-		const allCollectionCards = buildCollectionBrowseCardModels(allCollections, {
-			selectedManifestUrl: this.state.selectedCollectionManifestUrl || "",
-		});
-		const allItemCards = buildItemBrowseCardModels(allItems, {
-			selectedItemId: this.state.selectedItemId,
-		});
 		const allBrowseEntities = buildBrowseFeedEntities({
 			mode: "all",
 			sourceCards,
-			collectionCards: allCollectionCards,
-			itemCards: allItemCards,
+			collectionCards,
+			itemCards,
 		});
 		const showBackInViewport =
 			this.canGoBackEmbeddedNav() &&
 			(this.state.viewMode === "collections" ||
 				this.state.viewMode === "items");
-		const explicitScopedSourceId = this.resolveExplicitEmbeddedSourceId();
+		const explicitScopedSourceId = browseContext.sourceScopeId;
 		const activeSource = explicitScopedSourceId
 			? this.state.embeddedSources.find(
 					(source) => source.id === explicitScopedSourceId,

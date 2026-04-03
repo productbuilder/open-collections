@@ -139,9 +139,9 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("role", "button");
 		wrapper.setAttribute("tabindex", "0");
 		wrapper.setAttribute("data-span-cols", "2");
-		wrapper.setAttribute("data-span-rows", "1");
+		wrapper.setAttribute("data-span-rows", "2");
 		wrapper.setAttribute("data-span-cols-mobile", "2");
-		wrapper.setAttribute("data-span-rows-mobile", "1");
+		wrapper.setAttribute("data-span-rows-mobile", "2");
 
 		const card = document.createElement("grid5-card-collection");
 		card.update({
@@ -191,7 +191,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 		wrapper.setAttribute("role", "button");
 		wrapper.setAttribute("tabindex", "0");
 		wrapper.setAttribute("data-span-cols", "1");
-		wrapper.setAttribute("data-span-rows", "2");
+		wrapper.setAttribute("data-span-rows", "1");
 		wrapper.setAttribute("data-span-cols-mobile", "2");
 		wrapper.setAttribute("data-span-rows-mobile", "1");
 
@@ -204,7 +204,7 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			actionValue: workspaceId,
 			disabled: false,
 		});
-		card.classList.add("tile-1x2");
+		card.classList.add("tile-2x1");
 
 		const controls = document.createElement("div");
 		controls.className = "browse-cell-controls";
@@ -235,7 +235,11 @@ class OpenCollectionsBrowserElement extends HTMLElement {
 			columnsTablet: 4,
 			columnsMobile: 2,
 			gap: "0.62rem",
+			squareCellsDesktop: false,
 		});
+		grid?.style.setProperty("--oc-layout-row-size-desktop", "13rem");
+		grid?.style.setProperty("--oc-layout-row-size-tablet", "11rem");
+		grid?.style.setProperty("--oc-layout-row-size-mobile", "10rem");
 
 		if (managerMode === "sources") {
 			for (const source of Array.isArray(this.model.sourceCards)

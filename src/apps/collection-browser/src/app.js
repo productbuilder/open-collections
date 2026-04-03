@@ -735,6 +735,47 @@ class TimemapBrowserElement extends ComponentBase {
 		};
 	}
 
+	resolveGlobalSourceCards() {
+		if (!this.isEmbeddedRuntime()) {
+			return [];
+		}
+		const baseSources = Array.isArray(this.state.embeddedSources)
+			? this.state.embeddedSources
+			: [];
+		const hydratedCardsById = new Map(
+			(Array.isArray(this.state.embeddedSourceCards)
+				? this.state.embeddedSourceCards
+				: []
+			).map((card) => [String(card?.id || "").trim(), card]),
+		);
+		return baseSources.map((source) => {
+			const sourceId = String(source?.id || "").trim();
+			const hydratedCard = hydratedCardsById.get(sourceId);
+			return {
+				id: sourceId,
+				label: source?.label || hydratedCard?.label || "Source",
+				organizationName:
+					hydratedCard?.organizationName ||
+					source?.organizationName ||
+					source?.label ||
+					"Source",
+				curatorName: hydratedCard?.curatorName || source?.curatorName || "",
+				placeName: hydratedCard?.placeName || source?.placeName || "",
+				countryName: hydratedCard?.countryName || source?.countryName || "",
+				countryCode: hydratedCard?.countryCode || source?.countryCode || "",
+				subtitle: hydratedCard?.subtitle || "",
+				countLabel: hydratedCard?.countLabel || "",
+				previewRows: Array.isArray(hydratedCard?.previewRows)
+					? hydratedCard.previewRows
+					: [],
+				previewImages: Array.isArray(hydratedCard?.previewImages)
+					? hydratedCard.previewImages
+					: [],
+				sourceType: source?.sourceType || hydratedCard?.sourceType || "",
+			};
+		});
+	}
+
 	openItemFromCard(itemId) {
 		if (!itemId) {
 			return;
@@ -1217,9 +1258,17 @@ class TimemapBrowserElement extends ComponentBase {
 		const browseContext = this.resolveBrowseContext();
 		const candidatePools = this.buildBrowseCandidatePools(browseContext);
 		const { sources, collections, items } = candidatePools;
+		// Sources mode is intentionally global/top-level for now.
+		const globalSourceCards = this.resolveGlobalSourceCards();
 		const sourceCards = buildSourceBrowseCardModels(sources, {
 			activeSourceId: this.state.activeEmbeddedSourceId || "",
 		});
+		const sourceCardsForSourcesMode = buildSourceBrowseCardModels(
+			globalSourceCards,
+			{
+				activeSourceId: this.state.activeEmbeddedSourceId || "",
+			},
+		);
 		const collectionCards = buildCollectionBrowseCardModels(collections, {
 			selectedManifestUrl: this.state.selectedCollectionManifestUrl || "",
 		});
@@ -1287,13 +1336,13 @@ class TimemapBrowserElement extends ComponentBase {
 			return {
 				viewportTitle: "Sources",
 				viewportSubtitle:
-					sources.length > 0
-						? `${sources.length} source${sources.length === 1 ? "" : "s"} available. Select one to continue.`
+					sourceCardsForSourcesMode.length > 0
+						? `${sourceCardsForSourcesMode.length} source${sourceCardsForSourcesMode.length === 1 ? "" : "s"} available. Select one to continue.`
 						: "No sources available.",
 				showBack: showBackInViewport,
 				viewMode: "sources",
-				sources,
-				sourceCards,
+				sources: globalSourceCards,
+				sourceCards: sourceCardsForSourcesMode,
 				collectionCards: [],
 				itemCards: [],
 				allBrowseEntities,

@@ -8,6 +8,7 @@ const ALL_MODE_SCAN_LIMITS = {
 const ALL_MODE_RECENT_SOURCE_WINDOW = 8;
 const ALL_MODE_COLLECTION_REUSE_GAP = 10;
 const ALL_MODE_SOURCE_REUSE_GAP = 24;
+const ALL_MODE_ITEM_SOURCE_RECENT_WINDOW = 6;
 
 const ALL_MODE_COLLECTION_PACING_STEPS = [5, 6, 7, 6, 8];
 const ALL_MODE_SOURCE_PACING_STEPS = [14, 16, 18, 15, 20];
@@ -211,6 +212,103 @@ function pickBestCandidate({
 	};
 }
 
+function buildItemSourceBuckets(pool = []) {
+	const bucketsBySource = new Map();
+	const sourceOrder = [];
+	const sourceOrderById = new Map();
+
+	for (let index = 0; index < pool.length; index += 1) {
+		const candidate = pool[index] ?? null;
+		if (!candidate) {
+			continue;
+		}
+		const sourceId = getCandidateSourceId(candidate) || "__unknown_source__";
+		if (!bucketsBySource.has(sourceId)) {
+			bucketsBySource.set(sourceId, {
+				sourceId,
+				cursor: 0,
+				items: [],
+			});
+			sourceOrder.push(sourceId);
+			sourceOrderById.set(sourceId, sourceOrder.length - 1);
+		}
+		const bucket = bucketsBySource.get(sourceId);
+		bucket.items.push({
+			candidate,
+			key: getCandidateKey(candidate, index, "item"),
+			index,
+			collectionId: String(candidate?.collectionId ?? candidate?.entity?.collectionId ?? "").trim(),
+		});
+	}
+
+	return {
+		bucketsBySource,
+		sourceOrder,
+		sourceOrderById,
+	};
+}
+
+function getSourceOrderIndex(sourceId, sourceOrderById = new Map()) {
+	const index = sourceOrderById.get(sourceId);
+	return typeof index === "number" ? index : Number.MAX_SAFE_INTEGER;
+}
+
+function pickItemCandidateFromSourceBuckets(state) {
+	const { bucketsBySource, sourceOrder, sourceOrderById } = state.itemSourceBuckets;
+	if (!bucketsBySource?.size) {
+		return null;
+	}
+
+	const lastItemSourceId =
+		state.itemRecentSourceIds[state.itemRecentSourceIds.length - 1] || "";
+	let bestSourceId = "";
+	let bestScore = null;
+
+	for (const sourceId of sourceOrder) {
+		const bucket = bucketsBySource.get(sourceId);
+		if (!bucket || bucket.cursor >= bucket.items.length) {
+			continue;
+		}
+		const recentOverallUseCount = getRecentSourceUseCount(sourceId, state.recentSourceIds);
+		const recentItemUseCount = getRecentSourceUseCount(sourceId, state.itemRecentSourceIds);
+		const itemUseCount = state.itemSourceUseCounts.get(sourceId) ?? 0;
+		const sameAsLastItemSource = sourceId === lastItemSourceId ? 1 : 0;
+		const sourceOrderIndex = getSourceOrderIndex(sourceId, sourceOrderById);
+
+		const score = [
+			sameAsLastItemSource,
+			recentItemUseCount,
+			recentOverallUseCount,
+			itemUseCount,
+			bucket.cursor,
+			sourceOrderIndex,
+		];
+
+		if (!bestScore || compareCandidateScores(score, bestScore) < 0) {
+			bestSourceId = sourceId;
+			bestScore = score;
+		}
+	}
+
+	if (!bestSourceId) {
+		return null;
+	}
+
+	const selectedBucket = bucketsBySource.get(bestSourceId);
+	const selected = selectedBucket?.items[selectedBucket.cursor] ?? null;
+	if (!selected) {
+		return null;
+	}
+	selectedBucket.cursor += 1;
+
+	return {
+		candidate: selected.candidate,
+		key: selected.key,
+		sourceId: bestSourceId,
+		collectionId: selected.collectionId,
+	};
+}
+
 function createPacingState(steps, firstOffset = 0) {
 	return {
 		steps,
@@ -302,19 +400,7 @@ function selectCandidateForType(type, state, feedIndex) {
 		});
 	}
 
-	return pickBestCandidate({
-		type: "item",
-		pool: state.pools.item,
-		cursorState: state.cursorState,
-		feedIndex,
-		recentSourceIds: state.recentSourceIds,
-		sourceUseCounts: state.sourceUseCounts,
-		emittedEntityKeys: state.emittedEntityKeys,
-		allowReuse: false,
-		anchorLastSeenByKey: new Map(),
-		usedAnchorSourceIds: new Set(),
-		usedAnchorEntityKeys: new Set(),
-	});
+	return pickItemCandidateFromSourceBuckets(state);
 }
 
 function commitCandidateSelection(type, selection, state, feedIndex) {
@@ -324,6 +410,17 @@ function commitCandidateSelection(type, selection, state, feedIndex) {
 		state.emittedEntityKeys.add(entityId);
 	}
 	updateSourceTracking(selection.sourceId, state.recentSourceIds, state.sourceUseCounts);
+
+	if (type === "item" && selection.sourceId) {
+		state.itemRecentSourceIds.push(selection.sourceId);
+		if (state.itemRecentSourceIds.length > ALL_MODE_ITEM_SOURCE_RECENT_WINDOW) {
+			state.itemRecentSourceIds.shift();
+		}
+		state.itemSourceUseCounts.set(
+			selection.sourceId,
+			(state.itemSourceUseCounts.get(selection.sourceId) ?? 0) + 1,
+		);
+	}
 
 	if (type === "source") {
 		state.anchorLastSeen.source.set(selection.key, feedIndex);
@@ -365,15 +462,19 @@ export function createAllModeFeedStreamState(scoredPools = {}, { maxCards = ALL_
 		collection: normalizePool(scoredPools.collections),
 		item: normalizePool(scoredPools.items),
 	};
+	const itemSourceBuckets = buildItemSourceBuckets(pools.item);
 	const totalCandidateCount =
 		pools.source.length + pools.collection.length + pools.item.length;
 
 	return {
 		maxCards: Math.min(maxCards, Math.max(0, totalCandidateCount)),
 		pools,
+		itemSourceBuckets,
 		cursorState: { source: 0, collection: 0, item: 0 },
 		recentSourceIds: [],
+		itemRecentSourceIds: [],
 		sourceUseCounts: new Map(),
+		itemSourceUseCounts: new Map(),
 		emittedEntityKeys: new Set(),
 		emittedCandidates: [],
 		anchorLastSeen: {

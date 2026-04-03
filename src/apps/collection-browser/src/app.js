@@ -372,6 +372,15 @@ class TimemapBrowserElement extends ComponentBase {
 			return;
 		}
 		this.state.viewMode = nextMode;
+		if (nextMode === "sources") {
+			// Sources mode is always global; clear drill-scoped context before rendering.
+			this.state.explicitEmbeddedSourceId = "";
+			this.state.selectedCollectionManifestUrl = "";
+			this.state.selectedItemId = null;
+			this.state.viewerItemId = null;
+			this.state.mobileMetadataOpen = false;
+			this.closeViewer();
+		}
 		if (
 			nextMode === "collections" &&
 			this.state.sourceType === "source.json"

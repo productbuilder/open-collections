@@ -68,6 +68,22 @@ export function bindDomEvents(app) {
 	app.dom.browserViewport?.addEventListener("panel-back", () => {
 		app.goBackInEmbeddedNav();
 	});
+	app.dom.browserViewport?.addEventListener("view-mode-change", (event) => {
+		const requestedMode = String(event.detail?.mode || "").trim();
+		if (
+			requestedMode !== "all" &&
+			requestedMode !== "sources" &&
+			requestedMode !== "collections" &&
+			requestedMode !== "items"
+		) {
+			return;
+		}
+		if (!app.isEmbeddedRuntime()) {
+			return;
+		}
+		event.preventDefault();
+		app.setEmbeddedViewMode(requestedMode);
+	});
 
 	app.dom.browserViewport?.addEventListener("item-open", (event) => {
 		app.openItemFromCard(event.detail?.itemId || "");

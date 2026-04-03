@@ -1315,6 +1315,9 @@ class TimemapBrowserElement extends ComponentBase {
 		allFeedSessionKey = "",
 		allFeedExhausted = false,
 	} = {}) {
+		if (!BROWSER_CONFIG.enableBrowseDiagnostics) {
+			return;
+		}
 		const allEntities = Array.isArray(allBrowseEntities) ? allBrowseEntities : [];
 		const allRenderedCount = allEntities.length;
 		const allUniqueKeys = new Set(allEntities.map((entity) => this.buildAllModeEntityKey(entity)));

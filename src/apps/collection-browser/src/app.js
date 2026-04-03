@@ -69,6 +69,8 @@ class TimemapBrowserElement extends ComponentBase {
 			embeddedSources: [],
 			embeddedSourceCards: [],
 			activeEmbeddedSourceId: "",
+			// Explicit source scope set by user navigation; empty = cross-source browse.
+			explicitEmbeddedSourceId: "",
 			sourceType: "collection.json",
 			viewMode: "items",
 			embeddedNavStack: [],
@@ -143,6 +145,7 @@ class TimemapBrowserElement extends ComponentBase {
 		return {
 			viewMode: this.state.viewMode || "sources",
 			activeEmbeddedSourceId: this.state.activeEmbeddedSourceId || "",
+			explicitEmbeddedSourceId: this.state.explicitEmbeddedSourceId || "",
 			selectedCollectionManifestUrl:
 				this.state.selectedCollectionManifestUrl || "",
 			selectedItemId: this.state.selectedItemId || null,
@@ -173,6 +176,8 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 		this.state.viewMode = context.viewMode || "sources";
 		this.state.activeEmbeddedSourceId = context.activeEmbeddedSourceId || "";
+		this.state.explicitEmbeddedSourceId =
+			context.explicitEmbeddedSourceId || "";
 		this.state.selectedCollectionManifestUrl =
 			context.selectedCollectionManifestUrl || "";
 		this.state.selectedItemId = context.selectedItemId || null;
@@ -305,10 +310,10 @@ class TimemapBrowserElement extends ComponentBase {
 			(entry) => entry.manifestUrl === resolvedManifestUrl,
 		);
 		if (focusedCollection?.sourceId) {
-			// Use the collection's owning source so Collections/Items modes stay in sync.
-			this.state.activeEmbeddedSourceId = String(
-				focusedCollection.sourceId,
-			).trim();
+			// Keep startup/default source selection separate from explicit browse scope.
+			const scopedSourceId = String(focusedCollection.sourceId).trim();
+			this.state.activeEmbeddedSourceId = scopedSourceId;
+			this.state.explicitEmbeddedSourceId = scopedSourceId;
 		}
 		if (focusedCollection?.collection) {
 			this.state.collection = focusedCollection.collection;
@@ -529,17 +534,19 @@ class TimemapBrowserElement extends ComponentBase {
 		if (!this.isEmbeddedRuntime()) {
 			return collections;
 		}
-		const activeSourceId = this.resolveActiveEmbeddedSourceId();
-		if (!activeSourceId) {
+		const scopedSourceId = this.resolveExplicitEmbeddedSourceId();
+		if (!scopedSourceId) {
 			return collections;
 		}
 		return collections.filter(
-			(entry) => String(entry.sourceId || "").trim() === activeSourceId,
+			(entry) => String(entry.sourceId || "").trim() === scopedSourceId,
 		);
 	}
 
-	resolveActiveEmbeddedSourceId() {
-		const activeSourceId = String(this.state.activeEmbeddedSourceId || "").trim();
+	resolveExplicitEmbeddedSourceId() {
+		const explicitSourceId = String(
+			this.state.explicitEmbeddedSourceId || "",
+		).trim();
 		const selectedManifestUrl = String(
 			this.state.selectedCollectionManifestUrl || "",
 		).trim();
@@ -554,7 +561,7 @@ class TimemapBrowserElement extends ComponentBase {
 				return selectedCollectionSourceId;
 			}
 		}
-		return activeSourceId;
+		return explicitSourceId;
 	}
 
 	getCurrentItems() {
@@ -570,12 +577,15 @@ class TimemapBrowserElement extends ComponentBase {
 			const sourceItems = Array.isArray(this.state.sourceItems)
 				? this.state.sourceItems
 				: [];
-			const activeSourceId = this.resolveActiveEmbeddedSourceId();
-			if (!activeSourceId) {
+			const scopedSourceId = this.resolveExplicitEmbeddedSourceId();
+			if (!scopedSourceId) {
 				return sourceItems;
 			}
 			return sourceItems.filter(
-				(item) => String(item.sourceCollectionId || "").startsWith(`${activeSourceId}::`),
+				(item) =>
+					String(item.sourceCollectionId || "").startsWith(
+						`${scopedSourceId}::`,
+					),
 			);
 		}
 		return this.state.collection?.items || [];
@@ -601,6 +611,7 @@ class TimemapBrowserElement extends ComponentBase {
 				.trim();
 			if (sourceIdFromItem) {
 				this.state.activeEmbeddedSourceId = sourceIdFromItem;
+				this.state.explicitEmbeddedSourceId = sourceIdFromItem;
 			}
 		}
 		this.selectItem(itemId);
@@ -653,6 +664,7 @@ class TimemapBrowserElement extends ComponentBase {
 
 		this.state.activeEmbeddedSourceId =
 			this.state.activeEmbeddedSourceId || multiCollectionSources[0]?.id || "";
+		this.state.explicitEmbeddedSourceId = "";
 		this.state.viewMode = "all";
 		this.state.embeddedNavStack = [];
 		this.renderEmbeddedSourceControls();
@@ -694,6 +706,7 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 
 		this.state.activeEmbeddedSourceId = source.id;
+		this.state.explicitEmbeddedSourceId = source.id;
 		this.state.viewMode = "collections";
 		this.state.selectedCollectionManifestUrl = "";
 		this.state.selectedItemId = null;
@@ -1092,9 +1105,10 @@ class TimemapBrowserElement extends ComponentBase {
 			this.canGoBackEmbeddedNav() &&
 			(this.state.viewMode === "collections" ||
 				this.state.viewMode === "items");
-		const activeSource = this.state.activeEmbeddedSourceId
+		const explicitScopedSourceId = this.resolveExplicitEmbeddedSourceId();
+		const activeSource = explicitScopedSourceId
 			? this.state.embeddedSources.find(
-					(source) => source.id === this.state.activeEmbeddedSourceId,
+					(source) => source.id === explicitScopedSourceId,
 				) || null
 			: null;
 		if (this.isEmbeddedRuntime() && this.state.viewMode === "all") {
@@ -1140,18 +1154,19 @@ class TimemapBrowserElement extends ComponentBase {
 			};
 		}
 		if (this.isEmbeddedRuntime() && this.state.viewMode === "collections") {
+			const isSourceScoped = Boolean(explicitScopedSourceId);
 			const scopedCollectionsTitle =
-				showBackInViewport && activeSource?.label
+				isSourceScoped && activeSource?.label
 					? activeSource.label
 					: "Collections";
 			const scopedCollectionsSubtitle =
-				showBackInViewport && activeSource?.label
+				isSourceScoped && activeSource?.label
 					? collections.length > 0
 						? `${collections.length} collection${collections.length === 1 ? "" : "s"} in this source.`
 						: "No collections found in this source."
 					: collections.length > 0
 						? `${collections.length} collection${collections.length === 1 ? "" : "s"} available. Select one to browse items.`
-						: "No collections found in this source.";
+						: "No collections found.";
 			return {
 				viewportTitle: scopedCollectionsTitle,
 				viewportSubtitle: scopedCollectionsSubtitle,

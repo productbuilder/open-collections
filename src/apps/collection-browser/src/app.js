@@ -304,6 +304,12 @@ class TimemapBrowserElement extends ComponentBase {
 		const focusedCollection = this.state.collectionsIndex.find(
 			(entry) => entry.manifestUrl === resolvedManifestUrl,
 		);
+		if (focusedCollection?.sourceId) {
+			// Use the collection's owning source so Collections/Items modes stay in sync.
+			this.state.activeEmbeddedSourceId = String(
+				focusedCollection.sourceId,
+			).trim();
+		}
 		if (focusedCollection?.collection) {
 			this.state.collection = focusedCollection.collection;
 			this.state.currentManifestUrl = resolvedManifestUrl;
@@ -523,13 +529,32 @@ class TimemapBrowserElement extends ComponentBase {
 		if (!this.isEmbeddedRuntime()) {
 			return collections;
 		}
-		const activeSourceId = String(this.state.activeEmbeddedSourceId || "").trim();
+		const activeSourceId = this.resolveActiveEmbeddedSourceId();
 		if (!activeSourceId) {
 			return collections;
 		}
 		return collections.filter(
 			(entry) => String(entry.sourceId || "").trim() === activeSourceId,
 		);
+	}
+
+	resolveActiveEmbeddedSourceId() {
+		const activeSourceId = String(this.state.activeEmbeddedSourceId || "").trim();
+		const selectedManifestUrl = String(
+			this.state.selectedCollectionManifestUrl || "",
+		).trim();
+		if (selectedManifestUrl) {
+			const selectedCollection = this.state.collectionsIndex.find(
+				(entry) => String(entry?.manifestUrl || "").trim() === selectedManifestUrl,
+			);
+			const selectedCollectionSourceId = String(
+				selectedCollection?.sourceId || "",
+			).trim();
+			if (selectedCollectionSourceId) {
+				return selectedCollectionSourceId;
+			}
+		}
+		return activeSourceId;
 	}
 
 	getCurrentItems() {
@@ -545,7 +570,7 @@ class TimemapBrowserElement extends ComponentBase {
 			const sourceItems = Array.isArray(this.state.sourceItems)
 				? this.state.sourceItems
 				: [];
-			const activeSourceId = String(this.state.activeEmbeddedSourceId || "").trim();
+			const activeSourceId = this.resolveActiveEmbeddedSourceId();
 			if (!activeSourceId) {
 				return sourceItems;
 			}
@@ -559,6 +584,24 @@ class TimemapBrowserElement extends ComponentBase {
 	openItemFromCard(itemId) {
 		if (!itemId) {
 			return;
+		}
+		if (this.isEmbeddedRuntime()) {
+			const sourceItem = Array.isArray(this.state.sourceItems)
+				? this.state.sourceItems.find((item) => item?.id === itemId)
+				: null;
+			if (sourceItem?.sourceCollectionManifestUrl) {
+				this.state.selectedCollectionManifestUrl = String(
+					sourceItem.sourceCollectionManifestUrl,
+				).trim();
+			}
+			const sourceIdFromItem = String(
+				sourceItem?.sourceCollectionId || "",
+			)
+				.split("::")[0]
+				.trim();
+			if (sourceIdFromItem) {
+				this.state.activeEmbeddedSourceId = sourceIdFromItem;
+			}
 		}
 		this.selectItem(itemId);
 		this.openViewer(itemId);

@@ -147,33 +147,36 @@ class OcMapElement extends BaseElement {
 		}
 		this._sourceDataById.set(sourceId, geojson);
 
+		const layerType = options.type || "circle";
+		const geometryTypeFilter = this._buildGeometryTypeFilter(layerType);
+		const baseFilter = this._mergeLayerFilters(
+			geometryTypeFilter,
+			options.filter,
+		);
+
 		if (!this._map.getLayer(layerId)) {
 			this._map.addLayer({
 				id: layerId,
-				type: options.type || "circle",
+				type: layerType,
 				source: sourceId,
 				paint: {
-					"circle-radius": 5,
-					"circle-color": "#0f6cc6",
-					"circle-stroke-width": 1,
-					"circle-stroke-color": "#ffffff",
+					...this._buildDefaultPaint(layerType),
 					...(options.paint || {}),
 				},
 				layout: {
 					visibility: options.visible === false ? "none" : "visible",
 					...(options.layout || {}),
 				},
-				filter: options.filter,
+				filter: baseFilter,
 			});
 		}
 
 		const selectionProperty = options.selectionProperty || "id";
-		const layerType = options.type || "circle";
 		this._registeredLayers.set(layerId, {
 			layerId,
 			sourceId,
 			layerType,
-			baseFilter: options.filter || null,
+			baseFilter,
 			selectionProperty,
 			selectable: options.selectable !== false,
 			highlightLayerId: `${layerId}--oc-selected`,
@@ -191,7 +194,9 @@ class OcMapElement extends BaseElement {
 				const lngLat = event.lngLat
 					? { lng: event.lngLat.lng, lat: event.lngLat.lat }
 					: null;
-				const point = event.point ? { x: event.point.x, y: event.point.y } : null;
+				const point = event.point
+					? { x: event.point.x, y: event.point.y }
+					: null;
 				this.dispatchEvent(
 					new CustomEvent("oc-map-feature-click", {
 						bubbles: true,
@@ -220,7 +225,11 @@ class OcMapElement extends BaseElement {
 		if (!this._map || !this._isMapReady || !this._map.getLayer(layerId)) {
 			return false;
 		}
-		this._map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
+		this._map.setLayoutProperty(
+			layerId,
+			"visibility",
+			visible ? "visible" : "none",
+		);
 		return true;
 	}
 
@@ -291,7 +300,10 @@ class OcMapElement extends BaseElement {
 			return;
 		}
 
-		for (const [layerId, clickHandler] of this._layerClickHandlers.entries()) {
+		for (const [
+			layerId,
+			clickHandler,
+		] of this._layerClickHandlers.entries()) {
 			this._map.off("click", layerId, clickHandler);
 		}
 		this._layerClickHandlers.clear();
@@ -327,7 +339,9 @@ class OcMapElement extends BaseElement {
 			zoom: this._parseNumberAttr("zoom", 2),
 			bearing: this._parseNumberAttr("bearing", 0),
 			pitch: this._parseNumberAttr("pitch", 0),
-			interactive: this.getBoolAttr("interactive") || !this.hasAttribute("interactive"),
+			interactive:
+				this.getBoolAttr("interactive") ||
+				!this.hasAttribute("interactive"),
 		});
 
 		this._map.on("load", () => {
@@ -397,7 +411,10 @@ class OcMapElement extends BaseElement {
 	}
 
 	_resolveStyleUrl() {
-		return this.getStringAttr("style-url") || "https://demotiles.maplibre.org/style.json";
+		return (
+			this.getStringAttr("style-url") ||
+			"https://demotiles.maplibre.org/style.json"
+		);
 	}
 
 	_parseNumberAttr(name, fallback) {
@@ -578,6 +595,58 @@ class OcMapElement extends BaseElement {
 			"circle-stroke-width": 3,
 			"circle-stroke-color": "#a16207",
 		};
+	}
+
+	_buildDefaultPaint(layerType) {
+		if (layerType === "line") {
+			return {
+				"line-color": "#0f6cc6",
+				"line-width": 4,
+				"line-opacity": 0.85,
+			};
+		}
+		if (layerType === "fill") {
+			return {
+				"fill-color": "#0f6cc6",
+				"fill-opacity": 0.2,
+				"fill-outline-color": "#0f6cc6",
+			};
+		}
+		return {
+			"circle-radius": 5,
+			"circle-color": "#0f6cc6",
+			"circle-stroke-width": 1,
+			"circle-stroke-color": "#ffffff",
+		};
+	}
+
+	_buildGeometryTypeFilter(layerType) {
+		if (layerType === "line") {
+			return [
+				"any",
+				["==", ["geometry-type"], "LineString"],
+				["==", ["geometry-type"], "MultiLineString"],
+			];
+		}
+		if (layerType === "fill") {
+			return [
+				"any",
+				["==", ["geometry-type"], "Polygon"],
+				["==", ["geometry-type"], "MultiPolygon"],
+			];
+		}
+		return [
+			"any",
+			["==", ["geometry-type"], "Point"],
+			["==", ["geometry-type"], "MultiPoint"],
+		];
+	}
+
+	_mergeLayerFilters(geometryFilter, userFilter) {
+		if (geometryFilter && userFilter) {
+			return ["all", geometryFilter, userFilter];
+		}
+		return userFilter || geometryFilter || null;
 	}
 
 	_applySelectionHighlight() {

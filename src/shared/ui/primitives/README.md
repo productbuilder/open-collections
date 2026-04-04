@@ -44,3 +44,23 @@ These patterns already repeat across `app-shell`, `collection-account`, and `col
 Use a **primitive** when the unit is a small, reusable visual building block.
 Use a **panel** when the unit owns grouped domain behavior/composition.
 Keep app-specific workflows local until repeated cross-app usage is clear.
+## Local `oc-map` verification harness (development-only)
+
+- Path: `src/shared/ui/primitives/dev/oc-map-verification.html`
+- Purpose: quick manual browser check of the shared `oc-map` primitive using sample point/line/polygon GeoJSON.
+
+### Run locally
+
+From repo root:
+
+1. `pnpm site:preview`
+2. Open `http://localhost:4321/src/shared/ui/primitives/dev/oc-map-verification.html`
+
+### What to verify
+
+- Map initializes (`oc-map-ready` event and status text).
+- Sample layers render (points, line, polygon).
+- **Fit to data** button re-centers and zooms to sample points.
+- Layer checkboxes toggle visibility via `setLayerVisibility`.
+- Clicking map features logs `oc-map-feature-click` in the event panel.
+

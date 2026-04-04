@@ -24,9 +24,10 @@
 			main {
 				max-width: 980px;
 				margin: 0 auto;
-				padding: 20px;
+				padding: 12px;
 				display: grid;
 				gap: 12px;
+				box-sizing: border-box;
 			}
 
 			.panel {
@@ -57,8 +58,30 @@
 				gap: 6px;
 			}
 
+			.map-panel {
+				padding: 0;
+				overflow: hidden;
+			}
+
 			oc-map {
-				--oc-map-height: 480px;
+				display: block;
+				inline-size: 100%;
+				--oc-map-height: clamp(280px, 58vh, 520px);
+			}
+
+			#status,
+			#selection-status {
+				font-size: 13px;
+			}
+
+			@media (min-width: 720px) {
+				main {
+					padding: 20px;
+				}
+
+				oc-map {
+					--oc-map-height: clamp(320px, 62vh, 600px);
+				}
 			}
 
 			pre {
@@ -101,13 +124,15 @@
 				<span id="selection-status">Selection: none</span>
 			</section>
 
-			<oc-map
-				id="demo-map"
-				center-lng="5.1769"
-				center-lat="52.225"
-				zoom="13.6"
-				style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-			></oc-map>
+			<section class="panel map-panel">
+				<oc-map
+					id="demo-map"
+					center-lng="5.1766"
+					center-lat="52.2249"
+					zoom="14.1"
+					style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+				></oc-map>
+			</section>
 
 			<section class="panel">
 				<strong>Event log</strong>
@@ -306,8 +331,11 @@
 					},
 				);
 
-				mapEl.fitToData("sample-all", { padding: 56, maxZoom: 14 });
-				appendLog("oc-map-ready");
+				appendLog("oc-map-ready", {
+					initialCenter: [5.1766, 52.2249],
+					initialZoom: 14.1,
+					note: "Initial viewport is fixed to Hilversum; use Fit to sample data manually.",
+				});
 				appendLog("setGeoJsonData-results", {
 					polygonRegistered,
 					polygonOutlineRegistered,

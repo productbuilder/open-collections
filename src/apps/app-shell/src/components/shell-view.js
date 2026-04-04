@@ -6,7 +6,7 @@ export function renderBrowseView() {
 		title: "Browse",
 		description:
 			"Read and browse collections from connected manifest sources.",
-		replacementLabel: "collection-browser",
+		replacementLabel: "timemap-browser",
 	});
 }
 

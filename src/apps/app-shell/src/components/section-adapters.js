@@ -12,9 +12,9 @@ function mapEmbeddedRuntimeAttributes(_config, context) {
 
 export const SHELL_SECTION_ADAPTERS = {
 	browse: {
-		appId: "collection-browser",
+		appId: "timemap-browser",
 		adapter: createWebComponentAppAdapter({
-			appId: "collection-browser",
+			appId: "timemap-browser",
 			tagName: "timemap-browser",
 			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
 		}),

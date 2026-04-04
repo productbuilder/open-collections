@@ -1,5 +1,5 @@
 import "../../../apps/collection-manager/src/index.js";
-import "../../../apps/collection-browser/src/index.js";
+import "../../../apps/timemap-browser/src/index.js";
 import "../../../apps/collection-presenter/src/index.js";
 import "../../../apps/app-shell/src/index.js";
 

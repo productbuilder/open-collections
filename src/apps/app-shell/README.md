@@ -14,7 +14,7 @@ The shell owns:
 
 `app-shell` mounts these sub-apps through shared mount adapters:
 
-- **Browse** → `collection-browser` (`timemap-browser`)
+- **Browse** → `timemap-browser` (`timemap-browser`)
 - **Collect** → `collection-manager` (`open-collections-manager`)
 - **Present** → `collection-presenter` (`open-collections-presenter`)
 - **Account** → `collection-account` (`open-collections-account`)

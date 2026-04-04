@@ -6,7 +6,7 @@ Capacitor is the mobile shell for Open Collections. It hosts the same browser-fi
 
 - Package: `src/mobile/workbench`
 - Host type: native shell (Capacitor)
-- Current app target: `src/apps/collection-browser`
+- Current app target: `src/apps/timemap-browser`
 - Entry point: `src/mobile/workbench/src/main.js`
 
 The shell stages source into `src/mobile/workbench/dist`, then Capacitor loads that staged frontend in platform projects under `android/` and `ios/`.

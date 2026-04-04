@@ -218,49 +218,104 @@
 						: `${line}\n${logEl.textContent}`;
 			};
 
+			const summarizeMapRegistration = () => {
+				const style = mapEl.mapInstance?.getStyle?.();
+				if (!style) {
+					return;
+				}
+				const sourceIds = Object.keys(style.sources || {}).filter(
+					(id) => id.startsWith("sample-"),
+				);
+				const layerIds = (style.layers || [])
+					.map((layer) => layer.id)
+					.filter((id) => id.startsWith("sample-"));
+				appendLog("sample-registration", {
+					sourceIds,
+					layerIds,
+				});
+			};
+
 			mapEl.addEventListener("oc-map-ready", () => {
 				statusEl.textContent = "Map ready.";
-				mapEl.setGeoJsonData("sample-polygon", polygonData, {
-					type: "fill",
-					paint: {
-						"fill-color": "#60a5fa",
-						"fill-opacity": 0.05,
-						"fill-outline-color": "#3b82f6",
+				const polygonRegistered = mapEl.setGeoJsonData(
+					"sample-polygon",
+					polygonData,
+					{
+						type: "fill",
+						paint: {
+							"fill-color": "#60a5fa",
+							"fill-opacity": 0.14,
+							"fill-outline-color": "#3b82f6",
+						},
 					},
-				});
+				);
 
-				mapEl.setGeoJsonData("sample-line", lineData, {
-					type: "line",
-					paint: {
-						"line-color": "#dc2626",
-						"line-width": 8,
-						"line-opacity": 1,
+				const polygonOutlineRegistered = mapEl.setGeoJsonData(
+					"sample-polygon-outline",
+					polygonData,
+					{
+						sourceId: "sample-polygon",
+						type: "line",
+						paint: {
+							"line-color": "#1d4ed8",
+							"line-width": 3,
+							"line-opacity": 1,
+						},
 					},
-				});
+				);
 
-				mapEl.setGeoJsonData("sample-points", pointsData, {
-					type: "circle",
-					paint: {
-						"circle-radius": 12,
-						"circle-color": "#facc15",
-						"circle-stroke-width": 4,
-						"circle-stroke-color": "#111827",
+				const lineRegistered = mapEl.setGeoJsonData(
+					"sample-line",
+					lineData,
+					{
+						type: "line",
+						paint: {
+							"line-color": "#dc2626",
+							"line-width": 7,
+							"line-opacity": 1,
+						},
 					},
-				});
+				);
 
-				mapEl.setGeoJsonData("sample-all", allSamplesData, {
-					type: "circle",
-					paint: {
-						"circle-opacity": 0,
-						"circle-radius": 0,
+				const pointsRegistered = mapEl.setGeoJsonData(
+					"sample-points",
+					pointsData,
+					{
+						type: "circle",
+						paint: {
+							"circle-radius": 12,
+							"circle-color": "#facc15",
+							"circle-stroke-width": 4,
+							"circle-stroke-color": "#111827",
+						},
 					},
-					layout: {
-						visibility: "none",
+				);
+
+				const combinedRegistered = mapEl.setGeoJsonData(
+					"sample-all",
+					allSamplesData,
+					{
+						type: "circle",
+						paint: {
+							"circle-opacity": 0,
+							"circle-radius": 0,
+						},
+						layout: {
+							visibility: "none",
+						},
 					},
-				});
+				);
 
 				mapEl.fitToData("sample-all", { padding: 56, maxZoom: 14 });
 				appendLog("oc-map-ready");
+				appendLog("setGeoJsonData-results", {
+					polygonRegistered,
+					polygonOutlineRegistered,
+					lineRegistered,
+					pointsRegistered,
+					combinedRegistered,
+				});
+				summarizeMapRegistration();
 			});
 
 			mapEl.addEventListener("oc-map-feature-click", (event) => {
@@ -307,6 +362,10 @@
 						"sample-points",
 						event.currentTarget.checked,
 					);
+					appendLog("toggle-layer", {
+						layerId: "sample-points",
+						visible: event.currentTarget.checked,
+					});
 				});
 
 			document
@@ -316,15 +375,22 @@
 						"sample-line",
 						event.currentTarget.checked,
 					);
+					appendLog("toggle-layer", {
+						layerId: "sample-line",
+						visible: event.currentTarget.checked,
+					});
 				});
 
 			document
 				.getElementById("toggle-polygon")
 				.addEventListener("change", (event) => {
-					mapEl.setLayerVisibility(
-						"sample-polygon",
-						event.currentTarget.checked,
-					);
+					const visible = event.currentTarget.checked;
+					mapEl.setLayerVisibility("sample-polygon", visible);
+					mapEl.setLayerVisibility("sample-polygon-outline", visible);
+					appendLog("toggle-layer", {
+						layerId: "sample-polygon + sample-polygon-outline",
+						visible,
+					});
 				});
 		</script>
 	</body>

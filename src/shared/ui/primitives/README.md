@@ -65,5 +65,6 @@ From repo root:
 - Sample layers render in clear visual order and contrast: compact light polygon at bottom, strong line above polygon, and prominent larger points above line.
 - **Fit to sample data** button re-centers and zooms to the combined sample GeoJSON bounds.
 - Layer checkboxes toggle visibility via `setLayerVisibility`.
+- Harness event log also records sample source/layer registration IDs and `setGeoJsonData(...)` result flags for quick debugging of source/layer wiring.
 - Clicking map features logs `oc-map-feature-click` detail (layer/source/feature/properties/coordinates) in the event panel.
 - Clicking a feature applies generic highlight selection; **Clear selection** removes highlight.

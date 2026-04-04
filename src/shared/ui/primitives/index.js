@@ -11,9 +11,11 @@ import "./grid5-card-source.js";
 import "./grid5-card-collection.js";
 import "./grid5-card-item.js";
 import "./section-header.js";
+import "./oc-map.js";
 
 export { OpenCollectionsEmptyStateElement } from "./empty-state.js";
 export { OpenCollectionsSectionHeaderElement } from "./section-header.js";
+export { OcMapElement } from "./oc-map.js";
 
 export { OpenCollectionsActionRowElement } from "./action-row.js";
 export { OcGridElement, OpenCollectionsCardLayoutElement } from "./oc-grid.js";

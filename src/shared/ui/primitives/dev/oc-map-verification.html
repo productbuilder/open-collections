@@ -2,11 +2,23 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
 		<title>oc-map local verification</title>
 		<style>
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+
+			html,
 			body {
 				margin: 0;
+				inline-size: 100%;
+				max-inline-size: 100%;
 				font-family:
 					Inter,
 					ui-sans-serif,
@@ -22,12 +34,15 @@
 			}
 
 			main {
-				max-width: 980px;
+				inline-size: min(100%, 980px);
 				margin: 0 auto;
 				padding: 12px;
 				display: grid;
 				gap: 12px;
-				box-sizing: border-box;
+			}
+
+			main > * {
+				min-inline-size: 0;
 			}
 
 			.panel {
@@ -35,6 +50,7 @@
 				border: 1px solid #d8deea;
 				border-radius: 12px;
 				padding: 12px;
+				min-inline-size: 0;
 			}
 
 			.controls {
@@ -61,17 +77,20 @@
 			.map-panel {
 				padding: 0;
 				overflow: hidden;
+				inline-size: 100%;
 			}
 
 			oc-map {
 				display: block;
 				inline-size: 100%;
+				max-inline-size: 100%;
 				--oc-map-height: clamp(280px, 58vh, 520px);
 			}
 
 			#status,
 			#selection-status {
 				font-size: 13px;
+				overflow-wrap: anywhere;
 			}
 
 			@media (min-width: 720px) {
@@ -88,6 +107,8 @@
 				margin: 0;
 				max-height: 160px;
 				overflow: auto;
+				inline-size: 100%;
+				max-inline-size: 100%;
 				background: #0d1420;
 				color: #d7e2f0;
 				border-radius: 8px;

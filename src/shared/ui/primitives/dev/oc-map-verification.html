@@ -79,7 +79,13 @@
         <span id="status">Waiting for map...</span>
       </section>
 
-      <oc-map id="demo-map" center-lng="5.1769" center-lat="52.225" zoom="11"></oc-map>
+      <oc-map
+        id="demo-map"
+        center-lng="5.1769"
+        center-lat="52.225"
+        zoom="12"
+        style-url="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+      ></oc-map>
 
       <section class="panel">
         <strong>Event log</strong>
@@ -109,8 +115,13 @@
           },
           {
             type: "Feature",
+            properties: { name: "Raadhuis Hilversum" },
+            geometry: { type: "Point", coordinates: [5.1687, 52.2302] },
+          },
+          {
+            type: "Feature",
             properties: { name: "Corversbos" },
-            geometry: { type: "Point", coordinates: [5.1468, 52.2183] },
+            geometry: { type: "Point", coordinates: [5.1549, 52.2164] },
           },
         ],
       };
@@ -124,9 +135,11 @@
             geometry: {
               type: "LineString",
               coordinates: [
-                [5.132, 52.2136],
-                [5.1608, 52.2387],
-                [5.2095, 52.2375],
+                [5.1552, 52.2166],
+                [5.1687, 52.2302],
+                [5.1769, 52.225],
+                [5.1884, 52.221],
+                [5.1965, 52.2272],
               ],
             },
           },
@@ -143,11 +156,11 @@
               type: "Polygon",
               coordinates: [
                 [
-                  [5.1305, 52.2095],
-                  [5.231, 52.2095],
-                  [5.231, 52.257],
-                  [5.1305, 52.257],
-                  [5.1305, 52.2095],
+                  [5.152, 52.214],
+                  [5.198, 52.214],
+                  [5.198, 52.2395],
+                  [5.152, 52.2395],
+                  [5.152, 52.214],
                 ],
               ],
             },
@@ -167,13 +180,12 @@
 
       mapEl.addEventListener("oc-map-ready", () => {
         statusEl.textContent = "Map ready.";
-        mapEl.setGeoJsonData("sample-points", pointsData, {
-          type: "circle",
+        mapEl.setGeoJsonData("sample-polygon", polygonData, {
+          type: "fill",
           paint: {
-            "circle-radius": 8,
-            "circle-color": "#f97316",
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#ffffff",
+            "fill-color": "#22c55e",
+            "fill-opacity": 0.14,
+            "fill-outline-color": "#16a34a",
           },
         });
 
@@ -181,17 +193,18 @@
           type: "line",
           paint: {
             "line-color": "#1d4ed8",
-            "line-width": 5,
-            "line-opacity": 0.9,
+            "line-width": 4,
+            "line-opacity": 0.95,
           },
         });
 
-        mapEl.setGeoJsonData("sample-polygon", polygonData, {
-          type: "fill",
+        mapEl.setGeoJsonData("sample-points", pointsData, {
+          type: "circle",
           paint: {
-            "fill-color": "#10b981",
-            "fill-opacity": 0.3,
-            "fill-outline-color": "#065f46",
+            "circle-radius": 7,
+            "circle-color": "#f97316",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff",
           },
         });
 
@@ -206,7 +219,7 @@
           },
         });
 
-        mapEl.fitToData("sample-all", { padding: 56, maxZoom: 13 });
+        mapEl.fitToData("sample-all", { padding: 56, maxZoom: 14 });
         appendLog("oc-map-ready");
       });
 
@@ -223,7 +236,7 @@
       });
 
       document.getElementById("fit-data").addEventListener("click", () => {
-        mapEl.fitToData("sample-all", { padding: 56, maxZoom: 13 });
+        mapEl.fitToData("sample-all", { padding: 56, maxZoom: 14 });
       });
 
       document.getElementById("toggle-points").addEventListener("change", (event) => {

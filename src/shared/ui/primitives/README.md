@@ -59,8 +59,8 @@ From repo root:
 ### What to verify
 
 - Map initializes (`oc-map-ready` event and status text).
-- Initial view starts around Hilversum via `<oc-map center-lng="5.1769" center-lat="52.225" zoom="11">`.
-- Sample layers render (points, line, polygon).
+- Initial view starts around Hilversum with a detail-rich basemap via `<oc-map center-lng="5.1769" center-lat="52.225" zoom="12" style-url="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">`.
+- Sample layers render in clear visual order: polygon (light/transparent) below line, line below points.
 - **Fit to sample data** button re-centers and zooms to the combined sample GeoJSON bounds.
 - Layer checkboxes toggle visibility via `setLayerVisibility`.
 - Clicking map features logs `oc-map-feature-click` in the event panel.

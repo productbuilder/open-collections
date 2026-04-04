@@ -1,6 +1,6 @@
 import "../../../shared/ui/primitives/index.js";
 import "../../../shared/ui/panels/index.js";
-import "../../collection-browser/src/index.js";
+import "../../timemap-browser/src/index.js";
 import "../../collection-manager/src/index.js";
 import "../../collection-presenter/src/index.js";
 import "../../collection-connector/src/index.js";

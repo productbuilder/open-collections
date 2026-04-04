@@ -1,4 +1,4 @@
-import "../../../apps/collection-browser/src/index.js";
+import "../../../apps/timemap-browser/src/index.js";
 import {
 	mirrorNativePreferencesToLocalStorage,
 	readLocalStorageString,

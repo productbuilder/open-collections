@@ -1,4 +1,4 @@
-import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/+esm";
+import { loadMapLibreGl } from "./maplibre-loader.js";
 
 import { BaseElement } from "../app-foundation/base-element.js";
 import { appFoundationTokenStyles } from "../app-foundation/tokens.css.js";
@@ -16,10 +16,9 @@ import { appFoundationTokenStyles } from "../app-foundation/tokens.css.js";
  * - `oc-map-ready`
  * - `oc-map-feature-click`
  * - `oc-map-viewport-change`
+ * - `oc-map-error`
  */
 const ocMapStyles = `
-	@import url("https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css");
-
 	${appFoundationTokenStyles}
 
 	:host {
@@ -48,6 +47,7 @@ class OcMapElement extends BaseElement {
 	constructor() {
 		super();
 		this._map = null;
+		this._mapLibre = null;
 		this._highlightState = null;
 		this._isMapReady = false;
 		this._boundMoveEnd = this._onMoveEnd.bind(this);
@@ -71,7 +71,9 @@ class OcMapElement extends BaseElement {
 	}
 
 	onFirstConnected() {
-		this._ensureMap();
+		this._ensureMap().catch((error) => {
+			this._emitMapError(error);
+		});
 	}
 
 	onDisconnected() {
@@ -245,11 +247,12 @@ class OcMapElement extends BaseElement {
 		this._map.off("moveend", this._boundMoveEnd);
 		this._map.remove();
 		this._map = null;
+		this._mapLibre = null;
 		this._highlightState = null;
 		this._isMapReady = false;
 	}
 
-	_ensureMap() {
+	async _ensureMap() {
 		if (this._map) {
 			return;
 		}
@@ -259,7 +262,11 @@ class OcMapElement extends BaseElement {
 			return;
 		}
 
-		this._map = new maplibregl.Map({
+		if (!this._mapLibre) {
+			this._mapLibre = await loadMapLibreGl();
+		}
+
+		this._map = new this._mapLibre.Map({
 			container,
 			style: this._resolveStyleUrl(),
 			center: this._parseCenter(),
@@ -284,6 +291,20 @@ class OcMapElement extends BaseElement {
 		});
 
 		this._map.on("moveend", this._boundMoveEnd);
+	}
+
+	_emitMapError(error) {
+		const detail = {
+			message: error?.message || "Failed to initialize map.",
+			error: error || null,
+		};
+		this.dispatchEvent(
+			new CustomEvent("oc-map-error", {
+				bubbles: true,
+				composed: true,
+				detail,
+			}),
+		);
 	}
 
 	_applyViewportConfig() {

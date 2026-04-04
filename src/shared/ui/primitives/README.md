@@ -24,10 +24,10 @@ This folder holds the first modest set of app-shell family shared primitives.
 - `oc-card-item`
   - Semantic shared card for an item browse surface.
 - `oc-map`
-  - Generic shared map primitive powered by MapLibre GL JS.
+  - Generic shared map primitive powered by MapLibre GL JS (loaded from CDN at runtime; no package install needed).
   - Supports initial map config via attributes (`style-url`, `center`, `zoom`).
   - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `highlightFeature`).
-  - Emits `oc-map-ready`, `oc-map-feature-click`, and `oc-map-viewport-change`.
+  - Emits `oc-map-ready`, `oc-map-feature-click`, `oc-map-viewport-change`, and `oc-map-error` (for loader/init failures).
 
 ## Why these first
 

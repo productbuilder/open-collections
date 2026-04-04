@@ -58,10 +58,11 @@ class OcMapElement extends BaseElement {
 		super();
 		this._map = null;
 		this._mapLibre = null;
-		this._highlightState = null;
+		this._selectedFeature = null;
 		this._isMapReady = false;
 		this._boundMoveEnd = this._onMoveEnd.bind(this);
 		this._layerClickHandlers = new Map();
+		this._registeredLayers = new Map();
 		this._sourceDataById = new Map();
 	}
 
@@ -166,9 +167,31 @@ class OcMapElement extends BaseElement {
 			});
 		}
 
+		const selectionProperty = options.selectionProperty || "id";
+		const layerType = options.type || "circle";
+		this._registeredLayers.set(layerId, {
+			layerId,
+			sourceId,
+			layerType,
+			baseFilter: options.filter || null,
+			selectionProperty,
+			selectable: options.selectable !== false,
+			highlightLayerId: `${layerId}--oc-selected`,
+		});
+		this._ensureHighlightLayer(layerId);
+		this._applySelectionHighlight();
+
 		if (!this._layerClickHandlers.has(layerId)) {
 			const clickHandler = (event) => {
 				const [feature] = event.features || [];
+				const featureId = this._resolveFeatureIdentifier(
+					feature,
+					selectionProperty,
+				);
+				const lngLat = event.lngLat
+					? { lng: event.lngLat.lng, lat: event.lngLat.lat }
+					: null;
+				const point = event.point ? { x: event.point.x, y: event.point.y } : null;
 				this.dispatchEvent(
 					new CustomEvent("oc-map-feature-click", {
 						bubbles: true,
@@ -176,8 +199,11 @@ class OcMapElement extends BaseElement {
 						detail: {
 							layerId,
 							sourceId,
-							lngLat: event.lngLat,
-							point: event.point,
+							featureId,
+							featureProperties: feature?.properties || null,
+							lngLat,
+							point,
+							selectionProperty,
 							feature: feature || null,
 						},
 					}),
@@ -228,22 +254,35 @@ class OcMapElement extends BaseElement {
 	}
 
 	highlightFeature(sourceId, featureId) {
+		return this.selectFeature(sourceId, featureId);
+	}
+
+	selectFeature(sourceId, featureId, options = {}) {
 		if (!this._map || !this._isMapReady || !sourceId) {
 			return false;
 		}
 
-		if (this._highlightState) {
-			this._map.setFeatureState(this._highlightState, { highlighted: false });
-			this._highlightState = null;
-		}
-
 		if (featureId === null || featureId === undefined) {
+			this._selectedFeature = null;
+			this._applySelectionHighlight();
 			return true;
 		}
 
-		const nextState = { source: sourceId, id: featureId };
-		this._map.setFeatureState(nextState, { highlighted: true });
-		this._highlightState = nextState;
+		this._selectedFeature = {
+			sourceId,
+			featureId,
+			property: options.property || null,
+		};
+		this._applySelectionHighlight();
+		return true;
+	}
+
+	clearSelection() {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._selectedFeature = null;
+		this._applySelectionHighlight();
 		return true;
 	}
 
@@ -256,13 +295,14 @@ class OcMapElement extends BaseElement {
 			this._map.off("click", layerId, clickHandler);
 		}
 		this._layerClickHandlers.clear();
+		this._registeredLayers.clear();
 		this._sourceDataById.clear();
 
 		this._map.off("moveend", this._boundMoveEnd);
 		this._map.remove();
 		this._map = null;
 		this._mapLibre = null;
-		this._highlightState = null;
+		this._selectedFeature = null;
 		this._isMapReady = false;
 	}
 
@@ -480,6 +520,102 @@ class OcMapElement extends BaseElement {
 			return null;
 		}
 		return typeof layer.source === "string" ? layer.source : null;
+	}
+
+	_resolveFeatureIdentifier(feature, selectionProperty) {
+		if (!feature || typeof feature !== "object") {
+			return null;
+		}
+		if (feature.id !== undefined && feature.id !== null) {
+			return feature.id;
+		}
+		const propertyValue = feature.properties?.[selectionProperty];
+		return propertyValue === undefined ? null : propertyValue;
+	}
+
+	_ensureHighlightLayer(layerId) {
+		if (!this._map || !this._isMapReady) {
+			return;
+		}
+		const layerRegistration = this._registeredLayers.get(layerId);
+		if (!layerRegistration || !layerRegistration.selectable) {
+			return;
+		}
+		if (!this._map.getLayer(layerRegistration.layerId)) {
+			return;
+		}
+		if (this._map.getLayer(layerRegistration.highlightLayerId)) {
+			return;
+		}
+
+		this._map.addLayer({
+			id: layerRegistration.highlightLayerId,
+			type: layerRegistration.layerType,
+			source: layerRegistration.sourceId,
+			paint: this._buildHighlightPaint(layerRegistration.layerType),
+			filter: ["==", ["literal", 1], 0],
+		});
+	}
+
+	_buildHighlightPaint(layerType) {
+		if (layerType === "line") {
+			return {
+				"line-color": "#facc15",
+				"line-width": 9,
+				"line-opacity": 0.95,
+			};
+		}
+		if (layerType === "fill") {
+			return {
+				"fill-color": "#fde047",
+				"fill-outline-color": "#a16207",
+				"fill-opacity": 0.38,
+			};
+		}
+		return {
+			"circle-radius": 13,
+			"circle-color": "#fde047",
+			"circle-stroke-width": 3,
+			"circle-stroke-color": "#a16207",
+		};
+	}
+
+	_applySelectionHighlight() {
+		if (!this._map || !this._isMapReady) {
+			return;
+		}
+		for (const layerRegistration of this._registeredLayers.values()) {
+			if (!layerRegistration.selectable) {
+				continue;
+			}
+			this._ensureHighlightLayer(layerRegistration.layerId);
+			if (!this._map.getLayer(layerRegistration.highlightLayerId)) {
+				continue;
+			}
+			if (
+				!this._selectedFeature ||
+				this._selectedFeature.sourceId !== layerRegistration.sourceId
+			) {
+				this._map.setFilter(layerRegistration.highlightLayerId, [
+					"==",
+					["literal", 1],
+					0,
+				]);
+				continue;
+			}
+
+			const featureMatchExpression = this._selectedFeature.property
+				? [
+						"==",
+						["get", this._selectedFeature.property],
+						this._selectedFeature.featureId,
+					]
+				: ["==", ["id"], this._selectedFeature.featureId];
+			const nextFilter = layerRegistration.baseFilter
+				? ["all", layerRegistration.baseFilter, featureMatchExpression]
+				: featureMatchExpression;
+			this._map.setFilter(layerRegistration.highlightLayerId, nextFilter);
+		}
 	}
 }
 

@@ -26,7 +26,7 @@ This folder holds the first modest set of app-shell family shared primitives.
 - `oc-map`
     - Generic shared map primitive powered by MapLibre GL JS (loaded from CDN at runtime; no package install needed).
     - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`).
-    - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `highlightFeature`).
+    - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `selectFeature`, `clearSelection`, and backward-compatible `highlightFeature` alias).
     - Emits `oc-map-ready`, `oc-map-feature-click`, `oc-map-viewport-change`, and `oc-map-error` (for loader/init failures).
 
 ## Why these first
@@ -64,4 +64,5 @@ From repo root:
 - Sample layers render in clear visual order and contrast: compact light polygon at bottom, strong line above polygon, and prominent larger points above line.
 - **Fit to sample data** button re-centers and zooms to the combined sample GeoJSON bounds.
 - Layer checkboxes toggle visibility via `setLayerVisibility`.
-- Clicking map features logs `oc-map-feature-click` in the event panel.
+- Clicking map features logs `oc-map-feature-click` detail (layer/source/feature/properties/coordinates) in the event panel.
+- Clicking a feature applies generic highlight selection; **Clear selection** removes highlight.

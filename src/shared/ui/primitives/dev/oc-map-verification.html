@@ -82,7 +82,9 @@
 
 			<section class="panel controls">
 				<button id="fit-data" type="button">Fit to sample data</button>
-				<button id="clear-selection" type="button">Clear selection</button>
+				<button id="clear-selection" type="button">
+					Clear selection
+				</button>
 				<label
 					><input id="toggle-points" type="checkbox" checked />
 					Points</label
@@ -118,7 +120,8 @@
 
 			const mapEl = document.getElementById("demo-map");
 			const statusEl = document.getElementById("status");
-			const selectionStatusEl = document.getElementById("selection-status");
+			const selectionStatusEl =
+				document.getElementById("selection-status");
 			const logEl = document.getElementById("log");
 
 			const pointsData = {
@@ -126,20 +129,20 @@
 				features: [
 					{
 						type: "Feature",
-						id: "station",
-						properties: { name: "Hilversum Station" },
+						id: "marktplein",
+						properties: { name: "Hilversum Marktplein (QA point)" },
 						geometry: {
 							type: "Point",
-							coordinates: [5.1769, 52.225],
+							coordinates: [5.1759, 52.2247],
 						},
 					},
 					{
 						type: "Feature",
-						id: "media-park",
-						properties: { name: "Media Park" },
+						id: "stationsplein",
+						properties: { name: "Stationsplein" },
 						geometry: {
 							type: "Point",
-							coordinates: [5.1608, 52.2387],
+							coordinates: [5.1769, 52.225],
 						},
 					},
 					{
@@ -148,16 +151,7 @@
 						properties: { name: "Raadhuis Hilversum" },
 						geometry: {
 							type: "Point",
-							coordinates: [5.1687, 52.2302],
-						},
-					},
-					{
-						type: "Feature",
-						id: "corversbos",
-						properties: { name: "Corversbos" },
-						geometry: {
-							type: "Point",
-							coordinates: [5.1549, 52.2164],
+							coordinates: [5.1689, 52.2301],
 						},
 					},
 				],
@@ -173,11 +167,11 @@
 						geometry: {
 							type: "LineString",
 							coordinates: [
-								[5.1552, 52.2166],
-								[5.1687, 52.2302],
-								[5.1769, 52.225],
-								[5.1884, 52.221],
-								[5.1965, 52.2272],
+								[5.1695, 52.2303],
+								[5.1728, 52.2284],
+								[5.1762, 52.2263],
+								[5.1791, 52.2248],
+								[5.1822, 52.2232],
 							],
 						},
 					},
@@ -195,11 +189,11 @@
 							type: "Polygon",
 							coordinates: [
 								[
-									[5.1665, 52.2221],
-									[5.1824, 52.2221],
-									[5.1824, 52.2316],
-									[5.1665, 52.2316],
-									[5.1665, 52.2221],
+									[5.1684, 52.2236],
+									[5.1812, 52.2236],
+									[5.1812, 52.2298],
+									[5.1684, 52.2298],
+									[5.1684, 52.2236],
 								],
 							],
 						},
@@ -229,17 +223,17 @@
 				mapEl.setGeoJsonData("sample-polygon", polygonData, {
 					type: "fill",
 					paint: {
-						"fill-color": "#22c55e",
-						"fill-opacity": 0.07,
-						"fill-outline-color": "#16a34a",
+						"fill-color": "#60a5fa",
+						"fill-opacity": 0.05,
+						"fill-outline-color": "#3b82f6",
 					},
 				});
 
 				mapEl.setGeoJsonData("sample-line", lineData, {
 					type: "line",
 					paint: {
-						"line-color": "#7c3aed",
-						"line-width": 6,
+						"line-color": "#dc2626",
+						"line-width": 8,
 						"line-opacity": 1,
 					},
 				});
@@ -247,9 +241,9 @@
 				mapEl.setGeoJsonData("sample-points", pointsData, {
 					type: "circle",
 					paint: {
-						"circle-radius": 10,
-						"circle-color": "#f97316",
-						"circle-stroke-width": 3,
+						"circle-radius": 12,
+						"circle-color": "#facc15",
+						"circle-stroke-width": 4,
 						"circle-stroke-color": "#111827",
 					},
 				});
@@ -274,7 +268,10 @@
 					event.detail?.featureProperties?.name ||
 					String(event.detail?.featureId || "none");
 				selectionStatusEl.textContent = `Selection: ${selectedLabel}`;
-				mapEl.selectFeature(event.detail?.sourceId, event.detail?.featureId);
+				mapEl.selectFeature(
+					event.detail?.sourceId,
+					event.detail?.featureId,
+				);
 				appendLog("oc-map-feature-click", {
 					layerId: event.detail?.layerId,
 					sourceId: event.detail?.sourceId,

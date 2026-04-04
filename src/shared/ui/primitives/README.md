@@ -61,6 +61,7 @@ From repo root:
 
 - Map initializes (`oc-map-ready` event and status text).
 - Initial view starts around Hilversum at street/city verification level via `<oc-map center-lng="5.1769" center-lat="52.225" zoom="13.6" style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">`.
+- Sample point + line are intentionally placed in central Hilversum so both are visible in the initial viewport.
 - Sample layers render in clear visual order and contrast: compact light polygon at bottom, strong line above polygon, and prominent larger points above line.
 - **Fit to sample data** button re-centers and zooms to the combined sample GeoJSON bounds.
 - Layer checkboxes toggle visibility via `setLayerVisibility`.

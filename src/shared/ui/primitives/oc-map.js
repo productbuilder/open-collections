@@ -9,6 +9,7 @@ import { appFoundationTokenStyles } from "../app-foundation/tokens.css.js";
  * Attributes:
  * - `style-url`: Map style URL (defaults to MapLibre demo style).
  * - `center`: JSON array or comma-separated `lng,lat`.
+ * - `center-lng` + `center-lat`: optional numeric center attributes (preferred for HTML ergonomics).
  * - `zoom`, `bearing`, `pitch`: numeric viewport options.
  * - `interactive`: optional boolean toggle (defaults to true when absent).
  *
@@ -41,7 +42,16 @@ const ocMapStyles = `
 
 class OcMapElement extends BaseElement {
 	static get observedAttributes() {
-		return ["style-url", "center", "zoom", "bearing", "pitch", "interactive"];
+		return [
+			"style-url",
+			"center",
+			"center-lng",
+			"center-lat",
+			"zoom",
+			"bearing",
+			"pitch",
+			"interactive",
+		];
 	}
 
 	constructor() {
@@ -204,8 +214,12 @@ class OcMapElement extends BaseElement {
 		if (!this._map || !this._isMapReady || !name) {
 			return false;
 		}
-		const source = this._map.getSource(name);
-		const sourceData = this._sourceDataById.get(name) || source?._data;
+		const sourceId = options.sourceId || this._resolveSourceId(name);
+		if (!sourceId) {
+			return false;
+		}
+		const source = this._map.getSource(sourceId);
+		const sourceData = this._sourceDataById.get(sourceId) || source?._data;
 		const bounds = this._computeGeoJsonBounds(sourceData);
 		if (!bounds) {
 			return false;
@@ -352,6 +366,12 @@ class OcMapElement extends BaseElement {
 	}
 
 	_parseCenter() {
+		const lngAttr = this.getNumberAttr("center-lng");
+		const latAttr = this.getNumberAttr("center-lat");
+		if (lngAttr !== null && latAttr !== null) {
+			return [lngAttr, latAttr];
+		}
+
 		const centerRaw = this.getStringAttr("center");
 		if (!centerRaw) {
 			return [0, 0];
@@ -444,6 +464,22 @@ class OcMapElement extends BaseElement {
 			[minLng, minLat],
 			[maxLng, maxLat],
 		];
+	}
+
+	_resolveSourceId(name) {
+		if (!name || !this._map) {
+			return null;
+		}
+
+		if (this._map.getSource(name)) {
+			return name;
+		}
+
+		const layer = this._map.getLayer(name);
+		if (!layer) {
+			return null;
+		}
+		return typeof layer.source === "string" ? layer.source : null;
 	}
 }
 

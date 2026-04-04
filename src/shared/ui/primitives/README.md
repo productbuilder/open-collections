@@ -25,7 +25,7 @@ This folder holds the first modest set of app-shell family shared primitives.
   - Semantic shared card for an item browse surface.
 - `oc-map`
   - Generic shared map primitive powered by MapLibre GL JS (loaded from CDN at runtime; no package install needed).
-  - Supports initial map config via attributes (`style-url`, `center`, `zoom`).
+  - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`).
   - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `highlightFeature`).
   - Emits `oc-map-ready`, `oc-map-feature-click`, `oc-map-viewport-change`, and `oc-map-error` (for loader/init failures).
 
@@ -59,8 +59,8 @@ From repo root:
 ### What to verify
 
 - Map initializes (`oc-map-ready` event and status text).
+- Initial view starts around Hilversum via `<oc-map center-lng="5.1769" center-lat="52.225" zoom="11">`.
 - Sample layers render (points, line, polygon).
-- **Fit to data** button re-centers and zooms to sample points.
+- **Fit to sample data** button re-centers and zooms to the combined sample GeoJSON bounds.
 - Layer checkboxes toggle visibility via `setLayerVisibility`.
 - Clicking map features logs `oc-map-feature-click` in the event panel.
-

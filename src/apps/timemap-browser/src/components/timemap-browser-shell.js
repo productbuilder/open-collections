@@ -5,6 +5,7 @@ const timemapBrowserShellStyles = `
 		min-block-size: 100dvh;
 		color: #0f172a;
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+		--timeline-reserved-space: 5.2rem;
 	}
 
 	.shell {
@@ -35,122 +36,164 @@ const timemapBrowserShellStyles = `
 	.overlay-layer {
 		position: absolute;
 		inset-inline: 0;
-		padding-inline: clamp(0.5rem, 2vw, 1rem);
+		padding-inline: clamp(0.5rem, 2.2vw, 1rem);
 		pointer-events: none;
 	}
 
 	.top-overlay {
 		top: 0;
-		z-index: 3;
-		padding-block-start: clamp(0.5rem, 2vh, 0.85rem);
+		z-index: 4;
+		padding-block-start: max(env(safe-area-inset-top, 0px), clamp(0.45rem, 1.6vh, 0.75rem));
 	}
 
 	.bottom-overlay {
 		bottom: 0;
 		z-index: 2;
-		padding-block-end: clamp(0.4rem, 1.4vh, 0.85rem);
+		padding-block-end: max(env(safe-area-inset-bottom, 0px), clamp(0.4rem, 1.2vh, 0.7rem));
 	}
 
 	.detail-overlay-layer {
 		position: absolute;
 		inset-inline: 0;
-		bottom: var(--timeline-reserved-space, 5.3rem);
+		bottom: calc(var(--timeline-reserved-space, 5.2rem) + max(env(safe-area-inset-bottom, 0px), 0px));
 		z-index: 4;
-		padding-inline: clamp(0.5rem, 2vw, 1rem);
+		padding-inline: clamp(0.5rem, 2.2vw, 1rem);
 		pointer-events: none;
 	}
 
 	.top-chrome,
-	.timeline-shell,
 	.detail-shell {
 		pointer-events: auto;
-		border-radius: 0.75rem;
-		border: 1px solid rgba(148, 163, 184, 0.46);
-		backdrop-filter: blur(8px);
-		background: rgba(248, 250, 252, 0.92);
-		box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+		border: 1px solid rgba(148, 163, 184, 0.38);
+		backdrop-filter: blur(10px);
+		background: rgba(248, 250, 252, 0.9);
+		box-shadow: 0 16px 34px rgba(15, 23, 42, 0.22);
 	}
 
 	.top-chrome {
+		inline-size: min(100%, 44rem);
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.55rem;
+		grid-template-columns: minmax(0, 1fr) auto auto;
+		gap: 0.35rem;
 		align-items: center;
-		padding: 0.6rem 0.7rem;
+		padding: 0.35rem;
+		border-radius: 999px;
 	}
 
 	.top-title {
 		margin: 0;
-		font-size: 0.94rem;
-		line-height: 1.3;
+		font-size: 0.78rem;
+		line-height: 1.2;
 		font-weight: 700;
+		letter-spacing: 0.01em;
+		text-transform: uppercase;
+		color: #1e293b;
 	}
 
 	.chrome-note {
-		margin: 0.1rem 0 0;
-		font-size: 0.76rem;
-		line-height: 1.35;
-		color: #334155;
+		margin: 0.06rem 0 0;
+		font-size: 0.74rem;
+		line-height: 1.2;
+		color: #475569;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.top-primary {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		padding-inline-start: 0.18rem;
+		min-inline-size: 0;
 	}
 
 	.top-actions {
 		display: flex;
 		align-items: center;
-		gap: 0.45rem;
+		gap: 0.25rem;
+		justify-self: end;
+		flex-shrink: 0;
 	}
 
 	.action-button {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-block-size: 2rem;
-		padding: 0.3rem 0.65rem;
-		border-radius: 0.55rem;
-		border: 1px solid rgba(100, 116, 139, 0.65);
-		background: rgba(255, 255, 255, 0.94);
+		min-block-size: 1.95rem;
+		padding: 0.28rem 0.62rem;
+		border-radius: 0.65rem;
+		border: 1px solid rgba(100, 116, 139, 0.48);
+		background: rgba(255, 255, 255, 0.92);
 		color: #0f172a;
-		font-size: 0.77rem;
+		font-size: 0.74rem;
 		font-weight: 650;
+		line-height: 1;
 		cursor: pointer;
+		white-space: nowrap;
 	}
 
 	.action-button:hover {
 		border-color: #475569;
-		background: #f8fafc;
+		background: #ffffff;
+	}
+
+	.action-button--primary {
+		background: rgba(14, 116, 144, 0.12);
+		border-color: rgba(14, 116, 144, 0.45);
+		color: #0f172a;
 	}
 
 	.timeline-shell {
+		pointer-events: auto;
+		inline-size: 100%;
 		display: grid;
-		gap: 0.32rem;
-		padding: 0.56rem 0.68rem;
+		gap: 0.2rem;
+		padding: 0.48rem 0.7rem;
+		border-radius: 1rem;
+		border: 1px solid rgba(100, 116, 139, 0.35);
+		backdrop-filter: blur(9px);
+		background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.9));
+		box-shadow: 0 -8px 26px rgba(15, 23, 42, 0.2);
+	}
+
+	.timeline-pill {
+		inline-size: 2.2rem;
+		block-size: 0.26rem;
+		border-radius: 999px;
+		background: rgba(100, 116, 139, 0.45);
+		margin: 0 auto 0.08rem;
 	}
 
 	.timeline-title {
 		margin: 0;
-		font-size: 0.8rem;
+		font-size: 0.72rem;
 		font-weight: 700;
-		line-height: 1.2;
-		color: #0f172a;
+		line-height: 1.15;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: #334155;
 	}
 
 	.timeline-note {
 		margin: 0;
-		font-size: 0.75rem;
-		line-height: 1.38;
-		color: #334155;
+		font-size: 0.76rem;
+		line-height: 1.32;
+		color: #1e293b;
 	}
 
 	.detail-shell {
-		inline-size: min(92vw, 28.5rem);
-		max-block-size: min(48vh, 23rem);
+		inline-size: min(100%, 34rem);
+		max-block-size: min(52vh, 26rem);
 		overflow: auto;
-		margin-inline: auto;
-		padding: 0.75rem;
+		margin-inline: auto auto;
+		padding: 0.65rem 0.72rem 0.75rem;
+		border-radius: 1rem;
 	}
 
 	.detail-shell[data-mobile-sheet="true"] {
-		inline-size: min(100%, 42rem);
-		border-radius: 0.8rem 0.8rem 0.55rem 0.55rem;
+		inline-size: min(100%, 44rem);
+		border-radius: 1rem 1rem 0.75rem 0.75rem;
 	}
 
 	.detail-header {
@@ -158,31 +201,53 @@ const timemapBrowserShellStyles = `
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
-		margin-block-end: 0.45rem;
+		margin-block-end: 0.4rem;
 	}
 
 	.detail-heading {
 		margin: 0;
-		font-size: 0.86rem;
+		font-size: 0.72rem;
 		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: #475569;
 	}
 
 	.detail-card {
 		display: grid;
-		gap: 0.6rem;
-		padding: 0.3rem 0;
+		gap: 0.56rem;
+		padding: 0.15rem 0 0.1rem;
 	}
 
 	.detail-card__title {
 		margin: 0;
-		font-size: 1rem;
-		line-height: 1.2;
+		font-size: 1.07rem;
+		line-height: 1.18;
 		color: #0f172a;
+	}
+
+	.detail-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.32rem;
+	}
+
+	.detail-chip {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 1.4rem;
+		padding: 0.12rem 0.45rem;
+		border-radius: 999px;
+		border: 1px solid rgba(100, 116, 139, 0.35);
+		background: rgba(255, 255, 255, 0.74);
+		color: #334155;
+		font-size: 0.7rem;
+		font-weight: 600;
 	}
 
 	.detail-grid {
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.32rem;
 	}
 
 	.detail-row {
@@ -204,6 +269,11 @@ const timemapBrowserShellStyles = `
 		color: #475569;
 	}
 
+	.detail-actions {
+		display: flex;
+		gap: 0.4rem;
+	}
+
 	.sr-only {
 		position: absolute;
 		inline-size: 1px;
@@ -219,24 +289,36 @@ const timemapBrowserShellStyles = `
 	:host([data-embed-density="compact"]) .top-chrome,
 	:host([data-embed-density="compact"]) .timeline-shell,
 	:host([data-embed-density="compact"]) .detail-shell {
-		box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+		box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+	}
+
+	:host([data-embed-density="compact"]) {
+		--timeline-reserved-space: 4.8rem;
 	}
 
 	@media (max-width: 767px) {
 		:host {
-			--timeline-reserved-space: 4.8rem;
+			--timeline-reserved-space: 4.5rem;
 		}
 
 		.top-chrome {
-			grid-template-columns: minmax(0, 1fr);
+			inline-size: 100%;
+			grid-template-columns: minmax(0, 1fr) auto;
+			padding: 0.32rem;
+		}
+
+		.top-primary {
+			grid-column: 1 / -1;
+			order: 0;
 		}
 
 		.top-actions {
-			justify-content: flex-start;
+			order: 1;
 		}
 
 		.timeline-shell {
-			border-radius: 0.75rem 0.75rem 0.5rem 0.5rem;
+			border-radius: 0.9rem;
+			padding-block-end: 0.52rem;
 		}
 
 		.detail-overlay-layer {
@@ -244,7 +326,8 @@ const timemapBrowserShellStyles = `
 		}
 
 		.detail-shell {
-			max-block-size: min(56vh, 25rem);
+			max-block-size: min(58vh, 26rem);
+			border-radius: 1rem 1rem 0.7rem 0.7rem;
 		}
 	}
 `;
@@ -358,13 +441,18 @@ function renderSelectedFeatureCard(feature) {
 	return `
 		<div class="detail-card" data-bind="selected-detail-card">
 			<h3 class="detail-card__title">${title}</h3>
+			<div class="detail-meta">
+				<span class="detail-chip">Category: ${category}</span>
+				<span class="detail-chip">Geometry: ${geometryType}</span>
+			</div>
 			<div class="detail-grid">
 				<p class="detail-row"><span class="detail-label">ID:</span> ${featureId}</p>
-				<p class="detail-row"><span class="detail-label">Category:</span> ${category}</p>
-				<p class="detail-row"><span class="detail-label">Geometry:</span> ${geometryType}</p>
 				<p class="detail-row"><span class="detail-label">Description:</span> ${description}</p>
 			</div>
-			<button type="button" class="action-button" data-action="clear-selection">Clear selection</button>
+			<div class="detail-actions">
+				<button type="button" class="action-button action-button--primary" data-action="feature-action-save">Save</button>
+				<button type="button" class="action-button" data-action="clear-selection">Clear selection</button>
+			</div>
 		</div>
 	`;
 }
@@ -515,12 +603,15 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 					<section class="overlay-layer top-overlay" data-region="top-overlay">
 						<div class="top-chrome" data-bind="top-chrome">
-							<div>
+							<div class="top-primary">
 								<h1 class="top-title">Timemap browser</h1>
 								<p class="chrome-note" data-bind="top-summary"></p>
 							</div>
 							<div class="top-actions">
-								<button type="button" class="action-button" data-action="filter-entry">Filters</button>
+								<button type="button" class="action-button action-button--primary" data-action="filter-entry">Filters</button>
+							</div>
+							<div class="top-actions">
+								<button type="button" class="action-button" data-action="shell-menu">Menu</button>
 							</div>
 						</div>
 					</section>
@@ -537,8 +628,9 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 					<section class="overlay-layer bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
+							<div class="timeline-pill" aria-hidden="true"></div>
 							<p class="timeline-title">Timeline region (v1 reserved)</p>
-														<p class="timeline-note" data-bind="time-range"></p>
+							<p class="timeline-note" data-bind="time-range"></p>
 							<p class="sr-only" data-bind="status"></p>
 						</div>
 					</section>

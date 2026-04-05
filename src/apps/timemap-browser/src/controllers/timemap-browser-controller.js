@@ -9,7 +9,7 @@ import {
 	normalizeSpatialQueryInput,
 } from "../../../../shared/data/spatial/spatial-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
-import { loadStubSpatialResponse } from "../services/stub-spatial-loader.js";
+import { loadCollectionSpatialResponse } from "../services/collection-spatial-loader.js";
 
 function buildSpatialRequest(state) {
 	return normalizeSpatialQueryInput(
@@ -133,12 +133,12 @@ export function createTimemapBrowserController(
 				status: {
 					...state.status,
 					tone: "neutral",
-					text: "Loading stub spatial payload...",
+					text: "Loading collection spatial data...",
 				},
 			});
 
 			try {
-				const spatialResponse = await loadStubSpatialResponse(requestAtStart);
+				const spatialResponse = await loadCollectionSpatialResponse(requestAtStart);
 				if (loadToken !== latestSpatialLoadToken) {
 					return;
 				}
@@ -157,7 +157,7 @@ export function createTimemapBrowserController(
 					status: {
 						...state.status,
 						tone: "positive",
-						text: `Stub spatial payload ready (${spatialResponse.features.length} features).`,
+						text: `Collection spatial payload ready (${spatialResponse.features.length} mapped points from ${spatialResponse.meta?.georeferencedItems || spatialResponse.features.length} georeferenced items).`,
 					},
 				});
 			} catch (error) {
@@ -172,7 +172,7 @@ export function createTimemapBrowserController(
 					status: {
 						...state.status,
 						tone: "critical",
-						text: error?.message || "Failed to load stub spatial payload.",
+						text: error?.message || "Failed to load collection spatial payload.",
 					},
 				});
 			}

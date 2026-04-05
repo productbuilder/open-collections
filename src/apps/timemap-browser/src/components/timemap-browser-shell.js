@@ -260,6 +260,22 @@ const timemapBrowserShellStyles = `
 		color: #0f172a;
 	}
 
+	.detail-card__subtitle {
+		margin: -0.2rem 0 0;
+		font-size: 0.8rem;
+		line-height: 1.3;
+		color: #475569;
+	}
+
+	.detail-card__media {
+		inline-size: 100%;
+		max-block-size: 11rem;
+		object-fit: cover;
+		border-radius: 0.65rem;
+		border: 1px solid rgba(148, 163, 184, 0.35);
+		background: rgba(226, 232, 240, 0.45);
+	}
+
 	.detail-meta {
 		display: flex;
 		flex-wrap: wrap;
@@ -473,21 +489,29 @@ function renderSelectedFeatureCard(feature) {
 	const properties = feature?.properties || {};
 	const title =
 		properties.title || properties.label || properties.name || "Untitled feature";
+	const subtitle = properties.subtitle || properties.dateLabel || "";
 	const featureId = feature?.id || properties.id || "n/a";
 	const category = properties.category || properties.type || properties.kind || "n/a";
 	const description =
 		properties.description || properties.statusText || properties.status || "n/a";
+	const sourceLabel = properties.sourceLabel || properties.collectionTitle || "n/a";
+	const sourceUrl = properties.sourceUrl || "";
+	const imageUrl = properties.imageUrl || properties.thumbnailUrl || properties.mediaUrl || "";
 	const geometryType = feature?.geometry?.type || "n/a";
 	return `
 		<div class="detail-card" data-bind="selected-detail-card">
+			${imageUrl ? `<img class="detail-card__media" src="${imageUrl}" alt="${title}">` : ""}
 			<h3 class="detail-card__title">${title}</h3>
+			${subtitle ? `<p class="detail-card__subtitle">${subtitle}</p>` : ""}
 			<div class="detail-meta">
 				<span class="detail-chip">Category: ${category}</span>
 				<span class="detail-chip">Geometry: ${geometryType}</span>
+				<span class="detail-chip">Source: ${sourceLabel}</span>
 			</div>
 			<div class="detail-grid">
 				<p class="detail-row"><span class="detail-label">ID:</span> ${featureId}</p>
 				<p class="detail-row"><span class="detail-label">Description:</span> ${description}</p>
+				${sourceUrl ? `<p class="detail-row"><span class="detail-label">Source URL:</span> <a href="${sourceUrl}" target="_blank" rel="noreferrer">${sourceUrl}</a></p>` : ""}
 			</div>
 			<div class="detail-actions">
 				<button type="button" class="action-button action-button--primary" data-action="feature-action-save">Save</button>

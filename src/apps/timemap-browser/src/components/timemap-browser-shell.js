@@ -2,7 +2,7 @@ const timemapBrowserShellStyles = `
 	:host {
 		display: block;
 		block-size: 100%;
-		min-block-size: 100dvh;
+		min-block-size: 0;
 		color: #0f172a;
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 		--timeline-reserved-space: 5.2rem;
@@ -22,9 +22,17 @@ const timemapBrowserShellStyles = `
 		position: relative;
 		inline-size: 100%;
 		block-size: 100%;
-		min-block-size: 100dvh;
+		min-block-size: 0;
 		overflow: hidden;
 		background: #0b1120;
+	}
+
+	:host(:not([data-embedded])) {
+		min-block-size: 100dvh;
+	}
+
+	:host(:not([data-embedded])) .shell {
+		min-block-size: 100dvh;
 	}
 
 	.map-stage {
@@ -704,6 +712,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 		const config = this.getConfig();
 		this.dataset.embedDensity = config.embedDensity;
+		this.toggleAttribute("data-embedded", Boolean(this._presentation?.embedded));
 		const selectedFeature = toSelectedFeatureSummary(state);
 		const activeFilterCount =
 			(state.filters.keywords?.length || 0) +

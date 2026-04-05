@@ -279,6 +279,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					flex-shrink: 0;
 				}
 				.app-viewport {
+					height: 100%;
 					min-height: 0;
 					overflow: hidden;
 				}

@@ -1150,6 +1150,12 @@ class CollectionBrowserElement extends ComponentBase {
             min-height: 100dvh;
           }
 
+          :host([data-workbench-embed]) .app-shell,
+          :host([data-shell-embed]) .app-shell,
+          :host([data-oc-app-mode="embedded"]) .app-shell {
+            min-height: 0;
+          }
+
           .browser-header {
             padding: 0.55rem 0.7rem;
             gap: 0.55rem;

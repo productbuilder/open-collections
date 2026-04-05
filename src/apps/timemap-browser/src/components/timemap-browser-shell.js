@@ -128,19 +128,45 @@ function toMapFeature(feature, fallbackId) {
 	};
 }
 
+function createLayerDataSignature(features, overlays = {}) {
+	return JSON.stringify({
+		features: features.map((feature) => ({
+			id: feature.id,
+			geometryType: feature.geometry?.type,
+			coordinates: feature.geometry?.coordinates,
+			properties: feature.properties,
+		})),
+		featuresVisible: Boolean(overlays.features),
+	});
+}
+
+function toCenterSignature(viewport = {}) {
+	return `${Number(viewport.center?.lng || 0).toFixed(6)}:${Number(
+		viewport.center?.lat || 0,
+	).toFixed(6)}:${Number(viewport.zoom || 0).toFixed(4)}`;
+}
+
 class TimemapBrowserShellElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
 		this._state = null;
 		this._mapReady = false;
+		this._hasRendered = false;
+		this._lastLayerDataSignature = null;
+		this._lastAppliedCenterSignature = null;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
 	}
 
 	set state(nextState) {
 		this._state = nextState;
-		this.render();
+		if (!this._hasRendered) {
+			this.render();
+			return;
+		}
+		this.updateViewFromState();
+		this.renderSpatialLayers();
 	}
 
 	get state() {
@@ -152,6 +178,101 @@ class TimemapBrowserShellElement extends HTMLElement {
 	}
 
 	render() {
+		if (!this._hasRendered) {
+			this.shadowRoot.innerHTML = `
+				<style>${timemapBrowserShellStyles}</style>
+				<main class="shell" aria-label="Timemap browser scaffold">
+					<open-collections-section-header
+						heading-level="1"
+						title="Timemap browser"
+						description="Scaffold layout with map, filters, timeline, and detail placeholders."
+					></open-collections-section-header>
+
+					<div class="layout">
+						<section class="main-column" aria-label="Timemap main workspace">
+							<open-collections-section-panel
+								title="Filters"
+								description="Reserved area for future timemap filters."
+								heading-level="2"
+								surface
+							>
+								<div class="panel-content">
+									<p class="panel-note">Filter controls will be introduced in a later iteration.</p>
+									<p class="panel-note" data-bind="active-filters"></p>
+								</div>
+							</open-collections-section-panel>
+
+							<open-collections-section-panel
+								title="Map"
+								description="Shared oc-map primitive scaffolded for timemap integration."
+								heading-level="2"
+								surface
+								class="map-panel"
+							>
+								<div class="panel-content">
+									<p class="panel-note" data-bind="spatial-status"></p>
+									<p class="panel-note" data-bind="spatial-features"></p>
+									<p class="panel-note" data-bind="spatial-mode-density"></p>
+								</div>
+								<div class="map-wrap">
+									<oc-map
+										style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+									></oc-map>
+								</div>
+							</open-collections-section-panel>
+
+							<open-collections-section-panel
+								title="Timeline"
+								description="Reserved area for future timeline controls and tracks."
+								heading-level="2"
+								surface
+							>
+								<div class="panel-content">
+									<p class="panel-note">Timeline UI scaffold placeholder.</p>
+									<p class="panel-note" data-bind="time-range"></p>
+								</div>
+							</open-collections-section-panel>
+						</section>
+
+						<aside class="side-column" aria-label="Timemap details workspace">
+							<open-collections-section-panel
+								title="Cards & detail"
+								description="Reserved area for card list, drawer, and item details."
+								heading-level="2"
+								surface
+							>
+								<div class="panel-content">
+									<p class="panel-note">Detail drawer/card composition will be implemented in a future step.</p>
+									<p class="panel-note" data-bind="selected"></p>
+									<p class="panel-note" data-bind="hovered"></p>
+									<p class="panel-note" data-bind="visible-overlays"></p>
+									<p class="panel-note" data-bind="viewport"></p>
+									<p class="panel-note" data-bind="status"></p>
+								</div>
+							</open-collections-section-panel>
+						</aside>
+					</div>
+				</main>
+			`;
+
+			const mapElement = this.shadowRoot.querySelector("oc-map");
+			if (mapElement) {
+				mapElement.addEventListener("oc-map-ready", this._handleMapReady, {
+					once: true,
+				});
+				mapElement.addEventListener(
+					"oc-map-viewport-change",
+					this._handleViewportChange,
+				);
+			}
+			this._hasRendered = true;
+		}
+
+		this.updateViewFromState();
+		this.renderSpatialLayers();
+	}
+
+	updateViewFromState() {
 		const state = this._state || {
 			filters: {},
 			timeRange: {},
@@ -166,6 +287,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 			},
 			status: { text: "Timemap scaffold ready." },
 		};
+
 		const activeFilterCount =
 			(state.filters.keywords?.length || 0) +
 			(state.filters.tags?.length || 0) +
@@ -179,97 +301,43 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const spatialMode = state.spatial?.request?.strategy?.mode || "explore";
 		const spatialDensity = state.spatial?.request?.strategy?.density || "auto";
 
-		this.shadowRoot.innerHTML = `
-			<style>${timemapBrowserShellStyles}</style>
-			<main class="shell" aria-label="Timemap browser scaffold">
-				<open-collections-section-header
-					heading-level="1"
-					title="Timemap browser"
-					description="Scaffold layout with map, filters, timeline, and detail placeholders."
-				></open-collections-section-header>
+		this.updateText("active-filters", `Active filter values: ${activeFilterCount}`);
+		this.updateText("spatial-status", `Spatial status: ${spatialStatus}`);
+		this.updateText("spatial-features", `Returned features: ${spatialFeatureCount}`);
+		this.updateText(
+			"spatial-mode-density",
+			`Mode/density: ${spatialMode} / ${spatialDensity}`,
+		);
+		this.updateText("time-range", `Active time range: ${formatTimeRange(state.timeRange)}`);
+		this.updateText("selected", `Selected: ${selectedFeatureLabel}`);
+		this.updateText("hovered", `Hovered: ${hoveredFeatureLabel}`);
+		this.updateText("visible-overlays", `Visible overlays: ${visibleOverlayCount}`);
+		this.updateText("viewport", `Viewport: ${viewportSummary}`);
+		this.updateText("status", `Status: ${state.status.text}`);
 
-				<div class="layout">
-					<section class="main-column" aria-label="Timemap main workspace">
-						<open-collections-section-panel
-							title="Filters"
-							description="Reserved area for future timemap filters."
-							heading-level="2"
-							surface
-						>
-							<div class="panel-content">
-								<p class="panel-note">Filter controls will be introduced in a later iteration.</p>
-								<p class="panel-note">Active filter values: ${activeFilterCount}</p>
-							</div>
-						</open-collections-section-panel>
+		this.syncMapViewport(state.viewport);
+	}
 
-						<open-collections-section-panel
-							title="Map"
-							description="Shared oc-map primitive scaffolded for timemap integration."
-							heading-level="2"
-							surface
-							class="map-panel"
-						>
-							<div class="panel-content">
-								<p class="panel-note">Spatial status: ${spatialStatus}</p>
-								<p class="panel-note">Returned features: ${spatialFeatureCount}</p>
-								<p class="panel-note">Mode/density: ${spatialMode} / ${spatialDensity}</p>
-							</div>
-							<div class="map-wrap">
-								<oc-map
-									center-lng="${state.viewport.center.lng}"
-									center-lat="${state.viewport.center.lat}"
-									zoom="${state.viewport.zoom}"
-									style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-								></oc-map>
-							</div>
-						</open-collections-section-panel>
-
-						<open-collections-section-panel
-							title="Timeline"
-							description="Reserved area for future timeline controls and tracks."
-							heading-level="2"
-							surface
-						>
-							<div class="panel-content">
-								<p class="panel-note">Timeline UI scaffold placeholder.</p>
-								<p class="panel-note">Active time range: ${formatTimeRange(state.timeRange)}</p>
-							</div>
-						</open-collections-section-panel>
-					</section>
-
-					<aside class="side-column" aria-label="Timemap details workspace">
-						<open-collections-section-panel
-							title="Cards & detail"
-							description="Reserved area for card list, drawer, and item details."
-							heading-level="2"
-							surface
-						>
-							<div class="panel-content">
-								<p class="panel-note">Detail drawer/card composition will be implemented in a future step.</p>
-								<p class="panel-note">Selected: ${selectedFeatureLabel}</p>
-								<p class="panel-note">Hovered: ${hoveredFeatureLabel}</p>
-								<p class="panel-note">Visible overlays: ${visibleOverlayCount}</p>
-								<p class="panel-note">Viewport: ${viewportSummary}</p>
-								<p class="panel-note">Status: ${state.status.text}</p>
-							</div>
-						</open-collections-section-panel>
-					</aside>
-				</div>
-			</main>
-		`;
-
-		const mapElement = this.shadowRoot.querySelector("oc-map");
-		if (mapElement) {
-			mapElement.addEventListener("oc-map-ready", this._handleMapReady, {
-				once: true,
-			});
-			mapElement.addEventListener(
-				"oc-map-viewport-change",
-				this._handleViewportChange,
-			);
+	updateText(bindKey, value) {
+		const element = this.shadowRoot.querySelector(`[data-bind="${bindKey}"]`);
+		if (element && element.textContent !== value) {
+			element.textContent = value;
 		}
+	}
 
-		this._mapReady = false;
+	syncMapViewport(viewport = {}) {
+		const mapElement = this.shadowRoot.querySelector("oc-map");
+		if (!mapElement) {
+			return;
+		}
+		const centerSignature = toCenterSignature(viewport);
+		if (this._lastAppliedCenterSignature === centerSignature) {
+			return;
+		}
+		mapElement.setAttribute("center-lng", String(viewport.center?.lng ?? 0));
+		mapElement.setAttribute("center-lat", String(viewport.center?.lat ?? 0));
+		mapElement.setAttribute("zoom", String(viewport.zoom ?? 0));
+		this._lastAppliedCenterSignature = centerSignature;
 	}
 
 	_onMapReady() {
@@ -327,6 +395,14 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const normalizedFeatures = features
 			.map((feature, index) => toMapFeature(feature, `stub-feature-${index}`))
 			.filter(Boolean);
+		const nextLayerDataSignature = createLayerDataSignature(
+			normalizedFeatures,
+			state.visibleOverlays,
+		);
+		if (nextLayerDataSignature === this._lastLayerDataSignature) {
+			return;
+		}
+		this._lastLayerDataSignature = nextLayerDataSignature;
 
 		const pointFeatures = normalizedFeatures.filter(
 			(feature) => feature.geometry?.type === "Point",

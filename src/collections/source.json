@@ -26,6 +26,10 @@
     {
       "id": "time-compare",
       "manifest": "time-compare/collection.json"
+    },
+    {
+      "id": "hilversum-wikimedia",
+      "manifest": "hilversum-wikimedia/collection.json"
     }
 
   ]

@@ -7,10 +7,15 @@ const timemapBrowserShellStyles = `
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 		--timeline-reserved-space: 5.2rem;
 		--timemap-shell-bottom-inset: 0px;
+		/* Map overlay layout tokens */
 		--timemap-shell-overlay-inline-inset: clamp(0.85rem, 2.8vw, 1.4rem);
-		--timemap-shell-overlay-top-gap: clamp(0.45rem, 1.6vh, 0.75rem);
-		--timemap-shell-overlay-bottom-gap: clamp(0.4rem, 1.2vh, 0.7rem);
-		--timemap-shell-detail-rail-gap: clamp(0.7rem, 2vh, 1rem);
+		--timemap-shell-overlay-top-offset: clamp(0.45rem, 1.6vh, 0.75rem);
+		--timemap-shell-overlay-bottom-offset: clamp(0.4rem, 1.2vh, 0.7rem);
+		--timemap-shell-overlay-detail-rail-gap: clamp(0.7rem, 2vh, 1rem);
+		--timemap-shell-safe-top: env(safe-area-inset-top, 0px);
+		--timemap-shell-safe-right: env(safe-area-inset-right, 0px);
+		--timemap-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+		--timemap-shell-safe-left: env(safe-area-inset-left, 0px);
 	}
 
 	.shell {
@@ -41,45 +46,42 @@ const timemapBrowserShellStyles = `
 		--oc-border-default: transparent;
 	}
 
-	.overlay-layer,
-	.detail-overlay-layer {
+	.overlay-region {
 		position: absolute;
-		inset-inline: 0;
-		padding-inline-start: max(
-			env(safe-area-inset-left, 0px),
+		inset-inline-start: max(
+			var(--timemap-shell-safe-left),
 			var(--timemap-shell-overlay-inline-inset)
 		);
-		padding-inline-end: max(
-			env(safe-area-inset-right, 0px),
+		inset-inline-end: max(
+			var(--timemap-shell-safe-right),
 			var(--timemap-shell-overlay-inline-inset)
 		);
 		pointer-events: none;
 	}
 
 	.top-overlay {
-		top: 0;
-		z-index: 4;
-		padding-block-start: max(
-			env(safe-area-inset-top, 0px),
-			var(--timemap-shell-overlay-top-gap)
+		inset-block-start: calc(
+			var(--timemap-shell-safe-top) + var(--timemap-shell-overlay-top-offset)
 		);
+		z-index: 4;
 	}
 
 	.bottom-overlay {
-		bottom: 0;
-		z-index: 2;
-		padding-block-end: calc(
-			max(env(safe-area-inset-bottom, 0px), var(--timemap-shell-overlay-bottom-gap)) +
+		inset-block-end: calc(
+			var(--timemap-shell-safe-bottom) +
+				var(--timemap-shell-overlay-bottom-offset) +
 				var(--timemap-shell-bottom-inset, 0px)
 		);
+		z-index: 2;
 	}
 
-	.detail-overlay-layer {
-		bottom: calc(
+	.detail-overlay {
+		inset-block-end: calc(
 			var(--timeline-reserved-space, 5.2rem) +
-				max(env(safe-area-inset-bottom, 0px), 0px) +
+				var(--timemap-shell-safe-bottom) +
+				var(--timemap-shell-overlay-bottom-offset) +
 				var(--timemap-shell-bottom-inset, 0px) +
-				var(--timemap-shell-detail-rail-gap)
+				var(--timemap-shell-overlay-detail-rail-gap)
 		);
 		z-index: 4;
 	}
@@ -210,7 +212,7 @@ const timemapBrowserShellStyles = `
 		inline-size: min(100%, 34rem);
 		max-block-size: min(52vh, 26rem);
 		overflow: auto;
-		margin-inline: auto auto;
+		margin-inline: 0;
 		padding: 0.65rem 0.72rem 0.75rem;
 		border-radius: 1rem;
 	}
@@ -345,11 +347,13 @@ const timemapBrowserShellStyles = `
 			padding-block-end: 0.52rem;
 		}
 
-		.detail-overlay-layer {
-			bottom: calc(
+		.detail-overlay {
+			inset-block-end: calc(
 				var(--timeline-reserved-space, 4.8rem) +
+					var(--timemap-shell-safe-bottom) +
+					var(--timemap-shell-overlay-bottom-offset) +
 					var(--timemap-shell-bottom-inset, 0px) +
-					var(--timemap-shell-detail-rail-gap)
+					var(--timemap-shell-overlay-detail-rail-gap)
 			);
 		}
 
@@ -629,7 +633,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 						</div>
 					</section>
 
-					<section class="overlay-layer top-overlay" data-region="top-overlay">
+					<section class="overlay-region top-overlay" data-region="top-overlay">
 						<div class="top-chrome" data-bind="top-chrome">
 							<div class="top-primary">
 								<h1 class="top-title">Timemap browser</h1>
@@ -644,7 +648,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 						</div>
 					</section>
 
-					<section class="detail-overlay-layer" data-region="detail-overlay">
+					<section class="overlay-region detail-overlay" data-region="detail-overlay">
 						<div class="detail-shell" data-bind="detail-shell" hidden>
 							<div class="detail-header">
 								<h2 class="detail-heading">Selected feature</h2>
@@ -654,7 +658,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 						</div>
 					</section>
 
-					<section class="overlay-layer bottom-overlay" data-region="bottom-overlay">
+					<section class="overlay-region bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
 							<div class="timeline-pill" aria-hidden="true"></div>
 							<p class="timeline-title">Timeline region (v1 reserved)</p>

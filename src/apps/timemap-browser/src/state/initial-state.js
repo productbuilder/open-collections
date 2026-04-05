@@ -1,4 +1,9 @@
 import { createCollectionQueryState } from "../../../../shared/data/query/collection-query-contract.js";
+import {
+	createSpatialQueryInput,
+	createSpatialResponsePayload,
+	normalizeSpatialQueryInput,
+} from "../../../../shared/data/spatial/spatial-query-contract.js";
 
 function createInitialViewport() {
 	return {
@@ -23,6 +28,14 @@ function createInitialVisibleOverlays() {
 
 export function createTimemapBrowserInitialState() {
 	const query = createCollectionQueryState();
+	const viewport = createInitialViewport();
+	const spatialRequest = normalizeSpatialQueryInput(
+		{
+			query,
+			viewport,
+		},
+		createSpatialQueryInput(),
+	);
 	return {
 		query,
 		filters: {
@@ -34,7 +47,12 @@ export function createTimemapBrowserInitialState() {
 		selectedFeatureId: null,
 		hoveredFeatureId: null,
 		visibleOverlays: createInitialVisibleOverlays(),
-		viewport: createInitialViewport(),
+		viewport,
+		spatial: {
+			request: spatialRequest,
+			response: createSpatialResponsePayload(),
+			status: "idle",
+		},
 		status: {
 			tone: "neutral",
 			text: "Timemap scaffold ready for interaction wiring.",

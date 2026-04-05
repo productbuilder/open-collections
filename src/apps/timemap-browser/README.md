@@ -36,5 +36,6 @@ From repository root:
   - selection/hover
   - overlays
   - viewport
+  - spatial loading request/response scaffold via `src/shared/data/spatial/spatial-query-contract.js`
 - `src/controllers/timemap-browser-controller.js` provides lightweight orchestration helpers (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, etc.) and keeps a normalized shared `query` snapshot in sync.
 - `src/app.js` wires the controller to the shell component so rendering stays in UI components while state/orchestration stays app-local.

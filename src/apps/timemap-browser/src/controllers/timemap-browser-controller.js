@@ -3,7 +3,21 @@ import {
 	normalizeCollectionQueryFilterPatch,
 	normalizeCollectionQueryState,
 } from "../../../../shared/data/query/collection-query-contract.js";
+import {
+	createSpatialQueryInput,
+	normalizeSpatialQueryInput,
+} from "../../../../shared/data/spatial/spatial-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
+
+function buildSpatialRequest(state) {
+	return normalizeSpatialQueryInput(
+		{
+			query: state.query,
+			viewport: state.viewport,
+		},
+		createSpatialQueryInput(),
+	);
+}
 
 function cloneState(state) {
 	return {
@@ -20,6 +34,23 @@ function cloneState(state) {
 		viewport: {
 			...state.viewport,
 			center: { ...state.viewport.center },
+		},
+		spatial: {
+			...state.spatial,
+			request: normalizeSpatialQueryInput(state.spatial?.request),
+			response: {
+				...(state.spatial?.response || {}),
+				features: [...(state.spatial?.response?.features || [])],
+				clusters: [...(state.spatial?.response?.clusters || [])],
+				aggregates: {
+					...(state.spatial?.response?.aggregates || {}),
+					byType: [...(state.spatial?.response?.aggregates?.byType || [])],
+					byTimeBucket: [...(state.spatial?.response?.aggregates?.byTimeBucket || [])],
+				},
+				pageInfo: { ...(state.spatial?.response?.pageInfo || {}) },
+				meta: { ...(state.spatial?.response?.meta || {}) },
+				request: { ...(state.spatial?.response?.request || {}) },
+			},
 		},
 		status: { ...state.status },
 	};
@@ -66,6 +97,13 @@ export function createTimemapBrowserController(
 					tags: [...nextQuery.tags],
 					types: [...nextQuery.types],
 				},
+				spatial: {
+					...state.spatial,
+					request: buildSpatialRequest({
+						...state,
+						query: nextQuery,
+					}),
+				},
 			});
 		},
 		setTimeRange(timeRange = {}) {
@@ -82,6 +120,13 @@ export function createTimemapBrowserController(
 				query: nextQuery,
 				timeRange: {
 					...nextQuery.timeRange,
+				},
+				spatial: {
+					...state.spatial,
+					request: buildSpatialRequest({
+						...state,
+						query: nextQuery,
+					}),
 				},
 			});
 		},
@@ -103,14 +148,22 @@ export function createTimemapBrowserController(
 			});
 		},
 		setViewport(viewport = {}) {
+			const nextViewport = {
+				...state.viewport,
+				...viewport,
+				center: {
+					...state.viewport.center,
+					...(viewport.center || {}),
+				},
+			};
 			patchState({
-				viewport: {
-					...state.viewport,
-					...viewport,
-					center: {
-						...state.viewport.center,
-						...(viewport.center || {}),
-					},
+				viewport: nextViewport,
+				spatial: {
+					...state.spatial,
+					request: buildSpatialRequest({
+						...state,
+						viewport: nextViewport,
+					}),
 				},
 			});
 		},

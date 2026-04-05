@@ -8,6 +8,7 @@ const timemapBrowserShellStyles = `
 		--timeline-reserved-space: 5.2rem;
 		--timemap-shell-bottom-inset: 0px;
 		--timemap-shell-overlay-inline-inset: clamp(0.5rem, 2.2vw, 1rem);
+		--timemap-shell-top-inline-inset: clamp(0.85rem, 3vw, 1.4rem);
 	}
 
 	.shell {
@@ -33,6 +34,9 @@ const timemapBrowserShellStyles = `
 
 	.map-wrap oc-map {
 		--oc-map-height: 100%;
+		--oc-radius-md: 0px;
+		--oc-border-width-sm: 0px;
+		--oc-border-default: transparent;
 	}
 
 	.overlay-layer {
@@ -53,6 +57,14 @@ const timemapBrowserShellStyles = `
 		top: 0;
 		z-index: 4;
 		padding-block-start: max(env(safe-area-inset-top, 0px), clamp(0.45rem, 1.6vh, 0.75rem));
+		padding-inline-start: max(
+			env(safe-area-inset-left, 0px),
+			var(--timemap-shell-top-inline-inset)
+		);
+		padding-inline-end: max(
+			env(safe-area-inset-right, 0px),
+			var(--timemap-shell-top-inline-inset)
+		);
 	}
 
 	.bottom-overlay {

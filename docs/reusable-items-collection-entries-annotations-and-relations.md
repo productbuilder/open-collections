@@ -195,6 +195,25 @@ Explicit relations can support:
 - lightweight interoperability
 - easier understanding of reuse and interpretation
 
+### Naming alignment for base manifests
+
+In the conceptual model, "relation" remains a useful term for relationship thinking.
+
+In the practical `collection.json` base item format, prefer the field name `links` for authoring simplicity and cross-app consistency.
+
+Recommended base shape:
+
+```json
+{
+  "links": [
+    { "type": "relatedTo", "target": "item-002" },
+    { "type": "sameAs", "target": "https://example.org/object/123" }
+  ]
+}
+```
+
+This keeps relationship data explicit while avoiding a heavier graph vocabulary in the primary authoring format.
+
 ## 7. A simple organizing principle
 
 A concise organizing principle for this model is:

@@ -1,19 +1,21 @@
-# Open Collections Timemap Browser App (Scaffold)
+# Open Collections Timemap Browser App (Map-first v1 shell)
 
-`timemap-browser` is the first app-level scaffold for a future timemap browsing experience.
+`timemap-browser` now uses a map-first overlay shell that keeps the map as the full stage while reserving top chrome, bottom timeline space, and selection detail overlays.
 
 ## Scope (this phase)
 
-- app bootstrapping + registration as a web-component app
-- layout composition for filters, map, timeline, and detail/cards placeholders
-- shared `oc-map` primitive mounted with a practical development default view (Hilversum)
+- full-stage `oc-map` composition for timemap shell
+- top overlay chrome region with optional filter entry
+- bottom timeline region reserved as a primary timemap control area (placeholder content for now)
+- selection-driven detail overlay above the timeline region
+- controller/state/query/spatial contracts preserved from scaffold iteration
 
 ## Not included yet
 
 - production data loading and map layers
 - full filter behavior
-- full timeline interactions
-- full cards/detail logic
+- reusable shared timeline slider implementation
+- full cards/detail domain logic
 
 ## Run locally
 
@@ -22,20 +24,47 @@ From repository root:
 1. `pnpm site:preview`
 2. Open `http://localhost:4321/src/apps/timemap-browser/`
 
+## Host configuration attributes (v1)
+
+Set on `<timemap-browser>`:
+
+- `show-top-chrome="true|false"`
+- `show-timeline="true|false"`
+- `show-detail-overlay="true|false"`
+- `show-filter-entry="true|false"`
+- `map-edge-to-edge="true|false"`
+- `embed-density="comfortable|compact"`
+- `map-clear-selection-on-background="true|false"`
+
+Default behavior:
+
+- standalone runtime: top chrome visible
+- embedded runtime (`data-oc-app-mode="embedded"` or embed data attributes): top chrome hidden by default
+- timeline + detail overlay regions remain enabled by default
+
 ## Manual verification
 
-- The app should render a titled scaffold page.
-- The filter, timeline, and detail/cards areas should show placeholder content.
-- The map area should render a working `oc-map` centered around Hilversum.
+Desktop:
+
+- The map should fill the entire app stage.
+- Top overlay chrome should render with timemap summary text.
+- Bottom timeline placeholder should remain visible.
+- Clicking a map feature should open the bottom detail overlay and highlight selection.
+- Clicking "Close" or "Clear selection" should close detail and clear map selection.
+
+Mobile:
+
+- Timeline placeholder stays pinned at bottom edge.
+- Detail opens as a bottom-sheet-like overlay above timeline.
+- Tapping map background should clear selection (default mobile behavior).
+
+Configurability:
+
+- Toggle `show-top-chrome`, `show-timeline`, and `show-detail-overlay` attributes and verify overlay visibility changes.
 
 ## Internal structure (this phase)
 
-- `src/state/initial-state.js` defines a practical app-local state shape and seeds query defaults from `src/shared/data/query/collection-query-contract.js` for:
-  - filters
-  - time range
-  - selection/hover
-  - overlays
-  - viewport
-  - spatial loading request/response scaffold via `src/shared/data/spatial/spatial-query-contract.js`
-- `src/controllers/timemap-browser-controller.js` provides lightweight orchestration helpers (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, etc.) and keeps a normalized shared `query` snapshot in sync.
-- `src/app.js` wires the controller to the shell component so rendering stays in UI components while state/orchestration stays app-local.
+- `src/state/initial-state.js` defines the app-local state shape and seeds query defaults from `src/shared/data/query/collection-query-contract.js`.
+- `src/controllers/timemap-browser-controller.js` orchestrates state updates (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, selection handling, etc.).
+- `src/app.js` resolves runtime/host presentation config and wires controller state/events to shell.
+- `src/components/timemap-browser-shell.js` owns map-first visual composition and overlay stacking while delegating non-visual orchestration to the controller.

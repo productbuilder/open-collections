@@ -425,6 +425,131 @@ function toFeatureCollection(features) {
 	};
 }
 
+function toPointCoordinateKey(feature) {
+	const coordinates = feature?.geometry?.coordinates;
+	if (!Array.isArray(coordinates) || coordinates.length < 2) {
+		return null;
+	}
+	const [lng, lat] = coordinates;
+	if (!Number.isFinite(Number(lng)) || !Number.isFinite(Number(lat))) {
+		return null;
+	}
+	return `${Number(lng).toFixed(6)}:${Number(lat).toFixed(6)}`;
+}
+
+function getPointFeatureVisibilityDiagnostics(features = []) {
+	const pointFeatures = features.filter((feature) => feature?.geometry?.type === "Point");
+	if (pointFeatures.length === 0) {
+		return {
+			pointFeatureCount: 0,
+			uniqueCoordinateCount: 0,
+			overlappingItemCount: 0,
+			overlapGroupCount: 0,
+		};
+	}
+	const coordinateCounts = new Map();
+	for (const feature of pointFeatures) {
+		const coordinateKey = toPointCoordinateKey(feature);
+		if (!coordinateKey) {
+			continue;
+		}
+		coordinateCounts.set(coordinateKey, (coordinateCounts.get(coordinateKey) || 0) + 1);
+	}
+
+	let uniqueCoordinateCount = 0;
+	let overlappingItemCount = 0;
+	let overlapGroupCount = 0;
+	for (const count of coordinateCounts.values()) {
+		uniqueCoordinateCount += 1;
+		if (count > 1) {
+			overlappingItemCount += count;
+			overlapGroupCount += 1;
+		}
+	}
+
+	return {
+		pointFeatureCount: pointFeatures.length,
+		uniqueCoordinateCount,
+		overlappingItemCount,
+		overlapGroupCount,
+	};
+}
+
+function toDeterministicRadians(value) {
+	const normalized = String(value || "");
+	let hash = 0;
+	for (let index = 0; index < normalized.length; index += 1) {
+		hash = (hash * 31 + normalized.charCodeAt(index)) >>> 0;
+	}
+	return ((hash % 360) * Math.PI) / 180;
+}
+
+function offsetPointCoordinates(lng, lat, index, total) {
+	if (!Number.isFinite(lng) || !Number.isFinite(lat) || total <= 1) {
+		return [lng, lat];
+	}
+	const radiusMeters = 14;
+	const degreesPerMeter = 1 / 111320;
+	const latOffsetDegrees = radiusMeters * degreesPerMeter;
+	const latRadians = (lat * Math.PI) / 180;
+	const lonDivisor = Math.max(Math.cos(latRadians), 0.2);
+	const lonOffsetDegrees = latOffsetDegrees / lonDivisor;
+	const stepRadians = (Math.PI * 2) / total;
+	const startRadians = toDeterministicRadians(`${lng}:${lat}:${total}`);
+	const angleRadians = startRadians + index * stepRadians;
+	return [
+		lng + Math.cos(angleRadians) * lonOffsetDegrees,
+		lat + Math.sin(angleRadians) * latOffsetDegrees,
+	];
+}
+
+function applyPointOverlapOffsets(pointFeatures = []) {
+	const pointGroupsByCoordinate = new Map();
+	const passthroughFeatures = [];
+	for (const feature of pointFeatures) {
+		const coordinateKey = toPointCoordinateKey(feature);
+		if (!coordinateKey) {
+			passthroughFeatures.push(feature);
+			continue;
+		}
+		if (!pointGroupsByCoordinate.has(coordinateKey)) {
+			pointGroupsByCoordinate.set(coordinateKey, []);
+		}
+		pointGroupsByCoordinate.get(coordinateKey).push(feature);
+	}
+
+	const adjustedPointFeatures = [];
+	for (const group of pointGroupsByCoordinate.values()) {
+		const groupSize = group.length;
+		for (const [index, feature] of group.entries()) {
+			const coordinates = Array.isArray(feature.geometry?.coordinates)
+				? feature.geometry.coordinates
+				: [];
+			const [lng, lat] = coordinates;
+			const [offsetLng, offsetLat] = offsetPointCoordinates(
+				Number(lng),
+				Number(lat),
+				index,
+				groupSize,
+			);
+			adjustedPointFeatures.push({
+				...feature,
+				geometry: {
+					...feature.geometry,
+					coordinates: [offsetLng, offsetLat],
+				},
+				properties: {
+					...(feature.properties || {}),
+					overlapCount: groupSize,
+					overlapIndex: index,
+					originalCoordinates: [Number(lng), Number(lat)],
+				},
+			});
+		}
+	}
+	return [...adjustedPointFeatures, ...passthroughFeatures];
+}
+
 function toMapFeature(feature, fallbackId) {
 	if (!feature || typeof feature !== "object" || !feature.geometry) {
 		return null;
@@ -559,6 +684,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._lastMapViewportSignature = null;
 		this._lastSpatialRenderSignature = null;
 		this._lastFeatureClickTimestamp = 0;
+		this._hasAutoFitInitialCollectionPoints = false;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
 		this._handleMapFeatureClick = this._onMapFeatureClick.bind(this);
@@ -746,12 +872,16 @@ class TimemapBrowserShellElement extends HTMLElement {
 			(state.filters.keywords?.length || 0) +
 			(state.filters.tags?.length || 0) +
 			(state.filters.types?.length || 0);
-		const spatialFeatureCount = state.spatial?.response?.features?.length || 0;
+		const spatialFeatures = Array.isArray(state.spatial?.response?.features)
+			? state.spatial.response.features
+			: [];
+		const spatialFeatureCount = spatialFeatures.length;
 		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
+		const pointVisibilityDiagnostics = getPointFeatureVisibilityDiagnostics(spatialFeatures);
 
 		this.updateText(
 			"top-summary",
-			`${spatialFeatureCount} mapped features • ${activeFilterCount} active filters • ${visibleOverlayCount} visible overlays`,
+			`${spatialFeatureCount} mapped features (${pointVisibilityDiagnostics.uniqueCoordinateCount} visible positions; ${pointVisibilityDiagnostics.overlapGroupCount} overlap groups) • ${activeFilterCount} active filters • ${visibleOverlayCount} visible overlays`,
 		);
 		this.updateText(
 			"time-range",
@@ -978,6 +1108,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const pointFeatures = normalizedFeatures.filter(
 			(feature) => feature.geometry?.type === "Point",
 		);
+		const adjustedPointFeatures = applyPointOverlapOffsets(pointFeatures);
 		const lineFeatures = normalizedFeatures.filter(
 			(feature) => feature.geometry?.type === "LineString",
 		);
@@ -1003,17 +1134,43 @@ class TimemapBrowserShellElement extends HTMLElement {
 			selectionProperty: "id",
 			visible: Boolean(state.visibleOverlays?.features),
 		});
-		mapElement.setGeoJsonData("timemap-points", toFeatureCollection(pointFeatures), {
-			type: "circle",
-			paint: {
-				"circle-radius": 7,
-				"circle-color": "#1d4ed8",
-				"circle-stroke-width": 1.5,
-				"circle-stroke-color": "#e2e8f0",
+		mapElement.setGeoJsonData(
+			"timemap-points",
+			toFeatureCollection(adjustedPointFeatures),
+			{
+				type: "circle",
+				paint: {
+					"circle-radius": [
+						"case",
+						[">", ["coalesce", ["get", "overlapCount"], 1], 1],
+						8.5,
+						7,
+					],
+					"circle-color": [
+						"case",
+						[">", ["coalesce", ["get", "overlapCount"], 1], 1],
+						"#0f766e",
+						"#1d4ed8",
+					],
+					"circle-stroke-width": 1.5,
+					"circle-stroke-color": "#e2e8f0",
+				},
+				selectionProperty: "id",
+				visible: Boolean(state.visibleOverlays?.features),
 			},
-			selectionProperty: "id",
-			visible: Boolean(state.visibleOverlays?.features),
-		});
+		);
+
+		if (!this._hasAutoFitInitialCollectionPoints && adjustedPointFeatures.length > 0) {
+			const mobileViewport = this.isMobileViewport();
+			const didAutoFit = mapElement.fitToData("timemap-points", {
+				padding: mobileViewport ? 54 : 78,
+				maxZoom: mobileViewport ? 14.25 : 14.8,
+				duration: 0,
+			});
+			if (didAutoFit) {
+				this._hasAutoFitInitialCollectionPoints = true;
+			}
+		}
 
 		const selectedFeature = toSelectedFeatureSummary(state);
 		if (!selectedFeature) {

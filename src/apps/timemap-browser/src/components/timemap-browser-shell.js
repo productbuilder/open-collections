@@ -7,15 +7,15 @@ const timemapBrowserShellStyles = `
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 		--timeline-reserved-space: 5.2rem;
 		--timemap-shell-bottom-inset: 0px;
-		/* Map overlay layout tokens */
 		--timemap-shell-overlay-inline-inset: clamp(0.85rem, 2.8vw, 1.4rem);
 		--timemap-shell-overlay-top-offset: clamp(0.45rem, 1.6vh, 0.75rem);
 		--timemap-shell-overlay-bottom-offset: clamp(0.4rem, 1.2vh, 0.7rem);
 		--timemap-shell-overlay-detail-rail-gap: clamp(0.7rem, 2vh, 1rem);
-		--timemap-shell-safe-top: env(safe-area-inset-top, 0px);
-		--timemap-shell-safe-right: env(safe-area-inset-right, 0px);
-		--timemap-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
-		--timemap-shell-safe-left: env(safe-area-inset-left, 0px);
+		--timemap-shell-overlay-safe-top: env(safe-area-inset-top, 0px);
+		--timemap-shell-overlay-safe-bottom: env(safe-area-inset-bottom, 0px);
+		--timemap-shell-overlay-safe-inline-start: env(safe-area-inset-left, 0px);
+		--timemap-shell-overlay-safe-inline-end: env(safe-area-inset-right, 0px);
+		--timemap-shell-overlay-desktop-max-inline-size: none;
 	}
 
 	.shell {
@@ -49,26 +49,28 @@ const timemapBrowserShellStyles = `
 	.overlay-region {
 		position: absolute;
 		inset-inline-start: max(
-			var(--timemap-shell-safe-left),
+			var(--timemap-shell-overlay-safe-inline-start),
 			var(--timemap-shell-overlay-inline-inset)
 		);
 		inset-inline-end: max(
-			var(--timemap-shell-safe-right),
+			var(--timemap-shell-overlay-safe-inline-end),
 			var(--timemap-shell-overlay-inline-inset)
 		);
+		display: flex;
+		justify-content: center;
 		pointer-events: none;
 	}
 
 	.top-overlay {
 		inset-block-start: calc(
-			var(--timemap-shell-safe-top) + var(--timemap-shell-overlay-top-offset)
+			var(--timemap-shell-overlay-safe-top) + var(--timemap-shell-overlay-top-offset)
 		);
 		z-index: 4;
 	}
 
 	.bottom-overlay {
 		inset-block-end: calc(
-			var(--timemap-shell-safe-bottom) +
+			var(--timemap-shell-overlay-safe-bottom) +
 				var(--timemap-shell-overlay-bottom-offset) +
 				var(--timemap-shell-bottom-inset, 0px)
 		);
@@ -78,7 +80,7 @@ const timemapBrowserShellStyles = `
 	.detail-overlay {
 		inset-block-end: calc(
 			var(--timeline-reserved-space, 5.2rem) +
-				var(--timemap-shell-safe-bottom) +
+				var(--timemap-shell-overlay-safe-bottom) +
 				var(--timemap-shell-overlay-bottom-offset) +
 				var(--timemap-shell-bottom-inset, 0px) +
 				var(--timemap-shell-overlay-detail-rail-gap)
@@ -96,7 +98,8 @@ const timemapBrowserShellStyles = `
 	}
 
 	.top-chrome {
-		inline-size: min(100%, 44rem);
+		inline-size: 100%;
+		max-inline-size: var(--timemap-shell-overlay-desktop-max-inline-size);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto auto;
 		gap: 0.35rem;
@@ -172,6 +175,7 @@ const timemapBrowserShellStyles = `
 	.timeline-shell {
 		pointer-events: auto;
 		inline-size: 100%;
+		max-inline-size: var(--timemap-shell-overlay-desktop-max-inline-size);
 		box-sizing: border-box;
 		display: grid;
 		gap: 0.2rem;
@@ -209,17 +213,13 @@ const timemapBrowserShellStyles = `
 	}
 
 	.detail-shell {
-		inline-size: min(100%, 34rem);
+		inline-size: 100%;
+		max-inline-size: var(--timemap-shell-overlay-desktop-max-inline-size);
 		max-block-size: min(52vh, 26rem);
 		overflow: auto;
 		margin-inline: 0;
 		padding: 0.65rem 0.72rem 0.75rem;
 		border-radius: 1rem;
-	}
-
-	.detail-shell[data-mobile-sheet="true"] {
-		inline-size: min(100%, 44rem);
-		border-radius: 1rem 1rem 0.75rem 0.75rem;
 	}
 
 	.detail-header {
@@ -347,19 +347,15 @@ const timemapBrowserShellStyles = `
 			padding-block-end: 0.52rem;
 		}
 
-		.detail-overlay {
-			inset-block-end: calc(
-				var(--timeline-reserved-space, 4.8rem) +
-					var(--timemap-shell-safe-bottom) +
-					var(--timemap-shell-overlay-bottom-offset) +
-					var(--timemap-shell-bottom-inset, 0px) +
-					var(--timemap-shell-overlay-detail-rail-gap)
-			);
-		}
-
 		.detail-shell {
 			max-block-size: min(58vh, 26rem);
 			border-radius: 1rem 1rem 0.7rem 0.7rem;
+		}
+	}
+
+	@media (min-width: 768px) {
+		:host {
+			--timemap-shell-overlay-desktop-max-inline-size: 44rem;
 		}
 	}
 `;
@@ -748,7 +744,6 @@ class TimemapBrowserShellElement extends HTMLElement {
 		timelineShell.hidden = !config.showTimeline;
 		detailOverlay.hidden = !(config.showDetailOverlay && hasSelectedFeature);
 		detailShell.hidden = !(config.showDetailOverlay && hasSelectedFeature);
-		detailShell.dataset.mobileSheet = this.isMobileViewport() ? "true" : "false";
 		if (filterButton) {
 			filterButton.hidden = !config.showFilterEntry;
 		}

@@ -16,6 +16,9 @@ const HILVERSUM_FEATURES = Object.freeze([
 			kind: "point",
 			label: "Hilversum Center",
 			type: "place",
+			category: "place",
+			description: "Core center point used for timemap selection wiring checks.",
+			statusText: "Stub feature ready",
 		},
 	},
 	{
@@ -30,6 +33,9 @@ const HILVERSUM_FEATURES = Object.freeze([
 			kind: "point",
 			label: "Media Park",
 			type: "media",
+			category: "media",
+			description: "Media district marker in the stub spatial payload.",
+			statusText: "Stub feature ready",
 		},
 	},
 	{
@@ -44,6 +50,9 @@ const HILVERSUM_FEATURES = Object.freeze([
 			kind: "point",
 			label: "Station Hilversum",
 			type: "station",
+			category: "transport",
+			description: "Rail station marker for point selection behavior.",
+			statusText: "Stub feature ready",
 		},
 	},
 	{
@@ -62,6 +71,9 @@ const HILVERSUM_FEATURES = Object.freeze([
 			kind: "line",
 			label: "Stub transit corridor",
 			type: "route",
+			category: "transport",
+			description: "Simple line segment to validate line feature selection.",
+			statusText: "Stub feature ready",
 		},
 	},
 	{
@@ -84,6 +96,9 @@ const HILVERSUM_FEATURES = Object.freeze([
 			kind: "polygon",
 			label: "Central focus area",
 			type: "area",
+			category: "area",
+			description: "Polygon coverage for validating area selection details.",
+			statusText: "Stub feature ready",
 		},
 	},
 ]);

@@ -88,6 +88,8 @@ class TimemapBrowserElement extends HTMLElement {
 		this.lastViewportStateUpdate = null;
 		this.pendingViewportStateUpdate = null;
 		this.handleMapViewportChange = this.onMapViewportChange.bind(this);
+		this.handleMapFeatureClick = this.onMapFeatureClick.bind(this);
+		this.handleClearSelection = this.onClearSelection.bind(this);
 	}
 
 	connectedCallback() {
@@ -173,6 +175,14 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-map-viewport-change",
 			this.handleMapViewportChange,
 		);
+		shellElement.addEventListener(
+			"timemap-browser-map-feature-click",
+			this.handleMapFeatureClick,
+		);
+		shellElement.addEventListener(
+			"timemap-browser-clear-selection",
+			this.handleClearSelection,
+		);
 	}
 
 	unbindMapEvents() {
@@ -185,6 +195,14 @@ class TimemapBrowserElement extends HTMLElement {
 		shellElement.removeEventListener(
 			"timemap-browser-map-viewport-change",
 			this.handleMapViewportChange,
+		);
+		shellElement.removeEventListener(
+			"timemap-browser-map-feature-click",
+			this.handleMapFeatureClick,
+		);
+		shellElement.removeEventListener(
+			"timemap-browser-clear-selection",
+			this.handleClearSelection,
 		);
 	}
 
@@ -211,6 +229,15 @@ class TimemapBrowserElement extends HTMLElement {
 			this.pendingSpatialRefreshViewport = null;
 			this.controller.initializeSpatialData();
 		}, 280);
+	}
+
+	onMapFeatureClick(event) {
+		const featureId = event?.detail?.featureId || null;
+		this.controller.setSelectedFeature(featureId);
+	}
+
+	onClearSelection() {
+		this.controller.setSelectedFeature(null);
 	}
 
 	queueViewportStateUpdate(viewport) {

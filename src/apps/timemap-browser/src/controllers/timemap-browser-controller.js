@@ -5,6 +5,7 @@ import {
 } from "../../../../shared/data/query/collection-query-contract.js";
 import {
 	createSpatialQueryInput,
+	normalizeSpatialViewportInput,
 	normalizeSpatialQueryInput,
 } from "../../../../shared/data/spatial/spatial-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
@@ -35,6 +36,10 @@ function cloneState(state) {
 		viewport: {
 			...state.viewport,
 			center: { ...state.viewport.center },
+			bbox: state.viewport.bbox ? { ...state.viewport.bbox } : null,
+			pixelSize: state.viewport.pixelSize
+				? { ...state.viewport.pixelSize }
+				: { width: null, height: null },
 		},
 		spatial: {
 			...state.spatial,
@@ -57,11 +62,31 @@ function cloneState(state) {
 	};
 }
 
+function areViewportsEqual(left, right) {
+	if (!left || !right) {
+		return false;
+	}
+	return (
+		left.center?.lng === right.center?.lng &&
+		left.center?.lat === right.center?.lat &&
+		left.zoom === right.zoom &&
+		left.bearing === right.bearing &&
+		left.pitch === right.pitch &&
+		left.bbox?.west === right.bbox?.west &&
+		left.bbox?.south === right.bbox?.south &&
+		left.bbox?.east === right.bbox?.east &&
+		left.bbox?.north === right.bbox?.north &&
+		left.pixelSize?.width === right.pixelSize?.width &&
+		left.pixelSize?.height === right.pixelSize?.height
+	);
+}
+
 export function createTimemapBrowserController(
 	initialState = createTimemapBrowserInitialState(),
 ) {
 	let state = cloneState(initialState);
 	const listeners = new Set();
+	let latestSpatialLoadToken = 0;
 
 	function emit() {
 		const snapshot = cloneState(state);
@@ -86,6 +111,10 @@ export function createTimemapBrowserController(
 			return () => listeners.delete(listener);
 		},
 		async initializeSpatialData() {
+			const loadToken = latestSpatialLoadToken + 1;
+			latestSpatialLoadToken = loadToken;
+			const requestAtStart = normalizeSpatialQueryInput(state.spatial.request);
+
 			patchState({
 				spatial: {
 					...state.spatial,
@@ -99,7 +128,10 @@ export function createTimemapBrowserController(
 			});
 
 			try {
-				const spatialResponse = await loadStubSpatialResponse(state.spatial.request);
+				const spatialResponse = await loadStubSpatialResponse(requestAtStart);
+				if (loadToken !== latestSpatialLoadToken) {
+					return;
+				}
 				patchState({
 					spatial: {
 						...state.spatial,
@@ -113,6 +145,9 @@ export function createTimemapBrowserController(
 					},
 				});
 			} catch (error) {
+				if (loadToken !== latestSpatialLoadToken) {
+					return;
+				}
 				patchState({
 					spatial: {
 						...state.spatial,
@@ -190,14 +225,10 @@ export function createTimemapBrowserController(
 			});
 		},
 		setViewport(viewport = {}) {
-			const nextViewport = {
-				...state.viewport,
-				...viewport,
-				center: {
-					...state.viewport.center,
-					...(viewport.center || {}),
-				},
-			};
+			const nextViewport = normalizeSpatialViewportInput(viewport, state.viewport);
+			if (areViewportsEqual(nextViewport, state.viewport)) {
+				return;
+			}
 			patchState({
 				viewport: nextViewport,
 				spatial: {

@@ -11,12 +11,15 @@ class TimemapBrowserElement extends HTMLElement {
 		this.attachShadow({ mode: "open" });
 		this.controller = createTimemapBrowserController();
 		this.unsubscribeState = null;
+		this.viewportRefreshTimer = null;
+		this.handleMapViewportChange = this.onMapViewportChange.bind(this);
 	}
 
 	connectedCallback() {
 		this.render();
 		this.applyRuntimePresentation();
 		this.bindState();
+		this.bindMapEvents();
 		this.controller.initializeSpatialData();
 	}
 
@@ -24,6 +27,11 @@ class TimemapBrowserElement extends HTMLElement {
 		if (this.unsubscribeState) {
 			this.unsubscribeState();
 			this.unsubscribeState = null;
+		}
+		this.unbindMapEvents();
+		if (this.viewportRefreshTimer) {
+			clearTimeout(this.viewportRefreshTimer);
+			this.viewportRefreshTimer = null;
 		}
 	}
 
@@ -71,6 +79,44 @@ class TimemapBrowserElement extends HTMLElement {
 		this.unsubscribeState = this.controller.subscribe((nextState) => {
 			shellElement.state = nextState;
 		});
+	}
+
+	bindMapEvents() {
+		const shellElement = this.shadowRoot.querySelector(
+			"open-collections-timemap-browser-shell",
+		);
+		if (!shellElement) {
+			return;
+		}
+		shellElement.addEventListener(
+			"timemap-browser-map-viewport-change",
+			this.handleMapViewportChange,
+		);
+	}
+
+	unbindMapEvents() {
+		const shellElement = this.shadowRoot.querySelector(
+			"open-collections-timemap-browser-shell",
+		);
+		if (!shellElement) {
+			return;
+		}
+		shellElement.removeEventListener(
+			"timemap-browser-map-viewport-change",
+			this.handleMapViewportChange,
+		);
+	}
+
+	onMapViewportChange(event) {
+		const viewport = event?.detail || {};
+		this.controller.setViewport(viewport);
+		if (this.viewportRefreshTimer) {
+			clearTimeout(this.viewportRefreshTimer);
+		}
+		this.viewportRefreshTimer = setTimeout(() => {
+			this.viewportRefreshTimer = null;
+			this.controller.initializeSpatialData();
+		}, 280);
 	}
 
 	render() {

@@ -10,6 +10,15 @@ const VIEWPORT_REFRESH_THRESHOLDS = Object.freeze({
 	pixelSize: 2,
 });
 
+const VIEWPORT_STATE_THRESHOLDS = Object.freeze({
+	center: 0.00008,
+	zoom: 0.02,
+	bearing: 0.35,
+	pitch: 0.35,
+	bbox: 0.00015,
+	pixelSize: 1,
+});
+
 function absDelta(left, right) {
 	const safeLeft = Number(left);
 	const safeRight = Number(right);
@@ -19,21 +28,22 @@ function absDelta(left, right) {
 	return Math.abs(safeLeft - safeRight);
 }
 
-function hasMeaningfulViewportDelta(nextViewport, previousViewport) {
+function hasMeaningfulViewportDelta(
+	nextViewport,
+	previousViewport,
+	thresholds = VIEWPORT_REFRESH_THRESHOLDS,
+) {
 	if (!previousViewport) {
 		return true;
 	}
 	if (
 		absDelta(nextViewport.center?.lng, previousViewport.center?.lng) >=
-		VIEWPORT_REFRESH_THRESHOLDS.center ||
+		thresholds.center ||
 		absDelta(nextViewport.center?.lat, previousViewport.center?.lat) >=
-		VIEWPORT_REFRESH_THRESHOLDS.center ||
-		absDelta(nextViewport.zoom, previousViewport.zoom) >=
-		VIEWPORT_REFRESH_THRESHOLDS.zoom ||
-		absDelta(nextViewport.bearing, previousViewport.bearing) >=
-		VIEWPORT_REFRESH_THRESHOLDS.bearing ||
-		absDelta(nextViewport.pitch, previousViewport.pitch) >=
-		VIEWPORT_REFRESH_THRESHOLDS.pitch
+		thresholds.center ||
+		absDelta(nextViewport.zoom, previousViewport.zoom) >= thresholds.zoom ||
+		absDelta(nextViewport.bearing, previousViewport.bearing) >= thresholds.bearing ||
+		absDelta(nextViewport.pitch, previousViewport.pitch) >= thresholds.pitch
 	) {
 		return true;
 	}
@@ -45,19 +55,19 @@ function hasMeaningfulViewportDelta(nextViewport, previousViewport) {
 	}
 
 	if (
-		absDelta(nextBbox.west, previousBbox.west) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
-		absDelta(nextBbox.south, previousBbox.south) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
-		absDelta(nextBbox.east, previousBbox.east) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
-		absDelta(nextBbox.north, previousBbox.north) >= VIEWPORT_REFRESH_THRESHOLDS.bbox
+		absDelta(nextBbox.west, previousBbox.west) >= thresholds.bbox ||
+		absDelta(nextBbox.south, previousBbox.south) >= thresholds.bbox ||
+		absDelta(nextBbox.east, previousBbox.east) >= thresholds.bbox ||
+		absDelta(nextBbox.north, previousBbox.north) >= thresholds.bbox
 	) {
 		return true;
 	}
 
 	return (
 		absDelta(nextViewport.pixelSize?.width, previousViewport.pixelSize?.width) >=
-			VIEWPORT_REFRESH_THRESHOLDS.pixelSize ||
+			thresholds.pixelSize ||
 		absDelta(nextViewport.pixelSize?.height, previousViewport.pixelSize?.height) >=
-			VIEWPORT_REFRESH_THRESHOLDS.pixelSize
+			thresholds.pixelSize
 	);
 }
 
@@ -72,8 +82,11 @@ class TimemapBrowserElement extends HTMLElement {
 		this.controller = createTimemapBrowserController();
 		this.unsubscribeState = null;
 		this.viewportRefreshTimer = null;
+		this.viewportStateTimer = null;
 		this.lastSpatialRefreshViewport = null;
 		this.pendingSpatialRefreshViewport = null;
+		this.lastViewportStateUpdate = null;
+		this.pendingViewportStateUpdate = null;
 		this.handleMapViewportChange = this.onMapViewportChange.bind(this);
 	}
 
@@ -95,7 +108,12 @@ class TimemapBrowserElement extends HTMLElement {
 			clearTimeout(this.viewportRefreshTimer);
 			this.viewportRefreshTimer = null;
 		}
+		if (this.viewportStateTimer) {
+			clearTimeout(this.viewportStateTimer);
+			this.viewportStateTimer = null;
+		}
 		this.pendingSpatialRefreshViewport = null;
+		this.pendingViewportStateUpdate = null;
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -172,7 +190,7 @@ class TimemapBrowserElement extends HTMLElement {
 
 	onMapViewportChange(event) {
 		const viewport = event?.detail || {};
-		this.controller.setViewport(viewport);
+		this.queueViewportStateUpdate(viewport);
 
 		const refreshBaseline =
 			this.pendingSpatialRefreshViewport || this.lastSpatialRefreshViewport;
@@ -193,6 +211,35 @@ class TimemapBrowserElement extends HTMLElement {
 			this.pendingSpatialRefreshViewport = null;
 			this.controller.initializeSpatialData();
 		}, 280);
+	}
+
+	queueViewportStateUpdate(viewport) {
+		const stateBaseline =
+			this.pendingViewportStateUpdate || this.lastViewportStateUpdate;
+		if (
+			!hasMeaningfulViewportDelta(
+				viewport,
+				stateBaseline,
+				VIEWPORT_STATE_THRESHOLDS,
+			)
+		) {
+			return;
+		}
+
+		this.pendingViewportStateUpdate = viewport;
+		if (this.viewportStateTimer) {
+			return;
+		}
+
+		this.viewportStateTimer = setTimeout(() => {
+			this.viewportStateTimer = null;
+			if (!this.pendingViewportStateUpdate) {
+				return;
+			}
+			this.lastViewportStateUpdate = this.pendingViewportStateUpdate;
+			this.pendingViewportStateUpdate = null;
+			this.controller.setViewport(this.lastViewportStateUpdate);
+		}, 72);
 	}
 
 	render() {

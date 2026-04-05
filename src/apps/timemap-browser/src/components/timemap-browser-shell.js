@@ -146,6 +146,16 @@ function toCenterSignature(viewport = {}) {
 	).toFixed(6)}:${Number(viewport.zoom || 0).toFixed(4)}`;
 }
 
+function createSpatialRenderSignature(state = {}) {
+	return JSON.stringify({
+		requestId: state.spatial?.response?.request?.requestId || "",
+		featureCount: Array.isArray(state.spatial?.response?.features)
+			? state.spatial.response.features.length
+			: 0,
+		featuresVisible: Boolean(state.visibleOverlays?.features),
+	});
+}
+
 class TimemapBrowserShellElement extends HTMLElement {
 	constructor() {
 		super();
@@ -155,18 +165,23 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._hasRendered = false;
 		this._lastLayerDataSignature = null;
 		this._lastAppliedCenterSignature = null;
+		this._lastMapViewportSignature = null;
+		this._lastSpatialRenderSignature = null;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
 	}
 
 	set state(nextState) {
+		const previousState = this._state;
 		this._state = nextState;
 		if (!this._hasRendered) {
 			this.render();
 			return;
 		}
 		this.updateViewFromState();
-		this.renderSpatialLayers();
+		if (this.shouldRenderSpatialLayers(previousState, nextState)) {
+			this.renderSpatialLayers();
+		}
 	}
 
 	get state() {
@@ -334,9 +349,22 @@ class TimemapBrowserShellElement extends HTMLElement {
 		if (this._lastAppliedCenterSignature === centerSignature) {
 			return;
 		}
-		mapElement.setAttribute("center-lng", String(viewport.center?.lng ?? 0));
-		mapElement.setAttribute("center-lat", String(viewport.center?.lat ?? 0));
-		mapElement.setAttribute("zoom", String(viewport.zoom ?? 0));
+		if (this._lastMapViewportSignature === centerSignature) {
+			this._lastAppliedCenterSignature = centerSignature;
+			return;
+		}
+		const centerLngValue = String(viewport.center?.lng ?? 0);
+		const centerLatValue = String(viewport.center?.lat ?? 0);
+		const zoomValue = String(viewport.zoom ?? 0);
+		if (mapElement.getAttribute("center-lng") !== centerLngValue) {
+			mapElement.setAttribute("center-lng", centerLngValue);
+		}
+		if (mapElement.getAttribute("center-lat") !== centerLatValue) {
+			mapElement.setAttribute("center-lat", centerLatValue);
+		}
+		if (mapElement.getAttribute("zoom") !== zoomValue) {
+			mapElement.setAttribute("zoom", zoomValue);
+		}
 		this._lastAppliedCenterSignature = centerSignature;
 	}
 
@@ -356,6 +384,11 @@ class TimemapBrowserShellElement extends HTMLElement {
 		if (!center) {
 			return;
 		}
+		const viewportSignature = toCenterSignature({
+			center,
+			zoom: Number(detail.zoom),
+		});
+		this._lastMapViewportSignature = viewportSignature;
 
 		const mapElement = this.shadowRoot.querySelector("oc-map");
 		this.dispatchEvent(
@@ -380,6 +413,18 @@ class TimemapBrowserShellElement extends HTMLElement {
 				},
 			}),
 		);
+	}
+
+	shouldRenderSpatialLayers(previousState, nextState) {
+		if (!nextState) {
+			return false;
+		}
+		const nextSignature = createSpatialRenderSignature(nextState);
+		if (this._lastSpatialRenderSignature === nextSignature) {
+			return false;
+		}
+		this._lastSpatialRenderSignature = nextSignature;
+		return previousState !== nextState;
 	}
 
 	renderSpatialLayers() {

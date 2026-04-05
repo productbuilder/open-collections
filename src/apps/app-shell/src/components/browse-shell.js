@@ -192,6 +192,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					padding: 0.45rem 0.5rem;
 					background: #ecebe7;
 					border-bottom: 1px solid #d8d5cf;
+					z-index: 1;
 				}
 				.control-row {
 					display: grid;
@@ -291,6 +292,48 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					outline: 2px solid #6b7280;
 					outline-offset: 1px;
 				}
+
+				.browse-shell[data-mode="map"] {
+					grid-template-rows: minmax(0, 1fr);
+					position: relative;
+				}
+				.browse-shell[data-mode="map"] .app-viewport {
+					position: relative;
+				}
+				.browse-shell[data-mode="map"] .control-strip {
+					position: absolute;
+					top: 0.6rem;
+					left: 0.6rem;
+					right: 0.6rem;
+					background: transparent;
+					border-bottom: none;
+					padding: 0;
+					pointer-events: none;
+					z-index: 8;
+				}
+				.browse-shell[data-mode="map"] .control-row {
+					pointer-events: auto;
+				}
+				.browse-shell[data-mode="map"] .search-entry,
+				.browse-shell[data-mode="map"] .filter-entry,
+				.browse-shell[data-mode="map"] .mode-switch {
+					box-shadow: 0 2px 10px rgba(45, 42, 38, 0.16);
+					border-color: rgba(65, 61, 56, 0.2);
+					background: rgba(255, 255, 255, 0.96);
+					backdrop-filter: blur(6px);
+				}
+				.browse-shell[data-mode="map"] .search-entry,
+				.browse-shell[data-mode="map"] .filter-entry {
+					block-size: 2.2rem;
+					border-radius: 999px;
+				}
+				.browse-shell[data-mode="map"] .mode-switch {
+					padding: 0.16rem;
+				}
+				.browse-shell[data-mode="map"] .mode-button {
+					block-size: 1.9rem;
+				}
+
 				@media (max-width: 760px) {
 					.control-strip {
 						gap: 0.38rem;
@@ -312,9 +355,18 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						font-size: 0.75rem;
 						padding: 0 0.46rem;
 					}
+					.browse-shell[data-mode="map"] .control-strip {
+						top: 0.45rem;
+						left: 0.45rem;
+						right: 0.45rem;
+					}
+					.browse-shell[data-mode="map"] .search-entry,
+					.browse-shell[data-mode="map"] .filter-entry {
+						block-size: 2.05rem;
+					}
 				}
 			</style>
-			<section class="browse-shell" aria-label="Browse mode shell">
+			<section class="browse-shell" data-mode="${browseMode}" aria-label="Browse mode shell">
 				<div class="control-strip" aria-label="Browse controls">
 					<div class="control-row control-row--primary">
 						<button class="search-entry" type="button" data-action="search-entry" aria-label="Search browse results">

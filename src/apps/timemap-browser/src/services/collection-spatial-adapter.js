@@ -1,0 +1,133 @@
+function toTrimmedText(value) {
+	return String(value ?? "").trim();
+}
+
+function toFiniteCoordinate(value) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) {
+		return null;
+	}
+	return number;
+}
+
+function readLongitude(location = {}) {
+	const lon = toFiniteCoordinate(location.lon);
+	if (lon !== null) {
+		return lon;
+	}
+	return toFiniteCoordinate(location.lng);
+}
+
+function readLatitude(location = {}) {
+	return toFiniteCoordinate(location.lat);
+}
+
+function hasNonEmptyText(value) {
+	return toTrimmedText(value).length > 0;
+}
+
+function deriveSubtitle(item = {}) {
+	if (hasNonEmptyText(item.subtitle)) {
+		return toTrimmedText(item.subtitle);
+	}
+	if (hasNonEmptyText(item.date)) {
+		return toTrimmedText(item.date);
+	}
+	const tags = Array.isArray(item.tags)
+		? item.tags.map((entry) => toTrimmedText(entry)).filter(Boolean)
+		: [];
+	if (tags.length > 0) {
+		return tags.slice(0, 3).join(" · ");
+	}
+	return "";
+}
+
+function deriveDescription(item = {}) {
+	if (hasNonEmptyText(item.description)) {
+		return toTrimmedText(item.description);
+	}
+	const source = toTrimmedText(item.source);
+	if (source) {
+		return `Source: ${source}`;
+	}
+	return "";
+}
+
+function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
+	const location = item && typeof item.location === "object" ? item.location : {};
+	const lat = readLatitude(location);
+	const lon = readLongitude(location);
+	if (lat === null || lon === null) {
+		return null;
+	}
+	if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+		return null;
+	}
+
+	const id = toTrimmedText(item.id) || `collection-item-${index + 1}`;
+	const media = item && typeof item.media === "object" ? item.media : {};
+	const thumbnailUrl = toTrimmedText(media.thumbnailUrl);
+	const mediaUrl = toTrimmedText(media.url);
+	const imageUrl = thumbnailUrl || mediaUrl || "";
+	const title =
+		toTrimmedText(item.title) || toTrimmedText(item.name) || `Collection item ${index + 1}`;
+	const sourceUrl = toTrimmedText(item.source);
+	const sourceLabel = sourceUrl || toTrimmedText(collection.title) || "Collection source";
+	const primaryTag = Array.isArray(item.tags)
+		? item.tags.map((entry) => toTrimmedText(entry)).find(Boolean) || ""
+		: "";
+	const category =
+		toTrimmedText(item.category) || toTrimmedText(item.type) || primaryTag || "collection-item";
+
+	return {
+		type: "Feature",
+		id,
+		geometry: {
+			type: "Point",
+			coordinates: [lon, lat],
+		},
+		properties: {
+			id,
+			itemId: id,
+			title,
+			subtitle: deriveSubtitle(item),
+			description: deriveDescription(item),
+			category,
+			type: toTrimmedText(item.type) || "image",
+			sourceLabel,
+			sourceUrl,
+			imageUrl,
+			thumbnailUrl,
+			mediaUrl,
+			mediaType: toTrimmedText(media.type) || "image",
+			tags: Array.isArray(item.tags)
+				? item.tags.map((entry) => toTrimmedText(entry)).filter(Boolean)
+				: [],
+			dateLabel: toTrimmedText(item.date),
+			locationLabel: toTrimmedText(location.name),
+			collectionId: toTrimmedText(collection.id),
+			collectionTitle: toTrimmedText(collection.title),
+		},
+	};
+}
+
+export function mapCollectionItemsToSpatialFeatures(collection = {}) {
+	const items = Array.isArray(collection?.items) ? collection.items : [];
+	const features = [];
+	let georeferencedCount = 0;
+
+	for (const [index, item] of items.entries()) {
+		const feature = deriveCollectionItemFeature(item, index, collection);
+		if (!feature) {
+			continue;
+		}
+		georeferencedCount += 1;
+		features.push(feature);
+	}
+
+	return {
+		totalItems: items.length,
+		georeferencedCount,
+		features,
+	};
+}

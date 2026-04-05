@@ -1,8 +1,14 @@
+import {
+	createCollectionQueryState,
+	normalizeCollectionQueryFilterPatch,
+	normalizeCollectionQueryState,
+} from "../../../../shared/data/query/collection-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
 
 function cloneState(state) {
 	return {
 		...state,
+		query: normalizeCollectionQueryState(state.query),
 		filters: {
 			...state.filters,
 			keywords: [...state.filters.keywords],
@@ -19,21 +25,9 @@ function cloneState(state) {
 	};
 }
 
-function normalizePartialFilters(partialFilters = {}) {
-	const normalized = {};
-	if (Array.isArray(partialFilters.keywords)) {
-		normalized.keywords = partialFilters.keywords;
-	}
-	if (Array.isArray(partialFilters.tags)) {
-		normalized.tags = partialFilters.tags;
-	}
-	if (Array.isArray(partialFilters.types)) {
-		normalized.types = partialFilters.types;
-	}
-	return normalized;
-}
-
-export function createTimemapBrowserController(initialState = createTimemapBrowserInitialState()) {
+export function createTimemapBrowserController(
+	initialState = createTimemapBrowserInitialState(),
+) {
 	let state = cloneState(initialState);
 	const listeners = new Set();
 
@@ -60,19 +54,34 @@ export function createTimemapBrowserController(initialState = createTimemapBrows
 			return () => listeners.delete(listener);
 		},
 		setFilters(partialFilters) {
+			const nextQuery = normalizeCollectionQueryFilterPatch(
+				partialFilters,
+				state.query || createCollectionQueryState(),
+			);
 			patchState({
+				query: nextQuery,
 				filters: {
 					...state.filters,
-					...normalizePartialFilters(partialFilters),
+					keywords: [...nextQuery.keywords],
+					tags: [...nextQuery.tags],
+					types: [...nextQuery.types],
 				},
 			});
 		},
 		setTimeRange(timeRange = {}) {
+			const nextQuery = normalizeCollectionQueryState(
+				{
+					timeRange: {
+						start: timeRange.start ?? state.timeRange.start,
+						end: timeRange.end ?? state.timeRange.end,
+					},
+				},
+				state.query || createCollectionQueryState(),
+			);
 			patchState({
+				query: nextQuery,
 				timeRange: {
-					...state.timeRange,
-					start: timeRange.start ?? state.timeRange.start,
-					end: timeRange.end ?? state.timeRange.end,
+					...nextQuery.timeRange,
 				},
 			});
 		},

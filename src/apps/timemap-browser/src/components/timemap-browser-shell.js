@@ -76,11 +76,34 @@ function getVisibleOverlayCount(visibleOverlays = {}) {
 	return Object.values(visibleOverlays).filter(Boolean).length;
 }
 
+function toFeatureCollection(features) {
+	return {
+		type: "FeatureCollection",
+		features,
+	};
+}
+
+function toMapFeature(feature, fallbackId) {
+	if (!feature || typeof feature !== "object" || !feature.geometry) {
+		return null;
+	}
+	return {
+		type: "Feature",
+		id: feature.id || feature.properties?.id || fallbackId,
+		properties: {
+			...(feature.properties || {}),
+			id: feature.id || feature.properties?.id || fallbackId,
+		},
+		geometry: feature.geometry,
+	};
+}
+
 class TimemapBrowserShellElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
 		this._state = null;
+		this._mapReady = false;
 	}
 
 	set state(nextState) {
@@ -104,6 +127,11 @@ class TimemapBrowserShellElement extends HTMLElement {
 			hoveredFeatureId: null,
 			visibleOverlays: {},
 			viewport: { center: { lng: 5.1769, lat: 52.225 }, zoom: 13.6 },
+			spatial: {
+				request: { strategy: { mode: "explore", density: "auto" } },
+				response: { features: [] },
+				status: "idle",
+			},
 			status: { text: "Timemap scaffold ready." },
 		};
 		const activeFilterCount =
@@ -114,6 +142,10 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const hoveredFeatureLabel = state.hoveredFeatureId || "None";
 		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
 		const viewportSummary = `${state.viewport.center.lng}, ${state.viewport.center.lat} (z${state.viewport.zoom})`;
+		const spatialStatus = state.spatial?.status || "idle";
+		const spatialFeatureCount = state.spatial?.response?.features?.length || 0;
+		const spatialMode = state.spatial?.request?.strategy?.mode || "explore";
+		const spatialDensity = state.spatial?.request?.strategy?.density || "auto";
 
 		this.shadowRoot.innerHTML = `
 			<style>${timemapBrowserShellStyles}</style>
@@ -145,11 +177,16 @@ class TimemapBrowserShellElement extends HTMLElement {
 							surface
 							class="map-panel"
 						>
+							<div class="panel-content">
+								<p class="panel-note">Spatial status: ${spatialStatus}</p>
+								<p class="panel-note">Returned features: ${spatialFeatureCount}</p>
+								<p class="panel-note">Mode/density: ${spatialMode} / ${spatialDensity}</p>
+							</div>
 							<div class="map-wrap">
 								<oc-map
-									center-lng="5.1769"
-									center-lat="52.225"
-									zoom="13.6"
+									center-lng="${state.viewport.center.lng}"
+									center-lat="${state.viewport.center.lat}"
+									zoom="${state.viewport.zoom}"
 									style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
 								></oc-map>
 							</div>
@@ -188,6 +225,75 @@ class TimemapBrowserShellElement extends HTMLElement {
 				</div>
 			</main>
 		`;
+
+		const mapElement = this.shadowRoot.querySelector("oc-map");
+		if (mapElement) {
+			mapElement.addEventListener(
+				"oc-map-ready",
+				() => {
+					this._mapReady = true;
+					this.renderSpatialLayers();
+				},
+				{ once: true },
+			);
+		}
+
+		this._mapReady = false;
+	}
+
+	renderSpatialLayers() {
+		const mapElement = this.shadowRoot.querySelector("oc-map");
+		const state = this._state;
+		if (!mapElement || !this._mapReady || !state) {
+			return;
+		}
+
+		const features = Array.isArray(state.spatial?.response?.features)
+			? state.spatial.response.features
+			: [];
+		const normalizedFeatures = features
+			.map((feature, index) => toMapFeature(feature, `stub-feature-${index}`))
+			.filter(Boolean);
+
+		const pointFeatures = normalizedFeatures.filter(
+			(feature) => feature.geometry?.type === "Point",
+		);
+		const lineFeatures = normalizedFeatures.filter(
+			(feature) => feature.geometry?.type === "LineString",
+		);
+		const polygonFeatures = normalizedFeatures.filter(
+			(feature) => feature.geometry?.type === "Polygon",
+		);
+
+		mapElement.setGeoJsonData("timemap-polygon-fill", toFeatureCollection(polygonFeatures), {
+			type: "fill",
+			paint: {
+				"fill-color": "#60a5fa",
+				"fill-opacity": 0.2,
+			},
+			selectable: false,
+			visible: Boolean(state.visibleOverlays?.features),
+		});
+		mapElement.setGeoJsonData("timemap-line", toFeatureCollection(lineFeatures), {
+			type: "line",
+			paint: {
+				"line-color": "#0369a1",
+				"line-width": 3,
+			},
+			selectable: false,
+			visible: Boolean(state.visibleOverlays?.features),
+		});
+		mapElement.setGeoJsonData("timemap-points", toFeatureCollection(pointFeatures), {
+			type: "circle",
+			paint: {
+				"circle-radius": 7,
+				"circle-color": "#1d4ed8",
+				"circle-stroke-width": 1.5,
+				"circle-stroke-color": "#e2e8f0",
+			},
+			selectionProperty: "id",
+			visible: Boolean(state.visibleOverlays?.features),
+		});
 	}
 }
 

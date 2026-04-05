@@ -17,6 +17,7 @@ class TimemapBrowserElement extends HTMLElement {
 		this.render();
 		this.applyRuntimePresentation();
 		this.bindState();
+		this.controller.initializeSpatialData();
 	}
 
 	disconnectedCallback() {

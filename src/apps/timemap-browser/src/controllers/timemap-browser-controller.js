@@ -8,6 +8,7 @@ import {
 	normalizeSpatialQueryInput,
 } from "../../../../shared/data/spatial/spatial-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
+import { loadStubSpatialResponse } from "../services/stub-spatial-loader.js";
 
 function buildSpatialRequest(state) {
 	return normalizeSpatialQueryInput(
@@ -83,6 +84,47 @@ export function createTimemapBrowserController(
 			listeners.add(listener);
 			listener(cloneState(state));
 			return () => listeners.delete(listener);
+		},
+		async initializeSpatialData() {
+			patchState({
+				spatial: {
+					...state.spatial,
+					status: "loading",
+				},
+				status: {
+					...state.status,
+					tone: "neutral",
+					text: "Loading stub spatial payload...",
+				},
+			});
+
+			try {
+				const spatialResponse = await loadStubSpatialResponse(state.spatial.request);
+				patchState({
+					spatial: {
+						...state.spatial,
+						response: spatialResponse,
+						status: "ready",
+					},
+					status: {
+						...state.status,
+						tone: "positive",
+						text: `Stub spatial payload ready (${spatialResponse.features.length} features).`,
+					},
+				});
+			} catch (error) {
+				patchState({
+					spatial: {
+						...state.spatial,
+						status: "error",
+					},
+					status: {
+						...state.status,
+						tone: "critical",
+						text: error?.message || "Failed to load stub spatial payload.",
+					},
+				});
+			}
 		},
 		setFilters(partialFilters) {
 			const nextQuery = normalizeCollectionQueryFilterPatch(

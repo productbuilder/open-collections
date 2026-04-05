@@ -12,11 +12,14 @@ function mapEmbeddedRuntimeAttributes(_config, context) {
 
 export const SHELL_SECTION_ADAPTERS = {
 	browse: {
-		appId: "timemap-browser",
+		appId: "open-collections-browse-shell",
 		adapter: createWebComponentAppAdapter({
-			appId: "timemap-browser",
-			tagName: "timemap-browser",
-			mapConfigToAttributes: mapEmbeddedRuntimeAttributes,
+			appId: "open-collections-browse-shell",
+			tagName: "open-collections-browse-shell",
+			mapConfigToAttributes: (config, context) => ({
+				...mapEmbeddedRuntimeAttributes(config, context),
+				"default-browse-mode": "collection",
+			}),
 		}),
 	},
 	collect: {

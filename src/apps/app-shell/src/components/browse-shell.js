@@ -288,6 +288,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					height: 100%;
 					min-height: 0;
 				}
+				.app-viewport > timemap-browser {
+					--timemap-shell-bottom-inset: var(--oc-shell-mobile-nav-offset, 0px);
+				}
 				button:focus-visible {
 					outline: 2px solid #6b7280;
 					outline-offset: 1px;

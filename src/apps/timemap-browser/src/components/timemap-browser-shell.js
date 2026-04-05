@@ -6,6 +6,8 @@ const timemapBrowserShellStyles = `
 		color: #0f172a;
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 		--timeline-reserved-space: 5.2rem;
+		--timemap-shell-bottom-inset: 0px;
+		--timemap-shell-overlay-inline-inset: clamp(0.5rem, 2.2vw, 1rem);
 	}
 
 	.shell {
@@ -36,7 +38,14 @@ const timemapBrowserShellStyles = `
 	.overlay-layer {
 		position: absolute;
 		inset-inline: 0;
-		padding-inline: clamp(0.5rem, 2.2vw, 1rem);
+		padding-inline-start: max(
+			env(safe-area-inset-left, 0px),
+			var(--timemap-shell-overlay-inline-inset)
+		);
+		padding-inline-end: max(
+			env(safe-area-inset-right, 0px),
+			var(--timemap-shell-overlay-inline-inset)
+		);
 		pointer-events: none;
 	}
 
@@ -49,15 +58,28 @@ const timemapBrowserShellStyles = `
 	.bottom-overlay {
 		bottom: 0;
 		z-index: 2;
-		padding-block-end: max(env(safe-area-inset-bottom, 0px), clamp(0.4rem, 1.2vh, 0.7rem));
+		padding-block-end: calc(
+			max(env(safe-area-inset-bottom, 0px), clamp(0.4rem, 1.2vh, 0.7rem)) + var(--timemap-shell-bottom-inset, 0px)
+		);
 	}
 
 	.detail-overlay-layer {
 		position: absolute;
 		inset-inline: 0;
-		bottom: calc(var(--timeline-reserved-space, 5.2rem) + max(env(safe-area-inset-bottom, 0px), 0px));
+		bottom: calc(
+			var(--timeline-reserved-space, 5.2rem) +
+				max(env(safe-area-inset-bottom, 0px), 0px) +
+				var(--timemap-shell-bottom-inset, 0px)
+		);
 		z-index: 4;
-		padding-inline: clamp(0.5rem, 2.2vw, 1rem);
+		padding-inline-start: max(
+			env(safe-area-inset-left, 0px),
+			var(--timemap-shell-overlay-inline-inset)
+		);
+		padding-inline-end: max(
+			env(safe-area-inset-right, 0px),
+			var(--timemap-shell-overlay-inline-inset)
+		);
 		pointer-events: none;
 	}
 
@@ -76,8 +98,8 @@ const timemapBrowserShellStyles = `
 		grid-template-columns: minmax(0, 1fr) auto auto;
 		gap: 0.35rem;
 		align-items: center;
-		padding: 0.35rem;
-		border-radius: 999px;
+		padding: 0.32rem 0.38rem;
+		border-radius: 0.95rem;
 	}
 
 	.top-title {
@@ -147,6 +169,7 @@ const timemapBrowserShellStyles = `
 	.timeline-shell {
 		pointer-events: auto;
 		inline-size: 100%;
+		box-sizing: border-box;
 		display: grid;
 		gap: 0.2rem;
 		padding: 0.48rem 0.7rem;
@@ -322,7 +345,9 @@ const timemapBrowserShellStyles = `
 		}
 
 		.detail-overlay-layer {
-			bottom: var(--timeline-reserved-space, 4.8rem);
+			bottom: calc(
+				var(--timeline-reserved-space, 4.8rem) + var(--timemap-shell-bottom-inset, 0px)
+			);
 		}
 
 		.detail-shell {

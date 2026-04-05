@@ -236,6 +236,41 @@ This follows a key design rule:
 
 > Summary everywhere, detail on demand.
 
+## Base item summary direction (practical contract)
+
+For `collection.json`, treat each item as a lightweight summary record that is easy to author, easy to import from spreadsheets, and easy to render in browser/map/timeline surfaces.
+
+Recommended summary fields:
+
+- `id`, `title`, `type`, `description`
+- `media`
+- `date` and/or `time`
+- `location` (`lat`/`lon` for point placement)
+- `tags`
+- `license`, `attribution`, `source`
+- `links` (typed link objects with `type` + `target`)
+- `detailUrl`, `updatedAt`
+
+Keep rich metadata and domain-specific detail in `items/{id}.json` sidecar detail files when needed.
+
+### Map/timemap guidance
+
+- Prefer `location.lat` and `location.lon` in the base item summary for simple authoring and import.
+- Treat GeoJSON as a derived rendering/index format generated from base item metadata.
+- Use richer GeoJSON only when geometry complexity requires it, not as the first authoring requirement.
+
+### Timeline guidance
+
+- Support either `date`, `time`, or both in the summary format.
+- Keep timeline fields simple and directly indexable from manifest data.
+- Move uncertain/complex temporal modeling to detail files or extensions.
+
+### Linked-data guidance
+
+- Use `links` as the manifest field name for explicit item connections.
+- Keep each link minimal (`type`, `target`) so links are easy to author and parse.
+- Allow richer relationship semantics later in detail/extension layers without overloading base summaries.
+
 ---
 
 # Addressable Resources

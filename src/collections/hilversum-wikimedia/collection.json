@@ -1,0 +1,292 @@
+{
+  "id": "hilversum-wikimedia",
+  "title": "Hilversum (Wikimedia Commons)",
+  "description": "Curated Wikimedia Commons collection of Hilversum landmarks, media district architecture, transport infrastructure, and nearby nature areas.",
+  "items": [
+    {
+      "id": "media-park-2022-aerial",
+      "title": "Media Park, Hilversum (2022)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Media%20Park%2C%20Hilversum%202022-10-18.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Media_Park,_Hilversum_2022-10-18.jpg",
+      "license": "CC-BY-SA-4.0",
+      "location": {
+        "lat": 52.233378,
+        "lng": 5.175761
+      },
+      "tags": [
+        "media",
+        "urban",
+        "landmark",
+        "architecture"
+      ]
+    },
+    {
+      "id": "nos-gebouw-2021",
+      "title": "NOS Building at Media Park (2021)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/NOSgebouw%2C%20Hilversum%202021.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:NOSgebouw,_Hilversum_2021.jpg",
+      "license": "CC-BY-SA-4.0",
+      "location": {
+        "lat": 52.2339,
+        "lng": 5.1762
+      },
+      "tags": [
+        "media",
+        "architecture",
+        "urban",
+        "landmark"
+      ]
+    },
+    {
+      "id": "telecom-tower-media-park",
+      "title": "Hilversum Telecom Tower",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum%20Telecom%20Tower.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum_Telecom_Tower.jpg",
+      "license": "CC-BY-SA-3.0",
+      "tags": [
+        "media",
+        "landmark",
+        "urban",
+        "architecture"
+      ]
+    },
+    {
+      "id": "rijk-gooijersteeg",
+      "title": "Rijk de Gooijersteeg, Media Park",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Rijk%20de%20Gooijersteeg%2C%20Media%20Park%20Hilversum.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Rijk_de_Gooijersteeg,_Media_Park_Hilversum.jpg",
+      "license": "CC-BY-SA-4.0",
+      "tags": [
+        "media",
+        "urban",
+        "architecture"
+      ]
+    },
+    {
+      "id": "beeld-geluid-1",
+      "title": "Netherlands Institute for Sound and Vision (View 1)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Nederlands%20Instituut%20voor%20Beeld%20en%20Geluid%20%281%29.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Nederlands_Instituut_voor_Beeld_en_Geluid_(1).JPG",
+      "license": "CC0",
+      "location": {
+        "lat": 52.235278,
+        "lng": 5.173056
+      },
+      "tags": [
+        "media",
+        "architecture",
+        "landmark"
+      ]
+    },
+    {
+      "id": "beeld-geluid-2",
+      "title": "Netherlands Institute for Sound and Vision (View 2)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Nederlands%20Instituut%20voor%20Beeld%20en%20Geluid%20%282%29.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Nederlands_Instituut_voor_Beeld_en_Geluid_(2).JPG",
+      "license": "CC0",
+      "location": {
+        "lat": 52.235278,
+        "lng": 5.173056
+      },
+      "tags": [
+        "media",
+        "architecture",
+        "landmark"
+      ]
+    },
+    {
+      "id": "beeld-geluid-hay-kranen",
+      "title": "Beeld en Geluid Facade (Hay Kranen)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Beeld-en-Geluid-Hay-Kranen-07%20%28cropped%29.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Beeld-en-Geluid-Hay-Kranen-07_(cropped).JPG",
+      "license": "CC-BY-4.0",
+      "tags": [
+        "media",
+        "architecture",
+        "landmark"
+      ]
+    },
+    {
+      "id": "gebouw-beeld-geluid",
+      "title": "Gebouw Beeld en Geluid",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Gebouw%20Beeld%20en%20geluid%20Hilversum%201.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Gebouw_Beeld_en_geluid_Hilversum_1.JPG",
+      "license": "CC-BY-SA-3.0",
+      "tags": [
+        "media",
+        "architecture",
+        "urban"
+      ]
+    },
+    {
+      "id": "raadhuis-2022",
+      "title": "Raadhuis Hilversum (2022)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Raadhuis%20Hilversum2022.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Raadhuis_Hilversum2022.jpg",
+      "license": "CC-BY-SA-4.0",
+      "location": {
+        "lat": 52.229061,
+        "lng": 5.170431
+      },
+      "tags": [
+        "architecture",
+        "historic",
+        "landmark",
+        "urban"
+      ]
+    },
+    {
+      "id": "dudok-1",
+      "title": "Dudok Town Hall Exterior",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Dudok%201.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Dudok_1.jpg",
+      "license": "CC-BY-SA-4.0",
+      "location": {
+        "lat": 52.229061,
+        "lng": 5.170431
+      },
+      "tags": [
+        "architecture",
+        "historic",
+        "landmark"
+      ]
+    },
+    {
+      "id": "rijksmonument-46773",
+      "title": "Rijksmonument 46773 (Raadhuis Dudok)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Rijksmonument%2046773%20Raadhuis%20Dudok%20Hilversum%200.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Rijksmonument_46773_Raadhuis_Dudok_Hilversum_0.JPG",
+      "license": "CC-BY-SA-3.0-NL",
+      "location": {
+        "lat": 52.229061,
+        "lng": 5.170431
+      },
+      "tags": [
+        "architecture",
+        "historic",
+        "landmark"
+      ]
+    },
+    {
+      "id": "raadhuis-zwevend-dak",
+      "title": "Raadhuis Hilversum, Floating Roof Detail",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Raadhuis%20Hilversum%2C%20zwevend%20dak.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Raadhuis_Hilversum,_zwevend_dak.jpg",
+      "license": "CC-BY-SA-4.0",
+      "tags": [
+        "architecture",
+        "historic",
+        "landmark"
+      ]
+    },
+    {
+      "id": "spoorlijn-utrecht-1",
+      "title": "Hilversum–Utrecht Railway (View 1)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum-Utrecht%20spoorlijn%202020%201.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum-Utrecht_spoorlijn_2020_1.jpg",
+      "license": "CC-BY-SA-4.0",
+      "tags": [
+        "transport",
+        "urban"
+      ]
+    },
+    {
+      "id": "spoorlijn-utrecht-2",
+      "title": "Hilversum–Utrecht Railway (View 2)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum-Utrecht%20spoorlijn%202020%202.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum-Utrecht_spoorlijn_2020_2.jpg",
+      "license": "CC-BY-SA-4.0",
+      "tags": [
+        "transport",
+        "urban"
+      ]
+    },
+    {
+      "id": "connexxion-station-bus",
+      "title": "Connexxion Bus at Hilversum Station",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Connexxion%203282%2C%20Hilversum%20station%20%289687041782%29.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Connexxion_3282,_Hilversum_station_(9687041782).jpg",
+      "license": "CC-BY-SA-2.0",
+      "location": {
+        "lat": 52.2253,
+        "lng": 5.1814
+      },
+      "tags": [
+        "transport",
+        "urban"
+      ]
+    },
+    {
+      "id": "pouw-station-bus",
+      "title": "Pouw Vervoer at Hilversum Station",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Pouw%20Vervoer%205781%2C%20Hilversum%20station%20%289683806273%29.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Pouw_Vervoer_5781,_Hilversum_station_(9683806273).jpg",
+      "license": "CC-BY-SA-2.0",
+      "location": {
+        "lat": 52.2253,
+        "lng": 5.1814
+      },
+      "tags": [
+        "transport",
+        "urban"
+      ]
+    },
+    {
+      "id": "hilversum-nature-2024",
+      "title": "Nature in Hilversum (2024)",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum%208%202024.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum_8_2024.jpg",
+      "license": "CC-BY-2.0",
+      "tags": [
+        "nature",
+        "urban"
+      ]
+    },
+    {
+      "id": "franse-kamp",
+      "title": "Franse Kamp Area, Hilversum",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum%20Franse%20Kamp%2000.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum_Franse_Kamp_00.JPG",
+      "license": "CC-BY-SA-3.0",
+      "tags": [
+        "nature",
+        "landmark"
+      ]
+    },
+    {
+      "id": "annas-hoeve-groundheuvel-view",
+      "title": "View from Anna's Hoeve Ground Mound",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum%20uitzicht%20vanaf%20de%20Grondheuvel%20in%20de%20wijk%20Anna%27s%20Hoeve%2057.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum_uitzicht_vanaf_de_Grondheuvel_in_de_wijk_Anna%27s_Hoeve_57.jpg",
+      "license": "CC-BY-SA-3.0",
+      "tags": [
+        "nature",
+        "urban"
+      ]
+    },
+    {
+      "id": "zanderij-crailo",
+      "title": "Zanderij Crailo, Hilversum",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hilversum%20zanderij%20Crailo%2002.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Hilversum_zanderij_Crailo_02.JPG",
+      "license": "CC-BY-SA-3.0",
+      "tags": [
+        "nature",
+        "landmark"
+      ]
+    },
+    {
+      "id": "clemenskerk",
+      "title": "Clemenskerk, Hilversum",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Clemenskerk%20004.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Clemenskerk_004.jpg",
+      "license": "CC-BY-SA-4.0",
+      "tags": [
+        "architecture",
+        "historic",
+        "urban",
+        "landmark"
+      ]
+    }
+  ]
+}

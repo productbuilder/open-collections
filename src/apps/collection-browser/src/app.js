@@ -66,7 +66,7 @@ function derivePreviewImages(items = [], max = Number.POSITIVE_INFINITY) {
 	return previews;
 }
 
-class TimemapBrowserElement extends ComponentBase {
+class CollectionBrowserElement extends ComponentBase {
 	constructor() {
 		super();
 		this.state = {
@@ -1770,6 +1770,6 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 }
 
-if (!customElements.get("timemap-browser")) {
-	customElements.define("timemap-browser", TimemapBrowserElement);
+if (!customElements.get("collection-browser")) {
+	customElements.define("collection-browser", CollectionBrowserElement);
 }

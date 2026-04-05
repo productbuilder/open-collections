@@ -1,10 +1,12 @@
 import "../../../shared/ui/primitives/index.js";
 import "../../../shared/ui/panels/index.js";
 import "../../timemap-browser/src/index.js";
+import "../../collection-browser/src/index.js";
 import "../../collection-manager/src/index.js";
 import "../../collection-presenter/src/index.js";
 import "../../collection-connector/src/index.js";
 import "../../collection-account/src/index.js";
+import "./components/browse-shell.js";
 import { renderShellHeader } from "./components/shell-header.js";
 import { appShellStyles } from "./styles/shell.css.js";
 import { SHELL_SECTION_ADAPTERS } from "./components/section-adapters.js";

@@ -7,8 +7,10 @@ const timemapBrowserShellStyles = `
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 		--timeline-reserved-space: 5.2rem;
 		--timemap-shell-bottom-inset: 0px;
-		--timemap-shell-overlay-inline-inset: clamp(0.5rem, 2.2vw, 1rem);
-		--timemap-shell-top-inline-inset: clamp(0.85rem, 3vw, 1.4rem);
+		--timemap-shell-overlay-inline-inset: clamp(0.85rem, 2.8vw, 1.4rem);
+		--timemap-shell-overlay-top-gap: clamp(0.45rem, 1.6vh, 0.75rem);
+		--timemap-shell-overlay-bottom-gap: clamp(0.4rem, 1.2vh, 0.7rem);
+		--timemap-shell-detail-rail-gap: clamp(0.7rem, 2vh, 1rem);
 	}
 
 	.shell {
@@ -39,7 +41,8 @@ const timemapBrowserShellStyles = `
 		--oc-border-default: transparent;
 	}
 
-	.overlay-layer {
+	.overlay-layer,
+	.detail-overlay-layer {
 		position: absolute;
 		inset-inline: 0;
 		padding-inline-start: max(
@@ -56,14 +59,9 @@ const timemapBrowserShellStyles = `
 	.top-overlay {
 		top: 0;
 		z-index: 4;
-		padding-block-start: max(env(safe-area-inset-top, 0px), clamp(0.45rem, 1.6vh, 0.75rem));
-		padding-inline-start: max(
-			env(safe-area-inset-left, 0px),
-			var(--timemap-shell-top-inline-inset)
-		);
-		padding-inline-end: max(
-			env(safe-area-inset-right, 0px),
-			var(--timemap-shell-top-inline-inset)
+		padding-block-start: max(
+			env(safe-area-inset-top, 0px),
+			var(--timemap-shell-overlay-top-gap)
 		);
 	}
 
@@ -71,28 +69,19 @@ const timemapBrowserShellStyles = `
 		bottom: 0;
 		z-index: 2;
 		padding-block-end: calc(
-			max(env(safe-area-inset-bottom, 0px), clamp(0.4rem, 1.2vh, 0.7rem)) + var(--timemap-shell-bottom-inset, 0px)
+			max(env(safe-area-inset-bottom, 0px), var(--timemap-shell-overlay-bottom-gap)) +
+				var(--timemap-shell-bottom-inset, 0px)
 		);
 	}
 
 	.detail-overlay-layer {
-		position: absolute;
-		inset-inline: 0;
 		bottom: calc(
 			var(--timeline-reserved-space, 5.2rem) +
 				max(env(safe-area-inset-bottom, 0px), 0px) +
-				var(--timemap-shell-bottom-inset, 0px)
+				var(--timemap-shell-bottom-inset, 0px) +
+				var(--timemap-shell-detail-rail-gap)
 		);
 		z-index: 4;
-		padding-inline-start: max(
-			env(safe-area-inset-left, 0px),
-			var(--timemap-shell-overlay-inline-inset)
-		);
-		padding-inline-end: max(
-			env(safe-area-inset-right, 0px),
-			var(--timemap-shell-overlay-inline-inset)
-		);
-		pointer-events: none;
 	}
 
 	.top-chrome,
@@ -358,7 +347,9 @@ const timemapBrowserShellStyles = `
 
 		.detail-overlay-layer {
 			bottom: calc(
-				var(--timeline-reserved-space, 4.8rem) + var(--timemap-shell-bottom-inset, 0px)
+				var(--timeline-reserved-space, 4.8rem) +
+					var(--timemap-shell-bottom-inset, 0px) +
+					var(--timemap-shell-detail-rail-gap)
 			);
 		}
 

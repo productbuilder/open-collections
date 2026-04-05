@@ -30,11 +30,11 @@ From repository root:
 
 ## Internal structure (this phase)
 
-- `src/state/initial-state.js` defines a practical app-local state shape for:
+- `src/state/initial-state.js` defines a practical app-local state shape and seeds query defaults from `src/shared/data/query/collection-query-contract.js` for:
   - filters
   - time range
   - selection/hover
   - overlays
   - viewport
-- `src/controllers/timemap-browser-controller.js` provides lightweight orchestration helpers (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, etc.).
+- `src/controllers/timemap-browser-controller.js` provides lightweight orchestration helpers (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, etc.) and keeps a normalized shared `query` snapshot in sync.
 - `src/app.js` wires the controller to the shell component so rendering stays in UI components while state/orchestration stays app-local.

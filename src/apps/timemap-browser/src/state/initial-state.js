@@ -1,17 +1,4 @@
-function createInitialFilters() {
-	return {
-		keywords: [],
-		tags: [],
-		types: [],
-	};
-}
-
-function createInitialTimeRange() {
-	return {
-		start: null,
-		end: null,
-	};
-}
+import { createCollectionQueryState } from "../../../../shared/data/query/collection-query-contract.js";
 
 function createInitialViewport() {
 	return {
@@ -35,9 +22,15 @@ function createInitialVisibleOverlays() {
 }
 
 export function createTimemapBrowserInitialState() {
+	const query = createCollectionQueryState();
 	return {
-		filters: createInitialFilters(),
-		timeRange: createInitialTimeRange(),
+		query,
+		filters: {
+			keywords: [...query.keywords],
+			tags: [...query.tags],
+			types: [...query.types],
+		},
+		timeRange: { ...query.timeRange },
 		selectedFeatureId: null,
 		hoveredFeatureId: null,
 		visibleOverlays: createInitialVisibleOverlays(),

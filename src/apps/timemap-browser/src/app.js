@@ -1,6 +1,66 @@
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
 import { createTimemapBrowserController } from "./controllers/timemap-browser-controller.js";
 
+const VIEWPORT_REFRESH_THRESHOLDS = Object.freeze({
+	center: 0.00035,
+	zoom: 0.08,
+	bearing: 0.75,
+	pitch: 0.75,
+	bbox: 0.0005,
+	pixelSize: 2,
+});
+
+function absDelta(left, right) {
+	const safeLeft = Number(left);
+	const safeRight = Number(right);
+	if (!Number.isFinite(safeLeft) || !Number.isFinite(safeRight)) {
+		return Number.POSITIVE_INFINITY;
+	}
+	return Math.abs(safeLeft - safeRight);
+}
+
+function hasMeaningfulViewportDelta(nextViewport, previousViewport) {
+	if (!previousViewport) {
+		return true;
+	}
+	if (
+		absDelta(nextViewport.center?.lng, previousViewport.center?.lng) >=
+		VIEWPORT_REFRESH_THRESHOLDS.center ||
+		absDelta(nextViewport.center?.lat, previousViewport.center?.lat) >=
+		VIEWPORT_REFRESH_THRESHOLDS.center ||
+		absDelta(nextViewport.zoom, previousViewport.zoom) >=
+		VIEWPORT_REFRESH_THRESHOLDS.zoom ||
+		absDelta(nextViewport.bearing, previousViewport.bearing) >=
+		VIEWPORT_REFRESH_THRESHOLDS.bearing ||
+		absDelta(nextViewport.pitch, previousViewport.pitch) >=
+		VIEWPORT_REFRESH_THRESHOLDS.pitch
+	) {
+		return true;
+	}
+
+	const nextBbox = nextViewport.bbox;
+	const previousBbox = previousViewport.bbox;
+	if (!nextBbox || !previousBbox) {
+		return false;
+	}
+
+	if (
+		absDelta(nextBbox.west, previousBbox.west) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
+		absDelta(nextBbox.south, previousBbox.south) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
+		absDelta(nextBbox.east, previousBbox.east) >= VIEWPORT_REFRESH_THRESHOLDS.bbox ||
+		absDelta(nextBbox.north, previousBbox.north) >= VIEWPORT_REFRESH_THRESHOLDS.bbox
+	) {
+		return true;
+	}
+
+	return (
+		absDelta(nextViewport.pixelSize?.width, previousViewport.pixelSize?.width) >=
+			VIEWPORT_REFRESH_THRESHOLDS.pixelSize ||
+		absDelta(nextViewport.pixelSize?.height, previousViewport.pixelSize?.height) >=
+			VIEWPORT_REFRESH_THRESHOLDS.pixelSize
+	);
+}
+
 class TimemapBrowserElement extends HTMLElement {
 	static get observedAttributes() {
 		return ["data-oc-app-mode", "data-shell-embed", "data-workbench-embed"];
@@ -12,6 +72,8 @@ class TimemapBrowserElement extends HTMLElement {
 		this.controller = createTimemapBrowserController();
 		this.unsubscribeState = null;
 		this.viewportRefreshTimer = null;
+		this.lastSpatialRefreshViewport = null;
+		this.pendingSpatialRefreshViewport = null;
 		this.handleMapViewportChange = this.onMapViewportChange.bind(this);
 	}
 
@@ -33,6 +95,7 @@ class TimemapBrowserElement extends HTMLElement {
 			clearTimeout(this.viewportRefreshTimer);
 			this.viewportRefreshTimer = null;
 		}
+		this.pendingSpatialRefreshViewport = null;
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -110,11 +173,24 @@ class TimemapBrowserElement extends HTMLElement {
 	onMapViewportChange(event) {
 		const viewport = event?.detail || {};
 		this.controller.setViewport(viewport);
+
+		const refreshBaseline =
+			this.pendingSpatialRefreshViewport || this.lastSpatialRefreshViewport;
+		if (!hasMeaningfulViewportDelta(viewport, refreshBaseline)) {
+			return;
+		}
+
+		this.pendingSpatialRefreshViewport = viewport;
 		if (this.viewportRefreshTimer) {
 			clearTimeout(this.viewportRefreshTimer);
 		}
 		this.viewportRefreshTimer = setTimeout(() => {
 			this.viewportRefreshTimer = null;
+			if (!this.pendingSpatialRefreshViewport) {
+				return;
+			}
+			this.lastSpatialRefreshViewport = this.pendingSpatialRefreshViewport;
+			this.pendingSpatialRefreshViewport = null;
 			this.controller.initializeSpatialData();
 		}, 280);
 	}

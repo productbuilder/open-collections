@@ -187,18 +187,23 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 				.control-strip {
 					display: grid;
-					grid-template-columns: minmax(0, 1fr) auto;
-					align-items: center;
+					grid-template-columns: minmax(0, 1fr);
 					gap: 0.45rem;
 					padding: 0.45rem 0.5rem;
 					background: #ecebe7;
 					border-bottom: 1px solid #d8d5cf;
 				}
-				.entry-actions {
-					display: flex;
+				.control-row {
+					display: grid;
 					align-items: center;
-					gap: 0.45rem;
 					min-width: 0;
+				}
+				.control-row--primary {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.control-row--secondary {
+					grid-template-columns: minmax(0, 1fr) auto;
+					gap: 0.45rem;
 				}
 				.search-entry,
 				.filter-entry,
@@ -221,7 +226,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					font-weight: 540;
 				}
 				.search-entry {
-					flex: 1 1 auto;
+					inline-size: 100%;
 					justify-content: flex-start;
 					min-inline-size: 0;
 				}
@@ -232,7 +237,8 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					text-overflow: ellipsis;
 				}
 				.filter-entry {
-					flex: 0 0 auto;
+					inline-size: fit-content;
+					justify-self: start;
 				}
 				.mode-switch {
 					display: inline-flex;
@@ -287,11 +293,10 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 				@media (max-width: 760px) {
 					.control-strip {
-						grid-template-columns: 1fr;
 						gap: 0.38rem;
 						padding: 0.42rem;
 					}
-					.entry-actions {
+					.control-row--secondary {
 						gap: 0.35rem;
 					}
 					.search-entry,
@@ -311,18 +316,20 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			</style>
 			<section class="browse-shell" aria-label="Browse mode shell">
 				<div class="control-strip" aria-label="Browse controls">
-					<div class="entry-actions">
+					<div class="control-row control-row--primary">
 						<button class="search-entry" type="button" data-action="search-entry" aria-label="Search browse results">
 							<svg class="entry-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>
 							<span class="search-entry-label">Search titles, places, and sources</span>
 						</button>
+					</div>
+					<div class="control-row control-row--secondary">
 						<button class="filter-entry" type="button" data-action="filter-entry" aria-label="Open browse filters">
 							<svg class="entry-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18M7 12h10M10 19h4"></path></svg>
 							<span>Filters</span>
 						</button>
-					</div>
-					<div class="mode-switch" role="tablist" aria-label="Browse mode">
-						${BROWSE_MODE_OPTIONS.map((option) => this.renderModeButton(option, browseMode)).join("")}
+						<div class="mode-switch" role="tablist" aria-label="Browse mode">
+							${BROWSE_MODE_OPTIONS.map((option) => this.renderModeButton(option, browseMode)).join("")}
+						</div>
 					</div>
 				</div>
 				<div class="app-viewport">${this.renderChildApp(browseMode)}</div>

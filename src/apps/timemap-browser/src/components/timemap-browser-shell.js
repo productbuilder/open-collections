@@ -1,44 +1,176 @@
 const timemapBrowserShellStyles = `
 	:host {
 		display: block;
+		block-size: 100%;
+		min-block-size: 100dvh;
 		color: #0f172a;
 		font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 	}
 
 	.shell {
+		position: relative;
+		inline-size: 100%;
+		block-size: 100%;
+		min-block-size: 100dvh;
+		overflow: hidden;
+		background: #0b1120;
+	}
+
+	.map-stage {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.map-wrap,
+	.map-wrap oc-map {
+		inline-size: 100%;
+		block-size: 100%;
+	}
+
+	.map-wrap oc-map {
+		--oc-map-height: 100%;
+	}
+
+	.overlay-layer {
+		position: absolute;
+		inset-inline: 0;
+		padding-inline: clamp(0.5rem, 2vw, 1rem);
+		pointer-events: none;
+	}
+
+	.top-overlay {
+		top: 0;
+		z-index: 3;
+		padding-block-start: clamp(0.5rem, 2vh, 0.85rem);
+	}
+
+	.bottom-overlay {
+		bottom: 0;
+		z-index: 2;
+		padding-block-end: clamp(0.4rem, 1.4vh, 0.85rem);
+	}
+
+	.detail-overlay-layer {
+		position: absolute;
+		inset-inline: 0;
+		bottom: var(--timeline-reserved-space, 5.3rem);
+		z-index: 4;
+		padding-inline: clamp(0.5rem, 2vw, 1rem);
+		pointer-events: none;
+	}
+
+	.top-chrome,
+	.timeline-shell,
+	.detail-shell {
+		pointer-events: auto;
+		border-radius: 0.75rem;
+		border: 1px solid rgba(148, 163, 184, 0.46);
+		backdrop-filter: blur(8px);
+		background: rgba(248, 250, 252, 0.92);
+		box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+	}
+
+	.top-chrome {
 		display: grid;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		box-sizing: border-box;
-		min-height: 100%;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.55rem;
+		align-items: center;
+		padding: 0.6rem 0.7rem;
+	}
+
+	.top-title {
+		margin: 0;
+		font-size: 0.94rem;
+		line-height: 1.3;
+		font-weight: 700;
+	}
+
+	.chrome-note {
+		margin: 0.1rem 0 0;
+		font-size: 0.76rem;
+		line-height: 1.35;
+		color: #334155;
+	}
+
+	.top-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+	}
+
+	.action-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-block-size: 2rem;
+		padding: 0.3rem 0.65rem;
+		border-radius: 0.55rem;
+		border: 1px solid rgba(100, 116, 139, 0.65);
+		background: rgba(255, 255, 255, 0.94);
+		color: #0f172a;
+		font-size: 0.77rem;
+		font-weight: 650;
+		cursor: pointer;
+	}
+
+	.action-button:hover {
+		border-color: #475569;
 		background: #f8fafc;
 	}
 
-	.layout {
+	.timeline-shell {
 		display: grid;
-		gap: 0.75rem;
-		grid-template-columns: minmax(0, 1fr);
+		gap: 0.32rem;
+		padding: 0.56rem 0.68rem;
 	}
 
-	.panel-content {
-		display: grid;
-		gap: 0.5rem;
-	}
-
-	.panel-note {
+	.timeline-title {
 		margin: 0;
-		font-size: 0.9rem;
-		line-height: 1.4;
+		font-size: 0.8rem;
+		font-weight: 700;
+		line-height: 1.2;
+		color: #0f172a;
+	}
+
+	.timeline-note {
+		margin: 0;
+		font-size: 0.75rem;
+		line-height: 1.38;
 		color: #334155;
+	}
+
+	.detail-shell {
+		inline-size: min(92vw, 28.5rem);
+		max-block-size: min(48vh, 23rem);
+		overflow: auto;
+		margin-inline: auto;
+		padding: 0.75rem;
+	}
+
+	.detail-shell[data-mobile-sheet="true"] {
+		inline-size: min(100%, 42rem);
+		border-radius: 0.8rem 0.8rem 0.55rem 0.55rem;
+	}
+
+	.detail-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-block-end: 0.45rem;
+	}
+
+	.detail-heading {
+		margin: 0;
+		font-size: 0.86rem;
+		font-weight: 700;
 	}
 
 	.detail-card {
 		display: grid;
 		gap: 0.6rem;
-		padding: 0.8rem;
-		border: 1px solid #cbd5e1;
-		border-radius: 0.65rem;
-		background: #ffffff;
+		padding: 0.3rem 0;
 	}
 
 	.detail-card__title {
@@ -55,7 +187,7 @@ const timemapBrowserShellStyles = `
 
 	.detail-row {
 		margin: 0;
-		font-size: 0.86rem;
+		font-size: 0.82rem;
 		line-height: 1.35;
 		color: #334155;
 	}
@@ -67,54 +199,52 @@ const timemapBrowserShellStyles = `
 
 	.detail-empty {
 		margin: 0;
-		font-size: 0.9rem;
-		line-height: 1.45;
+		font-size: 0.85rem;
+		line-height: 1.4;
 		color: #475569;
 	}
 
-	.clear-selection-button {
-		inline-size: fit-content;
-		padding: 0.42rem 0.68rem;
-		border-radius: 0.5rem;
-		border: 1px solid #94a3b8;
-		background: #f8fafc;
-		color: #0f172a;
-		font-size: 0.82rem;
-		font-weight: 600;
-		cursor: pointer;
-	}
-
-	.clear-selection-button:hover {
-		background: #eff6ff;
-		border-color: #64748b;
-	}
-
-	.map-panel {
+	.sr-only {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
 		padding: 0;
+		margin: -1px;
 		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
-	.map-wrap {
-		min-height: 300px;
-		block-size: clamp(300px, 45vh, 560px);
+	:host([data-embed-density="compact"]) .top-chrome,
+	:host([data-embed-density="compact"]) .timeline-shell,
+	:host([data-embed-density="compact"]) .detail-shell {
+		box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
 	}
 
-	.map-wrap oc-map {
-		--oc-map-height: 100%;
-		inline-size: 100%;
-		block-size: 100%;
-	}
-
-	@media (min-width: 960px) {
-		.layout {
-			grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
-			align-items: start;
+	@media (max-width: 767px) {
+		:host {
+			--timeline-reserved-space: 4.8rem;
 		}
 
-		.main-column,
-		.side-column {
-			display: grid;
-			gap: 0.75rem;
+		.top-chrome {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.top-actions {
+			justify-content: flex-start;
+		}
+
+		.timeline-shell {
+			border-radius: 0.75rem 0.75rem 0.5rem 0.5rem;
+		}
+
+		.detail-overlay-layer {
+			bottom: var(--timeline-reserved-space, 4.8rem);
+		}
+
+		.detail-shell {
+			max-block-size: min(56vh, 25rem);
 		}
 	}
 `;
@@ -131,20 +261,6 @@ function formatTimeRange(timeRange = {}) {
 
 function getVisibleOverlayCount(visibleOverlays = {}) {
 	return Object.values(visibleOverlays).filter(Boolean).length;
-}
-
-function formatViewportSummary(viewport = {}) {
-	const centerLng = Number(viewport.center?.lng || 0).toFixed(4);
-	const centerLat = Number(viewport.center?.lat || 0).toFixed(4);
-	const zoom = Number(viewport.zoom || 0).toFixed(2);
-	const bbox = viewport.bbox
-		? `${Number(viewport.bbox.west).toFixed(4)}, ${Number(
-				viewport.bbox.south,
-			).toFixed(4)} → ${Number(viewport.bbox.east).toFixed(4)}, ${Number(
-				viewport.bbox.north,
-			).toFixed(4)}`
-		: "n/a";
-	return `${centerLng}, ${centerLat} (z${zoom}) • bbox ${bbox}`;
 }
 
 function toBboxFromBounds(bounds) {
@@ -248,26 +364,65 @@ function renderSelectedFeatureCard(feature) {
 				<p class="detail-row"><span class="detail-label">Geometry:</span> ${geometryType}</p>
 				<p class="detail-row"><span class="detail-label">Description:</span> ${description}</p>
 			</div>
-			<button type="button" class="clear-selection-button" data-action="clear-selection">Clear selection</button>
+			<button type="button" class="action-button" data-action="clear-selection">Clear selection</button>
 		</div>
 	`;
 }
 
+function parseBooleanAttribute(value, fallbackValue) {
+	if (value == null) {
+		return fallbackValue;
+	}
+	if (value === "" || value === "true") {
+		return true;
+	}
+	if (value === "false") {
+		return false;
+	}
+	return fallbackValue;
+}
+
 class TimemapBrowserShellElement extends HTMLElement {
+	static get observedAttributes() {
+		return [
+			"show-top-chrome",
+			"show-timeline",
+			"show-detail-overlay",
+			"show-filter-entry",
+			"map-edge-to-edge",
+			"embed-density",
+			"map-clear-selection-on-background",
+		];
+	}
+
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
 		this._state = null;
+		this._presentation = {};
 		this._mapReady = false;
 		this._hasRendered = false;
 		this._lastLayerDataSignature = null;
 		this._lastAppliedCenterSignature = null;
 		this._lastMapViewportSignature = null;
 		this._lastSpatialRenderSignature = null;
+		this._lastFeatureClickTimestamp = 0;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
 		this._handleMapFeatureClick = this._onMapFeatureClick.bind(this);
-		this._handleClearSelection = this._onClearSelection.bind(this);
+		this._handleClick = this._onClick.bind(this);
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue === newValue) {
+			return;
+		}
+		if (name === "embed-density") {
+			this.dataset.embedDensity = newValue === "compact" ? "compact" : "comfortable";
+		}
+		if (this._hasRendered) {
+			this.updateViewFromState();
+		}
 	}
 
 	set state(nextState) {
@@ -287,83 +442,106 @@ class TimemapBrowserShellElement extends HTMLElement {
 		return this._state;
 	}
 
+	set presentation(nextPresentation) {
+		this._presentation = { ...(nextPresentation || {}) };
+		if (this._hasRendered) {
+			this.updateViewFromState();
+		}
+	}
+
+	get presentation() {
+		return this._presentation;
+	}
+
 	connectedCallback() {
 		this.render();
+	}
+
+	getConfig() {
+		const embeddedByState = Boolean(this._presentation?.embedded);
+		const showTopChromeDefault = !embeddedByState;
+		const mapClearFallback = this.isMobileViewport();
+		const embedDensityDefault = embeddedByState ? "compact" : "comfortable";
+		const embedDensityAttr = this.getAttribute("embed-density");
+		const embedDensity =
+			embedDensityAttr === "compact" || embedDensityAttr === "comfortable"
+				? embedDensityAttr
+				: embedDensityDefault;
+
+		return {
+			showTopChrome: parseBooleanAttribute(
+				this.getAttribute("show-top-chrome"),
+				showTopChromeDefault,
+			),
+			showTimeline: parseBooleanAttribute(this.getAttribute("show-timeline"), true),
+			showDetailOverlay: parseBooleanAttribute(
+				this.getAttribute("show-detail-overlay"),
+				true,
+			),
+			showFilterEntry: parseBooleanAttribute(
+				this.getAttribute("show-filter-entry"),
+				true,
+			),
+			mapEdgeToEdge: parseBooleanAttribute(
+				this.getAttribute("map-edge-to-edge"),
+				true,
+			),
+			embedDensity,
+			mapClearSelectionOnBackground: parseBooleanAttribute(
+				this.getAttribute("map-clear-selection-on-background"),
+				mapClearFallback,
+			),
+		};
+	}
+
+	isMobileViewport() {
+		return typeof window !== "undefined"
+			? window.matchMedia("(max-width: 767px)").matches
+			: false;
 	}
 
 	render() {
 		if (!this._hasRendered) {
 			this.shadowRoot.innerHTML = `
 				<style>${timemapBrowserShellStyles}</style>
-				<main class="shell" aria-label="Timemap browser scaffold">
-					<open-collections-section-header
-						heading-level="1"
-						title="Timemap browser"
-						description="Scaffold layout with map, filters, timeline, and detail placeholders."
-					></open-collections-section-header>
+				<main class="shell" aria-label="Timemap browser map-first shell">
+					<section class="map-stage" aria-label="Map stage">
+						<div class="map-wrap">
+							<oc-map
+								style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+							></oc-map>
+						</div>
+					</section>
 
-					<div class="layout">
-						<section class="main-column" aria-label="Timemap main workspace">
-							<open-collections-section-panel
-								title="Filters"
-								description="Reserved area for future timemap filters."
-								heading-level="2"
-								surface
-							>
-								<div class="panel-content">
-									<p class="panel-note">Filter controls will be introduced in a later iteration.</p>
-									<p class="panel-note" data-bind="active-filters"></p>
-								</div>
-							</open-collections-section-panel>
+					<section class="overlay-layer top-overlay" data-region="top-overlay">
+						<div class="top-chrome" data-bind="top-chrome">
+							<div>
+								<h1 class="top-title">Timemap browser</h1>
+								<p class="chrome-note" data-bind="top-summary"></p>
+							</div>
+							<div class="top-actions">
+								<button type="button" class="action-button" data-action="filter-entry">Filters</button>
+							</div>
+						</div>
+					</section>
 
-							<open-collections-section-panel
-								title="Map"
-								description="Shared oc-map primitive scaffolded for timemap integration."
-								heading-level="2"
-								surface
-								class="map-panel"
-							>
-								<div class="panel-content">
-									<p class="panel-note" data-bind="spatial-status"></p>
-									<p class="panel-note" data-bind="spatial-features"></p>
-									<p class="panel-note" data-bind="spatial-mode-density"></p>
-								</div>
-								<div class="map-wrap">
-									<oc-map
-										style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-									></oc-map>
-								</div>
-							</open-collections-section-panel>
+					<section class="detail-overlay-layer" data-region="detail-overlay">
+						<div class="detail-shell" data-bind="detail-shell" hidden>
+							<div class="detail-header">
+								<h2 class="detail-heading">Selected feature</h2>
+								<button type="button" class="action-button" data-action="clear-selection">Close</button>
+							</div>
+							<div data-bind="selected-feature-detail"></div>
+						</div>
+					</section>
 
-							<open-collections-section-panel
-								title="Timeline"
-								description="Reserved area for future timeline controls and tracks."
-								heading-level="2"
-								surface
-							>
-								<div class="panel-content">
-									<p class="panel-note">Timeline UI scaffold placeholder.</p>
-									<p class="panel-note" data-bind="time-range"></p>
-								</div>
-							</open-collections-section-panel>
-						</section>
-
-						<aside class="side-column" aria-label="Timemap details workspace">
-							<open-collections-section-panel
-								title="Cards & detail"
-								description="Selection-driven detail card scaffold."
-								heading-level="2"
-								surface
-							>
-								<div class="panel-content">
-									<div data-bind="selected-feature-detail"></div>
-									<p class="panel-note" data-bind="visible-overlays"></p>
-									<p class="panel-note" data-bind="viewport"></p>
-									<p class="panel-note" data-bind="status"></p>
-								</div>
-							</open-collections-section-panel>
-						</aside>
-					</div>
+					<section class="overlay-layer bottom-overlay" data-region="bottom-overlay">
+						<div class="timeline-shell" data-bind="timeline-shell">
+							<p class="timeline-title">Timeline region (v1 reserved)</p>
+														<p class="timeline-note" data-bind="time-range"></p>
+							<p class="sr-only" data-bind="status"></p>
+						</div>
+					</section>
 				</main>
 			`;
 
@@ -381,7 +559,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 					this._handleMapFeatureClick,
 				);
 			}
-			this.shadowRoot.addEventListener("click", this._handleClearSelection);
+			this.shadowRoot.addEventListener("click", this._handleClick);
 			this._hasRendered = true;
 		}
 
@@ -394,7 +572,6 @@ class TimemapBrowserShellElement extends HTMLElement {
 			filters: {},
 			timeRange: {},
 			selectedFeatureId: null,
-			hoveredFeatureId: null,
 			visibleOverlays: {},
 			viewport: { center: { lng: 5.1769, lat: 52.225 }, zoom: 13.6 },
 			spatial: {
@@ -402,35 +579,61 @@ class TimemapBrowserShellElement extends HTMLElement {
 				response: { features: [] },
 				status: "idle",
 			},
-			status: { text: "Timemap scaffold ready." },
+			status: { text: "Timemap map-first shell ready." },
 		};
 
+		const config = this.getConfig();
+		this.dataset.embedDensity = config.embedDensity;
+		const selectedFeature = toSelectedFeatureSummary(state);
 		const activeFilterCount =
 			(state.filters.keywords?.length || 0) +
 			(state.filters.tags?.length || 0) +
 			(state.filters.types?.length || 0);
-		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
-		const viewportSummary = formatViewportSummary(state.viewport);
-		const spatialStatus = state.spatial?.status || "idle";
 		const spatialFeatureCount = state.spatial?.response?.features?.length || 0;
-		const spatialMode = state.spatial?.request?.strategy?.mode || "explore";
-		const spatialDensity = state.spatial?.request?.strategy?.density || "auto";
-		const selectedFeature = toSelectedFeatureSummary(state);
+		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
 
-		this.updateText("active-filters", `Active filter values: ${activeFilterCount}`);
-		this.updateText("spatial-status", `Spatial status: ${spatialStatus}`);
-		this.updateText("spatial-features", `Returned features: ${spatialFeatureCount}`);
 		this.updateText(
-			"spatial-mode-density",
-			`Mode/density: ${spatialMode} / ${spatialDensity}`,
+			"top-summary",
+			`${spatialFeatureCount} mapped features • ${activeFilterCount} active filters • ${visibleOverlayCount} visible overlays`,
 		);
-		this.updateText("time-range", `Active time range: ${formatTimeRange(state.timeRange)}`);
-		this.renderSelectedFeatureDetail(selectedFeature);
-		this.updateText("visible-overlays", `Visible overlays: ${visibleOverlayCount}`);
-		this.updateText("viewport", `Viewport: ${viewportSummary}`);
+		this.updateText(
+			"time-range",
+			`Active time range: ${formatTimeRange(state.timeRange)}. Shared timeline slider will mount here next.`,
+		);
 		this.updateText("status", `Status: ${state.status.text}`);
-
+		this.renderSelectedFeatureDetail(selectedFeature);
+		this.syncOverlayVisibility(config, Boolean(selectedFeature));
 		this.syncMapViewport(state.viewport);
+	}
+
+	syncOverlayVisibility(config, hasSelectedFeature) {
+		const topOverlay = this.shadowRoot.querySelector('[data-region="top-overlay"]');
+		const topChrome = this.shadowRoot.querySelector('[data-bind="top-chrome"]');
+		const timelineOverlay = this.shadowRoot.querySelector('[data-region="bottom-overlay"]');
+		const timelineShell = this.shadowRoot.querySelector('[data-bind="timeline-shell"]');
+		const detailOverlay = this.shadowRoot.querySelector('[data-region="detail-overlay"]');
+		const detailShell = this.shadowRoot.querySelector('[data-bind="detail-shell"]');
+		const filterButton = this.shadowRoot.querySelector('[data-action="filter-entry"]');
+		if (!topOverlay || !topChrome || !timelineOverlay || !timelineShell || !detailOverlay || !detailShell) {
+			return;
+		}
+
+		topOverlay.hidden = !config.showTopChrome;
+		topChrome.hidden = !config.showTopChrome;
+		timelineOverlay.hidden = !config.showTimeline;
+		timelineShell.hidden = !config.showTimeline;
+		detailOverlay.hidden = !(config.showDetailOverlay && hasSelectedFeature);
+		detailShell.hidden = !(config.showDetailOverlay && hasSelectedFeature);
+		detailShell.dataset.mobileSheet = this.isMobileViewport() ? "true" : "false";
+		if (filterButton) {
+			filterButton.hidden = !config.showFilterEntry;
+		}
+
+		if (!config.mapEdgeToEdge) {
+			this.style.setProperty("--timeline-reserved-space", "6rem");
+		} else {
+			this.style.removeProperty("--timeline-reserved-space");
+		}
 	}
 
 	updateText(bindKey, value) {
@@ -449,7 +652,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		}
 
 		if (!selectedFeature) {
-			detailElement.innerHTML = `<p class="detail-empty">Select a map feature to view detail here.</p>`;
+			detailElement.innerHTML = `<p class="detail-empty">Select a map feature to open detail.</p>`;
 			return;
 		}
 		detailElement.innerHTML = renderSelectedFeatureCard(selectedFeature);
@@ -531,6 +734,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 	}
 
 	_onMapFeatureClick(event) {
+		this._lastFeatureClickTimestamp = Date.now();
 		const detail = event?.detail || {};
 		this.dispatchEvent(
 			new CustomEvent("timemap-browser-map-feature-click", {
@@ -545,12 +749,32 @@ class TimemapBrowserShellElement extends HTMLElement {
 		);
 	}
 
-	_onClearSelection(event) {
+	_onClick(event) {
 		const target = event?.target;
 		if (!(target instanceof HTMLElement)) {
 			return;
 		}
-		if (!target.closest('[data-action="clear-selection"]')) {
+
+		if (target.closest('[data-action="clear-selection"]')) {
+			this.dispatchEvent(
+				new CustomEvent("timemap-browser-clear-selection", {
+					bubbles: true,
+					composed: true,
+				}),
+			);
+			return;
+		}
+
+		const mapContainerClicked = Boolean(target.closest("oc-map"));
+		const state = this._state || {};
+		if (!state.selectedFeatureId || !mapContainerClicked) {
+			return;
+		}
+		const config = this.getConfig();
+		if (!config.mapClearSelectionOnBackground) {
+			return;
+		}
+		if (Date.now() - this._lastFeatureClickTimestamp < 240) {
 			return;
 		}
 		this.dispatchEvent(

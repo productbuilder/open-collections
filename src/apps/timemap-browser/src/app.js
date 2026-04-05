@@ -19,6 +19,16 @@ const VIEWPORT_STATE_THRESHOLDS = Object.freeze({
 	pixelSize: 1,
 });
 
+const PRESENTATION_ATTRIBUTES = [
+	"show-top-chrome",
+	"show-timeline",
+	"show-detail-overlay",
+	"show-filter-entry",
+	"map-edge-to-edge",
+	"embed-density",
+	"map-clear-selection-on-background",
+];
+
 function absDelta(left, right) {
 	const safeLeft = Number(left);
 	const safeRight = Number(right);
@@ -38,9 +48,9 @@ function hasMeaningfulViewportDelta(
 	}
 	if (
 		absDelta(nextViewport.center?.lng, previousViewport.center?.lng) >=
-		thresholds.center ||
+			thresholds.center ||
 		absDelta(nextViewport.center?.lat, previousViewport.center?.lat) >=
-		thresholds.center ||
+			thresholds.center ||
 		absDelta(nextViewport.zoom, previousViewport.zoom) >= thresholds.zoom ||
 		absDelta(nextViewport.bearing, previousViewport.bearing) >= thresholds.bearing ||
 		absDelta(nextViewport.pitch, previousViewport.pitch) >= thresholds.pitch
@@ -73,7 +83,12 @@ function hasMeaningfulViewportDelta(
 
 class TimemapBrowserElement extends HTMLElement {
 	static get observedAttributes() {
-		return ["data-oc-app-mode", "data-shell-embed", "data-workbench-embed"];
+		return [
+			"data-oc-app-mode",
+			"data-shell-embed",
+			"data-workbench-embed",
+			...PRESENTATION_ATTRIBUTES,
+		];
 	}
 
 	constructor() {
@@ -95,6 +110,7 @@ class TimemapBrowserElement extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.applyRuntimePresentation();
+		this.syncShellPresentationConfig();
 		this.bindState();
 		this.bindMapEvents();
 		this.controller.initializeSpatialData();
@@ -129,6 +145,14 @@ class TimemapBrowserElement extends HTMLElement {
 		) {
 			this.applyRuntimePresentation();
 		}
+		if (
+			name === "data-oc-app-mode" ||
+			name === "data-shell-embed" ||
+			name === "data-workbench-embed" ||
+			PRESENTATION_ATTRIBUTES.includes(name)
+		) {
+			this.syncShellPresentationConfig();
+		}
 	}
 
 	isEmbeddedRuntime() {
@@ -145,6 +169,78 @@ class TimemapBrowserElement extends HTMLElement {
 
 	applyRuntimePresentation() {
 		this.toggleAttribute("data-app-presentation-embedded", this.isEmbeddedRuntime());
+	}
+
+	resolvePresentationConfig() {
+		const embedded = this.isEmbeddedRuntime();
+		const defaults = {
+			showTopChrome: !embedded,
+			showTimeline: true,
+			showDetailOverlay: true,
+			showFilterEntry: true,
+			mapEdgeToEdge: true,
+			embedDensity: embedded ? "compact" : "comfortable",
+			mapClearSelectionOnBackground: null,
+		};
+
+		const resolveBoolean = (attributeName, fallbackValue) => {
+			if (!this.hasAttribute(attributeName)) {
+				return fallbackValue;
+			}
+			const rawValue = this.getAttribute(attributeName);
+			if (rawValue === "false") {
+				return false;
+			}
+			if (rawValue === "true" || rawValue === "") {
+				return true;
+			}
+			return fallbackValue;
+		};
+
+		const rawEmbedDensity = this.getAttribute("embed-density");
+		const embedDensity =
+			rawEmbedDensity === "compact" || rawEmbedDensity === "comfortable"
+				? rawEmbedDensity
+				: defaults.embedDensity;
+
+		return {
+			embedded,
+			showTopChrome: resolveBoolean("show-top-chrome", defaults.showTopChrome),
+			showTimeline: resolveBoolean("show-timeline", defaults.showTimeline),
+			showDetailOverlay: resolveBoolean(
+				"show-detail-overlay",
+				defaults.showDetailOverlay,
+			),
+			showFilterEntry: resolveBoolean(
+				"show-filter-entry",
+				defaults.showFilterEntry,
+			),
+			mapEdgeToEdge: resolveBoolean("map-edge-to-edge", defaults.mapEdgeToEdge),
+			embedDensity,
+			mapClearSelectionOnBackground: resolveBoolean(
+				"map-clear-selection-on-background",
+				defaults.mapClearSelectionOnBackground,
+			),
+		};
+	}
+
+	syncShellPresentationConfig() {
+		const shellElement = this.shadowRoot.querySelector(
+			"open-collections-timemap-browser-shell",
+		);
+		if (!shellElement) {
+			return;
+		}
+		const config = this.resolvePresentationConfig();
+		shellElement.presentation = config;
+		for (const attributeName of PRESENTATION_ATTRIBUTES) {
+			if (this.hasAttribute(attributeName)) {
+				shellElement.setAttribute(attributeName, this.getAttribute(attributeName) ?? "");
+			} else {
+				shellElement.removeAttribute(attributeName);
+			}
+		}
+		shellElement.setAttribute("embed-density", config.embedDensity);
 	}
 
 	bindState() {

@@ -1,4 +1,5 @@
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
+import { createTimemapBrowserController } from "./controllers/timemap-browser-controller.js";
 
 class TimemapBrowserElement extends HTMLElement {
 	static get observedAttributes() {
@@ -8,11 +9,21 @@ class TimemapBrowserElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
+		this.controller = createTimemapBrowserController();
+		this.unsubscribeState = null;
 	}
 
 	connectedCallback() {
 		this.render();
 		this.applyRuntimePresentation();
+		this.bindState();
+	}
+
+	disconnectedCallback() {
+		if (this.unsubscribeState) {
+			this.unsubscribeState();
+			this.unsubscribeState = null;
+		}
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -42,6 +53,23 @@ class TimemapBrowserElement extends HTMLElement {
 
 	applyRuntimePresentation() {
 		this.toggleAttribute("data-app-presentation-embedded", this.isEmbeddedRuntime());
+	}
+
+	bindState() {
+		const shellElement = this.shadowRoot.querySelector(
+			"open-collections-timemap-browser-shell",
+		);
+		if (!shellElement) {
+			return;
+		}
+
+		if (this.unsubscribeState) {
+			this.unsubscribeState();
+		}
+
+		this.unsubscribeState = this.controller.subscribe((nextState) => {
+			shellElement.state = nextState;
+		});
 	}
 
 	render() {

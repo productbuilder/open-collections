@@ -27,3 +27,14 @@ From repository root:
 - The app should render a titled scaffold page.
 - The filter, timeline, and detail/cards areas should show placeholder content.
 - The map area should render a working `oc-map` centered around Hilversum.
+
+## Internal structure (this phase)
+
+- `src/state/initial-state.js` defines a practical app-local state shape for:
+  - filters
+  - time range
+  - selection/hover
+  - overlays
+  - viewport
+- `src/controllers/timemap-browser-controller.js` provides lightweight orchestration helpers (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, etc.).
+- `src/app.js` wires the controller to the shell component so rendering stays in UI components while state/orchestration stays app-local.

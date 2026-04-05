@@ -62,10 +62,34 @@ const timemapBrowserShellStyles = `
 	}
 `;
 
+function formatTimeRange(timeRange = {}) {
+	if (!timeRange.start && !timeRange.end) {
+		return "Not set";
+	}
+	if (timeRange.start && timeRange.end) {
+		return `${timeRange.start} to ${timeRange.end}`;
+	}
+	return timeRange.start ? `From ${timeRange.start}` : `Until ${timeRange.end}`;
+}
+
+function getVisibleOverlayCount(visibleOverlays = {}) {
+	return Object.values(visibleOverlays).filter(Boolean).length;
+}
+
 class TimemapBrowserShellElement extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
+		this._state = null;
+	}
+
+	set state(nextState) {
+		this._state = nextState;
+		this.render();
+	}
+
+	get state() {
+		return this._state;
 	}
 
 	connectedCallback() {
@@ -73,6 +97,24 @@ class TimemapBrowserShellElement extends HTMLElement {
 	}
 
 	render() {
+		const state = this._state || {
+			filters: {},
+			timeRange: {},
+			selectedFeatureId: null,
+			hoveredFeatureId: null,
+			visibleOverlays: {},
+			viewport: { center: { lng: 5.1769, lat: 52.225 }, zoom: 13.6 },
+			status: { text: "Timemap scaffold ready." },
+		};
+		const activeFilterCount =
+			(state.filters.keywords?.length || 0) +
+			(state.filters.tags?.length || 0) +
+			(state.filters.types?.length || 0);
+		const selectedFeatureLabel = state.selectedFeatureId || "None";
+		const hoveredFeatureLabel = state.hoveredFeatureId || "None";
+		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
+		const viewportSummary = `${state.viewport.center.lng}, ${state.viewport.center.lat} (z${state.viewport.zoom})`;
+
 		this.shadowRoot.innerHTML = `
 			<style>${timemapBrowserShellStyles}</style>
 			<main class="shell" aria-label="Timemap browser scaffold">
@@ -92,6 +134,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 						>
 							<div class="panel-content">
 								<p class="panel-note">Filter controls will be introduced in a later iteration.</p>
+								<p class="panel-note">Active filter values: ${activeFilterCount}</p>
 							</div>
 						</open-collections-section-panel>
 
@@ -120,6 +163,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 						>
 							<div class="panel-content">
 								<p class="panel-note">Timeline UI scaffold placeholder.</p>
+								<p class="panel-note">Active time range: ${formatTimeRange(state.timeRange)}</p>
 							</div>
 						</open-collections-section-panel>
 					</section>
@@ -133,6 +177,11 @@ class TimemapBrowserShellElement extends HTMLElement {
 						>
 							<div class="panel-content">
 								<p class="panel-note">Detail drawer/card composition will be implemented in a future step.</p>
+								<p class="panel-note">Selected: ${selectedFeatureLabel}</p>
+								<p class="panel-note">Hovered: ${hoveredFeatureLabel}</p>
+								<p class="panel-note">Visible overlays: ${visibleOverlayCount}</p>
+								<p class="panel-note">Viewport: ${viewportSummary}</p>
+								<p class="panel-note">Status: ${state.status.text}</p>
 							</div>
 						</open-collections-section-panel>
 					</aside>

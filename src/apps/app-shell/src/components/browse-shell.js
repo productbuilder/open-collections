@@ -300,11 +300,16 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.browse-shell[data-mode="map"] {
 					grid-template-rows: minmax(0, 1fr);
 					position: relative;
+					background: transparent;
 				}
 				.browse-shell[data-mode="map"] .app-viewport {
 					position: relative;
 				}
 				.browse-shell[data-mode="map"] .control-strip {
+					display: flex;
+					flex-direction: column;
+					align-items: stretch;
+					gap: 0.45rem;
 					position: absolute;
 					top: 0.6rem;
 					left: 0.6rem;
@@ -312,11 +317,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					background: transparent;
 					border-bottom: none;
 					padding: 0;
+					margin: 0;
 					pointer-events: none;
 					z-index: 8;
 				}
 				.browse-shell[data-mode="map"] .control-row {
 					pointer-events: auto;
+					background: transparent;
 				}
 				.browse-shell[data-mode="map"] .search-entry,
 				.browse-shell[data-mode="map"] .filter-entry,

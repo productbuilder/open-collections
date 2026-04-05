@@ -330,6 +330,10 @@ const timemapBrowserShellStyles = `
 		--timeline-reserved-space: 4.8rem;
 	}
 
+	:host([data-embedded]) .top-overlay {
+		display: none;
+	}
+
 	@media (max-width: 767px) {
 		:host {
 			--timeline-reserved-space: 4.5rem;

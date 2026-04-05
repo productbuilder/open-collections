@@ -76,6 +76,36 @@ function getVisibleOverlayCount(visibleOverlays = {}) {
 	return Object.values(visibleOverlays).filter(Boolean).length;
 }
 
+function formatViewportSummary(viewport = {}) {
+	const centerLng = Number(viewport.center?.lng || 0).toFixed(4);
+	const centerLat = Number(viewport.center?.lat || 0).toFixed(4);
+	const zoom = Number(viewport.zoom || 0).toFixed(2);
+	const bbox = viewport.bbox
+		? `${Number(viewport.bbox.west).toFixed(4)}, ${Number(
+				viewport.bbox.south,
+			).toFixed(4)} → ${Number(viewport.bbox.east).toFixed(4)}, ${Number(
+				viewport.bbox.north,
+			).toFixed(4)}`
+		: "n/a";
+	return `${centerLng}, ${centerLat} (z${zoom}) • bbox ${bbox}`;
+}
+
+function toBboxFromBounds(bounds) {
+	if (!Array.isArray(bounds) || bounds.length < 2) {
+		return null;
+	}
+	const [southWest, northEast] = bounds;
+	if (!Array.isArray(southWest) || !Array.isArray(northEast)) {
+		return null;
+	}
+	return {
+		west: Number(southWest[0]),
+		south: Number(southWest[1]),
+		east: Number(northEast[0]),
+		north: Number(northEast[1]),
+	};
+}
+
 function toFeatureCollection(features) {
 	return {
 		type: "FeatureCollection",
@@ -104,6 +134,8 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this.attachShadow({ mode: "open" });
 		this._state = null;
 		this._mapReady = false;
+		this._handleMapReady = this._onMapReady.bind(this);
+		this._handleViewportChange = this._onMapViewportChange.bind(this);
 	}
 
 	set state(nextState) {
@@ -141,7 +173,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const selectedFeatureLabel = state.selectedFeatureId || "None";
 		const hoveredFeatureLabel = state.hoveredFeatureId || "None";
 		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
-		const viewportSummary = `${state.viewport.center.lng}, ${state.viewport.center.lat} (z${state.viewport.zoom})`;
+		const viewportSummary = formatViewportSummary(state.viewport);
 		const spatialStatus = state.spatial?.status || "idle";
 		const spatialFeatureCount = state.spatial?.response?.features?.length || 0;
 		const spatialMode = state.spatial?.request?.strategy?.mode || "explore";
@@ -228,17 +260,58 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 		const mapElement = this.shadowRoot.querySelector("oc-map");
 		if (mapElement) {
+			mapElement.addEventListener("oc-map-ready", this._handleMapReady, {
+				once: true,
+			});
 			mapElement.addEventListener(
-				"oc-map-ready",
-				() => {
-					this._mapReady = true;
-					this.renderSpatialLayers();
-				},
-				{ once: true },
+				"oc-map-viewport-change",
+				this._handleViewportChange,
 			);
 		}
 
 		this._mapReady = false;
+	}
+
+	_onMapReady() {
+		this._mapReady = true;
+		this.renderSpatialLayers();
+	}
+
+	_onMapViewportChange(event) {
+		const detail = event?.detail || {};
+		const center = detail.center
+			? {
+					lng: Number(detail.center.lng),
+					lat: Number(detail.center.lat),
+				}
+			: null;
+		if (!center) {
+			return;
+		}
+
+		const mapElement = this.shadowRoot.querySelector("oc-map");
+		this.dispatchEvent(
+			new CustomEvent("timemap-browser-map-viewport-change", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					center,
+					zoom: Number(detail.zoom),
+					bearing: Number(detail.bearing),
+					pitch: Number(detail.pitch),
+					bbox: toBboxFromBounds(detail.bounds),
+					pixelSize: mapElement
+						? {
+								width: Math.round(mapElement.clientWidth || 0),
+								height: Math.round(mapElement.clientHeight || 0),
+							}
+						: {
+								width: null,
+								height: null,
+							},
+				},
+			}),
+		);
 	}
 
 	renderSpatialLayers() {

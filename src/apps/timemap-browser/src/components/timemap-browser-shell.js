@@ -32,6 +32,63 @@ const timemapBrowserShellStyles = `
 		color: #334155;
 	}
 
+	.detail-card {
+		display: grid;
+		gap: 0.6rem;
+		padding: 0.8rem;
+		border: 1px solid #cbd5e1;
+		border-radius: 0.65rem;
+		background: #ffffff;
+	}
+
+	.detail-card__title {
+		margin: 0;
+		font-size: 1rem;
+		line-height: 1.2;
+		color: #0f172a;
+	}
+
+	.detail-grid {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.detail-row {
+		margin: 0;
+		font-size: 0.86rem;
+		line-height: 1.35;
+		color: #334155;
+	}
+
+	.detail-label {
+		font-weight: 700;
+		color: #0f172a;
+	}
+
+	.detail-empty {
+		margin: 0;
+		font-size: 0.9rem;
+		line-height: 1.45;
+		color: #475569;
+	}
+
+	.clear-selection-button {
+		inline-size: fit-content;
+		padding: 0.42rem 0.68rem;
+		border-radius: 0.5rem;
+		border: 1px solid #94a3b8;
+		background: #f8fafc;
+		color: #0f172a;
+		font-size: 0.82rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.clear-selection-button:hover {
+		background: #eff6ff;
+		border-color: #64748b;
+	}
+
 	.map-panel {
 		padding: 0;
 		overflow: hidden;
@@ -153,7 +210,47 @@ function createSpatialRenderSignature(state = {}) {
 			? state.spatial.response.features.length
 			: 0,
 		featuresVisible: Boolean(state.visibleOverlays?.features),
+		selectedFeatureId: state.selectedFeatureId || null,
 	});
+}
+
+function toSelectedFeatureSummary(state = {}) {
+	const features = Array.isArray(state.spatial?.response?.features)
+		? state.spatial.response.features
+		: [];
+	const selectedFeatureId = state.selectedFeatureId;
+	if (!selectedFeatureId) {
+		return null;
+	}
+	return (
+		features.find((feature) => {
+			const featureId = feature?.id ?? feature?.properties?.id ?? null;
+			return featureId === selectedFeatureId;
+		}) || null
+	);
+}
+
+function renderSelectedFeatureCard(feature) {
+	const properties = feature?.properties || {};
+	const title =
+		properties.title || properties.label || properties.name || "Untitled feature";
+	const featureId = feature?.id || properties.id || "n/a";
+	const category = properties.category || properties.type || properties.kind || "n/a";
+	const description =
+		properties.description || properties.statusText || properties.status || "n/a";
+	const geometryType = feature?.geometry?.type || "n/a";
+	return `
+		<div class="detail-card" data-bind="selected-detail-card">
+			<h3 class="detail-card__title">${title}</h3>
+			<div class="detail-grid">
+				<p class="detail-row"><span class="detail-label">ID:</span> ${featureId}</p>
+				<p class="detail-row"><span class="detail-label">Category:</span> ${category}</p>
+				<p class="detail-row"><span class="detail-label">Geometry:</span> ${geometryType}</p>
+				<p class="detail-row"><span class="detail-label">Description:</span> ${description}</p>
+			</div>
+			<button type="button" class="clear-selection-button" data-action="clear-selection">Clear selection</button>
+		</div>
+	`;
 }
 
 class TimemapBrowserShellElement extends HTMLElement {
@@ -169,6 +266,8 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._lastSpatialRenderSignature = null;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
+		this._handleMapFeatureClick = this._onMapFeatureClick.bind(this);
+		this._handleClearSelection = this._onClearSelection.bind(this);
 	}
 
 	set state(nextState) {
@@ -252,14 +351,12 @@ class TimemapBrowserShellElement extends HTMLElement {
 						<aside class="side-column" aria-label="Timemap details workspace">
 							<open-collections-section-panel
 								title="Cards & detail"
-								description="Reserved area for card list, drawer, and item details."
+								description="Selection-driven detail card scaffold."
 								heading-level="2"
 								surface
 							>
 								<div class="panel-content">
-									<p class="panel-note">Detail drawer/card composition will be implemented in a future step.</p>
-									<p class="panel-note" data-bind="selected"></p>
-									<p class="panel-note" data-bind="hovered"></p>
+									<div data-bind="selected-feature-detail"></div>
 									<p class="panel-note" data-bind="visible-overlays"></p>
 									<p class="panel-note" data-bind="viewport"></p>
 									<p class="panel-note" data-bind="status"></p>
@@ -279,7 +376,12 @@ class TimemapBrowserShellElement extends HTMLElement {
 					"oc-map-viewport-change",
 					this._handleViewportChange,
 				);
+				mapElement.addEventListener(
+					"oc-map-feature-click",
+					this._handleMapFeatureClick,
+				);
 			}
+			this.shadowRoot.addEventListener("click", this._handleClearSelection);
 			this._hasRendered = true;
 		}
 
@@ -307,14 +409,13 @@ class TimemapBrowserShellElement extends HTMLElement {
 			(state.filters.keywords?.length || 0) +
 			(state.filters.tags?.length || 0) +
 			(state.filters.types?.length || 0);
-		const selectedFeatureLabel = state.selectedFeatureId || "None";
-		const hoveredFeatureLabel = state.hoveredFeatureId || "None";
 		const visibleOverlayCount = getVisibleOverlayCount(state.visibleOverlays);
 		const viewportSummary = formatViewportSummary(state.viewport);
 		const spatialStatus = state.spatial?.status || "idle";
 		const spatialFeatureCount = state.spatial?.response?.features?.length || 0;
 		const spatialMode = state.spatial?.request?.strategy?.mode || "explore";
 		const spatialDensity = state.spatial?.request?.strategy?.density || "auto";
+		const selectedFeature = toSelectedFeatureSummary(state);
 
 		this.updateText("active-filters", `Active filter values: ${activeFilterCount}`);
 		this.updateText("spatial-status", `Spatial status: ${spatialStatus}`);
@@ -324,8 +425,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 			`Mode/density: ${spatialMode} / ${spatialDensity}`,
 		);
 		this.updateText("time-range", `Active time range: ${formatTimeRange(state.timeRange)}`);
-		this.updateText("selected", `Selected: ${selectedFeatureLabel}`);
-		this.updateText("hovered", `Hovered: ${hoveredFeatureLabel}`);
+		this.renderSelectedFeatureDetail(selectedFeature);
 		this.updateText("visible-overlays", `Visible overlays: ${visibleOverlayCount}`);
 		this.updateText("viewport", `Viewport: ${viewportSummary}`);
 		this.updateText("status", `Status: ${state.status.text}`);
@@ -338,6 +438,21 @@ class TimemapBrowserShellElement extends HTMLElement {
 		if (element && element.textContent !== value) {
 			element.textContent = value;
 		}
+	}
+
+	renderSelectedFeatureDetail(selectedFeature) {
+		const detailElement = this.shadowRoot.querySelector(
+			'[data-bind="selected-feature-detail"]',
+		);
+		if (!detailElement) {
+			return;
+		}
+
+		if (!selectedFeature) {
+			detailElement.innerHTML = `<p class="detail-empty">Select a map feature to view detail here.</p>`;
+			return;
+		}
+		detailElement.innerHTML = renderSelectedFeatureCard(selectedFeature);
 	}
 
 	syncMapViewport(viewport = {}) {
@@ -415,6 +530,37 @@ class TimemapBrowserShellElement extends HTMLElement {
 		);
 	}
 
+	_onMapFeatureClick(event) {
+		const detail = event?.detail || {};
+		this.dispatchEvent(
+			new CustomEvent("timemap-browser-map-feature-click", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					featureId: detail.featureId || detail.featureProperties?.id || null,
+					layerId: detail.layerId || null,
+					sourceId: detail.sourceId || null,
+				},
+			}),
+		);
+	}
+
+	_onClearSelection(event) {
+		const target = event?.target;
+		if (!(target instanceof HTMLElement)) {
+			return;
+		}
+		if (!target.closest('[data-action="clear-selection"]')) {
+			return;
+		}
+		this.dispatchEvent(
+			new CustomEvent("timemap-browser-clear-selection", {
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	}
+
 	shouldRenderSpatialLayers(previousState, nextState) {
 		if (!nextState) {
 			return false;
@@ -465,7 +611,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 				"fill-color": "#60a5fa",
 				"fill-opacity": 0.2,
 			},
-			selectable: false,
+			selectionProperty: "id",
 			visible: Boolean(state.visibleOverlays?.features),
 		});
 		mapElement.setGeoJsonData("timemap-line", toFeatureCollection(lineFeatures), {
@@ -474,7 +620,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 				"line-color": "#0369a1",
 				"line-width": 3,
 			},
-			selectable: false,
+			selectionProperty: "id",
 			visible: Boolean(state.visibleOverlays?.features),
 		});
 		mapElement.setGeoJsonData("timemap-points", toFeatureCollection(pointFeatures), {
@@ -488,6 +634,20 @@ class TimemapBrowserShellElement extends HTMLElement {
 			selectionProperty: "id",
 			visible: Boolean(state.visibleOverlays?.features),
 		});
+
+		const selectedFeature = toSelectedFeatureSummary(state);
+		if (!selectedFeature) {
+			mapElement.clearSelection();
+			return;
+		}
+		const geometryType = selectedFeature.geometry?.type;
+		const sourceId =
+			geometryType === "Point"
+				? "timemap-points"
+				: geometryType === "LineString"
+					? "timemap-line"
+					: "timemap-polygon-fill";
+		mapElement.selectFeature(sourceId, selectedFeature.id, { property: "id" });
 	}
 }
 

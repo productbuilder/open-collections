@@ -81,6 +81,16 @@ function areViewportsEqual(left, right) {
 	);
 }
 
+function hasFeatureWithId(features, featureId) {
+	if (!featureId || !Array.isArray(features)) {
+		return false;
+	}
+	return features.some((feature) => {
+		const candidateId = feature?.id ?? feature?.properties?.id ?? null;
+		return candidateId === featureId;
+	});
+}
+
 export function createTimemapBrowserController(
 	initialState = createTimemapBrowserInitialState(),
 ) {
@@ -138,6 +148,12 @@ export function createTimemapBrowserController(
 						response: spatialResponse,
 						status: "ready",
 					},
+					selectedFeatureId: hasFeatureWithId(
+						spatialResponse.features,
+						state.selectedFeatureId,
+					)
+						? state.selectedFeatureId
+						: null,
 					status: {
 						...state.status,
 						tone: "positive",

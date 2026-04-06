@@ -309,17 +309,10 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		);
 		const firstTick = normalizeYearStep(Math.floor(minYear / baseStep) * baseStep, baseStep);
 		let lastLabelX = -Infinity;
-		for (
-			let year = firstTick;
-			year <= maxYear + baseStep * 0.5;
-			year = normalizeYearStep(year + baseStep, baseStep)
-		) {
-			if (year < this.model.domainMinYear) {
-				continue;
-			}
+		const appendTick = (year) => {
 			const x = centerX + (year - renderCenterYear) * pixelsPerYear;
-			if (x < -20 || x > trackWidth + 20) {
-				continue;
+			if (x < -36 || x > trackWidth + 36) {
+				return;
 			}
 			const tick = document.createElement("div");
 			tick.className = "tick";
@@ -337,7 +330,19 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				lastLabelX = x;
 			}
 			ticksContainer.append(tick);
+		};
+		for (
+			let year = firstTick;
+			year <= maxYear + baseStep * 0.5;
+			year = normalizeYearStep(year + baseStep, baseStep)
+		) {
+			if (year < this.model.domainMinYear) {
+				continue;
+			}
+			appendTick(year);
 		}
+		appendTick(this.model.domainMinYear);
+		appendTick(this.model.domainMaxYear);
 	}
 
 	applyView() {
@@ -382,8 +387,8 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.base-line {
 					position: absolute;
-					left: 0;
-					right: 0;
+					left: -8px;
+					right: -8px;
 					top: 57px;
 					height: 2px;
 					background: rgba(255, 255, 255, 0.25);
@@ -407,20 +412,20 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 52px;
+					top: 54px;
 					width: 1px;
-					height: 8px;
+					height: 6px;
 					background: rgba(255, 255, 255, 0.26);
 				}
 				.tick[data-tier="major"] {
-					height: 14px;
-					top: 49px;
+					height: 11px;
+					top: 51px;
 					width: 2px;
 					background: rgba(255, 255, 255, 0.72);
 				}
 				.label {
 					position: absolute;
-					top: -20px;
+					top: -17px;
 					left: 50%;
 					transform: translateX(-50%);
 					font-size: 0.64rem;

@@ -2,6 +2,12 @@ import {
 	ComponentBase,
 	normalizeCollection,
 } from "../../../shared/library-core/src/index.js";
+import {
+	FILTER_OPTION_STATUS,
+	createBrowseShellQueryState,
+	normalizeBrowseShellQueryPatch,
+	normalizeBrowseShellQueryState,
+} from "../../../shared/data/query/browse-shell-query-contract.js";
 import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
 import "../../../shared/ui/primitives/section-header.js";
 import { BROWSER_CONFIG } from "./config.js";
@@ -130,12 +136,14 @@ class CollectionBrowserElement extends ComponentBase {
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
 			isLoadingCollection: false,
+			browseShellQuery: createBrowseShellQueryState(),
 			allModeFeedSession: null,
 			isAppendingAllModeFeedChunk: false,
 		};
 		// Temporary feed diagnostics: tracks last payload signature to avoid noisy logs.
 		this.lastBrowseDiagnosticsSignature = "";
 		this.shadow = this.attachShadow({ mode: "open" });
+		this.handleBrowseQueryPatch = this.onBrowseQueryPatch.bind(this);
 	}
 
 	connectedCallback() {
@@ -148,6 +156,7 @@ class CollectionBrowserElement extends ComponentBase {
 		this.cacheDom();
 		this._eventsBound = false;
 		this.bindEvents();
+		this.addEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		this.setStatus(this.state.statusText, this.state.statusTone);
 		this.renderHeader();
 		this.renderManifestControls();
@@ -169,11 +178,30 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	disconnectedCallback() {
+		this.removeEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		if (this._handleWindowResize) {
 			window.removeEventListener("resize", this._handleWindowResize);
 			this._handleWindowResize = null;
 		}
 		this._eventsBound = false;
+	}
+
+	onBrowseQueryPatch(event) {
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const normalizedPatch = normalizeBrowseShellQueryPatch(
+			detail,
+			this.state.browseShellQuery?.query,
+		);
+		this.state.browseShellQuery = normalizeBrowseShellQueryState(
+			{
+				...this.state.browseShellQuery,
+				query: normalizedPatch.query,
+				filters: normalizedPatch.filters,
+			},
+			this.state.browseShellQuery || createBrowseShellQueryState(),
+		);
+		this.renderViewport();
 	}
 
 	buildAllModeFeedSessionKey({
@@ -1749,18 +1777,36 @@ class CollectionBrowserElement extends ComponentBase {
 			types: toFilterOptionEntries(typeCounts),
 			categories: toFilterOptionEntries(categoryCounts),
 		};
+		const currentQueryState =
+			this.state.browseShellQuery || createBrowseShellQueryState();
+		const hasOptions = options.types.length > 0 || options.categories.length > 0;
+		const optionsStatus = this.state.isLoadingCollection
+			? FILTER_OPTION_STATUS.LOADING
+			: hasOptions
+				? FILTER_OPTION_STATUS.READY
+				: FILTER_OPTION_STATUS.EMPTY;
+		const normalizedState = normalizeBrowseShellQueryState(
+			{
+				source: {
+					app: "collection-browser",
+					mode: "collection",
+				},
+				query: currentQueryState.query,
+				filters: currentQueryState.filters,
+				options,
+				status: {
+					loading: this.state.isLoadingCollection,
+					filterOptions: optionsStatus,
+				},
+			},
+			currentQueryState,
+		);
+		this.state.browseShellQuery = normalizedState;
 		this.dispatchEvent(
-			new CustomEvent("collection-browser-query-state", {
+			new CustomEvent("browse-query-state", {
 				bubbles: true,
 				composed: true,
-				detail: {
-					query: {
-						text: "",
-						types: [],
-						categories: [],
-					},
-					options,
-				},
+				detail: normalizedState,
 			}),
 		);
 	}

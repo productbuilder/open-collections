@@ -1,3 +1,10 @@
+import {
+	FILTER_OPTION_STATUS,
+	createBrowseShellQueryState,
+	normalizeBrowseShellQueryPatch,
+	normalizeBrowseShellQueryState,
+} from "../../../../shared/data/query/browse-shell-query-contract.js";
+
 const BROWSE_MODES = Object.freeze({
 	LIST: "collection",
 	MAP: "map",
@@ -108,7 +115,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				types: [],
 				categories: [],
 			},
+			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
 		};
+		this._browseQueryState = createBrowseShellQueryState();
 		this._filterInputTimer = null;
 		this._shellSearchTimer = null;
 	}
@@ -182,33 +191,22 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		const handleBrowseQueryState = (event) => {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
-			const query = detail.query && typeof detail.query === "object" ? detail.query : {};
-			const optionsSource =
-				detail.options && typeof detail.options === "object"
-					? detail.options
-					: detail.filterOptions && typeof detail.filterOptions === "object"
-						? detail.filterOptions
-						: {};
+			const normalizedState = normalizeBrowseShellQueryState(detail);
+			this._browseQueryState = normalizedState;
 			this.state.filterState = {
-				text: toText(query.text),
-				types: toUniqueStringList(query.types),
-				categories: toUniqueStringList(query.categories),
+				text: toText(normalizedState.filters.text),
+				types: toUniqueStringList(normalizedState.filters.types),
+				categories: toUniqueStringList(normalizedState.filters.categories),
 			};
 			this.state.filterOptions = {
-				types: normalizeFilterOptionEntries(optionsSource.types),
-				categories: normalizeFilterOptionEntries(optionsSource.categories),
+				types: normalizeFilterOptionEntries(normalizedState.options.types),
+				categories: normalizeFilterOptionEntries(normalizedState.options.categories),
 			};
+			this.state.filterOptionsStatus = normalizedState.status.filterOptions;
 			this.syncShellSearchState();
 			this.syncFilterPanelState();
 		};
-		this.shadowRoot.addEventListener(
-			"timemap-browser-query-state",
-			handleBrowseQueryState,
-		);
-		this.shadowRoot.addEventListener(
-			"collection-browser-query-state",
-			handleBrowseQueryState,
-		);
+		this.shadowRoot.addEventListener("browse-query-state", handleBrowseQueryState);
 		this.shadowRoot.addEventListener("input", (event) => {
 			const target = event.target;
 			if (!(target instanceof HTMLInputElement)) {
@@ -225,7 +223,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 				this._shellSearchTimer = setTimeout(() => {
 					this._shellSearchTimer = null;
-					this.sendFilterPatchToTimemap({ text: nextText });
+					this.sendBrowseQueryPatchToActiveChild({ text: nextText });
 				}, 120);
 			}
 		});
@@ -251,11 +249,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			}
 			this._filterInputTimer = setTimeout(() => {
 				this._filterInputTimer = null;
-				this.sendFilterPatchToTimemap(detail);
+				this.sendBrowseQueryPatchToActiveChild(detail);
 			}, 120);
 		});
 		this.shadowRoot.addEventListener("oc-filter-panel-clear", () => {
-			this.sendFilterPatchToTimemap({
+			this.sendBrowseQueryPatchToActiveChild({
 				text: "",
 				types: [],
 				categories: [],
@@ -303,6 +301,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		}
 		filterPanel.filterState = this.state.filterState;
 		filterPanel.filterOptions = this.state.filterOptions;
+		filterPanel.filterOptionsStatus = this.state.filterOptionsStatus;
 	}
 
 	syncShellSearchState() {
@@ -318,16 +317,22 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		}
 	}
 
-	sendFilterPatchToTimemap(filterPatch = {}) {
-		const timemapElement = this.shadowRoot.querySelector("timemap-browser");
-		if (!timemapElement) {
+	sendBrowseQueryPatchToActiveChild(filterPatch = {}) {
+		const targetSelector =
+			this.currentBrowseMode() === BROWSE_MODES.MAP
+				? "timemap-browser"
+				: "collection-browser";
+		const activeChildElement = this.shadowRoot.querySelector(targetSelector);
+		if (!activeChildElement) {
 			return;
 		}
-		timemapElement.dispatchEvent(
-			new CustomEvent("timemap-browser-filter-patch", {
-				detail: {
-					filterPatch,
-				},
+		const normalizedPatch = normalizeBrowseShellQueryPatch(
+			filterPatch,
+			this._browseQueryState?.query,
+		);
+		activeChildElement.dispatchEvent(
+			new CustomEvent("browse-query-patch", {
+				detail: normalizedPatch,
 			}),
 		);
 	}

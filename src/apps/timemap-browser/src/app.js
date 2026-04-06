@@ -101,6 +101,34 @@ const LOW_SIGNAL_CATEGORY_VALUES = new Set([
 
 const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
+function normalizeFilterOptionEntries(entries = []) {
+	if (!Array.isArray(entries)) {
+		return [];
+	}
+	const normalized = new Map();
+	for (const entry of entries) {
+		const value = String(
+			(entry && typeof entry === "object" ? entry.value : entry) ?? "",
+		)
+			.trim();
+		if (!value) {
+			continue;
+		}
+		const sourceCount =
+			entry && typeof entry === "object" ? Number(entry.count) : Number.NaN;
+		normalized.set(value, {
+			value,
+			label:
+				(entry && typeof entry === "object" && String(entry.label ?? "").trim()) ||
+				value,
+			count: Number.isFinite(sourceCount) ? sourceCount : null,
+		});
+	}
+	return [...normalized.values()].sort((left, right) =>
+		left.value.localeCompare(right.value),
+	);
+}
+
 function hasFilterOptionEntries(entries) {
 	return Array.isArray(entries) && entries.length > 0;
 }
@@ -166,20 +194,30 @@ function buildFilterOptionsFromFeatures(features = []) {
 }
 
 function resolveFilterOptions(spatialResponse = {}) {
+	const featureDerivedOptions = buildFilterOptionsFromFeatures(
+		spatialResponse?.features || [],
+	);
 	const metaOptions =
 		spatialResponse?.meta && typeof spatialResponse.meta === "object"
 			? spatialResponse.meta.filterOptions
 			: null;
 	const resolvedMetaOptions =
 		metaOptions && typeof metaOptions === "object" ? metaOptions : {};
-	const fallbackOptions = buildFilterOptionsFromFeatures(spatialResponse?.features || []);
+	const normalizedMetaCategories = normalizeFilterOptionEntries(
+		resolvedMetaOptions.categories,
+	);
+	const normalizedFeatureTypes = normalizeFilterOptionEntries(
+		featureDerivedOptions.types,
+	);
+	const normalizedFeatureCategories = normalizeFilterOptionEntries(
+		featureDerivedOptions.categories,
+	);
+
 	return {
-		types: hasFilterOptionEntries(resolvedMetaOptions.types)
-			? resolvedMetaOptions.types
-			: fallbackOptions.types,
-		categories: hasFilterOptionEntries(resolvedMetaOptions.categories)
-			? resolvedMetaOptions.categories
-			: fallbackOptions.categories,
+		types: normalizedFeatureTypes,
+		categories: hasFilterOptionEntries(normalizedFeatureCategories)
+			? normalizedFeatureCategories
+			: normalizedMetaCategories,
 	};
 }
 

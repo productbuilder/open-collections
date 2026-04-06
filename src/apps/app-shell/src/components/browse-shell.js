@@ -179,7 +179,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.closeFilterPanel();
 			}
 		});
-		this.shadowRoot.addEventListener("timemap-browser-query-state", (event) => {
+		const handleBrowseQueryState = (event) => {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
 			const query = detail.query && typeof detail.query === "object" ? detail.query : {};
@@ -200,7 +200,15 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			};
 			this.syncShellSearchState();
 			this.syncFilterPanelState();
-		});
+		};
+		this.shadowRoot.addEventListener(
+			"timemap-browser-query-state",
+			handleBrowseQueryState,
+		);
+		this.shadowRoot.addEventListener(
+			"collection-browser-query-state",
+			handleBrowseQueryState,
+		);
 		this.shadowRoot.addEventListener("input", (event) => {
 			const target = event.target;
 			if (!(target instanceof HTMLInputElement)) {

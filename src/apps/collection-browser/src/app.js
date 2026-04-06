@@ -42,6 +42,14 @@ import "./components/browser-viewer-dialog.js";
 
 const ALL_MODE_INITIAL_CHUNK_SIZE = 24;
 const ALL_MODE_APPEND_CHUNK_SIZE = 24;
+const LOW_SIGNAL_CATEGORY_VALUES = new Set([
+	"collection-item",
+	"item",
+	"unknown",
+	"uncategorized",
+	"n/a",
+]);
+const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
@@ -64,6 +72,37 @@ function derivePreviewImages(items = [], max = Number.POSITIVE_INFINITY) {
 		}
 	}
 	return previews;
+}
+
+function toFilterOptionEntries(counts = new Map()) {
+	return [...counts.entries()]
+		.sort(([leftValue], [rightValue]) => leftValue.localeCompare(rightValue))
+		.map(([value, count]) => ({
+			value,
+			label: value,
+			count,
+		}));
+}
+
+function collectTypeValues(item = {}) {
+	const directType = String(item?.type || "").trim();
+	if (directType) {
+		return [directType];
+	}
+	const mediaType = String(item?.media?.type || "").trim().toLowerCase();
+	if (!mediaType) {
+		return [];
+	}
+	const slashIndex = mediaType.indexOf("/");
+	if (slashIndex <= 0 || slashIndex >= mediaType.length - 1) {
+		return [mediaType];
+	}
+	const subtype = mediaType.slice(slashIndex + 1).trim();
+	const topLevel = mediaType.slice(0, slashIndex).trim();
+	if (subtype && !GENERIC_MEDIA_TYPES.has(subtype)) {
+		return [subtype];
+	}
+	return topLevel ? [topLevel] : [mediaType];
 }
 
 class CollectionBrowserElement extends ComponentBase {
@@ -1674,8 +1713,62 @@ class CollectionBrowserElement extends ComponentBase {
 		}
 	}
 
+	emitQueryState(model = {}) {
+		const items = Array.isArray(model.items) ? model.items : [];
+		const typeCounts = new Map();
+		const categoryCounts = new Map();
+		const incrementCount = (counts, value) => {
+			const normalized = String(value ?? "").trim();
+			if (!normalized) {
+				return;
+			}
+			counts.set(normalized, (counts.get(normalized) || 0) + 1);
+		};
+
+		for (const item of items) {
+			const uniqueTypes = new Set(collectTypeValues(item));
+			for (const typeValue of uniqueTypes) {
+				incrementCount(typeCounts, typeValue);
+			}
+			const categories = new Set(
+				[
+					String(item?.category || "").trim(),
+					...(Array.isArray(item?.tags) ? item.tags : []),
+				]
+					.map((entry) => String(entry || "").trim())
+					.filter(
+						(value) => value && !LOW_SIGNAL_CATEGORY_VALUES.has(value.toLowerCase()),
+					),
+			);
+			for (const categoryValue of categories) {
+				incrementCount(categoryCounts, categoryValue);
+			}
+		}
+
+		const options = {
+			types: toFilterOptionEntries(typeCounts),
+			categories: toFilterOptionEntries(categoryCounts),
+		};
+		this.dispatchEvent(
+			new CustomEvent("collection-browser-query-state", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					query: {
+						text: "",
+						types: [],
+						categories: [],
+					},
+					options,
+				},
+			}),
+		);
+	}
+
 	renderViewport() {
-		this.dom?.browserViewport?.update(this.viewportModel());
+		const model = this.viewportModel();
+		this.dom?.browserViewport?.update(model);
+		this.emitQueryState(model);
 		this.renderEntryHeaderVisibility();
 	}
 

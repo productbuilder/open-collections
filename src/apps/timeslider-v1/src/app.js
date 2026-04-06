@@ -79,15 +79,13 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 			ruler.windowSizeYears = this.state.windowSizeYears;
 		}
 
-		const centerValue = this.shadowRoot.getElementById("centerValue");
 		const spanValue = this.shadowRoot.getElementById("spanValue");
 		const rangeValue = this.shadowRoot.getElementById("rangeValue");
-		if (!centerValue || !spanValue || !rangeValue) {
+		if (!spanValue || !rangeValue) {
 			return;
 		}
 
 		const { startYear, endYear } = this.getDerivedWindow();
-		centerValue.textContent = formatYear(this.state.centerYear);
 		spanValue.textContent =
 			this.state.windowSizeYears === "all"
 				? "All"
@@ -132,7 +130,7 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 				}
 				.readouts {
 					display: grid;
-					grid-template-columns: repeat(2, minmax(0, 1fr));
+					grid-template-columns: minmax(0, 1fr);
 					gap: 0.65rem;
 				}
 				.readout {
@@ -196,10 +194,6 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 					<header class="header">
 						<h1>Timeline focus prototype (v1)</h1>
 						<div class="readouts">
-							<div class="readout">
-								<strong>Focused year</strong>
-								<span id="centerValue">1950</span>
-							</div>
 							<div class="readout">
 								<strong>Window size</strong>
 								<span id="spanValue">20 years</span>

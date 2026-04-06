@@ -40,9 +40,19 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			active: false,
 			startX: 0,
 			startYear: 1950,
+			lastX: 0,
+			lastTime: 0,
+		};
+		this.motion = {
+			displayYear: 1950,
+			velocityYearsPerMs: 0,
+			inertiaActive: false,
+			rafId: 0,
+			lastFrameTime: 0,
 		};
 		this.onPointerMove = this.onPointerMove.bind(this);
 		this.onPointerUp = this.onPointerUp.bind(this);
+		this.onFrame = this.onFrame.bind(this);
 	}
 
 	connectedCallback() {
@@ -75,6 +85,9 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			return;
 		}
 		this.model.centerYear = clamp(next, this.model.domainMinYear, this.model.domainMaxYear);
+		this.motion.displayYear = this.model.centerYear;
+		this.motion.velocityYearsPerMs = 0;
+		this.motion.inertiaActive = false;
 		this.applyView();
 	}
 
@@ -115,8 +128,13 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			this.drag.active = true;
 			this.drag.startX = event.clientX;
 			this.drag.startYear = this.model.centerYear;
+			this.drag.lastX = event.clientX;
+			this.drag.lastTime = event.timeStamp || performance.now();
+			this.motion.velocityYearsPerMs = 0;
+			this.motion.inertiaActive = false;
 			window.addEventListener("pointermove", this.onPointerMove);
 			window.addEventListener("pointerup", this.onPointerUp);
+			window.addEventListener("pointercancel", this.onPointerUp);
 		});
 	}
 
@@ -135,21 +153,91 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			this.model.domainMinYear,
 			this.model.domainMaxYear,
 		);
-		this.model.centerYear = nextYear;
-		this.applyView();
+		const time = event.timeStamp || performance.now();
+		const dt = Math.max(1, time - this.drag.lastTime);
+		const incrementalDeltaX = event.clientX - this.drag.lastX;
+		const instantVelocity = -(incrementalDeltaX / pixelsPerYear) / dt;
+		this.motion.velocityYearsPerMs =
+			this.motion.velocityYearsPerMs * 0.7 + instantVelocity * 0.3;
+		this.drag.lastX = event.clientX;
+		this.drag.lastTime = time;
+		this.updateCenterYear(nextYear);
+		this.ensureAnimationLoop();
+	}
+
+	onPointerUp() {
+		this.drag.active = false;
+		if (Math.abs(this.motion.velocityYearsPerMs) > 0.0012) {
+			this.motion.inertiaActive = true;
+			this.ensureAnimationLoop();
+		}
+		window.removeEventListener("pointermove", this.onPointerMove);
+		window.removeEventListener("pointerup", this.onPointerUp);
+		window.removeEventListener("pointercancel", this.onPointerUp);
+	}
+
+	updateCenterYear(nextYear) {
+		const boundedYear = clamp(
+			nextYear,
+			this.model.domainMinYear,
+			this.model.domainMaxYear,
+		);
+		if (this.model.centerYear === boundedYear) {
+			return;
+		}
+		this.model.centerYear = boundedYear;
 		this.dispatchEvent(
 			new CustomEvent("center-year-change", {
-				detail: { centerYear: nextYear },
+				detail: { centerYear: boundedYear },
 				bubbles: true,
 				composed: true,
 			}),
 		);
 	}
 
-	onPointerUp() {
-		this.drag.active = false;
-		window.removeEventListener("pointermove", this.onPointerMove);
-		window.removeEventListener("pointerup", this.onPointerUp);
+	ensureAnimationLoop() {
+		if (this.motion.rafId) {
+			return;
+		}
+		this.motion.lastFrameTime = performance.now();
+		this.motion.rafId = requestAnimationFrame(this.onFrame);
+	}
+
+	onFrame(now) {
+		const dt = Math.min(32, Math.max(1, now - this.motion.lastFrameTime));
+		this.motion.lastFrameTime = now;
+
+		if (!this.drag.active && this.motion.inertiaActive) {
+			const nextYear = this.model.centerYear + this.motion.velocityYearsPerMs * dt;
+			this.updateCenterYear(nextYear);
+			this.motion.velocityYearsPerMs *= Math.exp(-dt / 160);
+			if (
+				this.model.centerYear <= this.model.domainMinYear ||
+				this.model.centerYear >= this.model.domainMaxYear
+			) {
+				this.motion.velocityYearsPerMs = 0;
+			}
+			if (Math.abs(this.motion.velocityYearsPerMs) < 0.0002) {
+				this.motion.inertiaActive = false;
+				this.motion.velocityYearsPerMs = 0;
+			}
+		}
+
+		const blend = 1 - Math.exp(-dt / 70);
+		this.motion.displayYear += (this.model.centerYear - this.motion.displayYear) * blend;
+		this.applyView();
+
+		const keepRunning =
+			this.drag.active ||
+			this.motion.inertiaActive ||
+			Math.abs(this.model.centerYear - this.motion.displayYear) > 0.01;
+
+		if (keepRunning) {
+			this.motion.rafId = requestAnimationFrame(this.onFrame);
+			return;
+		}
+		this.motion.displayYear = this.model.centerYear;
+		this.motion.rafId = 0;
 	}
 
 	getWindowWidthPx(trackWidth, pixelsPerYear) {
@@ -169,13 +257,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		const step = computeTickStep(this.model.windowSizeYears);
 		const visibleHalfYears = trackWidth / (2 * pixelsPerYear);
 		const bufferYears = visibleHalfYears * 0.5;
+		const renderCenterYear = this.motion.displayYear;
 		const minYear = Math.max(
 			this.model.domainMinYear,
-			Math.floor(this.model.centerYear - visibleHalfYears - bufferYears),
+			Math.floor(renderCenterYear - visibleHalfYears - bufferYears),
 		);
 		const maxYear = Math.min(
 			this.model.domainMaxYear,
-			Math.ceil(this.model.centerYear + visibleHalfYears + bufferYears),
+			Math.ceil(renderCenterYear + visibleHalfYears + bufferYears),
 		);
 		const firstTick = Math.floor(minYear / step) * step;
 
@@ -183,7 +272,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			if (year < this.model.domainMinYear) {
 				continue;
 			}
-			const x = centerX + (year - this.model.centerYear) * pixelsPerYear;
+			const x = centerX + (year - renderCenterYear) * pixelsPerYear;
 			if (x < -20 || x > trackWidth + 20) {
 				continue;
 			}
@@ -209,6 +298,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		}
 		const track = this.shadowRoot.getElementById("track");
 		const activeWindow = this.shadowRoot.getElementById("activeWindow");
+		const centerYear = this.shadowRoot.getElementById("centerYear");
 		if (!track || !activeWindow) {
 			return;
 		}
@@ -216,6 +306,9 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		const pixelsPerYear = this.getPixelsPerYear();
 		const windowWidth = this.getWindowWidthPx(trackWidth, pixelsPerYear);
 		activeWindow.style.width = `${windowWidth}px`;
+		if (centerYear) {
+			centerYear.textContent = formatYear(this.model.centerYear);
+		}
 		this.buildTicks(trackWidth, pixelsPerYear);
 	}
 
@@ -227,7 +320,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.track {
 					position: relative;
-					height: 84px;
+					height: 92px;
 					border-radius: 12px;
 					overflow: hidden;
 					background: linear-gradient(180deg, #112739 0%, #0b1a29 100%);
@@ -239,14 +332,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					position: absolute;
 					left: 0;
 					right: 0;
-					top: 39px;
+					top: 46px;
 					height: 2px;
 					background: rgba(255, 255, 255, 0.25);
 				}
 				.active-window {
 					position: absolute;
 					left: 50%;
-					top: 8px;
+					top: 15px;
 					height: 50px;
 					transform: translateX(-50%);
 					background: rgba(82, 199, 255, 0.2);
@@ -262,14 +355,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 30px;
+					top: 37px;
 					width: 1px;
 					height: 18px;
 					background: rgba(255, 255, 255, 0.4);
 				}
 				.tick[data-major="true"] {
 					height: 28px;
-					top: 24px;
+					top: 31px;
 					width: 2px;
 					background: rgba(255, 255, 255, 0.76);
 				}
@@ -293,11 +386,28 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					background: #ffd85e;
 					box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 216, 94, 0.5);
 				}
+				.center-year {
+					position: absolute;
+					left: 50%;
+					top: 5px;
+					transform: translateX(-50%);
+					padding: 0.15rem 0.45rem;
+					font-size: 0.78rem;
+					font-weight: 700;
+					border-radius: 999px;
+					background: rgba(8, 19, 29, 0.9);
+					border: 1px solid rgba(255, 216, 94, 0.7);
+					color: #fff2bf;
+					line-height: 1.1;
+					letter-spacing: 0.01em;
+					pointer-events: none;
+				}
 			</style>
 			<div id="track" class="track" aria-label="Timeline ruler" role="slider">
 				<div class="base-line"></div>
 				<div id="activeWindow" class="active-window"></div>
 				<div id="ticks" class="ticks"></div>
+				<div id="centerYear" class="center-year">1950</div>
 				<div class="center-marker" aria-hidden="true"></div>
 			</div>
 		`;

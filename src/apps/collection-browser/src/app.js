@@ -921,6 +921,7 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	async initializeEmbeddedSources() {
+		this.state.isLoadingCollection = true;
 		const configuredSources = normalizeEmbeddedSourceCatalog(
 			BROWSER_CONFIG.embeddedSourceCatalog,
 		);
@@ -945,6 +946,7 @@ class CollectionBrowserElement extends ComponentBase {
 
 		if (!configuredSources.length) {
 			this.setStatus("No embedded browser sources configured.", "warn");
+			this.state.isLoadingCollection = false;
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 			return;
@@ -977,6 +979,10 @@ class CollectionBrowserElement extends ComponentBase {
 			this.syncMetadataPanelVisibility();
 		} catch (error) {
 			this.setStatus(`Source load failed: ${error.message}`, "warn");
+		} finally {
+			this.state.isLoadingCollection = false;
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
 		}
 	}
 
@@ -1742,7 +1748,23 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	emitQueryState(model = {}) {
-		const items = Array.isArray(model.items) ? model.items : [];
+		const renderedEntities = Array.isArray(model.allBrowseEntities)
+			? model.allBrowseEntities
+			: [];
+		const renderedItemCards = renderedEntities
+			.filter((entity) => String(entity?.browseKind || "").trim() === "item")
+			.map((entity) => entity?.item)
+			.filter(Boolean);
+		const directItemCards = Array.isArray(model.itemCards)
+			? model.itemCards.map((card) => card?.item).filter(Boolean)
+			: [];
+		const itemsFromModel = Array.isArray(model.items) ? model.items : [];
+		const items =
+			renderedItemCards.length > 0
+				? renderedItemCards
+				: directItemCards.length > 0
+					? directItemCards
+					: itemsFromModel;
 		const typeCounts = new Map();
 		const categoryCounts = new Map();
 		const incrementCount = (counts, value) => {

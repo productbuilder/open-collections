@@ -321,6 +321,8 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.track {
 					position: relative;
 					--band-top: 24px;
+					--triangle-width: 12px;
+					--triangle-height: 8px;
 					--band-height: 54px;
 					height: 96px;
 					border-radius: 12px;
@@ -394,25 +396,25 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					content: "";
 					position: absolute;
 					left: 50%;
-					width: 0;
-					height: 0;
-					border-left: 6px solid transparent;
-					border-right: 6px solid transparent;
-					border-top: 7px solid rgba(255, 216, 94, 0.92);
+					width: var(--triangle-width);
+					height: var(--triangle-height);
+					background: rgba(255, 216, 94, 0.92);
 					filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
 				}
 				.center-marker::before {
-					top: -8px;
+					top: 0;
 					transform: translateX(-50%);
+					clip-path: polygon(50% 100%, 0 0, 100% 0);
 				}
 				.center-marker::after {
-					bottom: -8px;
-					transform: translateX(-50%) rotate(180deg);
+					bottom: 0;
+					transform: translateX(-50%);
+					clip-path: polygon(50% 0, 0 100%, 100% 100%);
 				}
 				.center-year {
 					position: absolute;
 					left: 50%;
-					top: 3px;
+					top: 1px;
 					transform: translateX(-50%);
 					padding: 0.18rem 0.52rem;
 					font-size: 0.84rem;

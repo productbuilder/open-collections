@@ -320,6 +320,8 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.track {
 					position: relative;
+					--band-top: 24px;
+					--band-height: 54px;
 					height: 96px;
 					border-radius: 12px;
 					overflow: hidden;
@@ -332,15 +334,15 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					position: absolute;
 					left: 0;
 					right: 0;
-					top: 46px;
+					top: 57px;
 					height: 2px;
 					background: rgba(255, 255, 255, 0.25);
 				}
 				.active-window {
 					position: absolute;
 					left: 50%;
-					top: 13px;
-					height: 54px;
+					top: var(--band-top);
+					height: var(--band-height);
 					transform: translateX(-50%);
 					background: rgba(82, 199, 255, 0.2);
 					border: none;
@@ -355,14 +357,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 42px;
+					top: 53px;
 					width: 1px;
 					height: 9px;
 					background: rgba(255, 255, 255, 0.4);
 				}
 				.tick[data-major="true"] {
 					height: 14px;
-					top: 39px;
+					top: 50px;
 					width: 2px;
 					background: rgba(255, 255, 255, 0.76);
 				}
@@ -379,17 +381,38 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.center-marker {
 					position: absolute;
 					left: 50%;
-					top: 34px;
-					bottom: 0;
+					top: var(--band-top);
+					height: var(--band-height);
 					transform: translateX(-50%);
 					width: 3px;
 					background: #ffd85e;
 					box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 216, 94, 0.5);
+					z-index: 1;
+				}
+				.center-marker::before,
+				.center-marker::after {
+					content: "";
+					position: absolute;
+					left: 50%;
+					width: 0;
+					height: 0;
+					border-left: 6px solid transparent;
+					border-right: 6px solid transparent;
+					border-top: 7px solid rgba(255, 216, 94, 0.92);
+					filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
+				}
+				.center-marker::before {
+					top: -8px;
+					transform: translateX(-50%);
+				}
+				.center-marker::after {
+					bottom: -8px;
+					transform: translateX(-50%) rotate(180deg);
 				}
 				.center-year {
 					position: absolute;
 					left: 50%;
-					top: 4px;
+					top: 3px;
 					transform: translateX(-50%);
 					padding: 0.18rem 0.52rem;
 					font-size: 0.84rem;
@@ -402,19 +425,6 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					letter-spacing: 0.01em;
 					pointer-events: none;
 					z-index: 2;
-				}
-				.center-year::after {
-					content: "";
-					position: absolute;
-					left: 50%;
-					bottom: -6px;
-					transform: translateX(-50%);
-					width: 0;
-					height: 0;
-					border-left: 6px solid transparent;
-					border-right: 6px solid transparent;
-					border-top: 7px solid rgba(255, 216, 94, 0.92);
-					filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
 				}
 			</style>
 			<div id="track" class="track" aria-label="Timeline ruler" role="slider">

@@ -379,7 +379,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.center-marker {
 					position: absolute;
 					left: 50%;
-					top: 0;
+					top: 34px;
 					bottom: 0;
 					transform: translateX(-50%);
 					width: 3px;
@@ -401,6 +401,20 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					line-height: 1.1;
 					letter-spacing: 0.01em;
 					pointer-events: none;
+					z-index: 2;
+				}
+				.center-year::after {
+					content: "";
+					position: absolute;
+					left: 50%;
+					bottom: -6px;
+					transform: translateX(-50%);
+					width: 0;
+					height: 0;
+					border-left: 6px solid transparent;
+					border-right: 6px solid transparent;
+					border-top: 7px solid rgba(255, 216, 94, 0.92);
+					filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
 				}
 			</style>
 			<div id="track" class="track" aria-label="Timeline ruler" role="slider">

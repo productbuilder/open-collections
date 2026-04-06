@@ -374,7 +374,9 @@ class TimemapBrowserElement extends HTMLElement {
 		this.handleMapFeatureClick = this.onMapFeatureClick.bind(this);
 		this.handleClearSelection = this.onClearSelection.bind(this);
 		this.handleFilterPatch = this.onFilterPatch.bind(this);
+		this.handleTimeRangePatch = this.onTimeRangePatch.bind(this);
 		this.filterRefreshTimer = null;
+		this.timeRangeRefreshTimer = null;
 	}
 
 	connectedCallback() {
@@ -403,6 +405,10 @@ class TimemapBrowserElement extends HTMLElement {
 		if (this.filterRefreshTimer) {
 			clearTimeout(this.filterRefreshTimer);
 			this.filterRefreshTimer = null;
+		}
+		if (this.timeRangeRefreshTimer) {
+			clearTimeout(this.timeRangeRefreshTimer);
+			this.timeRangeRefreshTimer = null;
 		}
 		this.pendingSpatialRefreshViewport = null;
 		this.pendingViewportStateUpdate = null;
@@ -614,6 +620,7 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
 		);
+		this.addEventListener("timemap-browser-time-range-patch", this.handleTimeRangePatch);
 		this.addEventListener("browse-query-patch", this.handleFilterPatch);
 	}
 
@@ -635,6 +642,10 @@ class TimemapBrowserElement extends HTMLElement {
 		shellElement.removeEventListener(
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
+		);
+		this.removeEventListener(
+			"timemap-browser-time-range-patch",
+			this.handleTimeRangePatch,
 		);
 		this.removeEventListener("browse-query-patch", this.handleFilterPatch);
 	}
@@ -676,16 +687,48 @@ class TimemapBrowserElement extends HTMLElement {
 	onFilterPatch(event) {
 		const detail =
 			event?.detail && typeof event.detail === "object" ? event.detail : {};
-		const normalizedPatch = normalizeBrowseShellQueryPatch(
-			detail,
-			this.controller.getState()?.query,
-		);
+		const currentQuery = this.controller.getState()?.query;
+		const normalizedPatch = normalizeBrowseShellQueryPatch(detail, currentQuery);
+		const explicitTimeRange =
+			detail?.timeRange && typeof detail.timeRange === "object"
+				? detail.timeRange
+				: detail?.query?.timeRange && typeof detail.query.timeRange === "object"
+					? detail.query.timeRange
+					: null;
 		this.controller.setFilters(normalizedPatch.filters);
+		if (explicitTimeRange) {
+			this.controller.setTimeRange(explicitTimeRange);
+		}
+		this.queueFilterRefresh();
+	}
+
+	onTimeRangePatch(event) {
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		this.setTimeRange(detail);
+	}
+
+	setTimeRange(timeRange = {}) {
+		this.controller.setTimeRange(timeRange);
+		this.queueTimeRangeRefresh();
+	}
+
+	queueFilterRefresh() {
 		if (this.filterRefreshTimer) {
 			clearTimeout(this.filterRefreshTimer);
 		}
 		this.filterRefreshTimer = setTimeout(() => {
 			this.filterRefreshTimer = null;
+			this.controller.initializeSpatialData();
+		}, 120);
+	}
+
+	queueTimeRangeRefresh() {
+		if (this.timeRangeRefreshTimer) {
+			clearTimeout(this.timeRangeRefreshTimer);
+		}
+		this.timeRangeRefreshTimer = setTimeout(() => {
+			this.timeRangeRefreshTimer = null;
 			this.controller.initializeSpatialData();
 		}, 120);
 	}

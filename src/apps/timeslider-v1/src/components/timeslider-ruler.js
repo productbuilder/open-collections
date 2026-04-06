@@ -320,11 +320,11 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.track {
 					position: relative;
-					height: 92px;
+					height: 96px;
 					border-radius: 12px;
 					overflow: hidden;
 					background: linear-gradient(180deg, #112739 0%, #0b1a29 100%);
-					border: 1px solid rgba(255, 255, 255, 0.16);
+					border: 1px solid rgba(255, 255, 255, 0.2);
 					touch-action: none;
 					user-select: none;
 				}
@@ -339,11 +339,11 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.active-window {
 					position: absolute;
 					left: 50%;
-					top: 15px;
-					height: 50px;
+					top: 13px;
+					height: 54px;
 					transform: translateX(-50%);
-					background: rgba(82, 199, 255, 0.2);
-					border: 1px solid rgba(82, 199, 255, 0.7);
+					background: rgba(82, 199, 255, 0.24);
+					border: 1px solid rgba(82, 199, 255, 0.8);
 					border-radius: 8px;
 				}
 				.ticks {
@@ -389,14 +389,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.center-year {
 					position: absolute;
 					left: 50%;
-					top: 5px;
+					top: 4px;
 					transform: translateX(-50%);
-					padding: 0.15rem 0.45rem;
-					font-size: 0.78rem;
+					padding: 0.18rem 0.52rem;
+					font-size: 0.84rem;
 					font-weight: 700;
 					border-radius: 999px;
-					background: rgba(8, 19, 29, 0.9);
-					border: 1px solid rgba(255, 216, 94, 0.7);
+					background: rgba(8, 19, 29, 0.95);
+					border: 1px solid rgba(255, 216, 94, 0.85);
 					color: #fff2bf;
 					line-height: 1.1;
 					letter-spacing: 0.01em;

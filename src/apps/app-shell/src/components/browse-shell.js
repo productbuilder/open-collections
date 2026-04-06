@@ -300,14 +300,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				target.matches('[data-bind="filter-dialog"]')
 			) {
 				this.state.filterPanelOpen = false;
-				this.render();
 			}
 		});
 	}
 
 	openFilterPanel() {
 		this.state.filterPanelOpen = true;
-		this.render();
+		this.syncFilterPanelState();
 		const dialog = this.shadowRoot.querySelector('[data-bind="filter-dialog"]');
 		if (!dialog) {
 			return;
@@ -325,7 +324,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		if (dialog?.open && typeof dialog.close === "function") {
 			dialog.close();
 		}
-		this.render();
 	}
 
 	syncFilterPanelState() {

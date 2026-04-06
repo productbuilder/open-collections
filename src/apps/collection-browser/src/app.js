@@ -111,6 +111,48 @@ function collectTypeValues(item = {}) {
 	return topLevel ? [topLevel] : [mediaType];
 }
 
+function normalizeTypeFilterToken(value = "") {
+	return String(value ?? "").trim().toLowerCase();
+}
+
+function createActiveTypeFilterSet(queryState = {}) {
+	const sourceTypes = Array.isArray(queryState?.filters?.types)
+		? queryState.filters.types
+		: Array.isArray(queryState?.query?.types)
+			? queryState.query.types
+			: [];
+	const normalizedTypes = sourceTypes
+		.map((value) => normalizeTypeFilterToken(value))
+		.filter(Boolean);
+	return new Set(normalizedTypes);
+}
+
+function itemMatchesActiveTypeFilters(item = {}, activeTypeFilters = new Set()) {
+	if (!(activeTypeFilters instanceof Set) || activeTypeFilters.size === 0) {
+		return true;
+	}
+	const typeValues = collectTypeValues(item).map((value) =>
+		normalizeTypeFilterToken(value),
+	);
+	if (typeValues.length === 0) {
+		return false;
+	}
+	return typeValues.some((value) => activeTypeFilters.has(value));
+}
+
+function filterItemsByActiveTypeFilters(items = [], queryState = {}) {
+	if (!Array.isArray(items) || items.length === 0) {
+		return [];
+	}
+	const activeTypeFilters = createActiveTypeFilterSet(queryState);
+	if (activeTypeFilters.size === 0) {
+		return items;
+	}
+	return items.filter((item) =>
+		itemMatchesActiveTypeFilters(item, activeTypeFilters),
+	);
+}
+
 class CollectionBrowserElement extends ComponentBase {
 	constructor() {
 		super();
@@ -1446,6 +1488,10 @@ class CollectionBrowserElement extends ComponentBase {
 		const browseContext = this.resolveBrowseContext();
 		const candidatePools = this.buildBrowseCandidatePools(browseContext);
 		const { sources, collections, items } = candidatePools;
+		const filteredItems = filterItemsByActiveTypeFilters(
+			items,
+			this.state.browseShellQuery,
+		);
 		// Sources mode is intentionally global/top-level for now.
 		const globalSourceCards = this.resolveGlobalSourceCards();
 		const sourceCards = buildSourceBrowseCardModels(sources, {
@@ -1460,7 +1506,7 @@ class CollectionBrowserElement extends ComponentBase {
 		const collectionCards = buildCollectionBrowseCardModels(collections, {
 			selectedManifestUrl: this.state.selectedCollectionManifestUrl || "",
 		});
-		const itemCards = buildItemBrowseCardModels(items, {
+		const itemCards = buildItemBrowseCardModels(filteredItems, {
 			selectedItemId: this.state.selectedItemId,
 		});
 		const allModeExposureNamespace = this.buildAllModeExposureNamespace({
@@ -1540,7 +1586,7 @@ class CollectionBrowserElement extends ComponentBase {
 				collections,
 				selectedCollectionManifestUrl:
 					this.state.selectedCollectionManifestUrl || "",
-				items,
+				items: filteredItems,
 				selectedItemId: this.state.selectedItemId,
 				isLoading: this.state.isLoadingCollection,
 			};
@@ -1611,11 +1657,11 @@ class CollectionBrowserElement extends ComponentBase {
 				)
 			: null;
 		const subtitle = focusedCollection
-			? `${items.length} item${items.length === 1 ? "" : "s"}`
+			? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"}`
 			: this.isEmbeddedRuntime()
-				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections.`
-				: items.length > 0
-					? `${items.length} item${items.length === 1 ? "" : "s"} available. Select a card to open media.`
+				? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"} across all collections.`
+				: filteredItems.length > 0
+					? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"} available. Select a card to open media.`
 					: "Load a collection to browse its items.";
 		const scopedItemsTitle =
 			showBackInViewport && focusedCollection?.label
@@ -1637,7 +1683,7 @@ class CollectionBrowserElement extends ComponentBase {
 			collections: [],
 			selectedCollectionManifestUrl:
 				this.state.selectedCollectionManifestUrl || "",
-			items,
+			items: filteredItems,
 			selectedItemId: this.state.selectedItemId,
 			isLoading: this.state.isLoadingCollection,
 		};

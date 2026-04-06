@@ -48,13 +48,6 @@ import "./components/browser-viewer-dialog.js";
 
 const ALL_MODE_INITIAL_CHUNK_SIZE = 24;
 const ALL_MODE_APPEND_CHUNK_SIZE = 24;
-const LOW_SIGNAL_CATEGORY_VALUES = new Set([
-	"collection-item",
-	"item",
-	"unknown",
-	"uncategorized",
-	"n/a",
-]);
 const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function deriveItemPreviewUrl(item) {
@@ -1816,7 +1809,6 @@ class CollectionBrowserElement extends ComponentBase {
 					? itemsFromModel
 					: renderedItemCards;
 		const typeCounts = new Map();
-		const categoryCounts = new Map();
 		const incrementCount = (counts, value) => {
 			const normalized = String(value ?? "").trim();
 			if (!normalized) {
@@ -1830,28 +1822,15 @@ class CollectionBrowserElement extends ComponentBase {
 			for (const typeValue of uniqueTypes) {
 				incrementCount(typeCounts, typeValue);
 			}
-			const categories = new Set(
-				[
-					String(item?.category || "").trim(),
-					...(Array.isArray(item?.tags) ? item.tags : []),
-				]
-					.map((entry) => String(entry || "").trim())
-					.filter(
-						(value) => value && !LOW_SIGNAL_CATEGORY_VALUES.has(value.toLowerCase()),
-					),
-			);
-			for (const categoryValue of categories) {
-				incrementCount(categoryCounts, categoryValue);
-			}
 		}
 
 		const options = {
 			types: toFilterOptionEntries(typeCounts),
-			categories: toFilterOptionEntries(categoryCounts),
+			categories: [],
 		};
 		const currentQueryState =
 			this.state.browseShellQuery || createBrowseShellQueryState();
-		const hasOptions = options.types.length > 0 || options.categories.length > 0;
+		const hasOptions = options.types.length > 0;
 		const hasResolvedFilterOptions =
 			this.state.hasResolvedFilterOptionData ||
 			!this.state.isLoadingCollection;

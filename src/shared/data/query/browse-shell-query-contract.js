@@ -38,10 +38,7 @@ function normalizeFilterOptionEntries(entries = []) {
 
 function hasAnyFilterOptionEntries(options = {}) {
 	const source = options && typeof options === "object" ? options : {};
-	return (
-		(Array.isArray(source.types) && source.types.length > 0) ||
-		(Array.isArray(source.categories) && source.categories.length > 0)
-	);
+	return Array.isArray(source.types) && source.types.length > 0;
 }
 
 function normalizeFilterOptionsStatus(status = "", options = {}) {
@@ -94,7 +91,7 @@ export function normalizeBrowseShellQueryState(partialState = {}, baseState = nu
 		partial.options && typeof partial.options === "object" ? partial.options : {};
 	const nextOptions = {
 		types: normalizeFilterOptionEntries(optionsSource.types),
-		categories: normalizeFilterOptionEntries(optionsSource.categories),
+		categories: [],
 	};
 	const query = normalizeCollectionQueryState(partial.query, base.query);
 	const filterSource =

@@ -872,8 +872,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 			(state.filters.text ? 1 : 0) +
 			(state.filters.keywords?.length || 0) +
 			(state.filters.tags?.length || 0) +
-			(state.filters.types?.length || 0) +
-			(state.filters.categories?.length || 0);
+			(state.filters.types?.length || 0);
 		const spatialFeatures = Array.isArray(state.spatial?.response?.features)
 			? state.spatial.response.features
 			: [];

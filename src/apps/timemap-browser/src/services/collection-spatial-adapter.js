@@ -1,3 +1,5 @@
+import { normalizeTemporalDisplayValue } from "./temporal-normalization.js";
+
 function toTrimmedText(value) {
 	return String(value ?? "").trim();
 }
@@ -79,6 +81,39 @@ function deriveDescription(item = {}) {
 	return "";
 }
 
+function deriveTemporalDisplayValue(item = {}) {
+	const directCandidates = [item.date, item.time, item.year, item.dateLabel];
+	for (const candidate of directCandidates) {
+		if (hasNonEmptyText(candidate)) {
+			return toTrimmedText(candidate);
+		}
+	}
+
+	const temporal = item && typeof item.temporal === "object" ? item.temporal : null;
+	if (temporal) {
+		const start = toTrimmedText(temporal.start || temporal.from);
+		const end = toTrimmedText(temporal.end || temporal.to);
+		if (start && end) {
+			return `${start} to ${end}`;
+		}
+		if (start) {
+			return start;
+		}
+		if (end) {
+			return end;
+		}
+	}
+
+	const startCandidates = [item.dateStart, item.startDate, item.startYear];
+	const endCandidates = [item.dateEnd, item.endDate, item.endYear];
+	const start = startCandidates.map((entry) => toTrimmedText(entry)).find(Boolean) || "";
+	const end = endCandidates.map((entry) => toTrimmedText(entry)).find(Boolean) || "";
+	if (start && end) {
+		return `${start} to ${end}`;
+	}
+	return start || end || "";
+}
+
 function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 	const location = item && typeof item.location === "object" ? item.location : {};
 	const lat = readLatitude(location);
@@ -108,6 +143,7 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 	const format = deriveFormat(item, media);
 	const mediaType = toTrimmedText(media.type) || "image";
 	const itemType = toTrimmedText(item.type);
+	const temporal = normalizeTemporalDisplayValue(deriveTemporalDisplayValue(item));
 
 	return {
 		type: "Feature",
@@ -132,7 +168,10 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 			mediaUrl,
 			mediaType,
 			tags,
-			dateLabel: toTrimmedText(item.date),
+			dateLabel: temporal.temporalDisplayValue,
+			timeStart: temporal.timeStart,
+			timeEnd: temporal.timeEnd,
+			timeKnown: temporal.timeKnown,
 			locationLabel: toTrimmedText(location.name),
 			collectionId: toTrimmedText(collection.id),
 			collectionTitle: toTrimmedText(collection.title),

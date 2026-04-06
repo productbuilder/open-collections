@@ -168,16 +168,127 @@ function featureMatchesTypeFilters(feature, activeTypeFilters) {
 	return featureTypes.some((value) => activeTypeFilters.has(String(value).trim()));
 }
 
+function toUtcRangeFromTemporalBound(value, { isEndBound = false } = {}) {
+	if (value === null || value === undefined || value === "") {
+		return null;
+	}
+	const text = String(value).trim();
+	if (!text) {
+		return null;
+	}
+
+	const dateMatch = text.match(
+		/^(?<year>[-+]?\d{1,6})(?:-(?<month>\d{2})(?:-(?<day>\d{2}))?)?$/,
+	);
+	if (dateMatch?.groups) {
+		const year = Number(dateMatch.groups.year);
+		const month = dateMatch.groups.month ? Number(dateMatch.groups.month) : null;
+		const day = dateMatch.groups.day ? Number(dateMatch.groups.day) : null;
+
+		if (!Number.isInteger(year)) {
+			return null;
+		}
+
+		if (month === null) {
+			return isEndBound
+				? Date.UTC(year, 11, 31, 23, 59, 59, 999)
+				: Date.UTC(year, 0, 1, 0, 0, 0, 0);
+		}
+
+		if (!Number.isInteger(month) || month < 1 || month > 12) {
+			return null;
+		}
+
+		if (day === null) {
+			if (isEndBound) {
+				const monthEndDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+				return Date.UTC(year, month - 1, monthEndDay, 23, 59, 59, 999);
+			}
+			return Date.UTC(year, month - 1, 1, 0, 0, 0, 0);
+		}
+
+		if (!Number.isInteger(day) || day < 1 || day > 31) {
+			return null;
+		}
+		const monthEndDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+		if (day > monthEndDay) {
+			return null;
+		}
+
+		const normalized = isEndBound
+			? Date.UTC(year, month - 1, day, 23, 59, 59, 999)
+			: Date.UTC(year, month - 1, day, 0, 0, 0, 0);
+		if (!Number.isFinite(normalized) || Number.isNaN(normalized)) {
+			return null;
+		}
+		return normalized;
+	}
+
+	return null;
+}
+
+function resolveActiveTimeRangeBounds(query = {}) {
+	const source = query?.timeRange && typeof query.timeRange === "object" ? query.timeRange : {};
+	const hasRawStart = source.start !== null && source.start !== undefined && source.start !== "";
+	const hasRawEnd = source.end !== null && source.end !== undefined && source.end !== "";
+	if (!hasRawStart && !hasRawEnd) {
+		return null;
+	}
+
+	const start = hasRawStart
+		? toUtcRangeFromTemporalBound(source.start, { isEndBound: false })
+		: Number.NEGATIVE_INFINITY;
+	const end = hasRawEnd
+		? toUtcRangeFromTemporalBound(source.end, { isEndBound: true })
+		: Number.POSITIVE_INFINITY;
+	if (!Number.isFinite(start) && start !== Number.NEGATIVE_INFINITY) {
+		return null;
+	}
+	if (!Number.isFinite(end) && end !== Number.POSITIVE_INFINITY) {
+		return null;
+	}
+	if (start > end) {
+		return null;
+	}
+	return { start, end };
+}
+
+function featureMatchesTimeRange(feature, activeTimeRangeBounds) {
+	if (!activeTimeRangeBounds) {
+		return true;
+	}
+	const properties = feature?.properties || {};
+	// First-pass policy: when time-range filtering is active, unknown temporal
+	// features are excluded so the map reflects only records with comparable ranges.
+	if (properties.timeKnown !== true) {
+		return false;
+	}
+
+	const featureStart = Number(properties.timeStart);
+	const featureEnd = Number(properties.timeEnd);
+	if (!Number.isFinite(featureStart) || !Number.isFinite(featureEnd)) {
+		return false;
+	}
+
+	return (
+		featureEnd >= activeTimeRangeBounds.start &&
+		featureStart <= activeTimeRangeBounds.end
+	);
+}
+
 function filterMapVisibleFeatures(features = [], query = {}) {
 	if (!Array.isArray(features) || features.length === 0) {
 		return [];
 	}
 	const activeTypeFilters = createTypeFilterSet(query);
-	if (activeTypeFilters.size === 0) {
+	const activeTimeRangeBounds = resolveActiveTimeRangeBounds(query);
+	if (activeTypeFilters.size === 0 && !activeTimeRangeBounds) {
 		return features;
 	}
-	return features.filter((feature) =>
-		featureMatchesTypeFilters(feature, activeTypeFilters),
+	return features.filter(
+		(feature) =>
+			featureMatchesTypeFilters(feature, activeTypeFilters) &&
+			featureMatchesTimeRange(feature, activeTimeRangeBounds),
 	);
 }
 

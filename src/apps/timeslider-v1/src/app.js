@@ -160,22 +160,34 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 					left: 0;
 					right: 0;
 					bottom: 0;
-					padding: 0.9rem 0.75rem calc(0.9rem + env(safe-area-inset-bottom));
+					padding: 0.85rem 0.75rem calc(0.95rem + env(safe-area-inset-bottom));
 					background: rgba(5, 10, 18, 0.9);
 					backdrop-filter: blur(8px);
 					border-top: 1px solid rgba(255, 255, 255, 0.12);
 					display: grid;
-					gap: 0.8rem;
+					gap: 1rem;
+				}
+				.window-controls {
+					display: grid;
+					gap: 0.5rem;
+				}
+				.window-controls-label {
+					font-size: 0.7rem;
+					text-transform: uppercase;
+					letter-spacing: 0.06em;
+					font-weight: 650;
+					opacity: 0.75;
+					margin: 0;
 				}
 				.preset-row {
 					display: flex;
 					gap: 0.4rem;
 					overflow-x: auto;
-					padding-bottom: 0.1rem;
+					padding: 0.1rem 0 0.2rem;
 				}
 				.preset-row button {
-					border: 1px solid rgba(255, 255, 255, 0.18);
-					background: rgba(255, 255, 255, 0.06);
+					border: 1px solid rgba(255, 255, 255, 0.14);
+					background: rgba(255, 255, 255, 0.045);
 					color: #f4f7fb;
 					padding: 0.4rem 0.65rem;
 					border-radius: 999px;
@@ -187,6 +199,17 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 					background: #52c7ff;
 					color: #072033;
 					border-color: #52c7ff;
+				}
+				.ruler-stage {
+					background: linear-gradient(
+						180deg,
+						rgba(9, 19, 30, 0.96) 0%,
+						rgba(7, 13, 23, 0.94) 100%
+					);
+					border: 1px solid rgba(82, 199, 255, 0.24);
+					border-radius: 0.85rem;
+					padding: 0.5rem 0.5rem 0.45rem;
+					box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 				}
 			</style>
 			<div class="app">
@@ -206,15 +229,20 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 					</header>
 				</div>
 				<div class="footer-rail">
-					<div class="preset-row" role="group" aria-label="Window size presets">
-						<button type="button" data-preset="1">1Y</button>
-						<button type="button" data-preset="10">10Y</button>
-						<button type="button" data-preset="20">20Y</button>
-						<button type="button" data-preset="50">50Y</button>
-						<button type="button" data-preset="100">100Y</button>
-						<button type="button" data-preset="all">All</button>
+					<div class="window-controls">
+						<p class="window-controls-label">Window presets</p>
+						<div class="preset-row" role="group" aria-label="Window size presets">
+							<button type="button" data-preset="1">1Y</button>
+							<button type="button" data-preset="10">10Y</button>
+							<button type="button" data-preset="20">20Y</button>
+							<button type="button" data-preset="50">50Y</button>
+							<button type="button" data-preset="100">100Y</button>
+							<button type="button" data-preset="all">All</button>
+						</div>
 					</div>
-					<oc-timeslider-v1-ruler></oc-timeslider-v1-ruler>
+					<div class="ruler-stage">
+						<oc-timeslider-v1-ruler></oc-timeslider-v1-ruler>
+					</div>
 				</div>
 			</div>
 		`;

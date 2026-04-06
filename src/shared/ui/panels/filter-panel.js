@@ -55,6 +55,14 @@ function normalizeFilterOptions(value = {}) {
 	};
 }
 
+function normalizeFilterOptionsStatus(value) {
+	const status = toText(value).toLowerCase();
+	if (status === "loading" || status === "ready" || status === "empty") {
+		return status;
+	}
+	return "empty";
+}
+
 function escapeHtml(value) {
 	return String(value ?? "")
 		.replaceAll("&", "&amp;")
@@ -203,6 +211,7 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		super();
 		this._filterState = normalizeFilterState();
 		this._filterOptions = normalizeFilterOptions();
+		this._filterOptionsStatus = "empty";
 		this._onInput = this.onInput.bind(this);
 		this._onClick = this.onClick.bind(this);
 	}
@@ -227,6 +236,15 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 
 	get filterOptions() {
 		return normalizeFilterOptions(this._filterOptions);
+	}
+
+	set filterOptionsStatus(value) {
+		this._filterOptionsStatus = normalizeFilterOptionsStatus(value);
+		this.render();
+	}
+
+	get filterOptionsStatus() {
+		return normalizeFilterOptionsStatus(this._filterOptionsStatus);
 	}
 
 	get showTextSearch() {
@@ -296,9 +314,12 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		);
 	}
 
-	renderOptions(entries = [], inputName = "", selected = []) {
+	renderOptions(entries = [], inputName = "", selected = [], status = "empty") {
+		if (status === "loading") {
+			return `<p class="option-empty">Loading options…</p>`;
+		}
 		if (!entries.length) {
-			return `<p class="option-empty">No options yet.</p>`;
+			return `<p class="option-empty">No options available.</p>`;
 		}
 		const selectedSet = new Set(toUniqueStringList(selected));
 		return `<div class="option-list">${entries
@@ -319,9 +340,12 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		const state = this._filterState;
 		const options = this._filterOptions;
 		const showTextSearch = this.showTextSearch;
+		const filterOptionsStatus = this.filterOptionsStatus;
 		const hasCategoryOptions = Array.isArray(options.categories)
 			? options.categories.length > 0
 			: false;
+		const showCategorySection =
+			hasCategoryOptions || filterOptionsStatus === "loading";
 		const subtitle = showTextSearch
 			? "Search and narrow map items by type or category."
 			: "Narrow map items by type or category.";
@@ -347,13 +371,23 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 				}
 				<section class="group" aria-label="Type filters">
 					<h3 class="group-title">Type</h3>
-					${this.renderOptions(options.types, "type-filter", state.types)}
+					${this.renderOptions(
+						options.types,
+						"type-filter",
+						state.types,
+						filterOptionsStatus,
+					)}
 				</section>
 				${
-					hasCategoryOptions
+					showCategorySection
 						? `<section class="group" aria-label="Category filters">
 					<h3 class="group-title">Category</h3>
-					${this.renderOptions(options.categories, "category-filter", state.categories)}
+					${this.renderOptions(
+						options.categories,
+						"category-filter",
+						state.categories,
+						filterOptionsStatus,
+					)}
 				</section>`
 						: ""
 				}

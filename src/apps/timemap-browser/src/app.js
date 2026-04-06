@@ -1,4 +1,9 @@
 import { APP_RUNTIME_MODES } from "../../../shared/runtime/app-mount-contract.js";
+import {
+	FILTER_OPTION_STATUS,
+	normalizeBrowseShellQueryPatch,
+	normalizeBrowseShellQueryState,
+} from "../../../shared/data/query/browse-shell-query-contract.js";
 import { createTimemapBrowserController } from "./controllers/timemap-browser-controller.js";
 
 const VIEWPORT_REFRESH_THRESHOLDS = Object.freeze({
@@ -221,6 +226,16 @@ function resolveFilterOptions(spatialResponse = {}) {
 	};
 }
 
+function resolveFilterOptionsStatus({ spatialStatus = "idle", options = {} } = {}) {
+	if (spatialStatus === "loading" || spatialStatus === "idle") {
+		return FILTER_OPTION_STATUS.LOADING;
+	}
+	const hasOptions =
+		(Array.isArray(options.types) && options.types.length > 0) ||
+		(Array.isArray(options.categories) && options.categories.length > 0);
+	return hasOptions ? FILTER_OPTION_STATUS.READY : FILTER_OPTION_STATUS.EMPTY;
+}
+
 class TimemapBrowserElement extends HTMLElement {
 	static get observedAttributes() {
 		return [
@@ -403,14 +418,34 @@ class TimemapBrowserElement extends HTMLElement {
 
 		this.unsubscribeState = this.controller.subscribe((nextState) => {
 			shellElement.state = nextState;
+			const options = resolveFilterOptions(nextState.spatial?.response);
+			const normalizedPayload = normalizeBrowseShellQueryState({
+				source: {
+					app: "timemap-browser",
+					mode: "map",
+				},
+				query: nextState.query,
+				filters: {
+					text: nextState.query?.text,
+					types: nextState.query?.types,
+					categories: nextState.query?.categories,
+				},
+				options,
+				status: {
+					loading:
+						nextState?.spatial?.status === "loading" ||
+						nextState?.spatial?.status === "idle",
+					filterOptions: resolveFilterOptionsStatus({
+						spatialStatus: nextState?.spatial?.status,
+						options,
+					}),
+				},
+			});
 			this.dispatchEvent(
-				new CustomEvent("timemap-browser-query-state", {
+				new CustomEvent("browse-query-state", {
 					bubbles: true,
 					composed: true,
-					detail: {
-						query: nextState.query,
-						options: resolveFilterOptions(nextState.spatial?.response),
-					},
+					detail: normalizedPayload,
 				}),
 			);
 		});
@@ -435,7 +470,7 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
 		);
-		this.addEventListener("timemap-browser-filter-patch", this.handleFilterPatch);
+		this.addEventListener("browse-query-patch", this.handleFilterPatch);
 	}
 
 	unbindMapEvents() {
@@ -457,7 +492,7 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
 		);
-		this.removeEventListener("timemap-browser-filter-patch", this.handleFilterPatch);
+		this.removeEventListener("browse-query-patch", this.handleFilterPatch);
 	}
 
 	onMapViewportChange(event) {
@@ -497,11 +532,11 @@ class TimemapBrowserElement extends HTMLElement {
 	onFilterPatch(event) {
 		const detail =
 			event?.detail && typeof event.detail === "object" ? event.detail : {};
-		const filterPatch =
-			detail.filterPatch && typeof detail.filterPatch === "object"
-				? detail.filterPatch
-				: {};
-		this.controller.setFilters(filterPatch);
+		const normalizedPatch = normalizeBrowseShellQueryPatch(
+			detail,
+			this.controller.getState()?.query,
+		);
+		this.controller.setFilters(normalizedPatch.filters);
 		if (this.filterRefreshTimer) {
 			clearTimeout(this.filterRefreshTimer);
 		}

@@ -81,6 +81,75 @@ function hasMeaningfulViewportDelta(
 	);
 }
 
+function toFilterOptionEntries(counts = new Map()) {
+	return [...counts.entries()]
+		.sort(([leftValue], [rightValue]) => leftValue.localeCompare(rightValue))
+		.map(([value, count]) => ({
+			value,
+			label: value,
+			count,
+		}));
+}
+
+function hasFilterOptionEntries(entries) {
+	return Array.isArray(entries) && entries.length > 0;
+}
+
+function buildFilterOptionsFromFeatures(features = []) {
+	const typeCounts = new Map();
+	const categoryCounts = new Map();
+	const incrementCount = (counts, value) => {
+		const normalized = String(value ?? "").trim();
+		if (!normalized) {
+			return;
+		}
+		counts.set(normalized, (counts.get(normalized) || 0) + 1);
+	};
+
+	for (const feature of features) {
+		const properties = feature?.properties || {};
+		const uniqueTypes = new Set(
+			[properties.type, properties.mediaType, properties.format]
+				.map((entry) => String(entry ?? "").trim())
+				.filter(Boolean),
+		);
+		const uniqueCategories = new Set(
+			[properties.category, ...(Array.isArray(properties.tags) ? properties.tags : [])]
+				.map((entry) => String(entry ?? "").trim())
+				.filter(Boolean),
+		);
+		for (const typeValue of uniqueTypes) {
+			incrementCount(typeCounts, typeValue);
+		}
+		for (const categoryValue of uniqueCategories) {
+			incrementCount(categoryCounts, categoryValue);
+		}
+	}
+
+	return {
+		types: toFilterOptionEntries(typeCounts),
+		categories: toFilterOptionEntries(categoryCounts),
+	};
+}
+
+function resolveFilterOptions(spatialResponse = {}) {
+	const metaOptions =
+		spatialResponse?.meta && typeof spatialResponse.meta === "object"
+			? spatialResponse.meta.filterOptions
+			: null;
+	const resolvedMetaOptions =
+		metaOptions && typeof metaOptions === "object" ? metaOptions : {};
+	const fallbackOptions = buildFilterOptionsFromFeatures(spatialResponse?.features || []);
+	return {
+		types: hasFilterOptionEntries(resolvedMetaOptions.types)
+			? resolvedMetaOptions.types
+			: fallbackOptions.types,
+		categories: hasFilterOptionEntries(resolvedMetaOptions.categories)
+			? resolvedMetaOptions.categories
+			: fallbackOptions.categories,
+	};
+}
+
 class TimemapBrowserElement extends HTMLElement {
 	static get observedAttributes() {
 		return [
@@ -269,7 +338,7 @@ class TimemapBrowserElement extends HTMLElement {
 					composed: true,
 					detail: {
 						query: nextState.query,
-						options: nextState.spatial?.response?.meta?.filterOptions || {},
+						options: resolveFilterOptions(nextState.spatial?.response),
 					},
 				}),
 			);

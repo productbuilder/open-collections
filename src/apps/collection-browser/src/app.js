@@ -136,6 +136,7 @@ class CollectionBrowserElement extends ComponentBase {
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
 			isLoadingCollection: false,
+			hasResolvedFilterOptionData: false,
 			browseShellQuery: createBrowseShellQueryState(),
 			allModeFeedSession: null,
 			isAppendingAllModeFeedChunk: false,
@@ -921,6 +922,7 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	async initializeEmbeddedSources() {
+		this.state.hasResolvedFilterOptionData = false;
 		this.state.isLoadingCollection = true;
 		const configuredSources = normalizeEmbeddedSourceCatalog(
 			BROWSER_CONFIG.embeddedSourceCatalog,
@@ -947,6 +949,7 @@ class CollectionBrowserElement extends ComponentBase {
 		if (!configuredSources.length) {
 			this.setStatus("No embedded browser sources configured.", "warn");
 			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 			return;
@@ -981,6 +984,7 @@ class CollectionBrowserElement extends ComponentBase {
 			this.setStatus(`Source load failed: ${error.message}`, "warn");
 		} finally {
 			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 		}
@@ -1760,11 +1764,11 @@ class CollectionBrowserElement extends ComponentBase {
 			: [];
 		const itemsFromModel = Array.isArray(model.items) ? model.items : [];
 		const items =
-			renderedItemCards.length > 0
-				? renderedItemCards
-				: directItemCards.length > 0
-					? directItemCards
-					: itemsFromModel;
+			directItemCards.length > 0
+				? directItemCards
+				: itemsFromModel.length > 0
+					? itemsFromModel
+					: renderedItemCards;
 		const typeCounts = new Map();
 		const categoryCounts = new Map();
 		const incrementCount = (counts, value) => {
@@ -1802,7 +1806,7 @@ class CollectionBrowserElement extends ComponentBase {
 		const currentQueryState =
 			this.state.browseShellQuery || createBrowseShellQueryState();
 		const hasOptions = options.types.length > 0 || options.categories.length > 0;
-		const optionsStatus = this.state.isLoadingCollection
+		const optionsStatus = !this.state.hasResolvedFilterOptionData
 			? FILTER_OPTION_STATUS.LOADING
 			: hasOptions
 				? FILTER_OPTION_STATUS.READY
@@ -1891,6 +1895,7 @@ class CollectionBrowserElement extends ComponentBase {
 		}
 
 		this.setStatus("Loading collection...", "neutral");
+		this.state.hasResolvedFilterOptionData = false;
 		this.state.isLoadingCollection = true;
 		this.renderManifestControls();
 		this.renderEmbeddedSourceControls();
@@ -1930,6 +1935,7 @@ class CollectionBrowserElement extends ComponentBase {
 			this.setStatus(`Load failed: ${error.message}`, "warn");
 		} finally {
 			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
 			this.renderManifestControls();
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();

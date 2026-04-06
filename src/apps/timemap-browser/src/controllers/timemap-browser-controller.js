@@ -27,9 +27,11 @@ function cloneState(state) {
 		query: normalizeCollectionQueryState(state.query),
 		filters: {
 			...state.filters,
+			text: state.filters.text || "",
 			keywords: [...state.filters.keywords],
 			tags: [...state.filters.tags],
 			types: [...state.filters.types],
+			categories: [...(state.filters.categories || [])],
 		},
 		timeRange: { ...state.timeRange },
 		visibleOverlays: { ...state.visibleOverlays },
@@ -186,9 +188,11 @@ export function createTimemapBrowserController(
 				query: nextQuery,
 				filters: {
 					...state.filters,
+					text: nextQuery.text,
 					keywords: [...nextQuery.keywords],
 					tags: [...nextQuery.tags],
 					types: [...nextQuery.types],
+					categories: [...nextQuery.categories],
 				},
 				spatial: {
 					...state.spatial,

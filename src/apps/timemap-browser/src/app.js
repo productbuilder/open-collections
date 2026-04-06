@@ -105,6 +105,8 @@ class TimemapBrowserElement extends HTMLElement {
 		this.handleMapViewportChange = this.onMapViewportChange.bind(this);
 		this.handleMapFeatureClick = this.onMapFeatureClick.bind(this);
 		this.handleClearSelection = this.onClearSelection.bind(this);
+		this.handleFilterPatch = this.onFilterPatch.bind(this);
+		this.filterRefreshTimer = null;
 	}
 
 	connectedCallback() {
@@ -129,6 +131,10 @@ class TimemapBrowserElement extends HTMLElement {
 		if (this.viewportStateTimer) {
 			clearTimeout(this.viewportStateTimer);
 			this.viewportStateTimer = null;
+		}
+		if (this.filterRefreshTimer) {
+			clearTimeout(this.filterRefreshTimer);
+			this.filterRefreshTimer = null;
 		}
 		this.pendingSpatialRefreshViewport = null;
 		this.pendingViewportStateUpdate = null;
@@ -257,6 +263,16 @@ class TimemapBrowserElement extends HTMLElement {
 
 		this.unsubscribeState = this.controller.subscribe((nextState) => {
 			shellElement.state = nextState;
+			this.dispatchEvent(
+				new CustomEvent("timemap-browser-query-state", {
+					bubbles: true,
+					composed: true,
+					detail: {
+						query: nextState.query,
+						options: nextState.spatial?.response?.meta?.filterOptions || {},
+					},
+				}),
+			);
 		});
 	}
 
@@ -279,6 +295,7 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
 		);
+		this.addEventListener("timemap-browser-filter-patch", this.handleFilterPatch);
 	}
 
 	unbindMapEvents() {
@@ -300,6 +317,7 @@ class TimemapBrowserElement extends HTMLElement {
 			"timemap-browser-clear-selection",
 			this.handleClearSelection,
 		);
+		this.removeEventListener("timemap-browser-filter-patch", this.handleFilterPatch);
 	}
 
 	onMapViewportChange(event) {
@@ -334,6 +352,23 @@ class TimemapBrowserElement extends HTMLElement {
 
 	onClearSelection() {
 		this.controller.setSelectedFeature(null);
+	}
+
+	onFilterPatch(event) {
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const filterPatch =
+			detail.filterPatch && typeof detail.filterPatch === "object"
+				? detail.filterPatch
+				: {};
+		this.controller.setFilters(filterPatch);
+		if (this.filterRefreshTimer) {
+			clearTimeout(this.filterRefreshTimer);
+		}
+		this.filterRefreshTimer = setTimeout(() => {
+			this.filterRefreshTimer = null;
+			this.controller.initializeSpatialData();
+		}, 120);
 	}
 
 	queueViewportStateUpdate(viewport) {

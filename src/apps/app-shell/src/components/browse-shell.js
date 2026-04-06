@@ -48,7 +48,18 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.getAttribute("default-browse-mode"),
 				BROWSE_MODES.LIST,
 			),
+			filterPanelOpen: false,
+			filterState: {
+				text: "",
+				types: [],
+				categories: [],
+			},
+			filterOptions: {
+				types: [],
+				categories: [],
+			},
 		};
+		this._filterInputTimer = null;
 	}
 
 	connectedCallback() {
@@ -113,14 +124,111 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			}
 
 			if (element.closest('[data-action="filter-entry"]')) {
+				this.openFilterPanel();
 				this.dispatchEvent(
 					new CustomEvent("browse-shell-filter-entry", {
 						bubbles: true,
 						composed: true,
 					}),
 				);
+				return;
+			}
+
+			if (element.closest('[data-action="close-filter-panel"]')) {
+				this.closeFilterPanel();
 			}
 		});
+		this.addEventListener("timemap-browser-query-state", (event) => {
+			const detail =
+				event?.detail && typeof event.detail === "object" ? event.detail : {};
+			const query = detail.query && typeof detail.query === "object" ? detail.query : {};
+			const options =
+				detail.options && typeof detail.options === "object" ? detail.options : {};
+			this.state.filterState = {
+				text: String(query.text ?? "").trim(),
+				types: Array.isArray(query.types) ? query.types : [],
+				categories: Array.isArray(query.categories) ? query.categories : [],
+			};
+			this.state.filterOptions = {
+				types: Array.isArray(options.types) ? options.types : [],
+				categories: Array.isArray(options.categories) ? options.categories : [],
+			};
+			this.syncFilterPanelState();
+		});
+		this.shadowRoot.addEventListener("oc-filter-panel-change", (event) => {
+			const detail =
+				event?.detail && typeof event.detail === "object" ? event.detail : {};
+			if (this._filterInputTimer) {
+				clearTimeout(this._filterInputTimer);
+			}
+			this._filterInputTimer = setTimeout(() => {
+				this._filterInputTimer = null;
+				this.sendFilterPatchToTimemap(detail);
+			}, 120);
+		});
+		this.shadowRoot.addEventListener("oc-filter-panel-clear", () => {
+			this.sendFilterPatchToTimemap({
+				text: "",
+				types: [],
+				categories: [],
+			});
+		});
+		this.shadowRoot.addEventListener("close", (event) => {
+			const target = event?.target;
+			if (
+				target instanceof HTMLDialogElement &&
+				target.matches('[data-bind="filter-dialog"]')
+			) {
+				this.state.filterPanelOpen = false;
+				this.render();
+			}
+		});
+	}
+
+	openFilterPanel() {
+		this.state.filterPanelOpen = true;
+		this.render();
+		const dialog = this.shadowRoot.querySelector('[data-bind="filter-dialog"]');
+		if (!dialog) {
+			return;
+		}
+		if (!dialog.open && typeof dialog.showModal === "function") {
+			dialog.showModal();
+		} else if (!dialog.open) {
+			dialog.setAttribute("open", "open");
+		}
+	}
+
+	closeFilterPanel() {
+		this.state.filterPanelOpen = false;
+		const dialog = this.shadowRoot.querySelector('[data-bind="filter-dialog"]');
+		if (dialog?.open && typeof dialog.close === "function") {
+			dialog.close();
+		}
+		this.render();
+	}
+
+	syncFilterPanelState() {
+		const filterPanel = this.shadowRoot.querySelector("open-collections-filter-panel");
+		if (!filterPanel) {
+			return;
+		}
+		filterPanel.filterState = this.state.filterState;
+		filterPanel.filterOptions = this.state.filterOptions;
+	}
+
+	sendFilterPatchToTimemap(filterPatch = {}) {
+		const timemapElement = this.shadowRoot.querySelector("timemap-browser");
+		if (!timemapElement) {
+			return;
+		}
+		timemapElement.dispatchEvent(
+			new CustomEvent("timemap-browser-filter-patch", {
+				detail: {
+					filterPatch,
+				},
+			}),
+		);
 	}
 
 	currentBrowseMode() {
@@ -296,6 +404,37 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					outline: 2px solid #6b7280;
 					outline-offset: 1px;
 				}
+				.filter-dialog {
+					inline-size: min(30rem, calc(100vw - 1.2rem));
+					max-inline-size: min(30rem, calc(100vw - 1.2rem));
+					border: 1px solid #cbd5e1;
+					border-radius: 0.95rem;
+					padding: 0;
+					background: #f8fafc;
+					box-shadow: 0 20px 45px rgba(15, 23, 42, 0.33);
+				}
+				.filter-dialog::backdrop {
+					background: rgba(15, 23, 42, 0.42);
+				}
+				.filter-dialog-shell {
+					display: grid;
+					gap: 0.72rem;
+					padding: 0.82rem;
+				}
+				.filter-dialog-header {
+					display: flex;
+					justify-content: flex-end;
+				}
+				.close-filter-button {
+					border: 1px solid #cbd5e1;
+					background: #ffffff;
+					color: #1f2937;
+					border-radius: 999px;
+					padding: 0.3rem 0.62rem;
+					font: inherit;
+					font-size: 0.78rem;
+					font-weight: 600;
+				}
 
 				.browse-shell[data-mode="map"] {
 					grid-template-rows: minmax(0, 1fr);
@@ -375,6 +514,12 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					.browse-shell[data-mode="map"] .filter-entry {
 						block-size: 2.05rem;
 					}
+					.filter-dialog {
+						inline-size: calc(100vw - 0.6rem);
+						max-inline-size: calc(100vw - 0.6rem);
+						margin: auto;
+						border-radius: 1rem;
+					}
 				}
 			</style>
 			<section class="browse-shell" data-mode="${browseMode}" aria-label="Browse mode shell">
@@ -397,7 +542,16 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				</div>
 				<div class="app-viewport">${this.renderChildApp(browseMode)}</div>
 			</section>
+			<dialog class="filter-dialog" data-bind="filter-dialog">
+				<div class="filter-dialog-shell">
+					<header class="filter-dialog-header">
+						<button class="close-filter-button" type="button" data-action="close-filter-panel">Done</button>
+					</header>
+					<open-collections-filter-panel></open-collections-filter-panel>
+				</div>
+			</dialog>
 		`;
+		this.syncFilterPanelState();
 	}
 }
 

@@ -39,9 +39,11 @@ export function createTimemapBrowserInitialState() {
 	return {
 		query,
 		filters: {
+			text: query.text,
 			keywords: [...query.keywords],
 			tags: [...query.tags],
 			types: [...query.types],
+			categories: [...query.categories],
 		},
 		timeRange: { ...query.timeRange },
 		selectedFeatureId: null,

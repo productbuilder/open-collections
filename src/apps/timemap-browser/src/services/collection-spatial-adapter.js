@@ -26,17 +26,6 @@ function hasNonEmptyText(value) {
 	return toTrimmedText(value).length > 0;
 }
 
-function normalizeMediaKind(value) {
-	const text = toTrimmedText(value).toLowerCase();
-	if (!text) {
-		return "";
-	}
-	if (text.includes("/")) {
-		return toTrimmedText(text.split("/")[0]);
-	}
-	return text;
-}
-
 function deriveFormat(item = {}, media = {}) {
 	const explicitCandidates = [item.format, item.mediaFormat, media.format];
 	for (const candidate of explicitCandidates) {
@@ -61,30 +50,6 @@ function deriveFormat(item = {}, media = {}) {
 	}
 
 	return "";
-}
-
-function deriveType(item = {}, media = {}, tags = []) {
-	const explicitType = toTrimmedText(item.type);
-	if (explicitType) {
-		return explicitType;
-	}
-
-	const firstTag = tags.map((entry) => toTrimmedText(entry)).find(Boolean) || "";
-	if (firstTag) {
-		return firstTag;
-	}
-
-	const mediaKind = normalizeMediaKind(media.type);
-	if (mediaKind) {
-		return mediaKind;
-	}
-
-	const format = deriveFormat(item, media);
-	if (format) {
-		return format;
-	}
-
-	return "item";
 }
 
 function deriveSubtitle(item = {}) {
@@ -142,6 +107,7 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 		toTrimmedText(item.category) || toTrimmedText(item.type) || primaryTag || "collection-item";
 	const format = deriveFormat(item, media);
 	const mediaType = toTrimmedText(media.type) || "image";
+	const itemType = toTrimmedText(item.type);
 
 	return {
 		type: "Feature",
@@ -157,7 +123,7 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 			subtitle: deriveSubtitle(item),
 			description: deriveDescription(item),
 			category,
-			type: deriveType(item, media, tags),
+			type: itemType,
 			format,
 			sourceLabel,
 			sourceUrl,

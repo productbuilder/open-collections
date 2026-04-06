@@ -12,6 +12,7 @@ import "./grid5-card-collection.js";
 import "./grid5-card-item.js";
 import "./section-header.js";
 import "./oc-map.js";
+import "./oc-time-range-slider.js";
 
 export { OpenCollectionsEmptyStateElement } from "./empty-state.js";
 export { OpenCollectionsSectionHeaderElement } from "./section-header.js";
@@ -28,3 +29,5 @@ export { OpenCollectionsPreviewSummaryCardElement } from "./preview-summary-card
 export { Grid5SourceCardElement } from "./grid5-card-source.js";
 export { Grid5CollectionCardElement } from "./grid5-card-collection.js";
 export { Grid5ItemCardElement } from "./grid5-card-item.js";
+
+export { OcTimeRangeSliderElement } from "./oc-time-range-slider.js";

@@ -23,6 +23,9 @@ This folder holds the first modest set of app-shell family shared primitives.
     - Semantic shared card for a collection browse surface.
 - `oc-card-item`
     - Semantic shared card for an item browse surface.
+- `oc-time-range-slider`
+    - Generic reusable time-range primitive with `min`, `max`, `start`, `end`, and optional `disabled` inputs.
+    - Emits `oc-time-range-change` with normalized `{ min, max, start, end }` detail for host integration.
 - `oc-map`
     - Generic shared map primitive powered by MapLibre GL JS (loaded from CDN at runtime; no package install needed).
     - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`).

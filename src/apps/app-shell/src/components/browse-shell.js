@@ -91,6 +91,21 @@ function formatDebugValue(value, fallback = "—") {
 	return text ? escapeAttribute(text) : fallback;
 }
 
+function setElementProperty(element, key, value) {
+	if (!element || !key) {
+		return;
+	}
+	if (Object.prototype.hasOwnProperty.call(element, key)) {
+		const ownValue = element[key];
+		delete element[key];
+		if (ownValue !== undefined && value === undefined) {
+			element[key] = ownValue;
+			return;
+		}
+	}
+	element[key] = value;
+}
+
 class OpenCollectionsBrowseShellElement extends HTMLElement {
 	static get observedAttributes() {
 		return [
@@ -318,9 +333,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		if (!filterPanel) {
 			return;
 		}
-		filterPanel.filterState = this.state.filterState;
-		filterPanel.filterOptions = this.state.filterOptions;
-		filterPanel.filterOptionsStatus = this.state.filterOptionsStatus;
+		setElementProperty(filterPanel, "filterState", this.state.filterState);
+		setElementProperty(filterPanel, "filterOptions", this.state.filterOptions);
+		setElementProperty(
+			filterPanel,
+			"filterOptionsStatus",
+			this.state.filterOptionsStatus,
+		);
 	}
 
 	syncShellSearchState() {

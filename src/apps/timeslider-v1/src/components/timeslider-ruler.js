@@ -7,23 +7,63 @@ function formatYear(year) {
 	return Math.round(year).toString();
 }
 
-function computeTickStep(windowSizeYears) {
+const MONTH_LABELS = [
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+];
+
+function normalizeYearStep(value, step) {
+	const rounded = Math.round(value / step) * step;
+	return Number(rounded.toFixed(6));
+}
+
+function computeRulerScale(windowSizeYears) {
 	if (windowSizeYears === "all") {
-		return 20;
+		return { minorStep: 10, majorStep: 20, labelStep: 20, minLabelSpacingPx: 62 };
 	}
 	if (windowSizeYears <= 1) {
-		return 1;
+		return {
+			minorStep: 1 / 12,
+			majorStep: 0.25,
+			labelStep: 0.25,
+			minLabelSpacingPx: 44,
+		};
 	}
 	if (windowSizeYears <= 10) {
-		return 2;
+		return { minorStep: 1, majorStep: 2, labelStep: 2, minLabelSpacingPx: 58 };
 	}
 	if (windowSizeYears <= 20) {
-		return 5;
+		return { minorStep: 1, majorStep: 5, labelStep: 5, minLabelSpacingPx: 56 };
 	}
 	if (windowSizeYears <= 50) {
-		return 10;
+		return { minorStep: 5, majorStep: 10, labelStep: 10, minLabelSpacingPx: 60 };
 	}
-	return 20;
+	return { minorStep: 10, majorStep: 20, labelStep: 20, minLabelSpacingPx: 62 };
+}
+
+function formatTickLabel(year, windowSizeYears) {
+	if (windowSizeYears > 1 || windowSizeYears === "all") {
+		return formatYear(year);
+	}
+	const fractionalYear = year - Math.floor(year);
+	const monthIndex = Math.max(
+		0,
+		Math.min(11, Math.round((fractionalYear + 1e-6) * 12)),
+	);
+	if (monthIndex === 0) {
+		return `${MONTH_LABELS[monthIndex]} ${formatYear(year)}`;
+	}
+	return MONTH_LABELS[monthIndex];
 }
 
 class TimeSliderV1RulerElement extends HTMLElement {
@@ -254,7 +294,8 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		}
 		ticksContainer.innerHTML = "";
 		const centerX = trackWidth / 2;
-		const step = computeTickStep(this.model.windowSizeYears);
+		const scale = computeRulerScale(this.model.windowSizeYears);
+		const baseStep = Math.min(scale.minorStep, scale.majorStep);
 		const visibleHalfYears = trackWidth / (2 * pixelsPerYear);
 		const bufferYears = visibleHalfYears * 0.5;
 		const renderCenterYear = this.motion.displayYear;
@@ -266,9 +307,13 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			this.model.domainMaxYear,
 			Math.ceil(renderCenterYear + visibleHalfYears + bufferYears),
 		);
-		const firstTick = Math.floor(minYear / step) * step;
-
-		for (let year = firstTick; year <= maxYear; year += step) {
+		const firstTick = normalizeYearStep(Math.floor(minYear / baseStep) * baseStep, baseStep);
+		let lastLabelX = -Infinity;
+		for (
+			let year = firstTick;
+			year <= maxYear + baseStep * 0.5;
+			year = normalizeYearStep(year + baseStep, baseStep)
+		) {
 			if (year < this.model.domainMinYear) {
 				continue;
 			}
@@ -279,14 +324,17 @@ class TimeSliderV1RulerElement extends HTMLElement {
 			const tick = document.createElement("div");
 			tick.className = "tick";
 			tick.style.left = `${x}px`;
-			const majorEvery = step >= 10 ? step : step * 5;
-			const major = year % majorEvery === 0;
-			if (major) {
-				tick.dataset.major = "true";
+			const tickOnMajor =
+				Math.abs((year / scale.majorStep) - Math.round(year / scale.majorStep)) < 1e-4;
+			tick.dataset.tier = tickOnMajor ? "major" : "minor";
+			const tickOnLabel =
+				Math.abs((year / scale.labelStep) - Math.round(year / scale.labelStep)) < 1e-4;
+			if (tickOnLabel && x - lastLabelX >= scale.minLabelSpacingPx) {
 				const label = document.createElement("div");
 				label.className = "label";
-				label.textContent = formatYear(year);
+				label.textContent = formatTickLabel(year, this.model.windowSizeYears);
 				tick.append(label);
+				lastLabelX = x;
 			}
 			ticksContainer.append(tick);
 		}
@@ -320,14 +368,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.track {
 					position: relative;
-					--band-top: 24px;
-					--triangle-width: 12px;
-					--triangle-height: 8px;
+					--band-top: 28px;
+					--triangle-width: 15px;
+					--triangle-height: 10px;
 					--band-height: 54px;
 					height: 96px;
 					border-radius: 12px;
 					overflow: hidden;
-					background: linear-gradient(180deg, #112739 0%, #0b1a29 100%);
+					background: linear-gradient(180deg, #0f273a 0%, #0b1f30 100%);
 					border: 1px solid rgba(255, 255, 255, 0.14);
 					touch-action: none;
 					user-select: none;
@@ -346,7 +394,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					top: var(--band-top);
 					height: var(--band-height);
 					transform: translateX(-50%);
-					background: rgba(82, 199, 255, 0.2);
+					background: rgba(74, 134, 173, 0.72);
 					border: none;
 					border-radius: 8px;
 				}
@@ -359,25 +407,25 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 53px;
+					top: 52px;
 					width: 1px;
-					height: 9px;
-					background: rgba(255, 255, 255, 0.4);
+					height: 8px;
+					background: rgba(255, 255, 255, 0.26);
 				}
-				.tick[data-major="true"] {
+				.tick[data-tier="major"] {
 					height: 14px;
-					top: 50px;
+					top: 49px;
 					width: 2px;
-					background: rgba(255, 255, 255, 0.76);
+					background: rgba(255, 255, 255, 0.72);
 				}
 				.label {
 					position: absolute;
-					top: -16px;
+					top: -20px;
 					left: 50%;
 					transform: translateX(-50%);
-					font-size: 0.65rem;
+					font-size: 0.64rem;
 					font-weight: 600;
-					color: rgba(255, 255, 255, 0.9);
+					color: rgba(255, 255, 255, 0.88);
 					white-space: nowrap;
 				}
 				.center-marker {
@@ -398,7 +446,7 @@ class TimeSliderV1RulerElement extends HTMLElement {
 					left: 50%;
 					width: var(--triangle-width);
 					height: var(--triangle-height);
-					background: rgba(255, 216, 94, 0.92);
+					background: rgba(255, 255, 255, 0.98);
 					filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
 				}
 				.center-marker::before {
@@ -414,9 +462,9 @@ class TimeSliderV1RulerElement extends HTMLElement {
 				.center-year {
 					position: absolute;
 					left: 50%;
-					top: 1px;
+					top: -4px;
 					transform: translateX(-50%);
-					padding: 0.18rem 0.52rem;
+					padding: 0.18rem 0.56rem;
 					font-size: 0.84rem;
 					font-weight: 700;
 					border-radius: 999px;

@@ -18,6 +18,100 @@ function countGeometry(features, geometryType) {
 	return features.filter((entry) => entry.geometry?.type === geometryType).length;
 }
 
+function toNormalizedText(value) {
+	return String(value ?? "")
+		.trim()
+		.toLowerCase();
+}
+
+function toNormalizedSet(value) {
+	if (!Array.isArray(value)) {
+		return new Set();
+	}
+	return new Set(
+		value
+			.map((entry) => toNormalizedText(entry))
+			.filter(Boolean),
+	);
+}
+
+function createFilterOptions(features = []) {
+	const typeCounts = new Map();
+	const categoryCounts = new Map();
+	for (const feature of features) {
+		const properties = feature?.properties || {};
+		const typeValue = String(properties.type || properties.mediaType || "").trim();
+		if (typeValue) {
+			typeCounts.set(typeValue, (typeCounts.get(typeValue) || 0) + 1);
+		}
+		const categoryValue = String(properties.category || "").trim();
+		if (categoryValue) {
+			categoryCounts.set(categoryValue, (categoryCounts.get(categoryValue) || 0) + 1);
+		}
+	}
+	const toSortedList = (counts) =>
+		[...counts.entries()]
+			.sort(([leftLabel], [rightLabel]) => leftLabel.localeCompare(rightLabel))
+			.map(([value, count]) => ({
+				value,
+				label: value,
+				count,
+			}));
+	return {
+		types: toSortedList(typeCounts),
+		categories: toSortedList(categoryCounts),
+	};
+}
+
+function featureMatchesFilters(feature = {}, query = {}) {
+	const properties = feature?.properties || {};
+	const textQuery = toNormalizedText(query.text);
+	if (textQuery) {
+		const searchableValues = [
+			properties.title,
+			properties.subtitle,
+			properties.description,
+			properties.sourceLabel,
+			properties.locationLabel,
+			properties.dateLabel,
+			...(Array.isArray(properties.tags) ? properties.tags : []),
+		];
+		const searchableText = searchableValues
+			.map((entry) => toNormalizedText(entry))
+			.filter(Boolean)
+			.join(" ");
+		if (!searchableText.includes(textQuery)) {
+			return false;
+		}
+	}
+
+	const typeSet = toNormalizedSet(query.types);
+	if (typeSet.size > 0) {
+		const candidateTypeValues = [
+			toNormalizedText(properties.type),
+			toNormalizedText(properties.mediaType),
+		].filter(Boolean);
+		if (!candidateTypeValues.some((entry) => typeSet.has(entry))) {
+			return false;
+		}
+	}
+
+	const categorySet = toNormalizedSet(query.categories);
+	if (categorySet.size > 0) {
+		const candidateCategoryValues = [
+			toNormalizedText(properties.category),
+			...(Array.isArray(properties.tags)
+				? properties.tags.map((entry) => toNormalizedText(entry))
+				: []),
+		].filter(Boolean);
+		if (!candidateCategoryValues.some((entry) => categorySet.has(entry))) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 export async function loadCollectionSpatialResponse(spatialRequest) {
 	const normalizedRequest = normalizeSpatialQueryInput(spatialRequest);
 	const response = createSpatialResponsePayload();
@@ -34,7 +128,7 @@ export async function loadCollectionSpatialResponse(spatialRequest) {
 	});
 	const mapped = mapCollectionItemsToSpatialFeatures(collection);
 
-	const features = mapped.features.map((feature) => ({
+	const mappedFeatures = mapped.features.map((feature) => ({
 		...feature,
 		properties: {
 			...feature.properties,
@@ -42,6 +136,10 @@ export async function loadCollectionSpatialResponse(spatialRequest) {
 			density: normalizedRequest.strategy.density,
 		},
 	}));
+	const filterOptions = createFilterOptions(mappedFeatures);
+	const features = mappedFeatures.filter((feature) =>
+		featureMatchesFilters(feature, normalizedRequest.query),
+	);
 
 	response.request = {
 		requestId: createRequestId(),
@@ -65,6 +163,8 @@ export async function loadCollectionSpatialResponse(spatialRequest) {
 		collectionTitle: collection.title,
 		totalItems: mapped.totalItems,
 		georeferencedItems: mapped.georeferencedCount,
+		filteredGeoreferencedItems: features.length,
+		filterOptions,
 		manifestUrl: HILVERSUM_COLLECTION_MANIFEST_URL,
 	};
 

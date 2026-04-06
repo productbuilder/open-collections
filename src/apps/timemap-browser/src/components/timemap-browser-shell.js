@@ -203,21 +203,15 @@ const timemapBrowserShellStyles = `
 		margin: 0 auto 0.08rem;
 	}
 
-	.timeline-title {
-		margin: 0;
-		font-size: 0.72rem;
-		font-weight: 700;
-		line-height: 1.15;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: #334155;
-	}
-
 	.timeline-note {
 		margin: 0;
 		font-size: 0.76rem;
 		line-height: 1.32;
 		color: #1e293b;
+	}
+
+	.timeline-slider {
+		--oc-time-range-slider-accent: #0f766e;
 	}
 
 	.detail-shell {
@@ -396,6 +390,84 @@ function formatTimeRange(timeRange = {}) {
 		return `${timeRange.start} to ${timeRange.end}`;
 	}
 	return timeRange.start ? `From ${timeRange.start}` : `Until ${timeRange.end}`;
+}
+
+function toFiniteYearFromUtcTimestamp(value) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) {
+		return null;
+	}
+	const year = new Date(parsed).getUTCFullYear();
+	return Number.isFinite(year) ? year : null;
+}
+
+function toFiniteYearBound(value) {
+	if (value === null || value === undefined || value === "") {
+		return null;
+	}
+	const text = String(value).trim();
+	if (!text) {
+		return null;
+	}
+	if (/^[-+]?\d{1,6}$/.test(text)) {
+		const year = Number(text);
+		return Number.isFinite(year) ? year : null;
+	}
+	const match = text.match(/^(?<year>[-+]?\d{1,6})(?:-\d{2}(?:-\d{2})?)?$/);
+	if (!match?.groups?.year) {
+		return null;
+	}
+	const year = Number(match.groups.year);
+	return Number.isFinite(year) ? year : null;
+}
+
+function deriveTemporalFeatureYearDomain(features = []) {
+	if (!Array.isArray(features) || features.length === 0) {
+		return null;
+	}
+	let minYear = Number.POSITIVE_INFINITY;
+	let maxYear = Number.NEGATIVE_INFINITY;
+	for (const feature of features) {
+		const properties = feature?.properties || {};
+		if (properties.timeKnown !== true) {
+			continue;
+		}
+		const startYear = toFiniteYearFromUtcTimestamp(properties.timeStart);
+		const endYear = toFiniteYearFromUtcTimestamp(properties.timeEnd);
+		if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+			continue;
+		}
+		minYear = Math.min(minYear, startYear, endYear);
+		maxYear = Math.max(maxYear, startYear, endYear);
+	}
+	if (!Number.isFinite(minYear) || !Number.isFinite(maxYear)) {
+		return null;
+	}
+	return {
+		min: minYear,
+		max: maxYear,
+	};
+}
+
+function resolveActiveTimeRangeYears(state = {}, domain = null) {
+	if (!domain) {
+		return null;
+	}
+	const queryTimeRange =
+		state.query?.timeRange && typeof state.query.timeRange === "object"
+			? state.query.timeRange
+			: null;
+	const stateTimeRange =
+		state.timeRange && typeof state.timeRange === "object" ? state.timeRange : null;
+	const sourceRange = queryTimeRange || stateTimeRange || {};
+	const parsedStart = toFiniteYearBound(sourceRange.start);
+	const parsedEnd = toFiniteYearBound(sourceRange.end);
+	const startYear = Number.isFinite(parsedStart) ? parsedStart : domain.min;
+	const endYear = Number.isFinite(parsedEnd) ? parsedEnd : domain.max;
+	return {
+		start: Math.min(startYear, endYear),
+		end: Math.max(startYear, endYear),
+	};
 }
 
 function getVisibleOverlayCount(visibleOverlays = {}) {
@@ -685,9 +757,11 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._lastSpatialRenderSignature = null;
 		this._lastFeatureClickTimestamp = 0;
 		this._hasAutoFitInitialCollectionPoints = false;
+		this._suppressTimelineChangeEvent = false;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
 		this._handleMapFeatureClick = this._onMapFeatureClick.bind(this);
+		this._handleTimelineRangeChange = this._onTimelineRangeChange.bind(this);
 		this._handleClick = this._onClick.bind(this);
 	}
 
@@ -819,8 +893,8 @@ class TimemapBrowserShellElement extends HTMLElement {
 					<section class="overlay-region bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
 							<div class="timeline-pill" aria-hidden="true"></div>
-							<p class="timeline-title">Timeline region (v1 reserved)</p>
-							<p class="timeline-note" data-bind="time-range"></p>
+							<oc-time-range-slider class="timeline-slider" data-bind="timeline-slider"></oc-time-range-slider>
+							<p class="timeline-note" data-bind="time-range-note"></p>
 							<p class="sr-only" data-bind="status"></p>
 						</div>
 					</section>
@@ -839,6 +913,15 @@ class TimemapBrowserShellElement extends HTMLElement {
 				mapElement.addEventListener(
 					"oc-map-feature-click",
 					this._handleMapFeatureClick,
+				);
+			}
+			const timelineSliderElement = this.shadowRoot.querySelector(
+				'[data-bind="timeline-slider"]',
+			);
+			if (timelineSliderElement) {
+				timelineSliderElement.addEventListener(
+					"oc-time-range-change",
+					this._handleTimelineRangeChange,
 				);
 			}
 			this.shadowRoot.addEventListener("click", this._handleClick);
@@ -884,14 +967,90 @@ class TimemapBrowserShellElement extends HTMLElement {
 			"top-summary",
 			`${spatialFeatureCount} mapped features (${pointVisibilityDiagnostics.uniqueCoordinateCount} visible positions; ${pointVisibilityDiagnostics.overlapGroupCount} overlap groups) • ${activeFilterCount} active filters • ${visibleOverlayCount} visible overlays`,
 		);
-		this.updateText(
-			"time-range",
-			`Active time range: ${formatTimeRange(state.timeRange)}. Shared timeline slider will mount here next.`,
-		);
+		this.syncTimelineControl(state);
 		this.updateText("status", `Status: ${state.status.text}`);
 		this.renderSelectedFeatureDetail(selectedFeature);
 		this.syncOverlayVisibility(config, Boolean(selectedFeature));
 		this.syncMapViewport(state.viewport);
+	}
+
+	syncTimelineControl(state = {}) {
+		const timelineSliderElement = this.shadowRoot.querySelector(
+			'[data-bind="timeline-slider"]',
+		);
+		if (!timelineSliderElement) {
+			return;
+		}
+		const timelineFeatures = Array.isArray(state.timelineSourceFeatures)
+			? state.timelineSourceFeatures
+			: Array.isArray(state.spatial?.response?.features)
+				? state.spatial.response.features
+				: [];
+		const temporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
+		if (!temporalDomain) {
+			this._suppressTimelineChangeEvent = true;
+			timelineSliderElement.setAttribute("disabled", "");
+			timelineSliderElement.setAttribute("min", "0");
+			timelineSliderElement.setAttribute("max", "1");
+			timelineSliderElement.setAttribute("start", "0");
+			timelineSliderElement.setAttribute("end", "1");
+			this._suppressTimelineChangeEvent = false;
+			this.updateText("time-range-note", "No known temporal range in loaded features.");
+			return;
+		}
+
+		const activeRange = resolveActiveTimeRangeYears(state, temporalDomain);
+		this._suppressTimelineChangeEvent = true;
+		timelineSliderElement.removeAttribute("disabled");
+		timelineSliderElement.setAttribute("min", String(temporalDomain.min));
+		timelineSliderElement.setAttribute("max", String(temporalDomain.max));
+		timelineSliderElement.setAttribute("start", String(activeRange.start));
+		timelineSliderElement.setAttribute("end", String(activeRange.end));
+		this._suppressTimelineChangeEvent = false;
+		this.updateText(
+			"time-range-note",
+			`Active time range: ${formatTimeRange(state.timeRange)}.`,
+		);
+	}
+
+	_onTimelineRangeChange(event) {
+		if (this._suppressTimelineChangeEvent) {
+			return;
+		}
+		const detail = event?.detail || {};
+		const startYear = Number(detail.start);
+		const endYear = Number(detail.end);
+		if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+			return;
+		}
+		const nextStart = String(Math.min(startYear, endYear));
+		const nextEnd = String(Math.max(startYear, endYear));
+		const currentQueryTimeRange =
+			this._state?.query?.timeRange && typeof this._state.query.timeRange === "object"
+				? this._state.query.timeRange
+				: {};
+		const currentStateTimeRange =
+			this._state?.timeRange && typeof this._state.timeRange === "object"
+				? this._state.timeRange
+				: {};
+		const currentStart =
+			currentQueryTimeRange.start ??
+			currentStateTimeRange.start ??
+			null;
+		const currentEnd = currentQueryTimeRange.end ?? currentStateTimeRange.end ?? null;
+		if (String(currentStart ?? "") === nextStart && String(currentEnd ?? "") === nextEnd) {
+			return;
+		}
+		this.dispatchEvent(
+			new CustomEvent("timemap-browser-time-range-patch", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					start: nextStart,
+					end: nextEnd,
+				},
+			}),
+		);
 	}
 
 	syncOverlayVisibility(config, hasSelectedFeature) {

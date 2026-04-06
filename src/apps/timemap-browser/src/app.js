@@ -551,6 +551,7 @@ class TimemapBrowserElement extends HTMLElement {
 			}
 			const projectedState = {
 				...nextState,
+				timelineSourceFeatures: responseFeatures,
 				hoveredFeatureId:
 					nextState.hoveredFeatureId &&
 					!hasFeatureWithId(mapVisibleFeatures, nextState.hoveredFeatureId)

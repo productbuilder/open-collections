@@ -206,7 +206,7 @@ class OpenCollectionsTimeSliderV1AppElement extends HTMLElement {
 						rgba(9, 19, 30, 0.96) 0%,
 						rgba(7, 13, 23, 0.94) 100%
 					);
-					border: 1px solid rgba(82, 199, 255, 0.24);
+					border: none;
 					border-radius: 0.85rem;
 					padding: 0.5rem 0.5rem 0.45rem;
 					box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);

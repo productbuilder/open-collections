@@ -86,11 +86,6 @@ function normalizeFilterOptionEntries(value) {
 		.filter(Boolean);
 }
 
-function formatDebugValue(value, fallback = "—") {
-	const text = toText(value);
-	return text ? escapeAttribute(text) : fallback;
-}
-
 function setElementProperty(element, key, value) {
 	if (!element || !key) {
 		return;
@@ -136,13 +131,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				categories: [],
 			},
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
-			debug: {
-				lastSourceApp: "",
-				lastSourceMode: "",
-				lastUpdatedAt: "",
-				updateSequence: 0,
-				childLoading: false,
-			},
 		};
 		this._browseQueryState = createBrowseShellQueryState();
 		this._filterInputTimer = null;
@@ -230,13 +218,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				categories: normalizeFilterOptionEntries(normalizedState.options.categories),
 			};
 			this.state.filterOptionsStatus = normalizedState.status.filterOptions;
-			this.state.debug = {
-				lastSourceApp: toText(normalizedState.source?.app),
-				lastSourceMode: toText(normalizedState.source?.mode),
-				lastUpdatedAt: new Date().toISOString(),
-				updateSequence: Number(this.state.debug?.updateSequence || 0) + 1,
-				childLoading: Boolean(normalizedState.status?.loading),
-			};
 			this.syncShellSearchState();
 			this.syncFilterPanelState();
 		};
@@ -432,34 +413,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		`;
 	}
 
-	renderFilterDebugPanel(currentMode) {
-		if (!this.state.filterPanelOpen) {
-			return "";
-		}
-		const typeOptionCount = this.state.filterOptions.types.length;
-		const categoryOptionCount = this.state.filterOptions.categories.length;
-		const hasSelectedTypes = this.state.filterState.types.length > 0;
-		const hasSelectedCategories = this.state.filterState.categories.length > 0;
-		return `
-			<aside class="filter-debug" aria-live="polite" aria-label="Temporary browse filter debug diagnostics">
-				<h2 class="filter-debug-title">Temporary Debug (dev-only)</h2>
-				<dl class="filter-debug-list">
-					<div><dt>Active browse mode</dt><dd>${formatDebugValue(currentMode)}</dd></div>
-					<div><dt>Last source app</dt><dd>${formatDebugValue(this.state.debug.lastSourceApp)}</dd></div>
-					<div><dt>Last source mode</dt><dd>${formatDebugValue(this.state.debug.lastSourceMode)}</dd></div>
-					<div><dt>Filter options status</dt><dd>${formatDebugValue(this.state.filterOptionsStatus)}</dd></div>
-					<div><dt>Type option count</dt><dd>${typeOptionCount}</dd></div>
-					<div><dt>Category option count</dt><dd>${categoryOptionCount}</dd></div>
-					<div><dt>Has selected types</dt><dd>${hasSelectedTypes ? "yes" : "no"}</dd></div>
-					<div><dt>Has selected categories</dt><dd>${hasSelectedCategories ? "yes" : "no"}</dd></div>
-					<div><dt>Child loading flag</dt><dd>${this.state.debug.childLoading ? "true" : "false"}</dd></div>
-					<div><dt>Update sequence</dt><dd>${this.state.debug.updateSequence}</dd></div>
-					<div><dt>Last update (UTC)</dt><dd>${formatDebugValue(this.state.debug.lastUpdatedAt)}</dd></div>
-				</dl>
-			</aside>
-		`;
-	}
-
 	render() {
 		const browseMode = this.currentBrowseMode();
 
@@ -628,48 +581,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					font-size: 0.78rem;
 					font-weight: 600;
 				}
-				.filter-debug {
-					border: 1px dashed #94a3b8;
-					border-radius: 0.72rem;
-					background: #f8fafc;
-					padding: 0.62rem;
-					color: #0f172a;
-				}
-				.filter-debug-title {
-					margin: 0 0 0.45rem;
-					font-size: 0.72rem;
-					line-height: 1.35;
-					font-weight: 700;
-					text-transform: uppercase;
-					letter-spacing: 0.04em;
-					color: #475569;
-				}
-				.filter-debug-list {
-					display: grid;
-					grid-template-columns: minmax(0, 1fr);
-					gap: 0.35rem;
-					margin: 0;
-				}
-				.filter-debug-list > div {
-					display: grid;
-					grid-template-columns: minmax(0, 1fr) auto;
-					gap: 0.4rem;
-					align-items: baseline;
-					font-size: 0.74rem;
-					line-height: 1.3;
-				}
-				.filter-debug-list dt {
-					margin: 0;
-					color: #334155;
-				}
-				.filter-debug-list dd {
-					margin: 0;
-					font-family:
-						ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-						"Courier New", monospace;
-					color: #0f172a;
-				}
-
 				.browse-shell[data-mode="map"] {
 					grid-template-rows: minmax(0, 1fr);
 					position: relative;
@@ -788,7 +699,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						<button class="close-filter-button" type="button" data-action="close-filter-panel">Done</button>
 					</header>
 					<open-collections-filter-panel show-text-search="false"></open-collections-filter-panel>
-					${this.renderFilterDebugPanel(browseMode)}
 				</div>
 			</dialog>
 		`;

@@ -347,8 +347,8 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		const showCategorySection =
 			hasCategoryOptions || filterOptionsStatus === "loading";
 		const subtitle = showTextSearch
-			? "Search and narrow map items by type or category."
-			: "Narrow map items by type or category.";
+			? "Search and narrow items by type or category."
+			: "Narrow items by type or category.";
 		return `
 			<section class="filter-panel" aria-label="Browse filters">
 				<header class="header">

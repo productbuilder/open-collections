@@ -38,6 +38,47 @@ function escapeAttribute(value) {
 		.replaceAll("'", "&#39;");
 }
 
+function toText(value) {
+	return String(value ?? "").trim();
+}
+
+function toUniqueStringList(value) {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const unique = new Set();
+	for (const entry of value) {
+		const text = toText(entry);
+		if (text) {
+			unique.add(text);
+		}
+	}
+	return [...unique];
+}
+
+function normalizeFilterOptionEntries(value) {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	return value
+		.map((entry) => {
+			if (!entry || typeof entry !== "object") {
+				return null;
+			}
+			const normalizedValue = toText(entry.value);
+			if (!normalizedValue) {
+				return null;
+			}
+			const count = Number(entry.count);
+			return {
+				value: normalizedValue,
+				label: toText(entry.label) || normalizedValue,
+				count: Number.isFinite(count) ? count : null,
+			};
+		})
+		.filter(Boolean);
+}
+
 class OpenCollectionsBrowseShellElement extends HTMLElement {
 	static get observedAttributes() {
 		return [
@@ -138,20 +179,24 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.closeFilterPanel();
 			}
 		});
-		this.addEventListener("timemap-browser-query-state", (event) => {
+		this.shadowRoot.addEventListener("timemap-browser-query-state", (event) => {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
 			const query = detail.query && typeof detail.query === "object" ? detail.query : {};
-			const options =
-				detail.options && typeof detail.options === "object" ? detail.options : {};
+			const optionsSource =
+				detail.options && typeof detail.options === "object"
+					? detail.options
+					: detail.filterOptions && typeof detail.filterOptions === "object"
+						? detail.filterOptions
+						: {};
 			this.state.filterState = {
-				text: String(query.text ?? "").trim(),
-				types: Array.isArray(query.types) ? query.types : [],
-				categories: Array.isArray(query.categories) ? query.categories : [],
+				text: toText(query.text),
+				types: toUniqueStringList(query.types),
+				categories: toUniqueStringList(query.categories),
 			};
 			this.state.filterOptions = {
-				types: Array.isArray(options.types) ? options.types : [],
-				categories: Array.isArray(options.categories) ? options.categories : [],
+				types: normalizeFilterOptionEntries(optionsSource.types),
+				categories: normalizeFilterOptionEntries(optionsSource.categories),
 			};
 			this.syncShellSearchState();
 			this.syncFilterPanelState();

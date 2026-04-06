@@ -24,7 +24,6 @@ function normalizeFilterState(value = {}) {
 	return {
 		text: toText(source.text),
 		types: toUniqueStringList(source.types),
-		categories: toUniqueStringList(source.categories),
 	};
 }
 
@@ -51,7 +50,6 @@ function normalizeFilterOptions(value = {}) {
 			.filter(Boolean);
 	return {
 		types: normalizeEntryList(source.types),
-		categories: normalizeEntryList(source.categories),
 	};
 }
 
@@ -291,14 +289,8 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		const typeInputs = this.shadowRoot.querySelectorAll(
 			'input[name="type-filter"]:checked',
 		);
-		const categoryInputs = this.shadowRoot.querySelectorAll(
-			'input[name="category-filter"]:checked',
-		);
 		const detail = {
 			types: [...typeInputs]
-				.map((entry) => toText(entry.value))
-				.filter(Boolean),
-			categories: [...categoryInputs]
 				.map((entry) => toText(entry.value))
 				.filter(Boolean),
 		};
@@ -341,14 +333,9 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		const options = this._filterOptions;
 		const showTextSearch = this.showTextSearch;
 		const filterOptionsStatus = this.filterOptionsStatus;
-		const hasCategoryOptions = Array.isArray(options.categories)
-			? options.categories.length > 0
-			: false;
-		const showCategorySection =
-			hasCategoryOptions || filterOptionsStatus === "loading";
 		const subtitle = showTextSearch
-			? "Search and narrow items by type or category."
-			: "Narrow items by type or category.";
+			? "Search and narrow items by type."
+			: "Narrow items by type.";
 		return `
 			<section class="filter-panel" aria-label="Browse filters">
 				<header class="header">
@@ -378,19 +365,6 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 						filterOptionsStatus,
 					)}
 				</section>
-				${
-					showCategorySection
-						? `<section class="group" aria-label="Category filters">
-					<h3 class="group-title">Category</h3>
-					${this.renderOptions(
-						options.categories,
-						"category-filter",
-						state.categories,
-						filterOptionsStatus,
-					)}
-				</section>`
-						: ""
-				}
 				<div class="actions">
 					<button type="button" class="action-button" data-action="clear-filters">Clear all</button>
 				</div>

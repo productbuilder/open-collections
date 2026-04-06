@@ -128,7 +128,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			},
 			filterOptions: {
 				types: [],
-				categories: [],
 			},
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
 		};
@@ -215,7 +214,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			};
 			this.state.filterOptions = {
 				types: normalizeFilterOptionEntries(normalizedState.options.types),
-				categories: normalizeFilterOptionEntries(normalizedState.options.categories),
 			};
 			this.state.filterOptionsStatus = normalizedState.status.filterOptions;
 			this.syncShellSearchState();

@@ -35,14 +35,6 @@ function toNormalizedSet(value) {
 	);
 }
 
-const LOW_SIGNAL_CATEGORY_VALUES = new Set([
-	"collection-item",
-	"item",
-	"unknown",
-	"uncategorized",
-	"n/a",
-]);
-
 const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function collectTypeValues(properties = {}) {
@@ -70,7 +62,6 @@ function collectTypeValues(properties = {}) {
 
 function createFilterOptions(features = []) {
 	const typeCounts = new Map();
-	const categoryCounts = new Map();
 	const incrementCount = (counts, value) => {
 		const normalizedValue = String(value ?? "").trim();
 		if (!normalizedValue) {
@@ -81,24 +72,11 @@ function createFilterOptions(features = []) {
 	for (const feature of features) {
 		const properties = feature?.properties || {};
 		const typeCandidates = collectTypeValues(properties);
-		const categoryCandidates = [
-			properties.category,
-			...(Array.isArray(properties.tags) ? properties.tags : []),
-		];
 		const uniqueTypes = new Set(
 			typeCandidates.map((entry) => String(entry ?? "").trim()).filter(Boolean),
 		);
-		const uniqueCategories = new Set(
-			categoryCandidates
-				.map((entry) => String(entry ?? "").trim())
-				.filter((entry) => !LOW_SIGNAL_CATEGORY_VALUES.has(entry.toLowerCase()))
-				.filter(Boolean),
-		);
 		for (const typeValue of uniqueTypes) {
 			incrementCount(typeCounts, typeValue);
-		}
-		for (const categoryValue of uniqueCategories) {
-			incrementCount(categoryCounts, categoryValue);
 		}
 	}
 	const toSortedList = (counts) =>
@@ -109,12 +87,9 @@ function createFilterOptions(features = []) {
 				label: value,
 				count,
 			}));
-	if (categoryCounts.size < 2) {
-		categoryCounts.clear();
-	}
 	return {
 		types: toSortedList(typeCounts),
-		categories: toSortedList(categoryCounts),
+		categories: [],
 	};
 }
 
@@ -146,19 +121,6 @@ function featureMatchesFilters(feature = {}, query = {}) {
 			toNormalizedText(entry),
 		);
 		if (!candidateTypeValues.some((entry) => typeSet.has(entry))) {
-			return false;
-		}
-	}
-
-	const categorySet = toNormalizedSet(query.categories);
-	if (categorySet.size > 0) {
-		const candidateCategoryValues = [
-			toNormalizedText(properties.category),
-			...(Array.isArray(properties.tags)
-				? properties.tags.map((entry) => toNormalizedText(entry))
-				: []),
-		].filter(Boolean);
-		if (!candidateCategoryValues.some((entry) => categorySet.has(entry))) {
 			return false;
 		}
 	}

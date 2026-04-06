@@ -96,14 +96,6 @@ function toFilterOptionEntries(counts = new Map()) {
 		}));
 }
 
-const LOW_SIGNAL_CATEGORY_VALUES = new Set([
-	"collection-item",
-	"item",
-	"unknown",
-	"uncategorized",
-	"n/a",
-]);
-
 const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function normalizeFilterOptionEntries(entries = []) {
@@ -132,10 +124,6 @@ function normalizeFilterOptionEntries(entries = []) {
 	return [...normalized.values()].sort((left, right) =>
 		left.value.localeCompare(right.value),
 	);
-}
-
-function hasFilterOptionEntries(entries) {
-	return Array.isArray(entries) && entries.length > 0;
 }
 
 function collectTypeValues(properties = {}) {
@@ -205,7 +193,6 @@ function hasFeatureWithId(features = [], featureId) {
 
 function buildFilterOptionsFromFeatures(features = []) {
 	const typeCounts = new Map();
-	const categoryCounts = new Map();
 	const incrementCount = (counts, value) => {
 		const normalized = String(value ?? "").trim();
 		if (!normalized) {
@@ -217,26 +204,14 @@ function buildFilterOptionsFromFeatures(features = []) {
 	for (const feature of features) {
 		const properties = feature?.properties || {};
 		const uniqueTypes = new Set(collectTypeValues(properties));
-		const uniqueCategories = new Set(
-			[properties.category, ...(Array.isArray(properties.tags) ? properties.tags : [])]
-				.map((entry) => String(entry ?? "").trim())
-				.filter((entry) => !LOW_SIGNAL_CATEGORY_VALUES.has(entry.toLowerCase()))
-				.filter(Boolean),
-		);
 		for (const typeValue of uniqueTypes) {
 			incrementCount(typeCounts, typeValue);
 		}
-		for (const categoryValue of uniqueCategories) {
-			incrementCount(categoryCounts, categoryValue);
-		}
-	}
-	if (categoryCounts.size < 2) {
-		categoryCounts.clear();
 	}
 
 	return {
 		types: toFilterOptionEntries(typeCounts),
-		categories: toFilterOptionEntries(categoryCounts),
+		categories: [],
 	};
 }
 
@@ -244,27 +219,13 @@ function resolveFilterOptions(spatialResponse = {}) {
 	const featureDerivedOptions = buildFilterOptionsFromFeatures(
 		spatialResponse?.features || [],
 	);
-	const metaOptions =
-		spatialResponse?.meta && typeof spatialResponse.meta === "object"
-			? spatialResponse.meta.filterOptions
-			: null;
-	const resolvedMetaOptions =
-		metaOptions && typeof metaOptions === "object" ? metaOptions : {};
-	const normalizedMetaCategories = normalizeFilterOptionEntries(
-		resolvedMetaOptions.categories,
-	);
 	const normalizedFeatureTypes = normalizeFilterOptionEntries(
 		featureDerivedOptions.types,
-	);
-	const normalizedFeatureCategories = normalizeFilterOptionEntries(
-		featureDerivedOptions.categories,
 	);
 
 	return {
 		types: normalizedFeatureTypes,
-		categories: hasFilterOptionEntries(normalizedFeatureCategories)
-			? normalizedFeatureCategories
-			: normalizedMetaCategories,
+		categories: [],
 	};
 }
 
@@ -273,8 +234,7 @@ function resolveFilterOptionsStatus({ spatialStatus = "idle", options = {} } = {
 		return FILTER_OPTION_STATUS.LOADING;
 	}
 	const hasOptions =
-		(Array.isArray(options.types) && options.types.length > 0) ||
-		(Array.isArray(options.categories) && options.categories.length > 0);
+		Array.isArray(options.types) && options.types.length > 0;
 	return hasOptions ? FILTER_OPTION_STATUS.READY : FILTER_OPTION_STATUS.EMPTY;
 }
 
@@ -501,7 +461,7 @@ class TimemapBrowserElement extends HTMLElement {
 				filters: {
 					text: nextState.query?.text,
 					types: nextState.query?.types,
-					categories: nextState.query?.categories,
+					categories: [],
 				},
 				options,
 				status: {

@@ -99,8 +99,33 @@ const LOW_SIGNAL_CATEGORY_VALUES = new Set([
 	"n/a",
 ]);
 
+const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
+
 function hasFilterOptionEntries(entries) {
 	return Array.isArray(entries) && entries.length > 0;
+}
+
+function collectTypeValues(properties = {}) {
+	const resolvedType = String(properties.type ?? "").trim();
+	if (resolvedType) {
+		return [resolvedType];
+	}
+	const orderedCandidates = [
+		String(properties.format ?? "").trim(),
+		String(properties.mediaType ?? "").trim(),
+	].filter(Boolean);
+	const uniqueValues = [];
+	for (const value of orderedCandidates) {
+		if (!uniqueValues.includes(value)) {
+			uniqueValues.push(value);
+		}
+	}
+	if (uniqueValues.length > 1) {
+		return uniqueValues.filter(
+			(value) => !GENERIC_MEDIA_TYPES.has(value.toLowerCase()),
+		);
+	}
+	return uniqueValues;
 }
 
 function buildFilterOptionsFromFeatures(features = []) {
@@ -116,11 +141,7 @@ function buildFilterOptionsFromFeatures(features = []) {
 
 	for (const feature of features) {
 		const properties = feature?.properties || {};
-		const uniqueTypes = new Set(
-			[properties.type, properties.mediaType, properties.format]
-				.map((entry) => String(entry ?? "").trim())
-				.filter(Boolean),
-		);
+		const uniqueTypes = new Set(collectTypeValues(properties));
 		const uniqueCategories = new Set(
 			[properties.category, ...(Array.isArray(properties.tags) ? properties.tags : [])]
 				.map((entry) => String(entry ?? "").trim())

@@ -26,6 +26,67 @@ function hasNonEmptyText(value) {
 	return toTrimmedText(value).length > 0;
 }
 
+function normalizeMediaKind(value) {
+	const text = toTrimmedText(value).toLowerCase();
+	if (!text) {
+		return "";
+	}
+	if (text.includes("/")) {
+		return toTrimmedText(text.split("/")[0]);
+	}
+	return text;
+}
+
+function deriveFormat(item = {}, media = {}) {
+	const explicitCandidates = [item.format, item.mediaFormat, media.format];
+	for (const candidate of explicitCandidates) {
+		const value = toTrimmedText(candidate);
+		if (value) {
+			return value.toLowerCase();
+		}
+	}
+
+	const mediaType = toTrimmedText(media.type).toLowerCase();
+	if (mediaType.includes("/")) {
+		const subtype = toTrimmedText(mediaType.split("/")[1]);
+		if (subtype) {
+			return subtype.toLowerCase();
+		}
+	}
+
+	const mediaUrl = toTrimmedText(media.url);
+	const extensionMatch = mediaUrl.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
+	if (extensionMatch?.[1]) {
+		return extensionMatch[1].toLowerCase();
+	}
+
+	return "";
+}
+
+function deriveType(item = {}, media = {}, tags = []) {
+	const explicitType = toTrimmedText(item.type);
+	if (explicitType) {
+		return explicitType;
+	}
+
+	const firstTag = tags.map((entry) => toTrimmedText(entry)).find(Boolean) || "";
+	if (firstTag) {
+		return firstTag;
+	}
+
+	const mediaKind = normalizeMediaKind(media.type);
+	if (mediaKind) {
+		return mediaKind;
+	}
+
+	const format = deriveFormat(item, media);
+	if (format) {
+		return format;
+	}
+
+	return "item";
+}
+
 function deriveSubtitle(item = {}) {
 	if (hasNonEmptyText(item.subtitle)) {
 		return toTrimmedText(item.subtitle);
@@ -73,11 +134,14 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 		toTrimmedText(item.title) || toTrimmedText(item.name) || `Collection item ${index + 1}`;
 	const sourceUrl = toTrimmedText(item.source);
 	const sourceLabel = sourceUrl || toTrimmedText(collection.title) || "Collection source";
-	const primaryTag = Array.isArray(item.tags)
-		? item.tags.map((entry) => toTrimmedText(entry)).find(Boolean) || ""
-		: "";
+	const tags = Array.isArray(item.tags)
+		? item.tags.map((entry) => toTrimmedText(entry)).filter(Boolean)
+		: [];
+	const primaryTag = tags[0] || "";
 	const category =
 		toTrimmedText(item.category) || toTrimmedText(item.type) || primaryTag || "collection-item";
+	const format = deriveFormat(item, media);
+	const mediaType = toTrimmedText(media.type) || "image";
 
 	return {
 		type: "Feature",
@@ -93,16 +157,15 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 			subtitle: deriveSubtitle(item),
 			description: deriveDescription(item),
 			category,
-			type: toTrimmedText(item.type) || "image",
+			type: deriveType(item, media, tags),
+			format,
 			sourceLabel,
 			sourceUrl,
 			imageUrl,
 			thumbnailUrl,
 			mediaUrl,
-			mediaType: toTrimmedText(media.type) || "image",
-			tags: Array.isArray(item.tags)
-				? item.tags.map((entry) => toTrimmedText(entry)).filter(Boolean)
-				: [],
+			mediaType,
+			tags,
 			dateLabel: toTrimmedText(item.date),
 			locationLabel: toTrimmedText(location.name),
 			collectionId: toTrimmedText(collection.id),

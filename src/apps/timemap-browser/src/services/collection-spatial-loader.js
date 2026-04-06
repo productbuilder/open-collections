@@ -43,6 +43,31 @@ const LOW_SIGNAL_CATEGORY_VALUES = new Set([
 	"n/a",
 ]);
 
+const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
+
+function collectTypeValues(properties = {}) {
+	const resolvedType = String(properties.type ?? "").trim();
+	if (resolvedType) {
+		return [resolvedType];
+	}
+	const orderedCandidates = [
+		String(properties.format ?? "").trim(),
+		String(properties.mediaType ?? "").trim(),
+	].filter(Boolean);
+	const uniqueValues = [];
+	for (const value of orderedCandidates) {
+		if (!uniqueValues.includes(value)) {
+			uniqueValues.push(value);
+		}
+	}
+	if (uniqueValues.length > 1) {
+		return uniqueValues.filter(
+			(value) => !GENERIC_MEDIA_TYPES.has(value.toLowerCase()),
+		);
+	}
+	return uniqueValues;
+}
+
 function createFilterOptions(features = []) {
 	const typeCounts = new Map();
 	const categoryCounts = new Map();
@@ -55,11 +80,7 @@ function createFilterOptions(features = []) {
 	};
 	for (const feature of features) {
 		const properties = feature?.properties || {};
-		const typeCandidates = [
-			properties.type,
-			properties.mediaType,
-			properties.format,
-		];
+		const typeCandidates = collectTypeValues(properties);
 		const categoryCandidates = [
 			properties.category,
 			...(Array.isArray(properties.tags) ? properties.tags : []),
@@ -121,10 +142,9 @@ function featureMatchesFilters(feature = {}, query = {}) {
 
 	const typeSet = toNormalizedSet(query.types);
 	if (typeSet.size > 0) {
-		const candidateTypeValues = [
-			toNormalizedText(properties.type),
-			toNormalizedText(properties.mediaType),
-		].filter(Boolean);
+		const candidateTypeValues = collectTypeValues(properties).map((entry) =>
+			toNormalizedText(entry),
+		);
 		if (!candidateTypeValues.some((entry) => typeSet.has(entry))) {
 			return false;
 		}

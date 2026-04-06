@@ -161,6 +161,48 @@ function collectTypeValues(properties = {}) {
 	return uniqueValues;
 }
 
+function createTypeFilterSet(query = {}) {
+	const sourceTypes = Array.isArray(query?.types) ? query.types : [];
+	const normalizedTypes = sourceTypes
+		.map((value) => String(value ?? "").trim())
+		.filter(Boolean);
+	return new Set(normalizedTypes);
+}
+
+function featureMatchesTypeFilters(feature, activeTypeFilters) {
+	if (!(activeTypeFilters instanceof Set) || activeTypeFilters.size === 0) {
+		return true;
+	}
+	const featureTypes = collectTypeValues(feature?.properties || {});
+	if (!Array.isArray(featureTypes) || featureTypes.length === 0) {
+		return false;
+	}
+	return featureTypes.some((value) => activeTypeFilters.has(String(value).trim()));
+}
+
+function filterMapVisibleFeatures(features = [], query = {}) {
+	if (!Array.isArray(features) || features.length === 0) {
+		return [];
+	}
+	const activeTypeFilters = createTypeFilterSet(query);
+	if (activeTypeFilters.size === 0) {
+		return features;
+	}
+	return features.filter((feature) =>
+		featureMatchesTypeFilters(feature, activeTypeFilters),
+	);
+}
+
+function hasFeatureWithId(features = [], featureId) {
+	if (!featureId || !Array.isArray(features)) {
+		return false;
+	}
+	return features.some((feature) => {
+		const candidateId = feature?.id ?? feature?.properties?.id ?? null;
+		return candidateId === featureId;
+	});
+}
+
 function buildFilterOptionsFromFeatures(features = []) {
 	const typeCounts = new Map();
 	const categoryCounts = new Map();
@@ -417,7 +459,38 @@ class TimemapBrowserElement extends HTMLElement {
 		}
 
 		this.unsubscribeState = this.controller.subscribe((nextState) => {
-			shellElement.state = nextState;
+			const responseFeatures = Array.isArray(nextState.spatial?.response?.features)
+				? nextState.spatial.response.features
+				: [];
+			const mapVisibleFeatures = filterMapVisibleFeatures(
+				responseFeatures,
+				nextState.query,
+			);
+			const didFilterSelectedFeature =
+				Boolean(nextState.selectedFeatureId) &&
+				!hasFeatureWithId(mapVisibleFeatures, nextState.selectedFeatureId);
+			if (didFilterSelectedFeature) {
+				this.controller.setSelectedFeature(null);
+			}
+			const projectedState = {
+				...nextState,
+				hoveredFeatureId:
+					nextState.hoveredFeatureId &&
+					!hasFeatureWithId(mapVisibleFeatures, nextState.hoveredFeatureId)
+						? null
+						: nextState.hoveredFeatureId,
+				selectedFeatureId: didFilterSelectedFeature
+					? null
+					: nextState.selectedFeatureId,
+				spatial: {
+					...nextState.spatial,
+					response: {
+						...(nextState.spatial?.response || {}),
+						features: mapVisibleFeatures,
+					},
+				},
+			};
+			shellElement.state = projectedState;
 			const options = resolveFilterOptions(nextState.spatial?.response);
 			const normalizedPayload = normalizeBrowseShellQueryState({
 				source: {

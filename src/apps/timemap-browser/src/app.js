@@ -91,6 +91,14 @@ function toFilterOptionEntries(counts = new Map()) {
 		}));
 }
 
+const LOW_SIGNAL_CATEGORY_VALUES = new Set([
+	"collection-item",
+	"item",
+	"unknown",
+	"uncategorized",
+	"n/a",
+]);
+
 function hasFilterOptionEntries(entries) {
 	return Array.isArray(entries) && entries.length > 0;
 }
@@ -116,6 +124,7 @@ function buildFilterOptionsFromFeatures(features = []) {
 		const uniqueCategories = new Set(
 			[properties.category, ...(Array.isArray(properties.tags) ? properties.tags : [])]
 				.map((entry) => String(entry ?? "").trim())
+				.filter((entry) => !LOW_SIGNAL_CATEGORY_VALUES.has(entry.toLowerCase()))
 				.filter(Boolean),
 		);
 		for (const typeValue of uniqueTypes) {
@@ -124,6 +133,9 @@ function buildFilterOptionsFromFeatures(features = []) {
 		for (const categoryValue of uniqueCategories) {
 			incrementCount(categoryCounts, categoryValue);
 		}
+	}
+	if (categoryCounts.size < 2) {
+		categoryCounts.clear();
 	}
 
 	return {

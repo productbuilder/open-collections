@@ -287,11 +287,26 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			}, 120);
 		});
 		this.shadowRoot.addEventListener("oc-filter-panel-clear", () => {
-			this.sendBrowseQueryPatchToActiveChild({
+			const clearedFilters = {
 				text: "",
 				types: [],
 				categories: [],
-			});
+			};
+			this.state.filterState = { ...clearedFilters };
+			this._browseQueryState = normalizeBrowseShellQueryState(
+				{
+					...this._browseQueryState,
+					query: {
+						...(this._browseQueryState?.query || {}),
+						...clearedFilters,
+					},
+					filters: clearedFilters,
+				},
+				this._browseQueryState,
+			);
+			this.syncShellSearchState();
+			this.syncFilterPanelState();
+			this.sendBrowseQueryPatchToActiveChild(clearedFilters);
 		});
 		this.shadowRoot.addEventListener("close", (event) => {
 			const target = event?.target;

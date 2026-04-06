@@ -1806,7 +1806,13 @@ class CollectionBrowserElement extends ComponentBase {
 		const currentQueryState =
 			this.state.browseShellQuery || createBrowseShellQueryState();
 		const hasOptions = options.types.length > 0 || options.categories.length > 0;
-		const optionsStatus = !this.state.hasResolvedFilterOptionData
+		const hasResolvedFilterOptions =
+			this.state.hasResolvedFilterOptionData ||
+			!this.state.isLoadingCollection;
+		if (hasResolvedFilterOptions && !this.state.hasResolvedFilterOptionData) {
+			this.state.hasResolvedFilterOptionData = true;
+		}
+		const optionsStatus = !hasResolvedFilterOptions
 			? FILTER_OPTION_STATUS.LOADING
 			: hasOptions
 				? FILTER_OPTION_STATUS.READY

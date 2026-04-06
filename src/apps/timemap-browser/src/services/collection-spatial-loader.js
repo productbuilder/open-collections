@@ -38,15 +38,37 @@ function toNormalizedSet(value) {
 function createFilterOptions(features = []) {
 	const typeCounts = new Map();
 	const categoryCounts = new Map();
+	const incrementCount = (counts, value) => {
+		const normalizedValue = String(value ?? "").trim();
+		if (!normalizedValue) {
+			return;
+		}
+		counts.set(normalizedValue, (counts.get(normalizedValue) || 0) + 1);
+	};
 	for (const feature of features) {
 		const properties = feature?.properties || {};
-		const typeValue = String(properties.type || properties.mediaType || "").trim();
-		if (typeValue) {
-			typeCounts.set(typeValue, (typeCounts.get(typeValue) || 0) + 1);
+		const typeCandidates = [
+			properties.type,
+			properties.mediaType,
+			properties.format,
+		];
+		const categoryCandidates = [
+			properties.category,
+			...(Array.isArray(properties.tags) ? properties.tags : []),
+		];
+		const uniqueTypes = new Set(
+			typeCandidates.map((entry) => String(entry ?? "").trim()).filter(Boolean),
+		);
+		const uniqueCategories = new Set(
+			categoryCandidates
+				.map((entry) => String(entry ?? "").trim())
+				.filter(Boolean),
+		);
+		for (const typeValue of uniqueTypes) {
+			incrementCount(typeCounts, typeValue);
 		}
-		const categoryValue = String(properties.category || "").trim();
-		if (categoryValue) {
-			categoryCounts.set(categoryValue, (categoryCounts.get(categoryValue) || 0) + 1);
+		for (const categoryValue of uniqueCategories) {
+			incrementCount(categoryCounts, categoryValue);
 		}
 	}
 	const toSortedList = (counts) =>

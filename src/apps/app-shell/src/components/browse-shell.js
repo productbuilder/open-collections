@@ -29,6 +29,15 @@ function normalizeBrowseMode(value, fallback = BROWSE_MODES.LIST) {
 	return fallback;
 }
 
+function escapeAttribute(value) {
+	return String(value ?? "")
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
 class OpenCollectionsBrowseShellElement extends HTMLElement {
 	static get observedAttributes() {
 		return [
@@ -60,6 +69,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			},
 		};
 		this._filterInputTimer = null;
+		this._shellSearchTimer = null;
 	}
 
 	connectedCallback() {
@@ -113,16 +123,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				return;
 			}
 
-			if (element.closest('[data-action="search-entry"]')) {
-				this.dispatchEvent(
-					new CustomEvent("browse-shell-search-entry", {
-						bubbles: true,
-						composed: true,
-					}),
-				);
-				return;
-			}
-
 			if (element.closest('[data-action="filter-entry"]')) {
 				this.openFilterPanel();
 				this.dispatchEvent(
@@ -153,7 +153,42 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				types: Array.isArray(options.types) ? options.types : [],
 				categories: Array.isArray(options.categories) ? options.categories : [],
 			};
+			this.syncShellSearchState();
 			this.syncFilterPanelState();
+		});
+		this.shadowRoot.addEventListener("input", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLInputElement)) {
+				return;
+			}
+			if (target.matches('[data-bind="shell-search-input"]')) {
+				const nextText = String(target.value ?? "").trim();
+				this.state.filterState = {
+					...this.state.filterState,
+					text: nextText,
+				};
+				if (this._shellSearchTimer) {
+					clearTimeout(this._shellSearchTimer);
+				}
+				this._shellSearchTimer = setTimeout(() => {
+					this._shellSearchTimer = null;
+					this.sendFilterPatchToTimemap({ text: nextText });
+				}, 120);
+			}
+		});
+		this.shadowRoot.addEventListener("focusin", (event) => {
+			const target = event.target;
+			if (
+				target instanceof HTMLInputElement &&
+				target.matches('[data-bind="shell-search-input"]')
+			) {
+				this.dispatchEvent(
+					new CustomEvent("browse-shell-search-entry", {
+						bubbles: true,
+						composed: true,
+					}),
+				);
+			}
 		});
 		this.shadowRoot.addEventListener("oc-filter-panel-change", (event) => {
 			const detail =
@@ -215,6 +250,19 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		}
 		filterPanel.filterState = this.state.filterState;
 		filterPanel.filterOptions = this.state.filterOptions;
+	}
+
+	syncShellSearchState() {
+		const searchInput = this.shadowRoot.querySelector(
+			'[data-bind="shell-search-input"]',
+		);
+		if (!searchInput) {
+			return;
+		}
+		const nextValue = String(this.state.filterState?.text ?? "");
+		if (searchInput.value !== nextValue) {
+			searchInput.value = nextValue;
+		}
 	}
 
 	sendFilterPatchToTimemap(filterPatch = {}) {
@@ -339,11 +387,19 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					justify-content: flex-start;
 					min-inline-size: 0;
 				}
-				.search-entry-label {
+				.search-entry-input {
+					min-inline-size: 0;
+					inline-size: 100%;
+					border: none;
+					background: transparent;
+					color: #2e2924;
+					font: inherit;
+					font-size: 0.82rem;
+					font-weight: 540;
+					outline: none;
+				}
+				.search-entry-input::placeholder {
 					color: #6b6258;
-					white-space: nowrap;
-					overflow: hidden;
-					text-overflow: ellipsis;
 				}
 				.filter-entry {
 					inline-size: fit-content;
@@ -525,10 +581,16 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			<section class="browse-shell" data-mode="${browseMode}" aria-label="Browse mode shell">
 				<div class="control-strip" aria-label="Browse controls">
 					<div class="control-row control-row--primary">
-						<button class="search-entry" type="button" data-action="search-entry" aria-label="Search browse results">
+						<label class="search-entry" aria-label="Search browse results">
 							<svg class="entry-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>
-							<span class="search-entry-label">Search titles, places, and sources</span>
-						</button>
+							<input
+								data-bind="shell-search-input"
+								class="search-entry-input"
+								type="search"
+								placeholder="Search titles, places, and sources"
+								value="${escapeAttribute(this.state.filterState.text)}"
+							>
+						</label>
 					</div>
 					<div class="control-row control-row--secondary">
 						<button class="filter-entry" type="button" data-action="filter-entry" aria-label="Open browse filters">
@@ -547,10 +609,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					<header class="filter-dialog-header">
 						<button class="close-filter-button" type="button" data-action="close-filter-panel">Done</button>
 					</header>
-					<open-collections-filter-panel></open-collections-filter-panel>
+					<open-collections-filter-panel show-text-search="false"></open-collections-filter-panel>
 				</div>
 			</dialog>
 		`;
+		this.syncShellSearchState();
 		this.syncFilterPanelState();
 	}
 }

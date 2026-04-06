@@ -35,6 +35,14 @@ function toNormalizedSet(value) {
 	);
 }
 
+const LOW_SIGNAL_CATEGORY_VALUES = new Set([
+	"collection-item",
+	"item",
+	"unknown",
+	"uncategorized",
+	"n/a",
+]);
+
 function createFilterOptions(features = []) {
 	const typeCounts = new Map();
 	const categoryCounts = new Map();
@@ -62,6 +70,7 @@ function createFilterOptions(features = []) {
 		const uniqueCategories = new Set(
 			categoryCandidates
 				.map((entry) => String(entry ?? "").trim())
+				.filter((entry) => !LOW_SIGNAL_CATEGORY_VALUES.has(entry.toLowerCase()))
 				.filter(Boolean),
 		);
 		for (const typeValue of uniqueTypes) {
@@ -79,6 +88,9 @@ function createFilterOptions(features = []) {
 				label: value,
 				count,
 			}));
+	if (categoryCounts.size < 2) {
+		categoryCounts.clear();
+	}
 	return {
 		types: toSortedList(typeCounts),
 		categories: toSortedList(categoryCounts),

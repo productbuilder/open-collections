@@ -195,6 +195,10 @@ const filterPanelStyles = `
 `;
 
 class OpenCollectionsFilterPanelElement extends BaseElement {
+	static get observedAttributes() {
+		return ["show-text-search"];
+	}
+
 	constructor() {
 		super();
 		this._filterState = normalizeFilterState();
@@ -223,6 +227,14 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 
 	get filterOptions() {
 		return normalizeFilterOptions(this._filterOptions);
+	}
+
+	get showTextSearch() {
+		if (!this.hasAttribute("show-text-search")) {
+			return true;
+		}
+		const rawValue = this.getAttribute("show-text-search");
+		return rawValue !== "false";
 	}
 
 	onConnected() {
@@ -265,7 +277,6 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 			'input[name="category-filter"]:checked',
 		);
 		const detail = {
-			text: toText(textInput?.value),
 			types: [...typeInputs]
 				.map((entry) => toText(entry.value))
 				.filter(Boolean),
@@ -273,6 +284,9 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 				.map((entry) => toText(entry.value))
 				.filter(Boolean),
 		};
+		if (this.showTextSearch) {
+			detail.text = toText(textInput?.value);
+		}
 		this.dispatchEvent(
 			new CustomEvent("oc-filter-panel-change", {
 				detail,
@@ -304,13 +318,22 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 	renderTemplate() {
 		const state = this._filterState;
 		const options = this._filterOptions;
+		const showTextSearch = this.showTextSearch;
+		const hasCategoryOptions = Array.isArray(options.categories)
+			? options.categories.length > 0
+			: false;
+		const subtitle = showTextSearch
+			? "Search and narrow map items by type or category."
+			: "Narrow map items by type or category.";
 		return `
 			<section class="filter-panel" aria-label="Browse filters">
 				<header class="header">
 					<h2 class="title">Filters</h2>
-					<p class="subtitle">Search and narrow map items by type or category.</p>
+					<p class="subtitle">${subtitle}</p>
 				</header>
-				<label>
+				${
+					showTextSearch
+						? `<label>
 					<span class="sr-only">Search text</span>
 					<input
 						data-bind="text-input"
@@ -319,15 +342,21 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 						placeholder="Search titles, tags, and places"
 						value="${escapeHtml(state.text)}"
 					>
-				</label>
+				</label>`
+						: ""
+				}
 				<section class="group" aria-label="Type filters">
 					<h3 class="group-title">Type</h3>
 					${this.renderOptions(options.types, "type-filter", state.types)}
 				</section>
-				<section class="group" aria-label="Category filters">
+				${
+					hasCategoryOptions
+						? `<section class="group" aria-label="Category filters">
 					<h3 class="group-title">Category</h3>
 					${this.renderOptions(options.categories, "category-filter", state.categories)}
-				</section>
+				</section>`
+						: ""
+				}
 				<div class="actions">
 					<button type="button" class="action-button" data-action="clear-filters">Clear all</button>
 				</div>

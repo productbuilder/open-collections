@@ -18,7 +18,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 				maxYear: 2025,
 			},
 			focusYear: 1950,
-			activeRangeYears: 24,
+			rangeMin: 1938,
+			rangeMax: 1962,
 			minRangeYears: 6,
 			maxRangeYears: 260,
 			pixelsPerYear: 3.2,
@@ -37,63 +38,52 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 		ruler.addEventListener("focus-year-change", (event) => {
 			const nextFocus = Number(event.detail?.focusYear);
 			if (!Number.isFinite(nextFocus)) return;
-			const bounds = this.getFocusBounds(this.state.activeRangeYears);
-			this.state.focusYear = clamp(nextFocus, bounds.minFocusYear, bounds.maxFocusYear);
+			this.state.focusYear = clamp(nextFocus, this.state.domain.minYear, this.state.domain.maxYear);
 			this.applyView();
 		});
 		ruler.addEventListener("active-range-change", (event) => {
 			const nextRange = Number(event.detail?.activeRangeYears);
 			if (!Number.isFinite(nextRange)) return;
-			const maxByDomain = this.getMaxRangeAtFocus(this.state.focusYear);
-			this.state.activeRangeYears = clamp(
+			const domainSpan = this.state.domain.maxYear - this.state.domain.minYear;
+			const clampedRangeYears = clamp(
 				nextRange,
 				this.state.minRangeYears,
-				Math.min(this.state.maxRangeYears, maxByDomain),
+				Math.min(this.state.maxRangeYears, domainSpan),
 			);
-			const bounds = this.getFocusBounds(this.state.activeRangeYears);
-			this.state.focusYear = clamp(this.state.focusYear, bounds.minFocusYear, bounds.maxFocusYear);
+			const half = clampedRangeYears / 2;
+			const rangeCenter = (this.state.rangeMin + this.state.rangeMax) / 2;
+			const centeredMin = rangeCenter - half;
+			const centeredMax = rangeCenter + half;
+			const overflowLeft = this.state.domain.minYear - centeredMin;
+			const overflowRight = centeredMax - this.state.domain.maxYear;
+			if (overflowLeft > 0) {
+				this.state.rangeMin = centeredMin + overflowLeft;
+				this.state.rangeMax = centeredMax + overflowLeft;
+			} else if (overflowRight > 0) {
+				this.state.rangeMin = centeredMin - overflowRight;
+				this.state.rangeMax = centeredMax - overflowRight;
+			} else {
+				this.state.rangeMin = centeredMin;
+				this.state.rangeMax = centeredMax;
+			}
 			this.applyView();
 		});
-	}
-
-	getFocusBounds(activeRangeYears) {
-		const half = activeRangeYears / 2;
-		return {
-			minFocusYear: this.state.domain.minYear + half,
-			maxFocusYear: this.state.domain.maxYear - half,
-		};
-	}
-
-	getMaxRangeAtFocus(focusYear) {
-		const maxHalf = Math.min(
-			focusYear - this.state.domain.minYear,
-			this.state.domain.maxYear - focusYear,
-		);
-		return Math.max(this.state.minRangeYears, maxHalf * 2);
-	}
-
-	getActiveRange() {
-		const half = this.state.activeRangeYears / 2;
-		return {
-			startYear: this.state.focusYear - half,
-			endYear: this.state.focusYear + half,
-		};
 	}
 
 	applyView() {
 		if (!this.shadowRoot) return;
 		const ruler = this.shadowRoot.querySelector("oc-timeslider-v5-ruler");
-		const { startYear, endYear } = this.getActiveRange();
+		const activeRangeYears = this.state.rangeMax - this.state.rangeMin;
 		if (ruler) {
 			ruler.domainMinYear = this.state.domain.minYear;
 			ruler.domainMaxYear = this.state.domain.maxYear;
 			ruler.focusYear = this.state.focusYear;
-			ruler.activeRangeYears = this.state.activeRangeYears;
+			ruler.activeRangeYears = activeRangeYears;
 			ruler.minRangeYears = this.state.minRangeYears;
 			ruler.maxRangeYears = this.state.maxRangeYears;
 			ruler.pixelsPerYear = this.state.pixelsPerYear;
-			ruler.activeRangeStartYear = startYear;
-			ruler.activeRangeEndYear = endYear;
+			ruler.activeRangeStartYear = this.state.rangeMin;
+			ruler.activeRangeEndYear = this.state.rangeMax;
 		}
 		const focusValue = this.shadowRoot.getElementById("focusValue");
 		const rangeValue = this.shadowRoot.getElementById("rangeValue");
@@ -101,8 +91,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 		const domainValue = this.shadowRoot.getElementById("domainValue");
 		if (!focusValue || !rangeValue || !widthValue || !domainValue) return;
 		focusValue.textContent = formatYear(this.state.focusYear);
-		rangeValue.textContent = `${formatYear(startYear)} to ${formatYear(endYear)}`;
-		widthValue.textContent = `${Math.round(this.state.activeRangeYears)} years`;
+		rangeValue.textContent = `${formatYear(this.state.rangeMin)} to ${formatYear(this.state.rangeMax)}`;
+		widthValue.textContent = `${Math.round(activeRangeYears)} years`;
 		domainValue.textContent = `${formatYear(this.state.domain.minYear)} to ${formatYear(this.state.domain.maxYear)}`;
 	}
 

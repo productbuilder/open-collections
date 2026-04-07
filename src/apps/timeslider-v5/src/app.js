@@ -29,7 +29,29 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.bindEvents();
+		this.syncRangeFromFocusAndWidth(this.getActiveRangeYears());
 		this.applyView();
+	}
+
+
+	getActiveRangeYears() {
+		return this.state.rangeMaxYear - this.state.rangeMinYear;
+	}
+
+	clampRangeWidth(nextRangeYears) {
+		const domainSpan = this.state.domain.maxYear - this.state.domain.minYear;
+		return clamp(nextRangeYears, this.state.minRangeYears, Math.min(this.state.maxRangeYears, domainSpan));
+	}
+
+	syncRangeFromFocusAndWidth(nextRangeYears) {
+		const clampedRangeYears = this.clampRangeWidth(nextRangeYears);
+		const half = clampedRangeYears / 2;
+		const minFocus = this.state.domain.minYear + half;
+		const maxFocus = this.state.domain.maxYear - half;
+		const clampedFocus = clamp(this.state.focusYear, minFocus, maxFocus);
+		this.state.focusYear = clampedFocus;
+		this.state.rangeMinYear = clampedFocus - half;
+		this.state.rangeMaxYear = clampedFocus + half;
 	}
 
 	bindEvents() {
@@ -39,33 +61,13 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 			const nextFocus = Number(event.detail?.focusYear);
 			if (!Number.isFinite(nextFocus)) return;
 			this.state.focusYear = clamp(nextFocus, this.state.domain.minYear, this.state.domain.maxYear);
+			this.syncRangeFromFocusAndWidth(this.getActiveRangeYears());
 			this.applyView();
 		});
 		ruler.addEventListener("active-range-change", (event) => {
 			const nextRange = Number(event.detail?.activeRangeYears);
 			if (!Number.isFinite(nextRange)) return;
-			const domainSpan = this.state.domain.maxYear - this.state.domain.minYear;
-			const clampedRangeYears = clamp(
-				nextRange,
-				this.state.minRangeYears,
-				Math.min(this.state.maxRangeYears, domainSpan),
-			);
-			const half = clampedRangeYears / 2;
-			const rangeCenter = (this.state.rangeMinYear + this.state.rangeMaxYear) / 2;
-			const centeredMin = rangeCenter - half;
-			const centeredMax = rangeCenter + half;
-			const overflowLeft = this.state.domain.minYear - centeredMin;
-			const overflowRight = centeredMax - this.state.domain.maxYear;
-			if (overflowLeft > 0) {
-				this.state.rangeMinYear = centeredMin + overflowLeft;
-				this.state.rangeMaxYear = centeredMax + overflowLeft;
-			} else if (overflowRight > 0) {
-				this.state.rangeMinYear = centeredMin - overflowRight;
-				this.state.rangeMaxYear = centeredMax - overflowRight;
-			} else {
-				this.state.rangeMinYear = centeredMin;
-				this.state.rangeMaxYear = centeredMax;
-			}
+			this.syncRangeFromFocusAndWidth(nextRange);
 			this.applyView();
 		});
 	}
@@ -73,7 +75,7 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 	applyView() {
 		if (!this.shadowRoot) return;
 		const ruler = this.shadowRoot.querySelector("oc-timeslider-v5-ruler");
-		const activeRangeYears = this.state.rangeMaxYear - this.state.rangeMinYear;
+		const activeRangeYears = this.getActiveRangeYears();
 		if (ruler) {
 			ruler.domainMinYear = this.state.domain.minYear;
 			ruler.domainMaxYear = this.state.domain.maxYear;

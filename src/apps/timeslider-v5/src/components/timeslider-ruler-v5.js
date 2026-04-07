@@ -339,6 +339,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					--active-range-bottom: 102px;
 					--handle-top: 108px;
 					--center-marker-top: 28px;
+					--tick-minor-height: 6px;
+					--tick-major-height: 11px;
 					border-radius: 0;
 					overflow: hidden;
 					border: none;
@@ -437,14 +439,14 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: calc(var(--ruler-baseline-y) - 6px);
+					top: calc(var(--ruler-baseline-y) - (var(--tick-minor-height) / 2));
 					width: 1px;
-					height: 6px;
+					height: var(--tick-minor-height);
 					background: rgba(255, 255, 255, 0.46);
 				}
 				.tick[data-tier="major"] {
-					height: 11px;
-					top: calc(var(--ruler-baseline-y) - 11px);
+					height: var(--tick-major-height);
+					top: calc(var(--ruler-baseline-y) - (var(--tick-major-height) / 2));
 					width: 2px;
 					background: rgba(255, 255, 255, 0.82);
 				}

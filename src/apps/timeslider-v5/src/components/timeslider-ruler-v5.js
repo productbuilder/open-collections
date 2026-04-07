@@ -336,6 +336,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: relative;
 					--ruler-baseline-y: 69px;
 					--edge-value-bottom-inset: 6px;
+					--center-year-top: 11px;
 					--active-range-top: 41px;
 					--active-range-bottom: 97px;
 					--handle-top: 108px;
@@ -512,7 +513,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.center-year {
 					position: absolute;
-					top: 4px;
+					top: var(--center-year-top);
 					transform: translateX(-50%);
 					padding: 0.2rem 0.6rem;
 					font-size: 0.82rem;

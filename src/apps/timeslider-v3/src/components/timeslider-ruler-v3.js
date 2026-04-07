@@ -333,7 +333,7 @@ class TimeSliderV3RulerElement extends HTMLElement {
 		leftGuide.style.left = `${handleInset + 20}px`;
 		rightGuide.style.right = `${handleInset + 20}px`;
 		centerYear.textContent = formatYear(this.model.focusYear);
-		rangeValues.textContent = `${formatYear(this.model.activeRangeStartYear)} to ${formatYear(this.model.activeRangeEndYear)}`;
+		rangeValues.textContent = `${Math.round(this.model.activeRangeYears)} years`;
 		track.dataset.mode = this.interaction.mode || "idle";
 		this.buildTicks(trackWidth);
 	}
@@ -347,24 +347,32 @@ class TimeSliderV3RulerElement extends HTMLElement {
 				.track-shell {
 					position: relative;
 					display: grid;
-					gap: 0.35rem;
+					gap: 0.3rem;
+				}
+				.control-lane {
+					position: relative;
+					height: 56px;
+					border-radius: 11px;
+					background: linear-gradient(180deg, #102435 0%, #0b1a2a 100%);
+					border: 1px solid rgba(255, 255, 255, 0.13);
+					box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 				}
 				.handles-layer {
 					position: relative;
-					height: 34px;
+					height: 100%;
 					touch-action: none;
 					user-select: none;
 				}
 				.resize-guide {
 					position: absolute;
-					top: 20px;
+					top: -8px;
 					width: 1px;
-					height: 12px;
+					height: 14px;
 					background: rgba(96, 219, 255, 0.55);
 				}
 				.handle {
 					position: absolute;
-					top: 0;
+					top: 8px;
 					width: 40px;
 					height: 28px;
 					border-radius: 999px;
@@ -384,6 +392,22 @@ class TimeSliderV3RulerElement extends HTMLElement {
 				}
 				.handle.right {
 					transform: translateX(50%);
+				}
+				.range-values {
+					position: absolute;
+					left: 50%;
+					bottom: 6px;
+					transform: translateX(-50%);
+					padding: 0.18rem 0.52rem;
+					font-size: 0.72rem;
+					font-weight: 700;
+					border-radius: 999px;
+					background: rgba(7, 25, 40, 0.9);
+					border: 1px solid rgba(82, 199, 255, 0.65);
+					color: #c7f0ff;
+					pointer-events: none;
+					z-index: 3;
+					white-space: nowrap;
 				}
 				.track {
 					position: relative;
@@ -419,7 +443,7 @@ class TimeSliderV3RulerElement extends HTMLElement {
 					position: absolute;
 					left: 50%;
 					top: 40px;
-					height: 64px;
+					height: 52px;
 					transform: translateX(-50%);
 					background: rgba(82, 199, 255, 0.23);
 					border: 1px solid rgba(82, 199, 255, 0.72);
@@ -429,21 +453,6 @@ class TimeSliderV3RulerElement extends HTMLElement {
 						0 0 14px rgba(34, 137, 185, 0.3);
 					z-index: 2;
 					pointer-events: none;
-				}
-				.range-values {
-					position: absolute;
-					left: 50%;
-					top: 46px;
-					transform: translateX(-50%);
-					padding: 0.18rem 0.52rem;
-					font-size: 0.74rem;
-					font-weight: 700;
-					border-radius: 999px;
-					background: rgba(7, 25, 40, 0.92);
-					border: 1px solid rgba(82, 199, 255, 0.65);
-					color: #c7f0ff;
-					pointer-events: none;
-					z-index: 3;
 				}
 				.ticks {
 					position: absolute;
@@ -532,21 +541,23 @@ class TimeSliderV3RulerElement extends HTMLElement {
 				}
 			</style>
 			<div class="track-shell">
-				<div id="handlesLayer" class="handles-layer" aria-label="Range resize handles">
-					<div id="leftGuide" class="resize-guide"></div>
-					<div id="rightGuide" class="resize-guide"></div>
-					<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">⇤</button>
-					<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">⇥</button>
-				</div>
 				<div id="track" class="track" data-mode="idle" aria-label="Timeline ruler" role="application">
 					<div id="rulerZone" class="ruler-zone" aria-label="Drag ruler to move focused year"></div>
 					<div class="base-line"></div>
 					<div id="activeRange" class="active-range" aria-hidden="true"></div>
 					<div id="ticks" class="ticks"></div>
 					<div id="centerYear" class="center-year">1950</div>
-					<div class="range-values" id="rangeValues">1938 to 1962</div>
 					<div class="center-marker" aria-hidden="true"></div>
 					<div class="mode-pill" aria-hidden="true"></div>
+				</div>
+				<div class="control-lane" aria-label="Range controls">
+					<div id="handlesLayer" class="handles-layer" aria-label="Range resize handles">
+						<div id="leftGuide" class="resize-guide"></div>
+						<div id="rightGuide" class="resize-guide"></div>
+						<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">⇤</button>
+						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">⇥</button>
+						<div class="range-values" id="rangeValues">24 years</div>
+					</div>
 				</div>
 			</div>
 		`;

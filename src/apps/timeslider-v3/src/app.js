@@ -198,7 +198,7 @@ class OpenCollectionsTimeSliderV3AppElement extends HTMLElement {
 				<div class="page">
 					<header class="header">
 						<h1>Timeline focus prototype (v3)</h1>
-						<p class="helper">Drag inside the ruler band to move time. Drag the detached top handles to resize the active range symmetrically around the center marker.</p>
+						<p class="helper">Drag inside the ruler band to move time. Drag the lower-lane handles to resize the active range symmetrically around the center marker.</p>
 						<div class="readouts">
 							<div class="readout">
 								<strong>Focused year</strong>

@@ -338,9 +338,16 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					--active-range-top: 41px;
 					--active-range-bottom: 97px;
 					--handle-top: 108px;
+					--handle-height: 30px;
 					--center-marker-top: 28px;
 					--tick-minor-height: 6px;
 					--tick-major-height: 11px;
+					--active-range-height: calc(var(--active-range-bottom) - var(--active-range-top));
+					--timeline-lane-height: var(--active-range-height);
+					--timeline-lane-top: calc(var(--ruler-baseline-y) - (var(--timeline-lane-height) / 2));
+					--handle-center-y: calc(var(--handle-top) + (var(--handle-height) / 2));
+					--handles-lane-height: var(--handle-height);
+					--handles-lane-top: calc(var(--handle-center-y) - (var(--handles-lane-height) / 2));
 					border-radius: 0;
 					overflow: hidden;
 					border: none;
@@ -383,6 +390,23 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					z-index: 2;
 					pointer-events: none;
 				}
+				.timeline-lane,
+				.handles-lane {
+					position: absolute;
+					left: 0;
+					width: 100%;
+					background: rgba(255, 255, 255, 0.05);
+					pointer-events: none;
+					z-index: 0;
+				}
+				.timeline-lane {
+					top: var(--timeline-lane-top);
+					height: var(--timeline-lane-height);
+				}
+				.handles-lane {
+					top: var(--handles-lane-top);
+					height: var(--handles-lane-height);
+				}
 				.ruler-zone {
 					position: absolute;
 					top: 14px;
@@ -407,7 +431,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.active-range {
 					position: absolute;
 					top: var(--active-range-top);
-					height: calc(var(--active-range-bottom) - var(--active-range-top));
+					height: var(--active-range-height);
 					background: rgba(255, 255, 255, 0.09);
 					border: 1px solid rgba(255, 255, 255, 0.78);
 					border-radius: 4px;
@@ -510,7 +534,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: absolute;
 					top: var(--handle-top);
 					width: ${HANDLE_WIDTH_PX}px;
-					height: 30px;
+					height: var(--handle-height);
 					transform: translateX(-50%);
 					border-radius: 4px;
 					border: 1px solid rgba(255, 255, 255, 0.64);
@@ -521,6 +545,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					touch-action: none;
 					box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 					pointer-events: auto;
+					z-index: 3;
 				}
 				.handle-grip {
 					display: block;
@@ -560,6 +585,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						<div id="ticks" class="ticks"></div>
 					</div>
 					<div id="fixedOverlay" class="fixed-overlay">
+						<div class="timeline-lane" aria-hidden="true"></div>
+						<div class="handles-lane" aria-hidden="true"></div>
 						<div class="base-line"></div>
 						<div id="activeRange" class="active-range" aria-hidden="true"></div>
 						<div id="leftEdgeValue" class="edge-value left">1938</div>

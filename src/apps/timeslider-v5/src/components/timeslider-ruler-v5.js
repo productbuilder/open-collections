@@ -334,6 +334,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				:host { display: block; margin-inline: -0.2rem; }
 				.frame {
 					position: relative;
+					--ruler-baseline-y: 69px;
+					--active-range-top: 26px;
+					--active-range-bottom: 102px;
+					--handle-top: 108px;
+					--center-marker-top: 28px;
 					border-radius: 0;
 					overflow: hidden;
 					border: none;
@@ -392,15 +397,15 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: absolute;
 					left: -6px;
 					right: -6px;
-					top: 66px;
+					top: var(--ruler-baseline-y);
 					height: 1px;
 					background: rgba(255, 255, 255, 0.46);
 					pointer-events: none;
 				}
 				.active-range {
 					position: absolute;
-					top: 30px;
-					height: 38px;
+					top: var(--active-range-top);
+					height: calc(var(--active-range-bottom) - var(--active-range-top));
 					background: rgba(255, 255, 255, 0.09);
 					border: 1px solid rgba(255, 255, 255, 0.78);
 					border-radius: 4px;
@@ -432,14 +437,14 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 63px;
+					top: calc(var(--ruler-baseline-y) - 6px);
 					width: 1px;
 					height: 6px;
 					background: rgba(255, 255, 255, 0.46);
 				}
 				.tick[data-tier="major"] {
 					height: 11px;
-					top: 58px;
+					top: calc(var(--ruler-baseline-y) - 11px);
 					width: 2px;
 					background: rgba(255, 255, 255, 0.82);
 				}
@@ -456,8 +461,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.center-marker {
 					position: absolute;
-					top: 28px;
-					height: 52px;
+					top: var(--center-marker-top);
+					height: calc(var(--ruler-baseline-y) - var(--center-marker-top));
 					width: 2px;
 					transform: translateX(-50%);
 					background: rgba(255, 255, 255, 0.78);
@@ -492,16 +497,16 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.resize-guide {
 					position: absolute;
-					top: 88px;
+					top: var(--active-range-bottom);
 					width: 1px;
-					height: 14px;
+					height: calc(var(--handle-top) - var(--active-range-bottom) + 6px);
 					background: rgba(255, 255, 255, 0.56);
 					transform: translateX(-50%);
 					pointer-events: none;
 				}
 				.handle {
 					position: absolute;
-					top: 102px;
+					top: var(--handle-top);
 					width: ${HANDLE_WIDTH_PX}px;
 					height: 30px;
 					transform: translateX(-50%);
@@ -531,7 +536,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.range-values {
 					position: absolute;
 					left: 50%;
-					top: 118px;
+					top: 126px;
 					transform: translate(-50%, -50%);
 					font-size: 0.8rem;
 					font-weight: 700;

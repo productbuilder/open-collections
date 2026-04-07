@@ -1,5 +1,10 @@
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
+const INERTIA_RELEASE_BOOST = 1.18;
+const INERTIA_MAX_VELOCITY = 0.045;
+const INERTIA_START_THRESHOLD = 0.0009;
+const INERTIA_STOP_THRESHOLD = 0.00015;
+const INERTIA_DECAY_TIME_MS = 220;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -207,7 +212,12 @@ class TimeSliderV1RulerElement extends HTMLElement {
 
 	onPointerUp() {
 		this.drag.active = false;
-		if (Math.abs(this.motion.velocityYearsPerMs) > 0.0012) {
+		this.motion.velocityYearsPerMs = clamp(
+			this.motion.velocityYearsPerMs * INERTIA_RELEASE_BOOST,
+			-INERTIA_MAX_VELOCITY,
+			INERTIA_MAX_VELOCITY,
+		);
+		if (Math.abs(this.motion.velocityYearsPerMs) > INERTIA_START_THRESHOLD) {
 			this.motion.inertiaActive = true;
 			this.ensureAnimationLoop();
 		}
@@ -250,14 +260,14 @@ class TimeSliderV1RulerElement extends HTMLElement {
 		if (!this.drag.active && this.motion.inertiaActive) {
 			const nextYear = this.model.centerYear + this.motion.velocityYearsPerMs * dt;
 			this.updateCenterYear(nextYear);
-			this.motion.velocityYearsPerMs *= Math.exp(-dt / 160);
+			this.motion.velocityYearsPerMs *= Math.exp(-dt / INERTIA_DECAY_TIME_MS);
 			if (
 				this.model.centerYear <= this.model.domainMinYear ||
 				this.model.centerYear >= this.model.domainMaxYear
 			) {
 				this.motion.velocityYearsPerMs = 0;
 			}
-			if (Math.abs(this.motion.velocityYearsPerMs) < 0.0002) {
+			if (Math.abs(this.motion.velocityYearsPerMs) < INERTIA_STOP_THRESHOLD) {
 				this.motion.inertiaActive = false;
 				this.motion.velocityYearsPerMs = 0;
 			}

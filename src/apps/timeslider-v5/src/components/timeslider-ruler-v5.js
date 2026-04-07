@@ -2,8 +2,8 @@ const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_PIXELS_PER_YEAR = 3.2;
 const HANDLE_WIDTH_PX = 20;
-const LOWER_LABEL_SAFE_WIDTH_PX = 72;
-const RANGE_INNER_GUTTER_PX = 20;
+const DEFAULT_MIN_RANGE_YEARS = 20;
+const DEFAULT_MAX_RANGE_YEARS = 120;
 
 function formatYear(value) {
 	return Math.round(value).toString();
@@ -28,6 +28,10 @@ function computeTickScale(pixelsPerYear) {
 }
 
 class TimeSliderV5RulerElement extends HTMLElement {
+	static get observedAttributes() {
+		return ["min-range-years", "max-range-years"];
+	}
+
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
@@ -36,8 +40,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 			domainMaxYear: DEFAULT_DOMAIN_MAX,
 			focusYear: 1950,
 			activeRangeYears: 24,
-			minRangeYears: 6,
-			maxRangeYears: 260,
+			minRangeYears: DEFAULT_MIN_RANGE_YEARS,
+			maxRangeYears: DEFAULT_MAX_RANGE_YEARS,
 			pixelsPerYear: DEFAULT_PIXELS_PER_YEAR,
 			activeRangeStartYear: 1938,
 			activeRangeEndYear: 1962,
@@ -61,9 +65,35 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	connectedCallback() {
+		this.syncModelFromAttributes();
 		this.render();
 		this.bindEvents();
 		this.applyView();
+	}
+
+	attributeChangedCallback(name, _oldValue, newValue) {
+		const next = Number(newValue);
+		if (!Number.isFinite(next) || next <= 0) return;
+		if (name === "min-range-years") {
+			this.model.minRangeYears = next;
+			this.applyView();
+			return;
+		}
+		if (name === "max-range-years") {
+			this.model.maxRangeYears = next;
+			this.applyView();
+		}
+	}
+
+	syncModelFromAttributes() {
+		const minAttr = Number(this.getAttribute("min-range-years"));
+		const maxAttr = Number(this.getAttribute("max-range-years"));
+		if (Number.isFinite(minAttr) && minAttr > 0) {
+			this.model.minRangeYears = minAttr;
+		}
+		if (Number.isFinite(maxAttr) && maxAttr > 0) {
+			this.model.maxRangeYears = maxAttr;
+		}
 	}
 
 	set domainMinYear(value) {
@@ -193,19 +223,37 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		return centerX + (deltaYears * this.model.pixelsPerYear);
 	}
 
-	computeFixedRangeLayout(trackWidth) {
-		const minVisualRangeWidth = Math.max(
-			this.model.minRangeYears * this.model.pixelsPerYear,
-			(HANDLE_WIDTH_PX * 2) + LOWER_LABEL_SAFE_WIDTH_PX + RANGE_INNER_GUTTER_PX,
-		);
-		const modelWidth = Math.max(0, (this.model.activeRangeEndYear - this.model.activeRangeStartYear) * this.model.pixelsPerYear);
-		const visualWidth = Math.max(minVisualRangeWidth, modelWidth);
-		const centerX = trackWidth / 2;
+	resolveRangeConstraints() {
+		const domainSpan = Math.max(0, this.model.domainMaxYear - this.model.domainMinYear);
+		const minRangeYears = Math.min(Math.max(0, this.model.minRangeYears), domainSpan);
+		const maxRangeYears = Math.min(Math.max(minRangeYears, this.model.maxRangeYears), domainSpan);
+		return { minRangeYears, maxRangeYears, domainSpan };
+	}
+
+	resolveRangeYears() {
+		const { minRangeYears, maxRangeYears } = this.resolveRangeConstraints();
+		const explicitSpan = this.model.activeRangeEndYear - this.model.activeRangeStartYear;
+		const baseRangeYears = Number.isFinite(explicitSpan) && explicitSpan > 0 ? explicitSpan : this.model.activeRangeYears;
+		return Math.min(maxRangeYears, Math.max(minRangeYears, baseRangeYears));
+	}
+
+	computeRangeLayout(trackWidth) {
+		const rangeYears = this.resolveRangeYears();
+		const halfRange = rangeYears / 2;
+		const leftYear = this.model.focusYear - halfRange;
+		const rightYear = this.model.focusYear + halfRange;
+		const leftEdgeX = this.yearToX(leftYear, trackWidth);
+		const rightEdgeX = this.yearToX(rightYear, trackWidth);
+		const visualWidth = Math.max(HANDLE_WIDTH_PX * 2, rightEdgeX - leftEdgeX);
+		const centerX = (leftEdgeX + rightEdgeX) / 2;
 		return {
+			rangeYears,
 			visualWidth,
 			centerX,
-			leftEdgeX: centerX - (visualWidth / 2),
-			rightEdgeX: centerX + (visualWidth / 2),
+			leftEdgeX,
+			rightEdgeX,
+			leftYear,
+			rightYear,
 		};
 	}
 
@@ -236,9 +284,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 			const edgeFactor = this.interaction.rangeResizeDrag.edge === "left" ? -1 : 1;
 			const deltaHalfWidthYears = signedDeltaYears * edgeFactor;
 			const nextRangeYears = this.interaction.rangeResizeDrag.startRangeYears + (deltaHalfWidthYears * 2);
+			const { minRangeYears, maxRangeYears } = this.resolveRangeConstraints();
+			const clampedRangeYears = Math.min(maxRangeYears, Math.max(minRangeYears, nextRangeYears));
 			this.dispatchEvent(
 				new CustomEvent("active-range-change", {
-					detail: { activeRangeYears: nextRangeYears },
+					detail: { activeRangeYears: clampedRangeYears },
 					bubbles: true,
 					composed: true,
 				}),
@@ -308,7 +358,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		}
 
 		const trackWidth = frame.getBoundingClientRect().width || frame.clientWidth || 320;
-		const { visualWidth, centerX: focusX, leftEdgeX, rightEdgeX } = this.computeFixedRangeLayout(trackWidth);
+		const { visualWidth, centerX: focusX, leftEdgeX, rightEdgeX, leftYear, rightYear, rangeYears } = this.computeRangeLayout(trackWidth);
 
 		activeRange.style.left = `${leftEdgeX}px`;
 		activeRange.style.width = `${visualWidth}px`;
@@ -321,9 +371,9 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		centerMarker.style.left = `${focusX}px`;
 		centerYear.style.left = `${focusX}px`;
 		centerYear.textContent = formatYear(this.model.focusYear);
-		leftEdgeValue.textContent = formatYear(this.model.activeRangeStartYear);
-		rightEdgeValue.textContent = formatYear(this.model.activeRangeEndYear);
-		rangeValues.textContent = `${Math.round(this.model.activeRangeEndYear - this.model.activeRangeStartYear)}y`;
+		leftEdgeValue.textContent = formatYear(leftYear);
+		rightEdgeValue.textContent = formatYear(rightYear);
+		rangeValues.textContent = `${Math.round(rangeYears)}y`;
 		frame.dataset.mode = this.interaction.activeDragType || "idle";
 		this.buildTicks(trackWidth);
 	}

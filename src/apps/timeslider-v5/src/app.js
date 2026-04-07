@@ -20,8 +20,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 			focusYear: 1950,
 			rangeMinYear: 1938,
 			rangeMaxYear: 1962,
-			minRangeYears: 6,
-			maxRangeYears: 260,
+			minRangeYears: 20,
+			maxRangeYears: 120,
 			pixelsPerYear: 3.2,
 		};
 	}

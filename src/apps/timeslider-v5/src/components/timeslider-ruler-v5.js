@@ -46,6 +46,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 			activeDragType: null,
 			focusDrag: {
 				pointerId: null,
+				startX: 0,
+				startFocusYear: 1950,
 			},
 			rangeResizeDrag: {
 				pointerId: null,
@@ -159,7 +161,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		upperTrack.setPointerCapture(event.pointerId);
 		this.interaction.activeDragType = "focus";
 		this.interaction.focusDrag.pointerId = event.pointerId;
-		this.updateFocusYearFromPointer(event.clientX);
+		this.interaction.focusDrag.startX = event.clientX;
+		this.interaction.focusDrag.startFocusYear = this.model.focusYear;
 		window.addEventListener("pointermove", this.onPointerMove);
 		window.addEventListener("pointerup", this.onPointerUp);
 		window.addEventListener("pointercancel", this.onPointerUp);
@@ -184,29 +187,17 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	yearToX(year, width) {
-		const domainSpan = this.model.domainMaxYear - this.model.domainMinYear;
-		if (!Number.isFinite(domainSpan) || domainSpan <= 0) return 0;
-		return ((year - this.model.domainMinYear) / domainSpan) * width;
+		if (!Number.isFinite(width) || width <= 0) return 0;
+		const centerX = width / 2;
+		const deltaYears = year - this.model.focusYear;
+		return centerX + (deltaYears * this.model.pixelsPerYear);
 	}
 
-	xToYear(x, width) {
-		if (!Number.isFinite(width) || width <= 0) return this.model.focusYear;
-		const domainSpan = this.model.domainMaxYear - this.model.domainMinYear;
-		if (!Number.isFinite(domainSpan) || domainSpan <= 0) return this.model.focusYear;
-		const clampedX = Math.max(0, Math.min(width, x));
-		return this.model.domainMinYear + ((clampedX / width) * domainSpan);
-	}
-
-	updateFocusYearFromPointer(clientX) {
-		const frame = this.shadowRoot?.getElementById("frame");
-		if (!frame) return;
-		const rect = frame.getBoundingClientRect();
-		const width = rect.width || frame.clientWidth || 320;
-		const offsetX = clientX - rect.left;
-		const nextFocusYear = this.xToYear(offsetX, width);
+	updateFocusYear(nextFocusYear) {
+		const clampedFocusYear = Math.min(this.model.domainMaxYear, Math.max(this.model.domainMinYear, nextFocusYear));
 		this.dispatchEvent(
 			new CustomEvent("focus-year-change", {
-				detail: { focusYear: nextFocusYear },
+				detail: { focusYear: clampedFocusYear },
 				bubbles: true,
 				composed: true,
 			}),
@@ -215,7 +206,9 @@ class TimeSliderV5RulerElement extends HTMLElement {
 
 	onPointerMove(event) {
 		if (this.interaction.activeDragType === "focus" && event.pointerId === this.interaction.focusDrag.pointerId) {
-			this.updateFocusYearFromPointer(event.clientX);
+			const deltaX = event.clientX - this.interaction.focusDrag.startX;
+			const deltaYears = deltaX / this.model.pixelsPerYear;
+			this.updateFocusYear(this.interaction.focusDrag.startFocusYear + deltaYears);
 			return;
 		}
 
@@ -243,6 +236,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		if (!isFocusPointer && !isResizePointer) return;
 		this.interaction.activeDragType = null;
 		this.interaction.focusDrag.pointerId = null;
+		this.interaction.focusDrag.startX = 0;
+		this.interaction.focusDrag.startFocusYear = this.model.focusYear;
 		this.interaction.rangeResizeDrag.pointerId = null;
 		this.interaction.rangeResizeDrag.edge = null;
 		window.removeEventListener("pointermove", this.onPointerMove);
@@ -308,10 +303,9 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		const yearMappedWidth = Math.max(0, rawRightEdgeX - rawLeftEdgeX);
 		const visualWidth = Math.max(minVisualRangeWidth, yearMappedWidth);
 		const rangeCenterX = (rawLeftEdgeX + rawRightEdgeX) / 2;
-		const clampedRangeCenterX = Math.max(visualWidth / 2, Math.min(trackWidth - (visualWidth / 2), rangeCenterX));
-		const leftEdgeX = clampedRangeCenterX - (visualWidth / 2);
-		const rightEdgeX = clampedRangeCenterX + (visualWidth / 2);
-		const focusX = this.yearToX(this.model.focusYear, trackWidth);
+		const leftEdgeX = rangeCenterX - (visualWidth / 2);
+		const rightEdgeX = rangeCenterX + (visualWidth / 2);
+		const focusX = trackWidth / 2;
 
 		activeRange.style.left = `${leftEdgeX}px`;
 		activeRange.style.width = `${visualWidth}px`;

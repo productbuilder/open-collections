@@ -193,6 +193,22 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		return centerX + (deltaYears * this.model.pixelsPerYear);
 	}
 
+	computeFixedRangeLayout(trackWidth) {
+		const minVisualRangeWidth = Math.max(
+			this.model.minRangeYears * this.model.pixelsPerYear,
+			(HANDLE_WIDTH_PX * 2) + LOWER_LABEL_SAFE_WIDTH_PX + RANGE_INNER_GUTTER_PX,
+		);
+		const modelWidth = Math.max(0, (this.model.activeRangeEndYear - this.model.activeRangeStartYear) * this.model.pixelsPerYear);
+		const visualWidth = Math.max(minVisualRangeWidth, modelWidth);
+		const centerX = trackWidth / 2;
+		return {
+			visualWidth,
+			centerX,
+			leftEdgeX: centerX - (visualWidth / 2),
+			rightEdgeX: centerX + (visualWidth / 2),
+		};
+	}
+
 	updateFocusYear(nextFocusYear) {
 		const clampedFocusYear = Math.min(this.model.domainMaxYear, Math.max(this.model.domainMinYear, nextFocusYear));
 		this.dispatchEvent(
@@ -292,20 +308,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		}
 
 		const trackWidth = frame.getBoundingClientRect().width || frame.clientWidth || 320;
-		const minVisualRangeWidth = Math.max(
-			this.model.minRangeYears * this.model.pixelsPerYear,
-			(HANDLE_WIDTH_PX * 2) + LOWER_LABEL_SAFE_WIDTH_PX + RANGE_INNER_GUTTER_PX,
-		);
-		const yearMappedStartX = this.yearToX(this.model.activeRangeStartYear, trackWidth);
-		const yearMappedEndX = this.yearToX(this.model.activeRangeEndYear, trackWidth);
-		const rawLeftEdgeX = Math.min(yearMappedStartX, yearMappedEndX);
-		const rawRightEdgeX = Math.max(yearMappedStartX, yearMappedEndX);
-		const yearMappedWidth = Math.max(0, rawRightEdgeX - rawLeftEdgeX);
-		const visualWidth = Math.max(minVisualRangeWidth, yearMappedWidth);
-		const rangeCenterX = (rawLeftEdgeX + rawRightEdgeX) / 2;
-		const leftEdgeX = rangeCenterX - (visualWidth / 2);
-		const rightEdgeX = rangeCenterX + (visualWidth / 2);
-		const focusX = trackWidth / 2;
+		const { visualWidth, centerX: focusX, leftEdgeX, rightEdgeX } = this.computeFixedRangeLayout(trackWidth);
 
 		activeRange.style.left = `${leftEdgeX}px`;
 		activeRange.style.width = `${visualWidth}px`;
@@ -361,6 +364,18 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					height: 100%;
 					pointer-events: none;
 				}
+				.moving-timeline {
+					position: absolute;
+					inset: 0;
+					z-index: 1;
+					pointer-events: none;
+				}
+				.fixed-overlay {
+					position: absolute;
+					inset: 0;
+					z-index: 2;
+					pointer-events: none;
+				}
 				.ruler-zone {
 					position: absolute;
 					top: 0;
@@ -370,7 +385,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					touch-action: none;
 					cursor: grab;
 					pointer-events: auto;
-					z-index: 1;
+					z-index: 4;
 				}
 				.frame[data-mode="focus"] .ruler-zone { cursor: grabbing; }
 				.base-line {
@@ -412,7 +427,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.ticks {
 					position: absolute;
 					inset: 0;
-					z-index: 2;
+					z-index: 1;
 					pointer-events: none;
 				}
 				.tick {
@@ -532,23 +547,27 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					<div class="lower-track"></div>
 				</div>
 				<div id="overlay" class="overlay">
+					<div id="movingTimeline" class="moving-timeline" aria-hidden="true">
+						<div id="ticks" class="ticks"></div>
+					</div>
+					<div id="fixedOverlay" class="fixed-overlay">
+						<div class="base-line"></div>
+						<div id="activeRange" class="active-range" aria-hidden="true"></div>
+						<div id="leftEdgeValue" class="edge-value left">1938</div>
+						<div id="rightEdgeValue" class="edge-value right">1962</div>
+						<div id="centerYear" class="center-year">1950</div>
+						<div id="centerMarker" class="center-marker" aria-hidden="true"></div>
+						<div id="leftGuide" class="resize-guide"></div>
+						<div id="rightGuide" class="resize-guide"></div>
+						<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">
+							<span class="handle-grip" aria-hidden="true"></span>
+						</button>
+						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">
+							<span class="handle-grip" aria-hidden="true"></span>
+						</button>
+						<div class="range-values" id="rangeValues">24y</div>
+					</div>
 					<div id="rulerZone" class="ruler-zone" aria-label="Drag ruler to move focused year"></div>
-					<div class="base-line"></div>
-					<div id="activeRange" class="active-range" aria-hidden="true"></div>
-					<div id="leftEdgeValue" class="edge-value left">1938</div>
-					<div id="rightEdgeValue" class="edge-value right">1962</div>
-					<div id="ticks" class="ticks"></div>
-					<div id="centerYear" class="center-year">1950</div>
-					<div id="centerMarker" class="center-marker" aria-hidden="true"></div>
-					<div id="leftGuide" class="resize-guide"></div>
-					<div id="rightGuide" class="resize-guide"></div>
-					<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">
-						<span class="handle-grip" aria-hidden="true"></span>
-					</button>
-					<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">
-						<span class="handle-grip" aria-hidden="true"></span>
-					</button>
-					<div class="range-values" id="rangeValues">24y</div>
 				</div>
 			</div>
 		`;

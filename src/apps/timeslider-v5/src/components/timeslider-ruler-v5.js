@@ -316,8 +316,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		rightHandle.style.left = `${rightEdgeX}px`;
 		leftGuide.style.left = `${leftEdgeX}px`;
 		rightGuide.style.left = `${rightEdgeX}px`;
-		leftEdgeValue.style.left = `${leftEdgeX}px`;
-		rightEdgeValue.style.left = `${rightEdgeX}px`;
+		leftEdgeValue.style.left = `${leftEdgeX + 8}px`;
+		rightEdgeValue.style.left = `${rightEdgeX - 8}px`;
 		centerMarker.style.left = `${focusX}px`;
 		centerYear.style.left = `${focusX}px`;
 		centerYear.textContent = formatYear(this.model.focusYear);
@@ -335,6 +335,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.frame {
 					position: relative;
 					--ruler-baseline-y: 69px;
+					--tick-label-baseline-offset: 21px;
 					--active-range-top: 41px;
 					--active-range-bottom: 97px;
 					--handle-top: 108px;
@@ -440,20 +441,23 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.edge-value {
 					position: absolute;
-					top: 6px;
-					transform: translateX(-50%);
-					font-size: 0.67rem;
-					font-weight: 600;
+					top: calc(var(--ruler-baseline-y) + var(--tick-label-baseline-offset));
+					font-size: 0.62rem;
+					font-weight: 550;
 					letter-spacing: 0.01em;
-					color: #efefef;
-					z-index: 4;
-					background: rgba(43, 43, 43, 0.85);
-					border: 1px solid rgba(255, 255, 255, 0.34);
-					border-radius: 6px;
-					padding: 0.12rem 0.35rem;
+					color: rgba(255, 255, 255, 0.82);
+					z-index: 2;
 					line-height: 1.1;
 					white-space: nowrap;
 					pointer-events: none;
+				}
+				.edge-value.left {
+					transform: none;
+					text-align: left;
+				}
+				.edge-value.right {
+					transform: translateX(-100%);
+					text-align: right;
 				}
 				.ticks {
 					position: absolute;

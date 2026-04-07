@@ -335,8 +335,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.frame {
 					position: relative;
 					--ruler-baseline-y: 69px;
-					--active-range-top: 26px;
-					--active-range-bottom: 102px;
+					--active-range-top: 41px;
+					--active-range-bottom: 97px;
 					--handle-top: 108px;
 					--center-marker-top: 28px;
 					--tick-minor-height: 6px;
@@ -512,7 +512,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					width: ${HANDLE_WIDTH_PX}px;
 					height: 30px;
 					transform: translateX(-50%);
-					border-radius: 6px;
+					border-radius: 4px;
 					border: 1px solid rgba(255, 255, 255, 0.64);
 					background: #3f3f3f;
 					display: grid;
@@ -533,6 +533,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						transparent 1px,
 						transparent 3px
 					);
+					background-position: center;
+					margin: 0;
 					opacity: 0.8;
 				}
 				.range-values {

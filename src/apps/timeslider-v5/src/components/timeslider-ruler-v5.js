@@ -244,7 +244,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		const rightYear = this.model.focusYear + halfRange;
 		const leftEdgeX = this.yearToX(leftYear, trackWidth);
 		const rightEdgeX = this.yearToX(rightYear, trackWidth);
-		const visualWidth = Math.max(HANDLE_WIDTH_PX * 2, rightEdgeX - leftEdgeX);
+		const visualWidth = Math.max(0, rightEdgeX - leftEdgeX);
 		const centerX = (leftEdgeX + rightEdgeX) / 2;
 		return {
 			rangeYears,
@@ -366,8 +366,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		rightHandle.style.left = `${rightEdgeX}px`;
 		leftGuide.style.left = `${leftEdgeX}px`;
 		rightGuide.style.left = `${rightEdgeX}px`;
-		leftEdgeValue.style.left = `${leftEdgeX + 8}px`;
-		rightEdgeValue.style.left = `${rightEdgeX - 8}px`;
+		leftEdgeValue.style.left = `${leftEdgeX}px`;
+		rightEdgeValue.style.left = `${rightEdgeX}px`;
 		centerMarker.style.left = `${focusX}px`;
 		centerYear.style.left = `${focusX}px`;
 		centerYear.textContent = formatYear(this.model.focusYear);
@@ -485,8 +485,6 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					top: var(--active-range-top);
 					height: var(--active-range-height);
 					background: rgba(255, 255, 255, 0.09);
-					border: 1px solid rgba(255, 255, 255, 0.78);
-					border-radius: 4px;
 					z-index: 2;
 					pointer-events: none;
 				}
@@ -578,9 +576,9 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.resize-guide {
 					position: absolute;
-					top: var(--active-range-bottom);
+					top: var(--active-range-top);
 					width: 1px;
-					height: calc(var(--handle-top) - var(--active-range-bottom) + 6px);
+					height: calc(var(--handle-top) - var(--active-range-top) + 6px);
 					background: rgba(255, 255, 255, 0.56);
 					transform: translateX(-50%);
 					pointer-events: none;

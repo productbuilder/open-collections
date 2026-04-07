@@ -1,6 +1,6 @@
 {
   "id": "",
-  "organizationName": "Open Colections",
+  "organizationName": "Open Collections",
   "curatorName": "JBM Tangelder",
   "placeName": "Hilversum",
   "countryName": "The Netherlands",
@@ -26,6 +26,10 @@
     {
       "id": "time-compare",
       "manifest": "time-compare/collection.json"
+    },
+    {
+      "id": "hilversum-wikimedia",
+      "manifest": "hilversum-wikimedia/collection.json"
     }
 
   ]

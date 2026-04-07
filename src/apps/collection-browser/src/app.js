@@ -2,6 +2,12 @@ import {
 	ComponentBase,
 	normalizeCollection,
 } from "../../../shared/library-core/src/index.js";
+import {
+	FILTER_OPTION_STATUS,
+	createBrowseShellQueryState,
+	normalizeBrowseShellQueryPatch,
+	normalizeBrowseShellQueryState,
+} from "../../../shared/data/query/browse-shell-query-contract.js";
 import { ENTRY_VIEW_HEADERS } from "../../../shared/ui/app-foundation/entry-view-header-copy.js";
 import "../../../shared/ui/primitives/section-header.js";
 import { BROWSER_CONFIG } from "./config.js";
@@ -42,6 +48,7 @@ import "./components/browser-viewer-dialog.js";
 
 const ALL_MODE_INITIAL_CHUNK_SIZE = 24;
 const ALL_MODE_APPEND_CHUNK_SIZE = 24;
+const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
@@ -66,7 +73,80 @@ function derivePreviewImages(items = [], max = Number.POSITIVE_INFINITY) {
 	return previews;
 }
 
-class TimemapBrowserElement extends ComponentBase {
+function toFilterOptionEntries(counts = new Map()) {
+	return [...counts.entries()]
+		.sort(([leftValue], [rightValue]) => leftValue.localeCompare(rightValue))
+		.map(([value, count]) => ({
+			value,
+			label: value,
+			count,
+		}));
+}
+
+function collectTypeValues(item = {}) {
+	const directType = String(item?.type || "").trim();
+	if (directType) {
+		return [directType];
+	}
+	const mediaType = String(item?.media?.type || "").trim().toLowerCase();
+	if (!mediaType) {
+		return [];
+	}
+	const slashIndex = mediaType.indexOf("/");
+	if (slashIndex <= 0 || slashIndex >= mediaType.length - 1) {
+		return [mediaType];
+	}
+	const subtype = mediaType.slice(slashIndex + 1).trim();
+	const topLevel = mediaType.slice(0, slashIndex).trim();
+	if (subtype && !GENERIC_MEDIA_TYPES.has(subtype)) {
+		return [subtype];
+	}
+	return topLevel ? [topLevel] : [mediaType];
+}
+
+function normalizeTypeFilterToken(value = "") {
+	return String(value ?? "").trim().toLowerCase();
+}
+
+function createActiveTypeFilterSet(queryState = {}) {
+	const sourceTypes = Array.isArray(queryState?.filters?.types)
+		? queryState.filters.types
+		: Array.isArray(queryState?.query?.types)
+			? queryState.query.types
+			: [];
+	const normalizedTypes = sourceTypes
+		.map((value) => normalizeTypeFilterToken(value))
+		.filter(Boolean);
+	return new Set(normalizedTypes);
+}
+
+function itemMatchesActiveTypeFilters(item = {}, activeTypeFilters = new Set()) {
+	if (!(activeTypeFilters instanceof Set) || activeTypeFilters.size === 0) {
+		return true;
+	}
+	const typeValues = collectTypeValues(item).map((value) =>
+		normalizeTypeFilterToken(value),
+	);
+	if (typeValues.length === 0) {
+		return false;
+	}
+	return typeValues.some((value) => activeTypeFilters.has(value));
+}
+
+function filterItemsByActiveTypeFilters(items = [], queryState = {}) {
+	if (!Array.isArray(items) || items.length === 0) {
+		return [];
+	}
+	const activeTypeFilters = createActiveTypeFilterSet(queryState);
+	if (activeTypeFilters.size === 0) {
+		return items;
+	}
+	return items.filter((item) =>
+		itemMatchesActiveTypeFilters(item, activeTypeFilters),
+	);
+}
+
+class CollectionBrowserElement extends ComponentBase {
 	constructor() {
 		super();
 		this.state = {
@@ -91,12 +171,15 @@ class TimemapBrowserElement extends ComponentBase {
 			statusText: "Load a collection manifest to browse.",
 			statusTone: "neutral",
 			isLoadingCollection: false,
+			hasResolvedFilterOptionData: false,
+			browseShellQuery: createBrowseShellQueryState(),
 			allModeFeedSession: null,
 			isAppendingAllModeFeedChunk: false,
 		};
 		// Temporary feed diagnostics: tracks last payload signature to avoid noisy logs.
 		this.lastBrowseDiagnosticsSignature = "";
 		this.shadow = this.attachShadow({ mode: "open" });
+		this.handleBrowseQueryPatch = this.onBrowseQueryPatch.bind(this);
 	}
 
 	connectedCallback() {
@@ -109,6 +192,7 @@ class TimemapBrowserElement extends ComponentBase {
 		this.cacheDom();
 		this._eventsBound = false;
 		this.bindEvents();
+		this.addEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		this.setStatus(this.state.statusText, this.state.statusTone);
 		this.renderHeader();
 		this.renderManifestControls();
@@ -130,11 +214,30 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	disconnectedCallback() {
+		this.removeEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		if (this._handleWindowResize) {
 			window.removeEventListener("resize", this._handleWindowResize);
 			this._handleWindowResize = null;
 		}
 		this._eventsBound = false;
+	}
+
+	onBrowseQueryPatch(event) {
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const normalizedPatch = normalizeBrowseShellQueryPatch(
+			detail,
+			this.state.browseShellQuery?.query,
+		);
+		this.state.browseShellQuery = normalizeBrowseShellQueryState(
+			{
+				...this.state.browseShellQuery,
+				query: normalizedPatch.query,
+				filters: normalizedPatch.filters,
+			},
+			this.state.browseShellQuery || createBrowseShellQueryState(),
+		);
+		this.renderViewport();
 	}
 
 	buildAllModeFeedSessionKey({
@@ -865,6 +968,8 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 
 	async initializeEmbeddedSources() {
+		this.state.hasResolvedFilterOptionData = false;
+		this.state.isLoadingCollection = true;
 		const configuredSources = normalizeEmbeddedSourceCatalog(
 			BROWSER_CONFIG.embeddedSourceCatalog,
 		);
@@ -889,6 +994,8 @@ class TimemapBrowserElement extends ComponentBase {
 
 		if (!configuredSources.length) {
 			this.setStatus("No embedded browser sources configured.", "warn");
+			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();
 			return;
@@ -921,6 +1028,11 @@ class TimemapBrowserElement extends ComponentBase {
 			this.syncMetadataPanelVisibility();
 		} catch (error) {
 			this.setStatus(`Source load failed: ${error.message}`, "warn");
+		} finally {
+			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
 		}
 	}
 
@@ -1161,6 +1273,12 @@ class TimemapBrowserElement extends ComponentBase {
             min-height: 100dvh;
           }
 
+          :host([data-workbench-embed]) .app-shell,
+          :host([data-shell-embed]) .app-shell,
+          :host([data-oc-app-mode="embedded"]) .app-shell {
+            min-height: 0;
+          }
+
           .browser-header {
             padding: 0.55rem 0.7rem;
             gap: 0.55rem;
@@ -1374,6 +1492,10 @@ class TimemapBrowserElement extends ComponentBase {
 		const browseContext = this.resolveBrowseContext();
 		const candidatePools = this.buildBrowseCandidatePools(browseContext);
 		const { sources, collections, items } = candidatePools;
+		const filteredItems = filterItemsByActiveTypeFilters(
+			items,
+			this.state.browseShellQuery,
+		);
 		// Sources mode is intentionally global/top-level for now.
 		const globalSourceCards = this.resolveGlobalSourceCards();
 		const sourceCards = buildSourceBrowseCardModels(sources, {
@@ -1388,7 +1510,7 @@ class TimemapBrowserElement extends ComponentBase {
 		const collectionCards = buildCollectionBrowseCardModels(collections, {
 			selectedManifestUrl: this.state.selectedCollectionManifestUrl || "",
 		});
-		const itemCards = buildItemBrowseCardModels(items, {
+		const itemCards = buildItemBrowseCardModels(filteredItems, {
 			selectedItemId: this.state.selectedItemId,
 		});
 		const allModeExposureNamespace = this.buildAllModeExposureNamespace({
@@ -1468,7 +1590,7 @@ class TimemapBrowserElement extends ComponentBase {
 				collections,
 				selectedCollectionManifestUrl:
 					this.state.selectedCollectionManifestUrl || "",
-				items,
+				items: filteredItems,
 				selectedItemId: this.state.selectedItemId,
 				isLoading: this.state.isLoadingCollection,
 			};
@@ -1539,11 +1661,11 @@ class TimemapBrowserElement extends ComponentBase {
 				)
 			: null;
 		const subtitle = focusedCollection
-			? `${items.length} item${items.length === 1 ? "" : "s"}`
+			? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"}`
 			: this.isEmbeddedRuntime()
-				? `${items.length} item${items.length === 1 ? "" : "s"} across all collections.`
-				: items.length > 0
-					? `${items.length} item${items.length === 1 ? "" : "s"} available. Select a card to open media.`
+				? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"} across all collections.`
+				: filteredItems.length > 0
+					? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"} available. Select a card to open media.`
 					: "Load a collection to browse its items.";
 		const scopedItemsTitle =
 			showBackInViewport && focusedCollection?.label
@@ -1565,7 +1687,7 @@ class TimemapBrowserElement extends ComponentBase {
 			collections: [],
 			selectedCollectionManifestUrl:
 				this.state.selectedCollectionManifestUrl || "",
-			items,
+			items: filteredItems,
 			selectedItemId: this.state.selectedItemId,
 			isLoading: this.state.isLoadingCollection,
 		};
@@ -1679,8 +1801,88 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 	}
 
+	emitQueryState(model = {}) {
+		const renderedEntities = Array.isArray(model.allBrowseEntities)
+			? model.allBrowseEntities
+			: [];
+		const renderedItemCards = renderedEntities
+			.filter((entity) => String(entity?.browseKind || "").trim() === "item")
+			.map((entity) => entity?.item)
+			.filter(Boolean);
+		const directItemCards = Array.isArray(model.itemCards)
+			? model.itemCards.map((card) => card?.item).filter(Boolean)
+			: [];
+		const itemsFromModel = Array.isArray(model.items) ? model.items : [];
+		const items =
+			directItemCards.length > 0
+				? directItemCards
+				: itemsFromModel.length > 0
+					? itemsFromModel
+					: renderedItemCards;
+		const typeCounts = new Map();
+		const incrementCount = (counts, value) => {
+			const normalized = String(value ?? "").trim();
+			if (!normalized) {
+				return;
+			}
+			counts.set(normalized, (counts.get(normalized) || 0) + 1);
+		};
+
+		for (const item of items) {
+			const uniqueTypes = new Set(collectTypeValues(item));
+			for (const typeValue of uniqueTypes) {
+				incrementCount(typeCounts, typeValue);
+			}
+		}
+
+		const options = {
+			types: toFilterOptionEntries(typeCounts),
+			categories: [],
+		};
+		const currentQueryState =
+			this.state.browseShellQuery || createBrowseShellQueryState();
+		const hasOptions = options.types.length > 0;
+		const hasResolvedFilterOptions =
+			this.state.hasResolvedFilterOptionData ||
+			!this.state.isLoadingCollection;
+		if (hasResolvedFilterOptions && !this.state.hasResolvedFilterOptionData) {
+			this.state.hasResolvedFilterOptionData = true;
+		}
+		const optionsStatus = !hasResolvedFilterOptions
+			? FILTER_OPTION_STATUS.LOADING
+			: hasOptions
+				? FILTER_OPTION_STATUS.READY
+				: FILTER_OPTION_STATUS.EMPTY;
+		const normalizedState = normalizeBrowseShellQueryState(
+			{
+				source: {
+					app: "collection-browser",
+					mode: "collection",
+				},
+				query: currentQueryState.query,
+				filters: currentQueryState.filters,
+				options,
+				status: {
+					loading: this.state.isLoadingCollection,
+					filterOptions: optionsStatus,
+				},
+			},
+			currentQueryState,
+		);
+		this.state.browseShellQuery = normalizedState;
+		this.dispatchEvent(
+			new CustomEvent("browse-query-state", {
+				bubbles: true,
+				composed: true,
+				detail: normalizedState,
+			}),
+		);
+	}
+
 	renderViewport() {
-		this.dom?.browserViewport?.update(this.viewportModel());
+		const model = this.viewportModel();
+		this.dom?.browserViewport?.update(model);
+		this.emitQueryState(model);
 		this.renderEntryHeaderVisibility();
 	}
 
@@ -1735,6 +1937,7 @@ class TimemapBrowserElement extends ComponentBase {
 		}
 
 		this.setStatus("Loading collection...", "neutral");
+		this.state.hasResolvedFilterOptionData = false;
 		this.state.isLoadingCollection = true;
 		this.renderManifestControls();
 		this.renderEmbeddedSourceControls();
@@ -1774,6 +1977,7 @@ class TimemapBrowserElement extends ComponentBase {
 			this.setStatus(`Load failed: ${error.message}`, "warn");
 		} finally {
 			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
 			this.renderManifestControls();
 			this.renderEmbeddedSourceControls();
 			this.renderViewport();
@@ -1781,6 +1985,6 @@ class TimemapBrowserElement extends ComponentBase {
 	}
 }
 
-if (!customElements.get("timemap-browser")) {
-	customElements.define("timemap-browser", TimemapBrowserElement);
+if (!customElements.get("collection-browser")) {
+	customElements.define("collection-browser", CollectionBrowserElement);
 }

@@ -41,7 +41,16 @@ A collection remains valid without any optional capability fields.
       "id": "harbor-map-001",
       "title": "Harbor Map 001",
       "type": "image",
-      "thumbnailUrl": "thumbs/harbor-map-001.jpg",
+      "media": {
+        "thumbnail": "thumbs/harbor-map-001.jpg"
+      },
+      "location": {
+        "lat": 51.9225,
+        "lon": 4.47917
+      },
+      "links": [
+        { "type": "relatedTo", "target": "harbor-photo-011" }
+      ],
       "detailUrl": "items/harbor-map-001.json",
       "updatedAt": "2025-09-01T12:00:00Z"
     }
@@ -99,17 +108,111 @@ Optional query templates for clients.
 
 ## Item Summary Fields
 
-Each item summary should include:
+The `items` array in `collection.json` is the **base item summary format** for Open Collections.
+
+Use simple, author-friendly fields as the source of truth in the manifest. Keep this format flat where possible so it can be authored by hand and imported from spreadsheets, while still allowing nested JSON for grouped fields like location and links.
+
+Recommended base fields:
 
 - `id` (stable within the collection)
 - `title`
 - `type`
-- `thumbnailUrl`
+- `description`
+- `media`
+- `date` and/or `time`
+- `location`
+- `tags`
+- `license`
+- `attribution`
+- `source`
+- `links`
 - `detailUrl`
-
-Recommended for synchronization:
-
 - `updatedAt` (ISO 8601 timestamp)
+
+### Concise base item example
+
+```json
+{
+  "id": "harbor-map-001",
+  "title": "Harbor Map 001",
+  "type": "image",
+  "description": "Survey map of the inner harbor.",
+  "media": {
+    "thumbnail": "thumbs/harbor-map-001.jpg",
+    "primary": "media/harbor-map-001.jpg"
+  },
+  "date": "1898-01-01",
+  "time": "1898-01-01T00:00:00Z",
+  "location": {
+    "name": "Rotterdam Harbor",
+    "lat": 51.9225,
+    "lon": 4.47917
+  },
+  "tags": ["harbor", "map", "survey"],
+  "license": "CC BY 4.0",
+  "attribution": "City Archives Rotterdam",
+  "source": {
+    "recordUrl": "https://archive.example.org/records/harbor-map-001"
+  },
+  "links": [
+    { "type": "sameAs", "target": "https://www.wikidata.org/wiki/Q34370" },
+    { "type": "relatedTo", "target": "harbor-photo-011" }
+  ],
+  "detailUrl": "items/harbor-map-001.json",
+  "updatedAt": "2025-09-01T12:00:00Z"
+}
+```
+
+### Why `location.lat` / `location.lon` in the base format
+
+- It is simple to author and validate in JSON and spreadsheet workflows.
+- It supports immediate map and timemap placement without requiring GeoJSON tooling.
+- It keeps core item metadata compact and readable in the manifest.
+
+### Why GeoJSON is derived, not primary
+
+GeoJSON remains useful for map rendering, geometry operations, and interoperability. However, for core collection authoring:
+
+- base item metadata should stay lightweight and easy to edit;
+- point coordinates should remain easy to import from flat columns;
+- richer geometry can be generated into derived map artifacts when needed.
+
+In practice: keep authoring truth in base item fields, derive GeoJSON in render/index pipelines.
+
+### Why `links` is preferred over `relations`
+
+Use `links` as the base field name in item summaries because it is straightforward for authors and implementation-friendly across apps.
+
+Each link object should include:
+
+- `type`: relationship kind (`sameAs`, `relatedTo`, `partOf`, etc.)
+- `target`: target ID or URL
+
+This preserves explicit linked-data behavior without forcing heavier relation modeling in the base manifest.
+
+### Spreadsheet-to-nested JSON mapping guidance
+
+Spreadsheet authoring should map flat columns into nested JSON paths during import.
+
+Example column mapping:
+
+- `id` → `id`
+- `title` → `title`
+- `description` → `description`
+- `thumbnail_url` → `media.thumbnail`
+- `primary_media_url` → `media.primary`
+- `date` → `date`
+- `time` → `time`
+- `lat` → `location.lat`
+- `lon` → `location.lon`
+- `location_name` → `location.name`
+- `tags` (semicolon-separated) → `tags[]`
+- `link_1_type` → `links[0].type`
+- `link_1_target` → `links[0].target`
+- `detail_url` → `detailUrl`
+- `updated_at` → `updatedAt`
+
+This allows non-technical authoring while keeping `collection.json` structured and machine-friendly.
 
 ## Item Detail Files
 

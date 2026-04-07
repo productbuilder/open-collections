@@ -4,7 +4,7 @@ This is a lightweight shared desktop shell that hosts existing Web Component app
 
 - `src/apps/app-shell`
 - `src/apps/collection-manager`
-- `src/apps/collection-browser`
+- `src/apps/timemap-browser`
 
 ## Run in desktop mode
 

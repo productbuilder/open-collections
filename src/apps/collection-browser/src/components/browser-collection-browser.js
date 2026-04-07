@@ -1,8 +1,8 @@
 import { browserStyles } from "../css/browser.css.js";
 import { backButtonStyles, renderBackButton } from "../../../../shared/components/back-button.js";
-import "../../../grid-5/source-card.js";
-import "../../../grid-5/collection-card.js";
-import "../../../grid-5/item-card.js";
+import "../../../../shared/ui/primitives/grid5-card-source.js";
+import "../../../../shared/ui/primitives/grid5-card-collection.js";
+import "../../../../shared/ui/primitives/grid5-card-item.js";
 
 const VALID_MODES = ["all", "sources", "collections", "items"];
 

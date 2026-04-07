@@ -1,3 +1,4 @@
+// Deprecated: superseded by grid5-card-* components in shared/ui/primitives.
 import "./preview-summary-card.js";
 
 class OcCardCollectionElement extends HTMLElement {

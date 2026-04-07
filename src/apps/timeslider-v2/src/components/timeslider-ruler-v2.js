@@ -40,6 +40,7 @@ class TimeSliderV2RulerElement extends HTMLElement {
 		this.interaction = {
 			mode: null,
 			pointerId: null,
+			edge: null,
 			startX: 0,
 			startFocusYear: 1950,
 			startWindowSizeYears: 24,
@@ -118,8 +119,8 @@ class TimeSliderV2RulerElement extends HTMLElement {
 			return 3;
 		}
 		const width = track.getBoundingClientRect().width || track.clientWidth || 320;
-		const stableWindow = Math.max(this.model.windowSizeYears, 8);
-		return width / stableWindow;
+		const visibleSpanYears = Math.max(this.model.windowSizeYears * 2, 16);
+		return width / visibleSpanYears;
 	}
 
 	bindEvents() {
@@ -163,6 +164,8 @@ class TimeSliderV2RulerElement extends HTMLElement {
 
 	startResize(event) {
 		const track = this.shadowRoot?.getElementById("track");
+		const target = event.target;
+		const handle = target instanceof HTMLElement ? target.closest("[data-edge]") : null;
 		if (!track) {
 			return;
 		}
@@ -170,6 +173,7 @@ class TimeSliderV2RulerElement extends HTMLElement {
 		track.setPointerCapture(event.pointerId);
 		this.interaction.mode = "resize-window";
 		this.interaction.pointerId = event.pointerId;
+		this.interaction.edge = handle?.dataset.edge === "left" ? "left" : "right";
 		this.interaction.startX = event.clientX;
 		this.interaction.startWindowSizeYears = this.model.windowSizeYears;
 		window.addEventListener("pointermove", this.onPointerMove);
@@ -204,9 +208,11 @@ class TimeSliderV2RulerElement extends HTMLElement {
 			return;
 		}
 		if (this.interaction.mode === "resize-window") {
-			const halfDeltaYears = Math.abs(deltaX / pixelsPerYear);
+			const deltaYears = deltaX / pixelsPerYear;
+			const halfDeltaYears =
+				this.interaction.edge === "left" ? -deltaYears : deltaYears;
 			const nextSize = clamp(
-				this.interaction.startWindowSizeYears + halfDeltaYears * 2,
+				this.interaction.startWindowSizeYears + (halfDeltaYears * 2),
 				this.model.minWindowYears,
 				this.model.maxWindowYears,
 			);
@@ -226,6 +232,7 @@ class TimeSliderV2RulerElement extends HTMLElement {
 		}
 		this.interaction.mode = null;
 		this.interaction.pointerId = null;
+		this.interaction.edge = null;
 		window.removeEventListener("pointermove", this.onPointerMove);
 		window.removeEventListener("pointerup", this.onPointerUp);
 		window.removeEventListener("pointercancel", this.onPointerUp);
@@ -321,6 +328,10 @@ class TimeSliderV2RulerElement extends HTMLElement {
 					border: 1px solid rgba(255, 255, 255, 0.14);
 					touch-action: none;
 					user-select: none;
+					cursor: grab;
+				}
+				.track[data-mode="drag-ruler"] {
+					cursor: grabbing;
 				}
 				.base-line {
 					position: absolute;
@@ -339,7 +350,11 @@ class TimeSliderV2RulerElement extends HTMLElement {
 					background: rgba(82, 199, 255, 0.23);
 					border: 1px solid rgba(82, 199, 255, 0.72);
 					border-radius: 9px;
-					box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
+					box-shadow:
+						inset 0 0 0 1px rgba(255, 255, 255, 0.11),
+						0 0 0 1px rgba(82, 199, 255, 0.28),
+						0 0 16px rgba(34, 137, 185, 0.36);
+					z-index: 2;
 				}
 				.window-handle {
 					position: absolute;
@@ -358,6 +373,15 @@ class TimeSliderV2RulerElement extends HTMLElement {
 					border-radius: 2px;
 					background: rgba(177, 231, 255, 0.95);
 					box-shadow: 0 0 0 1px rgba(7, 25, 41, 0.55);
+				}
+				.window-handle::after {
+					content: "";
+					position: absolute;
+					width: 12px;
+					height: 38px;
+					border-radius: 8px;
+					border: 1px solid rgba(177, 231, 255, 0.35);
+					background: rgba(8, 19, 29, 0.3);
 				}
 				.window-handle.left {
 					left: -10px;

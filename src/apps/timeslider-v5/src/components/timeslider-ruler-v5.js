@@ -335,7 +335,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.frame {
 					position: relative;
 					--ruler-baseline-y: 69px;
-					--tick-label-baseline-offset: 21px;
+					--edge-value-bottom-inset: 7px;
 					--active-range-top: 41px;
 					--active-range-bottom: 97px;
 					--handle-top: 108px;
@@ -441,7 +441,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.edge-value {
 					position: absolute;
-					top: calc(var(--ruler-baseline-y) + var(--tick-label-baseline-offset));
+					top: calc(var(--active-range-bottom) - var(--edge-value-bottom-inset) - (0.62rem * 1.1));
 					font-size: 0.62rem;
 					font-weight: 550;
 					letter-spacing: 0.01em;

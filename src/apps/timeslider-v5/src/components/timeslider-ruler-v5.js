@@ -363,12 +363,12 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.upper-track {
 					height: 80px;
-					background: #6f6f6f;
+					background: transparent;
 					pointer-events: auto;
 				}
 				.lower-track {
 					height: 48px;
-					background: #626262;
+					background: transparent;
 					pointer-events: none;
 				}
 				.overlay {

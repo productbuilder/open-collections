@@ -149,6 +149,7 @@ class OpenCollectionsTimeSliderV4AppElement extends HTMLElement {
 					background: linear-gradient(180deg, rgba(70, 70, 70, 0.96) 0%, rgba(60, 60, 60, 0.95) 100%);
 					border-radius: 0.85rem;
 					padding: 0.5rem;
+					border: 1px solid rgba(255, 255, 255, 0.34);
 					box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
 				}
 			</style>

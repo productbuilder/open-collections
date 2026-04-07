@@ -1,6 +1,9 @@
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_PIXELS_PER_YEAR = 3.2;
+const HANDLE_WIDTH_PX = 24;
+const LOWER_LABEL_SAFE_WIDTH_PX = 92;
+const RANGE_INNER_GUTTER_PX = 26;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -322,16 +325,20 @@ class TimeSliderV3RulerElement extends HTMLElement {
 			return;
 		}
 		const trackWidth = track.getBoundingClientRect().width || track.clientWidth || 320;
+		const minVisualRangeWidth = Math.max(
+			this.model.minRangeYears * this.model.pixelsPerYear,
+			(HANDLE_WIDTH_PX * 2) + LOWER_LABEL_SAFE_WIDTH_PX + RANGE_INNER_GUTTER_PX,
+		);
 		const rangeWidth = Math.max(
-			22,
+			minVisualRangeWidth,
 			Math.min(trackWidth, this.model.activeRangeYears * this.model.pixelsPerYear),
 		);
 		const handleInset = (trackWidth - rangeWidth) / 2;
 		activeRange.style.width = `${rangeWidth}px`;
 		leftHandle.style.left = `${handleInset}px`;
 		rightHandle.style.right = `${handleInset}px`;
-		leftGuide.style.left = `${handleInset + 20}px`;
-		rightGuide.style.right = `${handleInset + 20}px`;
+		leftGuide.style.left = `${handleInset}px`;
+		rightGuide.style.right = `${handleInset}px`;
 		centerYear.textContent = formatYear(this.model.focusYear);
 		rangeValues.textContent = `${Math.round(this.model.activeRangeYears)} years`;
 		track.dataset.mode = this.interaction.mode || "idle";
@@ -373,14 +380,12 @@ class TimeSliderV3RulerElement extends HTMLElement {
 				.handle {
 					position: absolute;
 					top: 8px;
-					width: 40px;
-					height: 28px;
-					border-radius: 999px;
+					width: ${HANDLE_WIDTH_PX}px;
+					height: 30px;
+					border-radius: 7px;
 					border: 1px solid rgba(96, 219, 255, 0.72);
 					background: rgba(5, 22, 33, 0.95);
 					color: #c9f5ff;
-					font-size: 0.68rem;
-					font-weight: 700;
 					display: grid;
 					place-items: center;
 					cursor: ew-resize;
@@ -396,18 +401,29 @@ class TimeSliderV3RulerElement extends HTMLElement {
 				.range-values {
 					position: absolute;
 					left: 50%;
-					bottom: 6px;
+					bottom: 7px;
 					transform: translateX(-50%);
-					padding: 0.18rem 0.52rem;
-					font-size: 0.72rem;
+					font-size: 0.78rem;
 					font-weight: 700;
-					border-radius: 999px;
-					background: rgba(7, 25, 40, 0.9);
-					border: 1px solid rgba(82, 199, 255, 0.65);
+					letter-spacing: 0.01em;
 					color: #c7f0ff;
+					text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 					pointer-events: none;
 					z-index: 3;
 					white-space: nowrap;
+				}
+				.handle-grip {
+					position: relative;
+					width: 4px;
+					height: 4px;
+					border-radius: 999px;
+					background: rgba(201, 245, 255, 0.92);
+					box-shadow:
+						0 7px 0 rgba(201, 245, 255, 0.92),
+						0 14px 0 rgba(201, 245, 255, 0.92),
+						6px 0 0 rgba(201, 245, 255, 0.92),
+						6px 7px 0 rgba(201, 245, 255, 0.92),
+						6px 14px 0 rgba(201, 245, 255, 0.92);
 				}
 				.track {
 					position: relative;
@@ -554,8 +570,12 @@ class TimeSliderV3RulerElement extends HTMLElement {
 					<div id="handlesLayer" class="handles-layer" aria-label="Range resize handles">
 						<div id="leftGuide" class="resize-guide"></div>
 						<div id="rightGuide" class="resize-guide"></div>
-						<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">⇤</button>
-						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">⇥</button>
+						<button id="leftHandle" class="handle left" type="button" aria-label="Resize active range left edge">
+							<span class="handle-grip" aria-hidden="true"></span>
+						</button>
+						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">
+							<span class="handle-grip" aria-hidden="true"></span>
+						</button>
 						<div class="range-values" id="rangeValues">24 years</div>
 					</div>
 				</div>

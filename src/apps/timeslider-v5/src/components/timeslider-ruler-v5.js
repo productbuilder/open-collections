@@ -128,29 +128,35 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	bindEvents() {
-		const overlay = this.shadowRoot?.getElementById("overlay");
+		const frame = this.shadowRoot?.getElementById("frame");
+		const upperTrack = this.shadowRoot?.querySelector(".upper-track");
 		const leftHandle = this.shadowRoot?.getElementById("leftHandle");
 		const rightHandle = this.shadowRoot?.getElementById("rightHandle");
-		if (!overlay || !leftHandle || !rightHandle) return;
-		overlay.addEventListener("pointerdown", (event) => {
-			if (event.target === leftHandle) {
+		if (!frame || !upperTrack || !leftHandle || !rightHandle) return;
+		frame.addEventListener("pointerdown", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const targetHandle = target?.closest(".handle");
+			if (targetHandle === leftHandle) {
 				this.startRangeResize(event, "left");
 				return;
 			}
-			if (event.target === rightHandle) {
+			if (targetHandle === rightHandle) {
 				this.startRangeResize(event, "right");
 				return;
 			}
+			const upperTrackBounds = upperTrack.getBoundingClientRect();
+			const pointerInUpperTrack =
+				event.clientY >= upperTrackBounds.top && event.clientY <= upperTrackBounds.bottom;
+			if (!pointerInUpperTrack) return;
 			this.startFocusDrag(event);
 		});
 	}
 
 	startFocusDrag(event) {
-		const rulerZone = this.shadowRoot?.getElementById("rulerZone");
-		if (!rulerZone) return;
-		if (!rulerZone.contains(event.target)) return;
+		const upperTrack = this.shadowRoot?.querySelector(".upper-track");
+		if (!upperTrack) return;
 		event.preventDefault();
-		rulerZone.setPointerCapture(event.pointerId);
+		upperTrack.setPointerCapture(event.pointerId);
 		this.interaction.activeDragType = "focus";
 		this.interaction.focusDrag.pointerId = event.pointerId;
 		this.updateFocusYearFromPointer(event.clientX);
@@ -161,10 +167,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	startRangeResize(event, edge) {
-		const overlay = this.shadowRoot?.getElementById("overlay");
-		if (!overlay) return;
+		const target = event.target instanceof Element ? event.target : null;
+		const handle = target?.closest(".handle");
+		if (!(handle instanceof HTMLElement)) return;
 		event.preventDefault();
-		overlay.setPointerCapture(event.pointerId);
+		handle.setPointerCapture(event.pointerId);
 		this.interaction.activeDragType = "resize-range";
 		this.interaction.rangeResizeDrag.pointerId = event.pointerId;
 		this.interaction.rangeResizeDrag.edge = edge;
@@ -342,10 +349,12 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.upper-track {
 					height: 76px;
 					background: #6f6f6f;
+					pointer-events: auto;
 				}
 				.lower-track {
 					height: 44px;
 					background: #626262;
+					pointer-events: none;
 				}
 				.overlay {
 					position: absolute;
@@ -374,6 +383,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					top: 50px;
 					height: 1px;
 					background: rgba(255, 255, 255, 0.46);
+					pointer-events: none;
 				}
 				.active-range {
 					position: absolute;
@@ -430,6 +440,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					font-weight: 550;
 					color: rgba(255, 255, 255, 0.9);
 					white-space: nowrap;
+					pointer-events: none;
 				}
 				.center-marker {
 					position: absolute;
@@ -474,6 +485,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					height: 14px;
 					background: rgba(255, 255, 255, 0.56);
 					transform: translateX(-50%);
+					pointer-events: none;
 				}
 				.handle {
 					position: absolute;

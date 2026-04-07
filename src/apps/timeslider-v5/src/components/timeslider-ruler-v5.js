@@ -224,7 +224,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		if (this.interaction.activeDragType === "focus" && event.pointerId === this.interaction.focusDrag.pointerId) {
 			const deltaX = event.clientX - this.interaction.focusDrag.startX;
 			const deltaYears = deltaX / this.model.pixelsPerYear;
-			this.updateFocusYear(this.interaction.focusDrag.startFocusYear + deltaYears);
+			this.updateFocusYear(this.interaction.focusDrag.startFocusYear - deltaYears);
 			return;
 		}
 

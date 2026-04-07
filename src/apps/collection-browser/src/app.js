@@ -541,7 +541,12 @@ class TimemapBrowserElement extends ComponentBase {
 						id: `${source.id}::${entry.id}`,
 						sourceId: source.id,
 						sourceLabel: source.label,
-						sourceDisplayName: descriptor.title || source.label || "",
+						sourceTitle: descriptor.title || source.label || "",
+						sourceDisplayName:
+							descriptor.organizationName ||
+							descriptor.title ||
+							source.label ||
+							"",
 						sourceOrganizationName:
 							descriptor.organizationName || source.organizationName || "",
 						sourceCuratorName:
@@ -561,7 +566,13 @@ class TimemapBrowserElement extends ComponentBase {
 				manifestUrl: descriptor.manifestUrl,
 				sourceId: source.id,
 				sourceLabel: source.label,
-				sourceDisplayName: descriptor.title || source.label || "",
+				sourceTitle: descriptor.title || source.label || "",
+				sourceDisplayName:
+					source.organizationName ||
+					descriptor.organizationName ||
+					descriptor.title ||
+					source.label ||
+					"",
 				sourceOrganizationName:
 					source.organizationName || descriptor.organizationName || "",
 				sourceCuratorName:

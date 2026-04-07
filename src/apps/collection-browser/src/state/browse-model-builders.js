@@ -101,6 +101,7 @@ export function buildCollectionBrowseCardModels(
 			manifestUrl,
 			sourceId: entry.sourceId || "",
 			sourceLabel: entry.sourceLabel || "",
+			sourceTitle: entry.sourceTitle || "",
 			sourceDisplayName: entry.sourceDisplayName || "",
 			sourceOrganizationName: entry.sourceOrganizationName || "",
 			sourceCuratorName: entry.sourceCuratorName || "",

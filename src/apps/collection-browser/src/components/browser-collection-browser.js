@@ -180,11 +180,28 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	resolveCollectionSubtitle(entity = {}) {
 		return (
 			String(entity.sourceDisplayName || "").trim() ||
+			String(entity.sourceTitle || "").trim() ||
 			String(entity.sourceLabel || "").trim() ||
 			String(entity.sourceOrganizationName || "").trim() ||
 			String(entity.sourceCuratorName || "").trim() ||
 			"Collection"
 		);
+	}
+
+	applyCollectionSubtitle(card, subtitle) {
+		const subtitleText = String(subtitle || "").trim();
+		if (!subtitleText) {
+			return;
+		}
+		const updateSubtitle = () => {
+			const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
+			if (subtitleElement) {
+				subtitleElement.textContent = subtitleText;
+			}
+		};
+		updateSubtitle();
+		queueMicrotask(updateSubtitle);
+		requestAnimationFrame(updateSubtitle);
 	}
 
 	itemTileConfig(entity = {}) {
@@ -246,11 +263,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 				actionValue: manifestUrl,
 				disabled: Boolean(entity.disabled),
 			});
-			const subtitle = this.resolveCollectionSubtitle(entity);
-			const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
-			if (subtitleElement) {
-				subtitleElement.textContent = subtitle;
-			}
+			this.applyCollectionSubtitle(
+				card,
+				this.resolveCollectionSubtitle(entity),
+			);
 			card.classList.add("tile-2x2");
 			return card;
 		}

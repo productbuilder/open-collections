@@ -33,6 +33,11 @@ Current browse entities are:
 - collections
 - items
 
+Preferred manifest entry pattern in most cases:
+
+- start from `source.json` to preserve richer source context through candidate generation and feed assembly
+- allow direct `collection.json` or item-level loading where appropriate, with explicit source-context enrichment when browse UI/orchestration needs that context
+
 A naive flat stream fails because:
 
 - item counts are usually much larger and will dominate quickly

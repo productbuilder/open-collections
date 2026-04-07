@@ -13,6 +13,18 @@ Host
 
 The Manager can start from different entry points, depending on which source URL or path is provided.
 
+## Preferred entry point (recommended, not mandatory)
+
+In a manifest-driven, no-DB setup, `source.json` is generally the preferred entry point in most cases.
+
+Why:
+
+- it carries the richest source-level context (source identity and metadata)
+- it supports cleaner downstream resolution of collections and items
+- it reduces ad hoc enrichment work for browse/discovery surfaces and feed orchestration
+
+Direct `collection.json` loading remains valid and supported. It is still appropriate for standalone/single-collection flows. When UI or orchestration needs source-level context, direct loading may require additional frontend enrichment from surrounding load context.
+
 ## Core Concepts
 
 ### Terminology guardrails (host/source/connection/collection)
@@ -76,6 +88,8 @@ A source can point to either:
 `collections.json`  
 or  
 `collection.json`
+
+In Browser/discovery-first flows, `source.json` should be treated as the preferred source entry document in most cases because it provides richer source context. Direct `collection.json` entry points remain supported.
 
 In runtime terms, a saved connection usually targets a host + source entry point.
 
@@ -156,6 +170,7 @@ This makes `collection.json` a single-collection entry point.
 - Keep `collection.json` as the single-collection manifest filename.
 - Do not introduce `connection.json` as a protocol filename in this phase.
 - Browser and Manager should be able to consume sources that resolve to either `collections.json` or `collection.json`.
+- In practice, prefer starting from `source.json` when available to preserve source-level context through browse/model pipelines.
 
 ### Collections
 

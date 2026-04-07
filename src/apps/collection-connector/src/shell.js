@@ -29,6 +29,19 @@ function renderShell(shadowRoot) {
 	shadowRoot.innerHTML = `
 		<style>
 			${accountShellStyles}
+			.connections-quote {
+				margin: var(--oc-space-2) 0 var(--oc-space-3);
+				padding-left: var(--oc-space-2);
+				border-left: 1px solid var(--oc-border-soft, #d9d5d0);
+				color: var(--oc-text-subtle, var(--oc-text-muted));
+				font-size: 0.95em;
+				font-style: italic;
+				line-height: 1.4;
+			}
+
+			.connections-body{
+				margin-top: 2rem;
+			}
 		</style>
 
 		<main class="oc-page oc-app-viewport account-shell">
@@ -47,6 +60,7 @@ function renderShell(shadowRoot) {
 				<div id="connectionsOverviewView">
 					<div class="connections-overview-panel" id="connectionsOverviewPanel">
 						<p class="account-description connections-explainer">Open Collections does not store your files. Your collections stay in storage you control, such as a local folder, your own cloud storage, or your own web host.</p>
+						<p class="account-description connections-quote">“Why depend on big tech when you have your own tech.”</p>
 
 						<div class="connections-body">
 							<open-collections-action-row

@@ -18,6 +18,8 @@ At the protocol layer, Browser and Manager can consume entry points that resolve
 - `collections.json`
 - `collection.json`
 
+For Browser discovery workflows, `source.json` is the preferred entry point in most cases because it carries richer source-level context for source, collection, and mixed-feed presentation.
+
 At the Browser UI layer, users need a clearer hierarchy:
 
 - Sources
@@ -78,6 +80,7 @@ Keep these layers distinct:
 - entry points may resolve to either `collections.json` or `collection.json`
 - Browser and Manager should still be able to consume both entry forms
 - storage/runtime flexibility remains important
+- direct collection entry remains valid, but may require source-context enrichment in Browser models when source-level context is needed in cards or orchestration
 
 ### Browser browse model
 

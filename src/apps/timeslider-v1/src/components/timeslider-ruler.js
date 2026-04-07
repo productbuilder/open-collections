@@ -1,10 +1,11 @@
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
-const INERTIA_RELEASE_BOOST = 1.18;
-const INERTIA_MAX_VELOCITY = 0.045;
-const INERTIA_START_THRESHOLD = 0.0009;
+const INERTIA_RELEASE_BOOST = 1.24;
+const INERTIA_FAST_SWIPE_MULTIPLIER = 0.5;
+const INERTIA_MAX_VELOCITY = 0.065;
+const INERTIA_START_THRESHOLD = 0.0007;
 const INERTIA_STOP_THRESHOLD = 0.00015;
-const INERTIA_DECAY_TIME_MS = 220;
+const INERTIA_DECAY_TIME_MS = 320;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -212,8 +213,10 @@ class TimeSliderV1RulerElement extends HTMLElement {
 
 	onPointerUp() {
 		this.drag.active = false;
+		const releaseSpeed = Math.abs(this.motion.velocityYearsPerMs);
+		const fastSwipeBoost = 1 + Math.min(1, releaseSpeed / 0.018) * INERTIA_FAST_SWIPE_MULTIPLIER;
 		this.motion.velocityYearsPerMs = clamp(
-			this.motion.velocityYearsPerMs * INERTIA_RELEASE_BOOST,
+			this.motion.velocityYearsPerMs * INERTIA_RELEASE_BOOST * fastSwipeBoost,
 			-INERTIA_MAX_VELOCITY,
 			INERTIA_MAX_VELOCITY,
 		);

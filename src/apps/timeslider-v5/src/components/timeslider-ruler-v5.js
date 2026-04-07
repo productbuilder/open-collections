@@ -335,7 +335,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.frame {
 					position: relative;
 					--ruler-baseline-y: 69px;
-					--edge-value-bottom-inset: 7px;
+					--edge-value-bottom-inset: 6px;
 					--active-range-top: 41px;
 					--active-range-bottom: 97px;
 					--handle-top: 108px;

@@ -305,7 +305,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		const yearMappedEndX = this.yearToX(this.model.activeRangeEndYear, trackWidth);
 		const yearMappedWidth = Math.max(0, yearMappedEndX - yearMappedStartX);
 		const rangeWidth = Math.max(minVisualRangeWidth, yearMappedWidth);
-		const rangeCenterX = this.yearToX(this.model.focusYear, trackWidth);
+		const rangeCenterYear = (this.model.activeRangeStartYear + this.model.activeRangeEndYear) / 2;
+		const rangeCenterX = this.yearToX(rangeCenterYear, trackWidth);
 		const clampedRangeCenterX = Math.max(rangeWidth / 2, Math.min(trackWidth - (rangeWidth / 2), rangeCenterX));
 		const leftEdgeX = clampedRangeCenterX - (rangeWidth / 2);
 		const rightEdgeX = clampedRangeCenterX + (rangeWidth / 2);

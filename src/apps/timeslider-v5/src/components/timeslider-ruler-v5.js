@@ -344,15 +344,15 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: relative;
 					display: grid;
 					gap: 4px;
-					padding: 0;
+					padding: 14px 0 6px;
 				}
 				.upper-track {
-					height: 76px;
+					height: 80px;
 					background: #6f6f6f;
 					pointer-events: auto;
 				}
 				.lower-track {
-					height: 44px;
+					height: 48px;
 					background: #626262;
 					pointer-events: none;
 				}
@@ -378,10 +378,10 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.ruler-zone {
 					position: absolute;
-					top: 0;
+					top: 14px;
 					left: 0;
 					width: 100%;
-					height: 76px;
+					height: 80px;
 					touch-action: none;
 					cursor: grab;
 					pointer-events: auto;
@@ -392,14 +392,14 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: absolute;
 					left: -6px;
 					right: -6px;
-					top: 50px;
+					top: 66px;
 					height: 1px;
 					background: rgba(255, 255, 255, 0.46);
 					pointer-events: none;
 				}
 				.active-range {
 					position: absolute;
-					top: 14px;
+					top: 30px;
 					height: 38px;
 					background: rgba(255, 255, 255, 0.09);
 					border: 1px solid rgba(255, 255, 255, 0.78);
@@ -409,7 +409,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.edge-value {
 					position: absolute;
-					top: -10px;
+					top: 6px;
 					transform: translateX(-50%);
 					font-size: 0.67rem;
 					font-weight: 600;
@@ -432,14 +432,14 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.tick {
 					position: absolute;
-					top: 47px;
+					top: 63px;
 					width: 1px;
 					height: 6px;
 					background: rgba(255, 255, 255, 0.46);
 				}
 				.tick[data-tier="major"] {
 					height: 11px;
-					top: 42px;
+					top: 58px;
 					width: 2px;
 					background: rgba(255, 255, 255, 0.82);
 				}
@@ -456,7 +456,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.center-marker {
 					position: absolute;
-					top: 12px;
+					top: 28px;
 					height: 52px;
 					width: 2px;
 					transform: translateX(-50%);
@@ -477,7 +477,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.center-year {
 					position: absolute;
-					top: -12px;
+					top: 4px;
 					transform: translateX(-50%);
 					padding: 0.2rem 0.6rem;
 					font-size: 0.82rem;
@@ -492,7 +492,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.resize-guide {
 					position: absolute;
-					top: 72px;
+					top: 88px;
 					width: 1px;
 					height: 14px;
 					background: rgba(255, 255, 255, 0.56);
@@ -501,7 +501,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.handle {
 					position: absolute;
-					top: 86px;
+					top: 102px;
 					width: ${HANDLE_WIDTH_PX}px;
 					height: 30px;
 					transform: translateX(-50%);
@@ -531,7 +531,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.range-values {
 					position: absolute;
 					left: 50%;
-					top: 102px;
+					top: 118px;
 					transform: translate(-50%, -50%);
 					font-size: 0.8rem;
 					font-weight: 700;

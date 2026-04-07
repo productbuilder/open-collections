@@ -18,8 +18,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 				maxYear: 2025,
 			},
 			focusYear: 1950,
-			rangeMin: 1938,
-			rangeMax: 1962,
+			rangeMinYear: 1938,
+			rangeMaxYear: 1962,
 			minRangeYears: 6,
 			maxRangeYears: 260,
 			pixelsPerYear: 3.2,
@@ -51,20 +51,20 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 				Math.min(this.state.maxRangeYears, domainSpan),
 			);
 			const half = clampedRangeYears / 2;
-			const rangeCenter = (this.state.rangeMin + this.state.rangeMax) / 2;
+			const rangeCenter = (this.state.rangeMinYear + this.state.rangeMaxYear) / 2;
 			const centeredMin = rangeCenter - half;
 			const centeredMax = rangeCenter + half;
 			const overflowLeft = this.state.domain.minYear - centeredMin;
 			const overflowRight = centeredMax - this.state.domain.maxYear;
 			if (overflowLeft > 0) {
-				this.state.rangeMin = centeredMin + overflowLeft;
-				this.state.rangeMax = centeredMax + overflowLeft;
+				this.state.rangeMinYear = centeredMin + overflowLeft;
+				this.state.rangeMaxYear = centeredMax + overflowLeft;
 			} else if (overflowRight > 0) {
-				this.state.rangeMin = centeredMin - overflowRight;
-				this.state.rangeMax = centeredMax - overflowRight;
+				this.state.rangeMinYear = centeredMin - overflowRight;
+				this.state.rangeMaxYear = centeredMax - overflowRight;
 			} else {
-				this.state.rangeMin = centeredMin;
-				this.state.rangeMax = centeredMax;
+				this.state.rangeMinYear = centeredMin;
+				this.state.rangeMaxYear = centeredMax;
 			}
 			this.applyView();
 		});
@@ -73,7 +73,7 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 	applyView() {
 		if (!this.shadowRoot) return;
 		const ruler = this.shadowRoot.querySelector("oc-timeslider-v5-ruler");
-		const activeRangeYears = this.state.rangeMax - this.state.rangeMin;
+		const activeRangeYears = this.state.rangeMaxYear - this.state.rangeMinYear;
 		if (ruler) {
 			ruler.domainMinYear = this.state.domain.minYear;
 			ruler.domainMaxYear = this.state.domain.maxYear;
@@ -82,8 +82,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 			ruler.minRangeYears = this.state.minRangeYears;
 			ruler.maxRangeYears = this.state.maxRangeYears;
 			ruler.pixelsPerYear = this.state.pixelsPerYear;
-			ruler.activeRangeStartYear = this.state.rangeMin;
-			ruler.activeRangeEndYear = this.state.rangeMax;
+			ruler.activeRangeStartYear = this.state.rangeMinYear;
+			ruler.activeRangeEndYear = this.state.rangeMaxYear;
 		}
 		const focusValue = this.shadowRoot.getElementById("focusValue");
 		const rangeValue = this.shadowRoot.getElementById("rangeValue");
@@ -91,7 +91,7 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 		const domainValue = this.shadowRoot.getElementById("domainValue");
 		if (!focusValue || !rangeValue || !widthValue || !domainValue) return;
 		focusValue.textContent = formatYear(this.state.focusYear);
-		rangeValue.textContent = `${formatYear(this.state.rangeMin)} to ${formatYear(this.state.rangeMax)}`;
+		rangeValue.textContent = `${formatYear(this.state.rangeMinYear)} to ${formatYear(this.state.rangeMaxYear)}`;
 		widthValue.textContent = `${Math.round(activeRangeYears)} years`;
 		domainValue.textContent = `${formatYear(this.state.domain.minYear)} to ${formatYear(this.state.domain.maxYear)}`;
 	}

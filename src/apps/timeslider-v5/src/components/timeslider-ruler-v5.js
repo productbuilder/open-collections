@@ -43,12 +43,16 @@ class TimeSliderV5RulerElement extends HTMLElement {
 			activeRangeEndYear: 1962,
 		};
 		this.interaction = {
-			mode: null,
-			pointerId: null,
-			startX: 0,
-			startFocusYear: 1950,
-			startRangeYears: 24,
-			edge: null,
+			activeDragType: null,
+			focusDrag: {
+				pointerId: null,
+			},
+			rangeResizeDrag: {
+				pointerId: null,
+				startX: 0,
+				startRangeYears: 24,
+				edge: null,
+			},
 		};
 		this.onPointerMove = this.onPointerMove.bind(this);
 		this.onPointerUp = this.onPointerUp.bind(this);
@@ -124,24 +128,32 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	bindEvents() {
-		const rulerZone = this.shadowRoot?.getElementById("rulerZone");
+		const overlay = this.shadowRoot?.getElementById("overlay");
 		const leftHandle = this.shadowRoot?.getElementById("leftHandle");
 		const rightHandle = this.shadowRoot?.getElementById("rightHandle");
-		if (!rulerZone || !leftHandle || !rightHandle) return;
-		rulerZone.addEventListener("pointerdown", (event) => this.startRulerDrag(event));
-		leftHandle.addEventListener("pointerdown", (event) => this.startRangeResize(event, "left"));
-		rightHandle.addEventListener("pointerdown", (event) => this.startRangeResize(event, "right"));
+		if (!overlay || !leftHandle || !rightHandle) return;
+		overlay.addEventListener("pointerdown", (event) => {
+			if (event.target === leftHandle) {
+				this.startRangeResize(event, "left");
+				return;
+			}
+			if (event.target === rightHandle) {
+				this.startRangeResize(event, "right");
+				return;
+			}
+			this.startFocusDrag(event);
+		});
 	}
 
-	startRulerDrag(event) {
+	startFocusDrag(event) {
 		const rulerZone = this.shadowRoot?.getElementById("rulerZone");
 		if (!rulerZone) return;
+		if (!rulerZone.contains(event.target)) return;
 		event.preventDefault();
 		rulerZone.setPointerCapture(event.pointerId);
-		this.interaction.mode = "drag-ruler";
-		this.interaction.pointerId = event.pointerId;
-		this.interaction.startX = event.clientX;
-		this.interaction.startFocusYear = this.model.focusYear;
+		this.interaction.activeDragType = "focus";
+		this.interaction.focusDrag.pointerId = event.pointerId;
+		this.updateFocusYearFromPointer(event.clientX);
 		window.addEventListener("pointermove", this.onPointerMove);
 		window.addEventListener("pointerup", this.onPointerUp);
 		window.addEventListener("pointercancel", this.onPointerUp);
@@ -153,11 +165,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		if (!overlay) return;
 		event.preventDefault();
 		overlay.setPointerCapture(event.pointerId);
-		this.interaction.mode = "resize-range";
-		this.interaction.pointerId = event.pointerId;
-		this.interaction.edge = edge;
-		this.interaction.startX = event.clientX;
-		this.interaction.startRangeYears = this.model.activeRangeYears;
+		this.interaction.activeDragType = "resize-range";
+		this.interaction.rangeResizeDrag.pointerId = event.pointerId;
+		this.interaction.rangeResizeDrag.edge = edge;
+		this.interaction.rangeResizeDrag.startX = event.clientX;
+		this.interaction.rangeResizeDrag.startRangeYears = this.model.activeRangeYears;
 		window.addEventListener("pointermove", this.onPointerMove);
 		window.addEventListener("pointerup", this.onPointerUp);
 		window.addEventListener("pointercancel", this.onPointerUp);
@@ -170,30 +182,44 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		return ((year - this.model.domainMinYear) / domainSpan) * width;
 	}
 
-	onPointerMove(event) {
-		if (event.pointerId !== this.interaction.pointerId) return;
-		const deltaX = event.clientX - this.interaction.startX;
-		const pixelsPerYear = this.model.pixelsPerYear;
-		if (!pixelsPerYear) return;
+	xToYear(x, width) {
+		if (!Number.isFinite(width) || width <= 0) return this.model.focusYear;
+		const domainSpan = this.model.domainMaxYear - this.model.domainMinYear;
+		if (!Number.isFinite(domainSpan) || domainSpan <= 0) return this.model.focusYear;
+		const clampedX = Math.max(0, Math.min(width, x));
+		return this.model.domainMinYear + ((clampedX / width) * domainSpan);
+	}
 
-		if (this.interaction.mode === "drag-ruler") {
-			const deltaYears = deltaX / pixelsPerYear;
-			const nextFocusYear = this.interaction.startFocusYear - deltaYears;
-			this.dispatchEvent(
-				new CustomEvent("focus-year-change", {
-					detail: { focusYear: nextFocusYear },
-					bubbles: true,
-					composed: true,
-				}),
-			);
+	updateFocusYearFromPointer(clientX) {
+		const frame = this.shadowRoot?.getElementById("frame");
+		if (!frame) return;
+		const rect = frame.getBoundingClientRect();
+		const width = rect.width || frame.clientWidth || 320;
+		const offsetX = clientX - rect.left;
+		const nextFocusYear = this.xToYear(offsetX, width);
+		this.dispatchEvent(
+			new CustomEvent("focus-year-change", {
+				detail: { focusYear: nextFocusYear },
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	}
+
+	onPointerMove(event) {
+		if (this.interaction.activeDragType === "focus" && event.pointerId === this.interaction.focusDrag.pointerId) {
+			this.updateFocusYearFromPointer(event.clientX);
 			return;
 		}
 
-		if (this.interaction.mode === "resize-range") {
+		if (this.interaction.activeDragType === "resize-range" && event.pointerId === this.interaction.rangeResizeDrag.pointerId) {
+			const pixelsPerYear = this.model.pixelsPerYear;
+			if (!pixelsPerYear) return;
+			const deltaX = event.clientX - this.interaction.rangeResizeDrag.startX;
 			const signedDeltaYears = deltaX / pixelsPerYear;
-			const edgeFactor = this.interaction.edge === "left" ? -1 : 1;
+			const edgeFactor = this.interaction.rangeResizeDrag.edge === "left" ? -1 : 1;
 			const deltaHalfWidthYears = signedDeltaYears * edgeFactor;
-			const nextRangeYears = this.interaction.startRangeYears + (deltaHalfWidthYears * 2);
+			const nextRangeYears = this.interaction.rangeResizeDrag.startRangeYears + (deltaHalfWidthYears * 2);
 			this.dispatchEvent(
 				new CustomEvent("active-range-change", {
 					detail: { activeRangeYears: nextRangeYears },
@@ -205,10 +231,13 @@ class TimeSliderV5RulerElement extends HTMLElement {
 	}
 
 	onPointerUp(event) {
-		if (event.pointerId !== this.interaction.pointerId) return;
-		this.interaction.mode = null;
-		this.interaction.pointerId = null;
-		this.interaction.edge = null;
+		const isFocusPointer = event.pointerId === this.interaction.focusDrag.pointerId;
+		const isResizePointer = event.pointerId === this.interaction.rangeResizeDrag.pointerId;
+		if (!isFocusPointer && !isResizePointer) return;
+		this.interaction.activeDragType = null;
+		this.interaction.focusDrag.pointerId = null;
+		this.interaction.rangeResizeDrag.pointerId = null;
+		this.interaction.rangeResizeDrag.edge = null;
 		window.removeEventListener("pointermove", this.onPointerMove);
 		window.removeEventListener("pointerup", this.onPointerUp);
 		window.removeEventListener("pointercancel", this.onPointerUp);
@@ -288,7 +317,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		leftEdgeValue.textContent = formatYear(this.model.activeRangeStartYear);
 		rightEdgeValue.textContent = formatYear(this.model.activeRangeEndYear);
 		rangeValues.textContent = `${Math.round(this.model.activeRangeYears)}y`;
-		frame.dataset.mode = this.interaction.mode || "idle";
+		frame.dataset.mode = this.interaction.activeDragType || "idle";
 		this.buildTicks(trackWidth);
 	}
 
@@ -337,7 +366,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					pointer-events: auto;
 					z-index: 1;
 				}
-				.frame[data-mode="drag-ruler"] .ruler-zone { cursor: grabbing; }
+				.frame[data-mode="focus"] .ruler-zone { cursor: grabbing; }
 				.base-line {
 					position: absolute;
 					left: -6px;

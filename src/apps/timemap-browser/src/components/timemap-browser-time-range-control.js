@@ -159,6 +159,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		};
 		this._resizeObserver = null;
 		this._handleResize = this._onResize.bind(this);
+		this._lastEffectiveState = null;
 	}
 
 	connectedCallback() {
@@ -241,6 +242,17 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		return this._canonical.domainMax;
 	}
 
+	getDebugSnapshot() {
+		return {
+			canonicalStart: this._canonical.start,
+			canonicalEnd: this._canonical.end,
+			computedFocusYear: this._lastEffectiveState?.focusYear ?? null,
+			computedActiveRangeYears: this._lastEffectiveState?.activeRangeYears ?? null,
+			effectivePixelsPerYear: this._lastEffectiveState?.pixelsPerYear ?? this._pixelsPerYear,
+			disabled: this.hasAttribute("disabled"),
+		};
+	}
+
 	render() {
 		if (this.shadowRoot.childElementCount > 0) {
 			return;
@@ -313,6 +325,11 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const model = toV5Model(normalized);
 		const pixelsPerYear = this._resolvePixelsPerYear(normalized);
+		this._lastEffectiveState = {
+			focusYear: model.focusYear,
+			activeRangeYears: model.activeRangeYears,
+			pixelsPerYear,
+		};
 		this._suppressDispatch = true;
 		ruler.pixelsPerYear = pixelsPerYear;
 		ruler.domainMinYear = model.domainMinYear;

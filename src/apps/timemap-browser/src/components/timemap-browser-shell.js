@@ -213,6 +213,21 @@ const timemapBrowserShellStyles = `
 		color: #1e293b;
 	}
 
+	.timeline-debug {
+		margin: 0;
+		padding: 0.44rem 0.52rem;
+		border-radius: 0.55rem;
+		border: 1px solid rgba(148, 163, 184, 0.45);
+		background: rgba(226, 232, 240, 0.5);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+			"Courier New", monospace;
+		font-size: 0.67rem;
+		line-height: 1.35;
+		color: #0f172a;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
 	.timeline-slider {
 		--oc-time-range-slider-accent: #0f766e;
 		display: block;
@@ -524,6 +539,13 @@ function resolveActiveTimeRangeYears(state = {}, domain = null) {
 		start: Math.min(startYear, endYear),
 		end: Math.max(startYear, endYear),
 	};
+}
+
+function toDebugValue(value) {
+	if (value === null || value === undefined || value === "") {
+		return "null";
+	}
+	return String(value);
 }
 
 function getVisibleOverlayCount(visibleOverlays = {}) {
@@ -958,6 +980,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 								range-end="${TIMELINE_DEFAULT_END_YEAR}"
 							></timemap-browser-time-range-control>
 							<p class="timeline-note" data-bind="time-range-note"></p>
+							<pre class="timeline-debug" data-bind="timeline-debug"></pre>
 							<p class="sr-only" data-bind="status"></p>
 						</div>
 					</section>
@@ -1050,6 +1073,14 @@ class TimemapBrowserShellElement extends HTMLElement {
 				? state.spatial.response.features
 				: [];
 		const timelinePill = this.shadowRoot.querySelector('[data-bind="timeline-pill"]');
+		const queryTimeRange =
+			state.query?.timeRange && typeof state.query.timeRange === "object"
+				? state.query.timeRange
+				: null;
+		const queryStart = toFiniteYearBound(queryTimeRange?.start);
+		const queryEnd = toFiniteYearBound(queryTimeRange?.end);
+		const hasFiniteCanonicalQueryBounds =
+			Number.isFinite(queryStart) && Number.isFinite(queryEnd);
 		const featureTemporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
 		if (!featureTemporalDomain) {
 			this._suppressTimelineChangeEvent = true;
@@ -1064,6 +1095,17 @@ class TimemapBrowserShellElement extends HTMLElement {
 				timelinePill.hidden = true;
 			}
 			this.updateText("time-range-note", "No known temporal range in loaded features.");
+			this.updateTimelineDebug({
+				shell: {
+					domainMin: null,
+					domainMax: null,
+					rangeStart: null,
+					rangeEnd: null,
+					temporalDomainExists: false,
+					hasFiniteCanonicalQueryBounds,
+				},
+				wrapper: timelineSliderElement.getDebugSnapshot?.(),
+			});
 			return;
 		}
 		const temporalDomain = resolveEmbeddedTemporalDomain(featureTemporalDomain);
@@ -1084,6 +1126,42 @@ class TimemapBrowserShellElement extends HTMLElement {
 			"time-range-note",
 			`Active time range: ${formatTimeRange(state.timeRange)}.`,
 		);
+		this.updateTimelineDebug({
+			shell: {
+				domainMin: temporalDomain.min,
+				domainMax: temporalDomain.max,
+				rangeStart: activeRange.start,
+				rangeEnd: activeRange.end,
+				temporalDomainExists: true,
+				hasFiniteCanonicalQueryBounds,
+			},
+			wrapper: timelineSliderElement.getDebugSnapshot?.(),
+		});
+	}
+
+	updateTimelineDebug({ shell = {}, wrapper = {} } = {}) {
+		const debugElement = this.shadowRoot?.querySelector('[data-bind="timeline-debug"]');
+		if (!debugElement) {
+			return;
+		}
+		const lines = [
+			"[shell-contract]",
+			`domain min: ${toDebugValue(shell.domainMin)}`,
+			`domain max: ${toDebugValue(shell.domainMax)}`,
+			`range start: ${toDebugValue(shell.rangeStart)}`,
+			`range end: ${toDebugValue(shell.rangeEnd)}`,
+			`temporal domain exists: ${toDebugValue(shell.temporalDomainExists)}`,
+			`canonical query.timeRange finite bounds: ${toDebugValue(shell.hasFiniteCanonicalQueryBounds)}`,
+			"",
+			"[wrapper-effective]",
+			`canonical start: ${toDebugValue(wrapper.canonicalStart)}`,
+			`canonical end: ${toDebugValue(wrapper.canonicalEnd)}`,
+			`computed focus year: ${toDebugValue(wrapper.computedFocusYear)}`,
+			`computed active range years: ${toDebugValue(wrapper.computedActiveRangeYears)}`,
+			`effective pixelsPerYear: ${toDebugValue(wrapper.effectivePixelsPerYear)}`,
+			`disabled: ${toDebugValue(wrapper.disabled)}`,
+		];
+		debugElement.textContent = lines.join("\n");
 	}
 
 	_onTimelineRangeChange(event) {

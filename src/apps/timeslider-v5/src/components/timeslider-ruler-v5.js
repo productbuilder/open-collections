@@ -476,6 +476,14 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					--handle-center-y: calc(var(--handle-top) + (var(--handle-height) / 2));
 					--handles-lane-height: var(--handle-height);
 					--handles-lane-top: calc(var(--handle-center-y) - (var(--handles-lane-height) / 2));
+					--timeslider-v5-upper-track-surface: var(
+						--timeslider-v5-upper-track-background,
+						rgba(255, 255, 255, 0.06)
+					);
+					--timeslider-v5-lower-track-surface: var(
+						--timeslider-v5-lower-track-background,
+						rgba(255, 255, 255, 0.04)
+					);
 					border-radius: 0;
 					overflow: hidden;
 					border: none;
@@ -490,12 +498,12 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.upper-track {
 					height: 80px;
-					background: var(--timeslider-v5-upper-track-background, rgba(255, 255, 255, 0.06));
+					background: var(--timeslider-v5-upper-track-surface);
 					pointer-events: auto;
 				}
 				.lower-track {
 					height: 48px;
-					background: var(--timeslider-v5-lower-track-background, rgba(255, 255, 255, 0.04));
+					background: var(--timeslider-v5-lower-track-surface);
 					pointer-events: none;
 				}
 				.overlay {

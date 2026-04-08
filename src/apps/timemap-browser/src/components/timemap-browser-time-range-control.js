@@ -5,8 +5,8 @@ const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_MIN_RANGE_YEARS = 1;
 const EMBEDDED_MIN_PIXELS_PER_YEAR = 2.4;
 const EMBEDDED_MAX_PIXELS_PER_YEAR = 12;
-const EMBEDDED_TARGET_ACTIVE_RANGE_FRACTION = 0.42;
 const EMBEDDED_MIN_MEASURABLE_WIDTH = 180;
+const EMBEDDED_DOMAIN_FIT_FACTOR = 0.9;
 
 function toFiniteNumber(value) {
 	const next = Number(value);
@@ -67,21 +67,15 @@ function toV5Model(range) {
 	};
 }
 
-function resolveEmbeddedPixelsPerYear({ availableWidth, normalizedRange }) {
+function resolveEmbeddedPixelsPerYear({ availableWidth, domain }) {
 	const width = Number(availableWidth);
 	if (!Number.isFinite(width) || width <= 0) {
 		return EMBEDDED_MIN_PIXELS_PER_YEAR;
 	}
 	const measuredWidth = Math.max(EMBEDDED_MIN_MEASURABLE_WIDTH, width);
-	const activeSpan = Math.max(DEFAULT_MIN_RANGE_YEARS, normalizedRange.end - normalizedRange.start);
-	const domainSpan = Math.max(
-		DEFAULT_MIN_RANGE_YEARS,
-		normalizedRange.domain.max - normalizedRange.domain.min,
-	);
-	const targetByActiveRange = (measuredWidth * EMBEDDED_TARGET_ACTIVE_RANGE_FRACTION) / activeSpan;
-	const domainAwareMin = measuredWidth / (domainSpan * 1.5);
-	const safeMin = Math.max(EMBEDDED_MIN_PIXELS_PER_YEAR, domainAwareMin);
-	return clamp(targetByActiveRange, safeMin, EMBEDDED_MAX_PIXELS_PER_YEAR);
+	const domainSpan = Math.max(DEFAULT_MIN_RANGE_YEARS, domain.max - domain.min);
+	const targetByDomain = measuredWidth / (domainSpan * EMBEDDED_DOMAIN_FIT_FACTOR);
+	return clamp(targetByDomain, EMBEDDED_MIN_PIXELS_PER_YEAR, EMBEDDED_MAX_PIXELS_PER_YEAR);
 }
 
 class TimemapBrowserTimeRangeControlElement extends HTMLElement {
@@ -102,6 +96,12 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		this._handleFocusYearChange = this._onFocusYearChange.bind(this);
 		this._handleActiveRangeChange = this._onActiveRangeChange.bind(this);
 		this._availableWidth = 0;
+		this._pixelsPerYear = null;
+		this._pixelsPerYearContext = {
+			availableWidth: null,
+			domainMin: null,
+			domainMax: null,
+		};
 		this._resizeObserver = null;
 		this._handleResize = this._onResize.bind(this);
 	}
@@ -257,10 +257,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		}
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const model = toV5Model(normalized);
-		const pixelsPerYear = resolveEmbeddedPixelsPerYear({
-			availableWidth: this._availableWidth || this.getBoundingClientRect().width,
-			normalizedRange: normalized,
-		});
+		const pixelsPerYear = this._resolvePixelsPerYear(normalized);
 		this._suppressDispatch = true;
 		ruler.pixelsPerYear = pixelsPerYear;
 		ruler.domainMinYear = model.domainMinYear;
@@ -270,6 +267,31 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		ruler.activeRangeYears = model.activeRangeYears;
 		ruler.focusYear = model.focusYear;
 		this._suppressDispatch = false;
+	}
+
+	_resolvePixelsPerYear(normalizedRange) {
+		const availableWidth = this._availableWidth || this.getBoundingClientRect().width;
+		const nextContext = {
+			availableWidth,
+			domainMin: normalizedRange.domain.min,
+			domainMax: normalizedRange.domain.max,
+		};
+		const hasCachedValue = Number.isFinite(this._pixelsPerYear);
+		const sameWidth =
+			Number.isFinite(this._pixelsPerYearContext.availableWidth) &&
+			Math.abs(this._pixelsPerYearContext.availableWidth - nextContext.availableWidth) < 0.5;
+		const sameDomain =
+			this._pixelsPerYearContext.domainMin === nextContext.domainMin &&
+			this._pixelsPerYearContext.domainMax === nextContext.domainMax;
+		if (hasCachedValue && sameWidth && sameDomain) {
+			return this._pixelsPerYear;
+		}
+		this._pixelsPerYear = resolveEmbeddedPixelsPerYear({
+			availableWidth,
+			domain: normalizedRange.domain,
+		});
+		this._pixelsPerYearContext = nextContext;
+		return this._pixelsPerYear;
 	}
 
 	_onFocusYearChange(event) {

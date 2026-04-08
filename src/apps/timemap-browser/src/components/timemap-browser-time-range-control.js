@@ -3,6 +3,7 @@ import "../../../timeslider-v5/src/components/timeslider-ruler-v5.js";
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_MIN_RANGE_YEARS = 1;
+const EMBEDDED_PIXELS_PER_YEAR = 2.4;
 
 function toFiniteNumber(value) {
 	const next = Number(value);
@@ -202,6 +203,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const model = toV5Model(normalized);
 		this._suppressDispatch = true;
+		ruler.pixelsPerYear = EMBEDDED_PIXELS_PER_YEAR;
 		ruler.domainMinYear = model.domainMinYear;
 		ruler.domainMaxYear = model.domainMaxYear;
 		ruler.activeRangeStartYear = model.activeRangeStartYear;

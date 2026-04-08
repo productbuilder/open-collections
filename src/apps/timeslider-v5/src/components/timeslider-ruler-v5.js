@@ -374,7 +374,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		centerYear.textContent = formatYear(this.model.focusYear);
 		leftEdgeValue.textContent = formatYear(leftYear);
 		rightEdgeValue.textContent = formatYear(rightYear);
-		rangeValues.textContent = `${Math.round(rangeYears)}y`;
+		rangeValues.textContent = `${Math.round(rangeYears)}`;
 		frame.dataset.mode = this.interaction.activeDragType || "idle";
 		this.buildTicks(trackWidth);
 	}
@@ -622,7 +622,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.range-values {
 					position: absolute;
 					left: 50%;
-					top: 126px;
+					top: var(--handle-center-y);
 					transform: translate(-50%, -50%);
 					font-size: 0.8rem;
 					font-weight: 700;
@@ -658,7 +658,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">
 							<span class="handle-grip" aria-hidden="true"></span>
 						</button>
-						<div class="range-values" id="rangeValues">50y</div>
+						<div class="range-values" id="rangeValues">50</div>
 					</div>
 					<div id="rulerZone" class="ruler-zone" aria-label="Drag ruler to move focused year"></div>
 				</div>

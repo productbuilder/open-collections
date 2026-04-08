@@ -399,6 +399,45 @@ function formatTimeRange(timeRange = {}) {
 	return timeRange.start ? `From ${timeRange.start}` : `Until ${timeRange.end}`;
 }
 
+const TIMELINE_EMBED_DOMAIN_MIN_YEAR = 1800;
+const TIMELINE_EMBED_DOMAIN_MAX_YEAR = 2050;
+const TIMELINE_DEFAULT_CENTER_YEAR = 1950;
+const TIMELINE_DEFAULT_WINDOW_YEARS = 50;
+
+function clamp(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+
+function clampRangeWithinDomain({ center, width, domain }) {
+	const domainSpan = Math.max(0, domain.max - domain.min);
+	const clampedWidth = Math.min(Math.max(1, width), domainSpan);
+	if (clampedWidth <= 0) {
+		return {
+			start: domain.min,
+			end: domain.min,
+		};
+	}
+	const halfWidth = clampedWidth / 2;
+	const minCenter = domain.min + halfWidth;
+	const maxCenter = domain.max - halfWidth;
+	const clampedCenter = clamp(center, minCenter, maxCenter);
+	return {
+		start: clampedCenter - halfWidth,
+		end: clampedCenter + halfWidth,
+	};
+}
+
+function resolveEmbeddedTemporalDomain(featureDomain = null) {
+	const rawMin = Number(featureDomain?.min);
+	const rawMax = Number(featureDomain?.max);
+	const featureMin = Number.isFinite(rawMin) ? rawMin : TIMELINE_EMBED_DOMAIN_MIN_YEAR;
+	const featureMax = Number.isFinite(rawMax) ? rawMax : TIMELINE_EMBED_DOMAIN_MAX_YEAR;
+	return {
+		min: Math.min(featureMin, TIMELINE_EMBED_DOMAIN_MIN_YEAR),
+		max: Math.max(featureMax, TIMELINE_EMBED_DOMAIN_MAX_YEAR),
+	};
+}
+
 function toFiniteYearFromUtcTimestamp(value) {
 	const parsed = Number(value);
 	if (!Number.isFinite(parsed)) {
@@ -460,31 +499,18 @@ function resolveActiveTimeRangeYears(state = {}, domain = null) {
 	if (!domain) {
 		return null;
 	}
-	const domainSpan = Math.max(0, domain.max - domain.min);
-	const centeredWindowYears = Math.min(domainSpan, Math.max(20, Math.round(domainSpan * 0.4)));
-	const centeredStart = domain.min + ((domainSpan - centeredWindowYears) / 2);
-	const centeredEnd = centeredStart + centeredWindowYears;
 	const queryTimeRange =
 		state.query?.timeRange && typeof state.query.timeRange === "object"
 			? state.query.timeRange
 			: null;
-	const stateTimeRange =
-		state.timeRange && typeof state.timeRange === "object" ? state.timeRange : null;
 	if (!queryTimeRange) {
-		const stateStart = toFiniteYearBound(stateTimeRange?.start);
-		const stateEnd = toFiniteYearBound(stateTimeRange?.end);
-		if (Number.isFinite(stateStart) && Number.isFinite(stateEnd)) {
-			return {
-				start: Math.max(domain.min, Math.min(domain.max, Math.min(stateStart, stateEnd))),
-				end: Math.max(domain.min, Math.min(domain.max, Math.max(stateStart, stateEnd))),
-			};
-		}
-		return {
-			start: centeredStart,
-			end: centeredEnd,
-		};
+		return clampRangeWithinDomain({
+			center: TIMELINE_DEFAULT_CENTER_YEAR,
+			width: TIMELINE_DEFAULT_WINDOW_YEARS,
+			domain,
+		});
 	}
-	const sourceRange = queryTimeRange || stateTimeRange || {};
+	const sourceRange = queryTimeRange;
 	const parsedStart = toFiniteYearBound(sourceRange.start);
 	const parsedEnd = toFiniteYearBound(sourceRange.end);
 	const startYear = Number.isFinite(parsedStart) ? parsedStart : domain.min;
@@ -1012,8 +1038,8 @@ class TimemapBrowserShellElement extends HTMLElement {
 				? state.spatial.response.features
 				: [];
 		const timelinePill = this.shadowRoot.querySelector('[data-bind="timeline-pill"]');
-		const temporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
-		if (!temporalDomain) {
+		const featureTemporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
+		if (!featureTemporalDomain) {
 			this._suppressTimelineChangeEvent = true;
 			timelineSliderElement.setAttribute("disabled", "");
 			timelineSliderElement.hidden = true;
@@ -1028,6 +1054,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 			this.updateText("time-range-note", "No known temporal range in loaded features.");
 			return;
 		}
+		const temporalDomain = resolveEmbeddedTemporalDomain(featureTemporalDomain);
 
 		const activeRange = resolveActiveTimeRangeYears(state, temporalDomain);
 		this._suppressTimelineChangeEvent = true;

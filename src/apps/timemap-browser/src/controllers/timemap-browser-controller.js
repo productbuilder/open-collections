@@ -204,11 +204,17 @@ export function createTimemapBrowserController(
 			});
 		},
 		setTimeRange(timeRange = {}) {
+			const currentQueryTimeRange =
+				state.query?.timeRange && typeof state.query.timeRange === "object"
+					? state.query.timeRange
+					: createCollectionQueryState().timeRange;
+			const hasStartPatch = Object.prototype.hasOwnProperty.call(timeRange, "start");
+			const hasEndPatch = Object.prototype.hasOwnProperty.call(timeRange, "end");
 			const nextQuery = normalizeCollectionQueryState(
 				{
 					timeRange: {
-						start: timeRange.start ?? state.timeRange.start,
-						end: timeRange.end ?? state.timeRange.end,
+						start: hasStartPatch ? timeRange.start : currentQueryTimeRange.start,
+						end: hasEndPatch ? timeRange.end : currentQueryTimeRange.end,
 					},
 				},
 				state.query || createCollectionQueryState(),

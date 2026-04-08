@@ -551,6 +551,9 @@ class TimemapBrowserElement extends HTMLElement {
 			}
 			const projectedState = {
 				...nextState,
+				timeRange: {
+					...(nextState.query?.timeRange || {}),
+				},
 				timelineSourceFeatures: responseFeatures,
 				hoveredFeatureId:
 					nextState.hoveredFeatureId &&

@@ -249,21 +249,6 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		return this._canonical.domainMax;
 	}
 
-	getDebugSnapshot() {
-		return {
-			canonicalStart: this._canonical.start,
-			canonicalEnd: this._canonical.end,
-			computedFocusYear: this._hasEffectiveModel ? this._lastEffectiveState?.focusYear ?? null : null,
-			computedActiveRangeYears: this._hasEffectiveModel
-				? this._lastEffectiveState?.activeRangeYears ?? null
-				: null,
-			effectivePixelsPerYear: this._hasEffectiveModel
-				? this._lastEffectiveState?.pixelsPerYear ?? this._pixelsPerYear
-				: null,
-			disabled: this._isInactive(),
-		};
-	}
-
 	render() {
 		if (this.shadowRoot.childElementCount > 0) {
 			return;
@@ -280,6 +265,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 					display: block;
 					inline-size: 100%;
 					min-block-size: 9.8rem;
+					--timeslider-v5-frame-background: transparent;
 				}
 			</style>
 			<oc-timeslider-v5-ruler data-bind="timeline-ruler"></oc-timeslider-v5-ruler>

@@ -454,10 +454,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.filter-entry,
 				.mode-button {
 					border: 1px solid #cbc6be;
-					background: #fffcf8;
+					background: #ffffff;
 					color: inherit;
 					font: inherit;
 					line-height: 1;
+					
 				}
 				.search-entry,
 				.filter-entry {
@@ -469,11 +470,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					border-radius: 0.65rem;
 					font-size: 0.82rem;
 					font-weight: 540;
+					
 				}
 				.search-entry {
 					inline-size: 100%;
 					justify-content: flex-start;
 					min-inline-size: 0;
+					box-sizing:border-box;
 				}
 				.search-entry-input {
 					min-inline-size: 0;

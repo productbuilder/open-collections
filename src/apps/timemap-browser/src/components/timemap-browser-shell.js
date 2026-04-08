@@ -207,6 +207,7 @@ const timemapBrowserShellStyles = `
 	}
 
 	.timeline-note {
+		display:none;
 		margin: 0;
 		font-size: 0.76rem;
 		line-height: 1.32;

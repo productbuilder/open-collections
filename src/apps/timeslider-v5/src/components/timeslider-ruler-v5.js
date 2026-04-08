@@ -517,7 +517,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				.moving-timeline {
 					position: absolute;
 					inset: 0;
-					z-index: 1;
+					z-index: 100;
 					pointer-events: none;
 				}
 				.fixed-overlay {
@@ -531,7 +531,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					position: absolute;
 					left: 0;
 					width: 100%;
-					background: rgba(255, 255, 255, 0.05);
+					background: var( --oc-border-accent, rgba(133, 133, 133, 1) ) ;
 					pointer-events: none;
 					z-index: 0;
 				}

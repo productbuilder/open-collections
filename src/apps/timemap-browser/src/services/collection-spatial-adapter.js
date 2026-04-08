@@ -28,6 +28,11 @@ function hasNonEmptyText(value) {
 	return toTrimmedText(value).length > 0;
 }
 
+function normalizeItemType(value) {
+	const normalized = toTrimmedText(value);
+	return normalized ? normalized : null;
+}
+
 function deriveFormat(item = {}, media = {}) {
 	const explicitCandidates = [item.format, item.mediaFormat, media.format];
 	for (const candidate of explicitCandidates) {
@@ -142,7 +147,7 @@ function deriveCollectionItemFeature(item = {}, index = 0, collection = {}) {
 		toTrimmedText(item.category) || toTrimmedText(item.type) || primaryTag || "collection-item";
 	const format = deriveFormat(item, media);
 	const mediaType = toTrimmedText(media.type) || "image";
-	const itemType = toTrimmedText(item.type);
+	const itemType = normalizeItemType(item.type);
 	const temporal = normalizeTemporalDisplayValue(deriveTemporalDisplayValue(item));
 
 	return {

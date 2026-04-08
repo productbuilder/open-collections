@@ -1,7 +1,7 @@
 import "../../../timeslider-v5/src/components/timeslider-ruler-v5.js";
 
 const DEFAULT_DOMAIN_MIN = 1800;
-const DEFAULT_DOMAIN_MAX = 2025;
+const DEFAULT_DOMAIN_MAX = 2050;
 const DEFAULT_MIN_RANGE_YEARS = 1;
 const EMBEDDED_MIN_PIXELS_PER_YEAR = 2.4;
 const EMBEDDED_MAX_PIXELS_PER_YEAR = 12;
@@ -64,6 +64,27 @@ function toV5Model(range) {
 		activeRangeEndYear: range.end,
 		activeRangeYears: width,
 		focusYear: range.start + (width / 2),
+	};
+}
+
+function clampRangeWithinDomain({ center, width, domain }) {
+	const domainMin = domain.min;
+	const domainMax = domain.max;
+	const domainSpan = Math.max(0, domainMax - domainMin);
+	const clampedWidth = Math.min(Math.max(DEFAULT_MIN_RANGE_YEARS, width), domainSpan);
+	if (clampedWidth <= 0) {
+		return {
+			start: domainMin,
+			end: domainMin,
+		};
+	}
+	const halfWidth = clampedWidth / 2;
+	const minCenter = domainMin + halfWidth;
+	const maxCenter = domainMax - halfWidth;
+	const clampedCenter = clamp(center, minCenter, maxCenter);
+	return {
+		start: clampedCenter - halfWidth,
+		end: clampedCenter + halfWidth,
 	};
 }
 
@@ -304,9 +325,11 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		}
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const width = Math.max(DEFAULT_MIN_RANGE_YEARS, normalized.end - normalized.start);
-		const halfWidth = width / 2;
-		const start = clamp(nextFocusYear - halfWidth, normalized.domain.min, normalized.domain.max);
-		const end = clamp(nextFocusYear + halfWidth, normalized.domain.min, normalized.domain.max);
+		const { start, end } = clampRangeWithinDomain({
+			center: nextFocusYear,
+			width,
+			domain: normalized.domain,
+		});
 		this._emitCanonicalRangeChange(start, end);
 	}
 
@@ -320,9 +343,11 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		}
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const focusYear = (normalized.start + normalized.end) / 2;
-		const halfWidth = nextRangeYears / 2;
-		const start = clamp(focusYear - halfWidth, normalized.domain.min, normalized.domain.max);
-		const end = clamp(focusYear + halfWidth, normalized.domain.min, normalized.domain.max);
+		const { start, end } = clampRangeWithinDomain({
+			center: focusYear,
+			width: nextRangeYears,
+			domain: normalized.domain,
+		});
 		this._emitCanonicalRangeChange(start, end);
 	}
 

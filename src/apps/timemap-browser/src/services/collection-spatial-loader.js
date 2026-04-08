@@ -35,29 +35,12 @@ function toNormalizedSet(value) {
 	);
 }
 
-const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
-
 function collectTypeValues(properties = {}) {
 	const resolvedType = String(properties.type ?? "").trim();
 	if (resolvedType) {
 		return [resolvedType];
 	}
-	const orderedCandidates = [
-		String(properties.format ?? "").trim(),
-		String(properties.mediaType ?? "").trim(),
-	].filter(Boolean);
-	const uniqueValues = [];
-	for (const value of orderedCandidates) {
-		if (!uniqueValues.includes(value)) {
-			uniqueValues.push(value);
-		}
-	}
-	if (uniqueValues.length > 1) {
-		return uniqueValues.filter(
-			(value) => !GENERIC_MEDIA_TYPES.has(value.toLowerCase()),
-		);
-	}
-	return uniqueValues;
+	return [];
 }
 
 function createFilterOptions(features = []) {

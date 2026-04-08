@@ -1103,7 +1103,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		} else {
 			this.updateText(
 				"time-range-note",
-				`Active time range: ${formatTimeRange(state.timeRange)}.`,
+				`Active time range: ${formatTimeRange(queryTimeRange || {})}.`,
 			);
 		}
 
@@ -1161,15 +1161,8 @@ class TimemapBrowserShellElement extends HTMLElement {
 			this._state?.query?.timeRange && typeof this._state.query.timeRange === "object"
 				? this._state.query.timeRange
 				: {};
-		const currentStateTimeRange =
-			this._state?.timeRange && typeof this._state.timeRange === "object"
-				? this._state.timeRange
-				: {};
-		const currentStart =
-			currentQueryTimeRange.start ??
-			currentStateTimeRange.start ??
-			null;
-		const currentEnd = currentQueryTimeRange.end ?? currentStateTimeRange.end ?? null;
+		const currentStart = currentQueryTimeRange.start ?? null;
+		const currentEnd = currentQueryTimeRange.end ?? null;
 		if (String(currentStart ?? "") === nextStart && String(currentEnd ?? "") === nextEnd) {
 			return;
 		}

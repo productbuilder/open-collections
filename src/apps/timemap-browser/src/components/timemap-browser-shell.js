@@ -184,7 +184,7 @@ const timemapBrowserShellStyles = `
 		pointer-events: auto;
 		inline-size: 100%;
 		min-inline-size: min(100%, 24rem);
-		max-inline-size: var(--timemap-shell-overlay-desktop-max-inline-size);
+		max-inline-size: none;
 		box-sizing: border-box;
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);

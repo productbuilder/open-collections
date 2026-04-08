@@ -264,7 +264,6 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 				oc-timeslider-v5-ruler {
 					display: block;
 					inline-size: 100%;
-					min-block-size: 9.8rem;
 					--timeslider-v5-frame-background: transparent;
 				}
 			</style>

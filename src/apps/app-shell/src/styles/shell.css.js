@@ -27,7 +27,7 @@ export const appShellStyles = `
   }
 
   .oc-app-bar {
-	flex: 0 0 auto;
+	  flex: 0 0 auto;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -152,6 +152,7 @@ export const appShellStyles = `
   }
 
   .oc-app-bar {
+    height: var(--oc-shell-mobile-nav-height);
     position: fixed;
     left: 0;
     right: 0;

@@ -198,13 +198,7 @@ const timemapBrowserShellStyles = `
 		box-shadow: none;
 	}
 
-	.timeline-pill {
-		inline-size: 2.2rem;
-		block-size: 0.26rem;
-		border-radius: 999px;
-		background: rgba(100, 116, 139, 0.45);
-		margin: 0 auto 0.08rem;
-	}
+
 
 	.timeline-note {
 		display:none;
@@ -219,7 +213,6 @@ const timemapBrowserShellStyles = `
 		display: block;
 		inline-size: 100%;
 		min-inline-size: min(100%, 23rem);
-		min-block-size: 9.8rem;
 	}
 
 	.detail-shell {
@@ -947,7 +940,6 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 					<section class="overlay-region bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
-							<div class="timeline-pill" aria-hidden="true" data-bind="timeline-pill"></div>
 							<timemap-browser-time-range-control
 								class="timeline-slider"
 								data-bind="timeline-slider"
@@ -1048,7 +1040,6 @@ class TimemapBrowserShellElement extends HTMLElement {
 			: Array.isArray(state.spatial?.response?.features)
 				? state.spatial.response.features
 				: [];
-		const timelinePill = this.shadowRoot.querySelector('[data-bind="timeline-pill"]');
 		const featureTemporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
 		const hasFeatureTemporalDomain = Boolean(featureTemporalDomain);
 		const temporalDomain = resolveEmbeddedTemporalDomain(featureTemporalDomain);
@@ -1062,9 +1053,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		timelineSliderElement.removeAttribute("disabled");
 		timelineSliderElement.hidden = false;
 		this._suppressTimelineChangeEvent = false;
-		if (timelinePill) {
-			timelinePill.hidden = false;
-		}
+		
 
 		if (!hasFeatureTemporalDomain) {
 			this.updateText("time-range-note", "No known temporal range in loaded features.");

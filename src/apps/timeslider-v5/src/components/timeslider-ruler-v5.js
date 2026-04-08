@@ -502,7 +502,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					pointer-events: auto;
 				}
 				.lower-track {
-					height: 48px;
+					height: 40px;
 					background: var(--timeslider-v5-lower-track-surface);
 					pointer-events: none;
 				}

@@ -503,18 +503,19 @@ function resolveActiveTimeRangeYears(state = {}, domain = null) {
 		state.query?.timeRange && typeof state.query.timeRange === "object"
 			? state.query.timeRange
 			: null;
-	if (!queryTimeRange) {
+	const queryStart = toFiniteYearBound(queryTimeRange?.start);
+	const queryEnd = toFiniteYearBound(queryTimeRange?.end);
+	const hasFiniteQueryBounds =
+		Number.isFinite(queryStart) && Number.isFinite(queryEnd);
+	if (!hasFiniteQueryBounds) {
 		return clampRangeWithinDomain({
 			center: TIMELINE_DEFAULT_CENTER_YEAR,
 			width: TIMELINE_DEFAULT_WINDOW_YEARS,
 			domain,
 		});
 	}
-	const sourceRange = queryTimeRange;
-	const parsedStart = toFiniteYearBound(sourceRange.start);
-	const parsedEnd = toFiniteYearBound(sourceRange.end);
-	const startYear = Number.isFinite(parsedStart) ? parsedStart : domain.min;
-	const endYear = Number.isFinite(parsedEnd) ? parsedEnd : domain.max;
+	const startYear = clamp(queryStart, domain.min, domain.max);
+	const endYear = clamp(queryEnd, domain.min, domain.max);
 	return {
 		start: Math.min(startYear, endYear),
 		end: Math.max(startYear, endYear),

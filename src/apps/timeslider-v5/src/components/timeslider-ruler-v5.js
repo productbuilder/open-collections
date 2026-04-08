@@ -1,9 +1,10 @@
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_PIXELS_PER_YEAR = 3.2;
-const HANDLE_WIDTH_PX = 20;
+const HANDLE_WIDTH_PX = 22;
 const DEFAULT_MIN_RANGE_YEARS = 20;
 const DEFAULT_MAX_RANGE_YEARS = 120;
+const DEFAULT_ACTIVE_RANGE_YEARS = 50;
 
 function formatYear(value) {
 	return Math.round(value).toString();
@@ -39,12 +40,12 @@ class TimeSliderV5RulerElement extends HTMLElement {
 			domainMinYear: DEFAULT_DOMAIN_MIN,
 			domainMaxYear: DEFAULT_DOMAIN_MAX,
 			focusYear: 1950,
-			activeRangeYears: 24,
+			activeRangeYears: DEFAULT_ACTIVE_RANGE_YEARS,
 			minRangeYears: DEFAULT_MIN_RANGE_YEARS,
 			maxRangeYears: DEFAULT_MAX_RANGE_YEARS,
 			pixelsPerYear: DEFAULT_PIXELS_PER_YEAR,
-			activeRangeStartYear: 1938,
-			activeRangeEndYear: 1962,
+			activeRangeStartYear: 1925,
+			activeRangeEndYear: 1975,
 		};
 		this.interaction = {
 			activeDragType: null,
@@ -501,11 +502,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					pointer-events: none;
 				}
 				.edge-value.left {
-					transform: none;
+					transform: translateX(4px);
 					text-align: left;
 				}
 				.edge-value.right {
-					transform: translateX(-100%);
+					transform: translateX(calc(-100% - 4px));
 					text-align: right;
 				}
 				.ticks {
@@ -592,8 +593,11 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					border-radius: 4px;
 					border: 1px solid rgba(255, 255, 255, 0.64);
 					background: #3f3f3f;
-					display: grid;
-					place-items: center;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 4px;
+					box-sizing: border-box;
 					cursor: ew-resize;
 					touch-action: none;
 					box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -602,8 +606,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 				}
 				.handle-grip {
 					display: block;
-					width: 10px;
-					height: 14px;
+					width: 100%;
+					height: 100%;
 					background: repeating-linear-gradient(
 						90deg,
 						rgba(255, 255, 255, 0.7) 0,
@@ -611,7 +615,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						transparent 1px,
 						transparent 3px
 					);
-					background-position: center;
+					background-position: center center;
 					margin: 0;
 					opacity: 0.8;
 				}
@@ -642,8 +646,8 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						<div class="handles-lane" aria-hidden="true"></div>
 						<div class="base-line"></div>
 						<div id="activeRange" class="active-range" aria-hidden="true"></div>
-						<div id="leftEdgeValue" class="edge-value left">1938</div>
-						<div id="rightEdgeValue" class="edge-value right">1962</div>
+						<div id="leftEdgeValue" class="edge-value left">1925</div>
+						<div id="rightEdgeValue" class="edge-value right">1975</div>
 						<div id="centerYear" class="center-year">1950</div>
 						<div id="centerMarker" class="center-marker" aria-hidden="true"></div>
 						<div id="leftGuide" class="resize-guide"></div>
@@ -654,7 +658,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 						<button id="rightHandle" class="handle right" type="button" aria-label="Resize active range right edge">
 							<span class="handle-grip" aria-hidden="true"></span>
 						</button>
-						<div class="range-values" id="rangeValues">24y</div>
+						<div class="range-values" id="rangeValues">50y</div>
 					</div>
 					<div id="rulerZone" class="ruler-zone" aria-label="Drag ruler to move focused year"></div>
 				</div>

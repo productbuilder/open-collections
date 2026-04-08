@@ -18,8 +18,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 				maxYear: 2025,
 			},
 			focusYear: 1950,
-			rangeMinYear: 1938,
-			rangeMaxYear: 1962,
+			rangeMinYear: 1925,
+			rangeMaxYear: 1975,
 			minRangeYears: 20,
 			maxRangeYears: 120,
 			pixelsPerYear: 3.2,
@@ -152,8 +152,8 @@ class OpenCollectionsTimeSliderV5AppElement extends HTMLElement {
 						<p class="helper">Layered structure pass: static track stage + dynamic overlay while preserving v4 interactions.</p>
 						<div class="readouts">
 							<div class="readout"><strong>Focused year</strong><span id="focusValue">1950</span></div>
-							<div class="readout"><strong>Active range</strong><span id="rangeValue">1938 to 1962</span></div>
-							<div class="readout"><strong>Range width</strong><span id="widthValue">24 years</span></div>
+							<div class="readout"><strong>Active range</strong><span id="rangeValue">1925 to 1975</span></div>
+							<div class="readout"><strong>Range width</strong><span id="widthValue">50 years</span></div>
 							<div class="readout"><strong>Domain model</strong><span id="domainValue">1800 to 2025</span></div>
 						</div>
 					</header>

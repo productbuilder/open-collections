@@ -899,7 +899,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 					<section class="overlay-region bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
-							<div class="timeline-pill" aria-hidden="true"></div>
+							<div class="timeline-pill" aria-hidden="true" data-bind="timeline-pill"></div>
 							<timemap-browser-time-range-control class="timeline-slider" data-bind="timeline-slider"></timemap-browser-time-range-control>
 							<p class="timeline-note" data-bind="time-range-note"></p>
 							<p class="sr-only" data-bind="status"></p>
@@ -993,15 +993,20 @@ class TimemapBrowserShellElement extends HTMLElement {
 			: Array.isArray(state.spatial?.response?.features)
 				? state.spatial.response.features
 				: [];
+		const timelinePill = this.shadowRoot.querySelector('[data-bind="timeline-pill"]');
 		const temporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
 		if (!temporalDomain) {
 			this._suppressTimelineChangeEvent = true;
 			timelineSliderElement.setAttribute("disabled", "");
-			timelineSliderElement.setAttribute("domain-min", "0");
-			timelineSliderElement.setAttribute("domain-max", "1");
-			timelineSliderElement.setAttribute("range-start", "0");
-			timelineSliderElement.setAttribute("range-end", "1");
+			timelineSliderElement.hidden = true;
+			timelineSliderElement.removeAttribute("domain-min");
+			timelineSliderElement.removeAttribute("domain-max");
+			timelineSliderElement.removeAttribute("range-start");
+			timelineSliderElement.removeAttribute("range-end");
 			this._suppressTimelineChangeEvent = false;
+			if (timelinePill) {
+				timelinePill.hidden = true;
+			}
 			this.updateText("time-range-note", "No known temporal range in loaded features.");
 			return;
 		}
@@ -1009,11 +1014,15 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const activeRange = resolveActiveTimeRangeYears(state, temporalDomain);
 		this._suppressTimelineChangeEvent = true;
 		timelineSliderElement.removeAttribute("disabled");
+		timelineSliderElement.hidden = false;
 		timelineSliderElement.setAttribute("domain-min", String(temporalDomain.min));
 		timelineSliderElement.setAttribute("domain-max", String(temporalDomain.max));
 		timelineSliderElement.setAttribute("range-start", String(activeRange.start));
 		timelineSliderElement.setAttribute("range-end", String(activeRange.end));
 		this._suppressTimelineChangeEvent = false;
+		if (timelinePill) {
+			timelinePill.hidden = false;
+		}
 		this.updateText(
 			"time-range-note",
 			`Active time range: ${formatTimeRange(state.timeRange)}.`,

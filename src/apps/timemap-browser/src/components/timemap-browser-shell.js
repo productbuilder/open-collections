@@ -1082,35 +1082,10 @@ class TimemapBrowserShellElement extends HTMLElement {
 		const hasFiniteCanonicalQueryBounds =
 			Number.isFinite(queryStart) && Number.isFinite(queryEnd);
 		const featureTemporalDomain = deriveTemporalFeatureYearDomain(timelineFeatures);
-		if (!featureTemporalDomain) {
-			this._suppressTimelineChangeEvent = true;
-			timelineSliderElement.setAttribute("disabled", "");
-			timelineSliderElement.hidden = true;
-			timelineSliderElement.removeAttribute("domain-min");
-			timelineSliderElement.removeAttribute("domain-max");
-			timelineSliderElement.removeAttribute("range-start");
-			timelineSliderElement.removeAttribute("range-end");
-			this._suppressTimelineChangeEvent = false;
-			if (timelinePill) {
-				timelinePill.hidden = true;
-			}
-			this.updateText("time-range-note", "No known temporal range in loaded features.");
-			this.updateTimelineDebug({
-				shell: {
-					domainMin: null,
-					domainMax: null,
-					rangeStart: null,
-					rangeEnd: null,
-					temporalDomainExists: false,
-					hasFiniteCanonicalQueryBounds,
-				},
-				wrapper: timelineSliderElement.getDebugSnapshot?.(),
-			});
-			return;
-		}
+		const hasFeatureTemporalDomain = Boolean(featureTemporalDomain);
 		const temporalDomain = resolveEmbeddedTemporalDomain(featureTemporalDomain);
-
 		const activeRange = resolveActiveTimeRangeYears(state, temporalDomain);
+
 		this._suppressTimelineChangeEvent = true;
 		timelineSliderElement.setAttribute("domain-min", String(temporalDomain.min));
 		timelineSliderElement.setAttribute("domain-max", String(temporalDomain.max));
@@ -1122,17 +1097,23 @@ class TimemapBrowserShellElement extends HTMLElement {
 		if (timelinePill) {
 			timelinePill.hidden = false;
 		}
-		this.updateText(
-			"time-range-note",
-			`Active time range: ${formatTimeRange(state.timeRange)}.`,
-		);
+
+		if (!hasFeatureTemporalDomain) {
+			this.updateText("time-range-note", "No known temporal range in loaded features.");
+		} else {
+			this.updateText(
+				"time-range-note",
+				`Active time range: ${formatTimeRange(state.timeRange)}.`,
+			);
+		}
+
 		this.updateTimelineDebug({
 			shell: {
 				domainMin: temporalDomain.min,
 				domainMax: temporalDomain.max,
 				rangeStart: activeRange.start,
 				rangeEnd: activeRange.end,
-				temporalDomainExists: true,
+				temporalDomainExists: hasFeatureTemporalDomain,
 				hasFiniteCanonicalQueryBounds,
 			},
 			wrapper: timelineSliderElement.getDebugSnapshot?.(),

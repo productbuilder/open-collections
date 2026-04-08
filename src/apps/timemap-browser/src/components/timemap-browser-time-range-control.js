@@ -3,7 +3,10 @@ import "../../../timeslider-v5/src/components/timeslider-ruler-v5.js";
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2025;
 const DEFAULT_MIN_RANGE_YEARS = 1;
-const EMBEDDED_PIXELS_PER_YEAR = 2.4;
+const EMBEDDED_MIN_PIXELS_PER_YEAR = 2.4;
+const EMBEDDED_MAX_PIXELS_PER_YEAR = 12;
+const EMBEDDED_TARGET_ACTIVE_RANGE_FRACTION = 0.42;
+const EMBEDDED_MIN_MEASURABLE_WIDTH = 180;
 
 function toFiniteNumber(value) {
 	const next = Number(value);
@@ -64,6 +67,23 @@ function toV5Model(range) {
 	};
 }
 
+function resolveEmbeddedPixelsPerYear({ availableWidth, normalizedRange }) {
+	const width = Number(availableWidth);
+	if (!Number.isFinite(width) || width <= 0) {
+		return EMBEDDED_MIN_PIXELS_PER_YEAR;
+	}
+	const measuredWidth = Math.max(EMBEDDED_MIN_MEASURABLE_WIDTH, width);
+	const activeSpan = Math.max(DEFAULT_MIN_RANGE_YEARS, normalizedRange.end - normalizedRange.start);
+	const domainSpan = Math.max(
+		DEFAULT_MIN_RANGE_YEARS,
+		normalizedRange.domain.max - normalizedRange.domain.min,
+	);
+	const targetByActiveRange = (measuredWidth * EMBEDDED_TARGET_ACTIVE_RANGE_FRACTION) / activeSpan;
+	const domainAwareMin = measuredWidth / (domainSpan * 1.5);
+	const safeMin = Math.max(EMBEDDED_MIN_PIXELS_PER_YEAR, domainAwareMin);
+	return clamp(targetByActiveRange, safeMin, EMBEDDED_MAX_PIXELS_PER_YEAR);
+}
+
 class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 	static get observedAttributes() {
 		return ["range-start", "range-end", "domain-min", "domain-max"];
@@ -81,6 +101,9 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		this._suppressDispatch = false;
 		this._handleFocusYearChange = this._onFocusYearChange.bind(this);
 		this._handleActiveRangeChange = this._onActiveRangeChange.bind(this);
+		this._availableWidth = 0;
+		this._resizeObserver = null;
+		this._handleResize = this._onResize.bind(this);
 	}
 
 	connectedCallback() {
@@ -90,6 +113,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 			ruler.addEventListener("focus-year-change", this._handleFocusYearChange);
 			ruler.addEventListener("active-range-change", this._handleActiveRangeChange);
 		}
+		this._setupResizeObserver();
 		this._syncFromAttributes();
 	}
 
@@ -98,6 +122,10 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		if (ruler) {
 			ruler.removeEventListener("focus-year-change", this._handleFocusYearChange);
 			ruler.removeEventListener("active-range-change", this._handleActiveRangeChange);
+		}
+		if (this._resizeObserver) {
+			this._resizeObserver.disconnect();
+			this._resizeObserver = null;
 		}
 	}
 
@@ -195,6 +223,33 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		this._applyCanonicalToRuler();
 	}
 
+	_setupResizeObserver() {
+		if (typeof ResizeObserver !== "function" || this._resizeObserver) {
+			return;
+		}
+		this._resizeObserver = new ResizeObserver((entries) => {
+			this._handleResize(entries);
+		});
+		this._resizeObserver.observe(this);
+	}
+
+	_onResize(entries) {
+		const entry = entries?.[entries.length - 1];
+		const nextWidth =
+			entry?.contentRect?.width ??
+			this.getBoundingClientRect().width ??
+			this.clientWidth ??
+			0;
+		if (!Number.isFinite(nextWidth)) {
+			return;
+		}
+		if (Math.abs(nextWidth - this._availableWidth) < 0.5) {
+			return;
+		}
+		this._availableWidth = nextWidth;
+		this._applyCanonicalToRuler();
+	}
+
 	_applyCanonicalToRuler() {
 		const ruler = this._getRuler();
 		if (!ruler) {
@@ -202,8 +257,12 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		}
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const model = toV5Model(normalized);
+		const pixelsPerYear = resolveEmbeddedPixelsPerYear({
+			availableWidth: this._availableWidth || this.getBoundingClientRect().width,
+			normalizedRange: normalized,
+		});
 		this._suppressDispatch = true;
-		ruler.pixelsPerYear = EMBEDDED_PIXELS_PER_YEAR;
+		ruler.pixelsPerYear = pixelsPerYear;
 		ruler.domainMinYear = model.domainMinYear;
 		ruler.domainMaxYear = model.domainMaxYear;
 		ruler.activeRangeStartYear = model.activeRangeStartYear;

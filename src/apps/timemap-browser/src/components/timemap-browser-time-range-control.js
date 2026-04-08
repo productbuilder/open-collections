@@ -133,9 +133,13 @@ function resolveEmbeddedPixelsPerYear({ availableWidth, domain }) {
 	return clamp(targetByDomain, EMBEDDED_MIN_PIXELS_PER_YEAR, EMBEDDED_MAX_PIXELS_PER_YEAR);
 }
 
+function hasValidTemporalDomain({ domainMin, domainMax }) {
+	return Number.isFinite(domainMin) && Number.isFinite(domainMax);
+}
+
 class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 	static get observedAttributes() {
-		return ["range-start", "range-end", "domain-min", "domain-max"];
+		return ["range-start", "range-end", "domain-min", "domain-max", "disabled"];
 	}
 
 	constructor() {
@@ -160,6 +164,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		this._resizeObserver = null;
 		this._handleResize = this._onResize.bind(this);
 		this._lastEffectiveState = null;
+		this._hasEffectiveModel = false;
 	}
 
 	connectedCallback() {
@@ -199,6 +204,8 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 				break;
 			case "domain-max":
 				this._canonical.domainMax = parsed;
+				break;
+			case "disabled":
 				break;
 			default:
 				break;
@@ -246,10 +253,14 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		return {
 			canonicalStart: this._canonical.start,
 			canonicalEnd: this._canonical.end,
-			computedFocusYear: this._lastEffectiveState?.focusYear ?? null,
-			computedActiveRangeYears: this._lastEffectiveState?.activeRangeYears ?? null,
-			effectivePixelsPerYear: this._lastEffectiveState?.pixelsPerYear ?? this._pixelsPerYear,
-			disabled: this.hasAttribute("disabled"),
+			computedFocusYear: this._hasEffectiveModel ? this._lastEffectiveState?.focusYear ?? null : null,
+			computedActiveRangeYears: this._hasEffectiveModel
+				? this._lastEffectiveState?.activeRangeYears ?? null
+				: null,
+			effectivePixelsPerYear: this._hasEffectiveModel
+				? this._lastEffectiveState?.pixelsPerYear ?? this._pixelsPerYear
+				: null,
+			disabled: this._isInactive(),
 		};
 	}
 
@@ -322,14 +333,23 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		if (!ruler) {
 			return;
 		}
+		if (this._isInactive()) {
+			this._clearEffectiveModel(ruler);
+			return;
+		}
 		const normalized = normalizeCanonicalRange(this._canonical);
 		const model = toV5Model(normalized);
 		const pixelsPerYear = this._resolvePixelsPerYear(normalized);
+		this.hidden = false;
+		ruler.hidden = false;
+		ruler.inert = false;
+		ruler.setAttribute("aria-hidden", "false");
 		this._lastEffectiveState = {
 			focusYear: model.focusYear,
 			activeRangeYears: model.activeRangeYears,
 			pixelsPerYear,
 		};
+		this._hasEffectiveModel = true;
 		this._suppressDispatch = true;
 		ruler.pixelsPerYear = pixelsPerYear;
 		ruler.domainMinYear = model.domainMinYear;
@@ -339,6 +359,28 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 		ruler.activeRangeYears = model.activeRangeYears;
 		ruler.focusYear = model.focusYear;
 		this._suppressDispatch = false;
+	}
+
+	_isInactive() {
+		if (this.hasAttribute("disabled")) {
+			return true;
+		}
+		return !hasValidTemporalDomain(this._canonical);
+	}
+
+	_clearEffectiveModel(ruler) {
+		this._hasEffectiveModel = false;
+		this._lastEffectiveState = null;
+		this._pixelsPerYear = null;
+		this._pixelsPerYearContext = {
+			availableWidth: null,
+			domainMin: null,
+			domainMax: null,
+		};
+		this.hidden = true;
+		ruler.hidden = true;
+		ruler.inert = true;
+		ruler.setAttribute("aria-hidden", "true");
 	}
 
 	_resolvePixelsPerYear(normalizedRange) {
@@ -367,7 +409,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 	}
 
 	_onFocusYearChange(event) {
-		if (this._suppressDispatch) {
+		if (this._suppressDispatch || !this._hasEffectiveModel || this._isInactive()) {
 			return;
 		}
 		const nextFocusYear = toFiniteNumber(event?.detail?.focusYear);
@@ -385,7 +427,7 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 	}
 
 	_onActiveRangeChange(event) {
-		if (this._suppressDispatch) {
+		if (this._suppressDispatch || !this._hasEffectiveModel || this._isInactive()) {
 			return;
 		}
 		const nextRangeYears = toFiniteNumber(event?.detail?.activeRangeYears);

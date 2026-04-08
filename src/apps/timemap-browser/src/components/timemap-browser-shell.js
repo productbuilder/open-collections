@@ -403,6 +403,10 @@ const TIMELINE_EMBED_DOMAIN_MIN_YEAR = 1800;
 const TIMELINE_EMBED_DOMAIN_MAX_YEAR = 2050;
 const TIMELINE_DEFAULT_CENTER_YEAR = 1950;
 const TIMELINE_DEFAULT_WINDOW_YEARS = 50;
+const TIMELINE_DEFAULT_START_YEAR =
+	TIMELINE_DEFAULT_CENTER_YEAR - TIMELINE_DEFAULT_WINDOW_YEARS / 2;
+const TIMELINE_DEFAULT_END_YEAR =
+	TIMELINE_DEFAULT_CENTER_YEAR + TIMELINE_DEFAULT_WINDOW_YEARS / 2;
 
 function clamp(value, min, max) {
 	return Math.min(max, Math.max(min, value));
@@ -945,7 +949,14 @@ class TimemapBrowserShellElement extends HTMLElement {
 					<section class="overlay-region bottom-overlay" data-region="bottom-overlay">
 						<div class="timeline-shell" data-bind="timeline-shell">
 							<div class="timeline-pill" aria-hidden="true" data-bind="timeline-pill"></div>
-							<timemap-browser-time-range-control class="timeline-slider" data-bind="timeline-slider"></timemap-browser-time-range-control>
+							<timemap-browser-time-range-control
+								class="timeline-slider"
+								data-bind="timeline-slider"
+								domain-min="${TIMELINE_EMBED_DOMAIN_MIN_YEAR}"
+								domain-max="${TIMELINE_EMBED_DOMAIN_MAX_YEAR}"
+								range-start="${TIMELINE_DEFAULT_START_YEAR}"
+								range-end="${TIMELINE_DEFAULT_END_YEAR}"
+							></timemap-browser-time-range-control>
 							<p class="timeline-note" data-bind="time-range-note"></p>
 							<p class="sr-only" data-bind="status"></p>
 						</div>
@@ -1059,12 +1070,12 @@ class TimemapBrowserShellElement extends HTMLElement {
 
 		const activeRange = resolveActiveTimeRangeYears(state, temporalDomain);
 		this._suppressTimelineChangeEvent = true;
-		timelineSliderElement.removeAttribute("disabled");
-		timelineSliderElement.hidden = false;
 		timelineSliderElement.setAttribute("domain-min", String(temporalDomain.min));
 		timelineSliderElement.setAttribute("domain-max", String(temporalDomain.max));
 		timelineSliderElement.setAttribute("range-start", String(activeRange.start));
 		timelineSliderElement.setAttribute("range-end", String(activeRange.end));
+		timelineSliderElement.removeAttribute("disabled");
+		timelineSliderElement.hidden = false;
 		this._suppressTimelineChangeEvent = false;
 		if (timelinePill) {
 			timelinePill.hidden = false;

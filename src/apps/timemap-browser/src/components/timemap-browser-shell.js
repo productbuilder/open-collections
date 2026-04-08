@@ -460,12 +460,30 @@ function resolveActiveTimeRangeYears(state = {}, domain = null) {
 	if (!domain) {
 		return null;
 	}
+	const domainSpan = Math.max(0, domain.max - domain.min);
+	const centeredWindowYears = Math.min(domainSpan, Math.max(20, Math.round(domainSpan * 0.4)));
+	const centeredStart = domain.min + ((domainSpan - centeredWindowYears) / 2);
+	const centeredEnd = centeredStart + centeredWindowYears;
 	const queryTimeRange =
 		state.query?.timeRange && typeof state.query.timeRange === "object"
 			? state.query.timeRange
 			: null;
 	const stateTimeRange =
 		state.timeRange && typeof state.timeRange === "object" ? state.timeRange : null;
+	if (!queryTimeRange) {
+		const stateStart = toFiniteYearBound(stateTimeRange?.start);
+		const stateEnd = toFiniteYearBound(stateTimeRange?.end);
+		if (Number.isFinite(stateStart) && Number.isFinite(stateEnd)) {
+			return {
+				start: Math.max(domain.min, Math.min(domain.max, Math.min(stateStart, stateEnd))),
+				end: Math.max(domain.min, Math.min(domain.max, Math.max(stateStart, stateEnd))),
+			};
+		}
+		return {
+			start: centeredStart,
+			end: centeredEnd,
+		};
+	}
 	const sourceRange = queryTimeRange || stateTimeRange || {};
 	const parsedStart = toFiniteYearBound(sourceRange.start);
 	const parsedEnd = toFiniteYearBound(sourceRange.end);

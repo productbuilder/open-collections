@@ -307,13 +307,18 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 	_emitCanonicalRangeChange(start, end) {
 		const nextStart = Math.min(start, end);
 		const nextEnd = Math.max(start, end);
+		const optimisticStart = Math.round(nextStart);
+		const optimisticEnd = Math.round(nextEnd);
+		this._canonical.start = optimisticStart;
+		this._canonical.end = optimisticEnd;
+		this._applyCanonicalToRuler();
 		this.dispatchEvent(
 			new CustomEvent("timemap-browser-time-range-change", {
 				bubbles: true,
 				composed: true,
 				detail: {
-					start: String(Math.round(nextStart)),
-					end: String(Math.round(nextEnd)),
+					start: String(optimisticStart),
+					end: String(optimisticEnd),
 				},
 			}),
 		);

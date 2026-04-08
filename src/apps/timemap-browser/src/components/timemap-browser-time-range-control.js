@@ -3,6 +3,8 @@ import "../../../timeslider-v5/src/components/timeslider-ruler-v5.js";
 const DEFAULT_DOMAIN_MIN = 1800;
 const DEFAULT_DOMAIN_MAX = 2050;
 const DEFAULT_MIN_RANGE_YEARS = 1;
+const EMBEDDED_STARTUP_CENTER_YEAR = 1950;
+const EMBEDDED_STARTUP_RANGE_YEARS = 50;
 const EMBEDDED_MIN_PIXELS_PER_YEAR = 2.4;
 const EMBEDDED_MAX_PIXELS_PER_YEAR = 12;
 const EMBEDDED_MIN_MEASURABLE_WIDTH = 180;
@@ -34,16 +36,37 @@ function resolveDomain(domainMin, domainMax) {
 	return { min: DEFAULT_DOMAIN_MIN, max: DEFAULT_DOMAIN_MAX };
 }
 
+function resolveEmbeddedStartupRange(domain) {
+	const domainMin = domain.min;
+	const domainMax = domain.max;
+	const domainSpan = Math.max(0, domainMax - domainMin);
+	const width = Math.min(EMBEDDED_STARTUP_RANGE_YEARS, domainSpan);
+	if (width <= 0) {
+		return {
+			start: domainMin,
+			end: domainMin,
+		};
+	}
+	const halfWidth = width / 2;
+	const minCenter = domainMin + halfWidth;
+	const maxCenter = domainMax - halfWidth;
+	const center = clamp(EMBEDDED_STARTUP_CENTER_YEAR, minCenter, maxCenter);
+	return {
+		start: center - halfWidth,
+		end: center + halfWidth,
+	};
+}
+
 function normalizeCanonicalRange({ start, end, domainMin, domainMax }) {
 	const domain = resolveDomain(domainMin, domainMax);
 	const startYear = toFiniteNumber(start);
 	const endYear = toFiniteNumber(end);
 	if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
-		const center = (domain.min + domain.max) / 2;
+		const { start: embeddedStart, end: embeddedEnd } = resolveEmbeddedStartupRange(domain);
 		return {
 			domain,
-			start: center,
-			end: center,
+			start: embeddedStart,
+			end: embeddedEnd,
 		};
 	}
 	const orderedStart = Math.min(startYear, endYear);

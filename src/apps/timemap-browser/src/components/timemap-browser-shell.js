@@ -183,9 +183,12 @@ const timemapBrowserShellStyles = `
 	.timeline-shell {
 		pointer-events: auto;
 		inline-size: 100%;
+		min-inline-size: min(100%, 24rem);
 		max-inline-size: var(--timemap-shell-overlay-desktop-max-inline-size);
 		box-sizing: border-box;
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		align-items: stretch;
 		gap: 0.2rem;
 		padding: 0.48rem 0.7rem;
 		border-radius: 1rem;
@@ -212,6 +215,10 @@ const timemapBrowserShellStyles = `
 
 	.timeline-slider {
 		--oc-time-range-slider-accent: #0f766e;
+		display: block;
+		inline-size: 100%;
+		min-inline-size: min(100%, 23rem);
+		min-block-size: 9.8rem;
 	}
 
 	.detail-shell {

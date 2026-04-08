@@ -165,6 +165,14 @@ class TimemapBrowserTimeRangeControlElement extends HTMLElement {
 			<style>
 				:host {
 					display: block;
+					inline-size: 100%;
+					min-inline-size: min(100%, 23rem);
+				}
+
+				oc-timeslider-v5-ruler {
+					display: block;
+					inline-size: 100%;
+					min-block-size: 9.8rem;
 				}
 			</style>
 			<oc-timeslider-v5-ruler data-bind="timeline-ruler"></oc-timeslider-v5-ruler>

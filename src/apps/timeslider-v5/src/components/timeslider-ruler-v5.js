@@ -30,7 +30,16 @@ function computeTickScale(pixelsPerYear) {
 
 class TimeSliderV5RulerElement extends HTMLElement {
 	static get observedAttributes() {
-		return ["min-range-years", "max-range-years"];
+		return [
+			"domain-min-year",
+			"domain-max-year",
+			"focus-year",
+			"active-range-start-year",
+			"active-range-end-year",
+			"min-range-years",
+			"max-range-years",
+			"pixels-per-year",
+		];
 	}
 
 	constructor() {
@@ -74,48 +83,89 @@ class TimeSliderV5RulerElement extends HTMLElement {
 
 	attributeChangedCallback(name, _oldValue, newValue) {
 		const next = Number(newValue);
-		if (!Number.isFinite(next) || next <= 0) return;
-		if (name === "min-range-years") {
-			this.model.minRangeYears = next;
-			this.applyView();
-			return;
-		}
-		if (name === "max-range-years") {
-			this.model.maxRangeYears = next;
-			this.applyView();
+		if (!Number.isFinite(next)) return;
+		switch (name) {
+			case "domain-min-year":
+				this.domainMinYear = next;
+				break;
+			case "domain-max-year":
+				this.domainMaxYear = next;
+				break;
+			case "focus-year":
+				this.focusYear = next;
+				break;
+			case "active-range-start-year":
+				this.activeRangeStartYear = next;
+				break;
+			case "active-range-end-year":
+				this.activeRangeEndYear = next;
+				break;
+			case "min-range-years":
+				this.minRangeYears = next;
+				break;
+			case "max-range-years":
+				this.maxRangeYears = next;
+				break;
+			case "pixels-per-year":
+				this.pixelsPerYear = next;
+				break;
+			default:
+				break;
 		}
 	}
 
 	syncModelFromAttributes() {
-		const minAttr = Number(this.getAttribute("min-range-years"));
-		const maxAttr = Number(this.getAttribute("max-range-years"));
-		if (Number.isFinite(minAttr) && minAttr > 0) {
-			this.model.minRangeYears = minAttr;
+		for (const attributeName of TimeSliderV5RulerElement.observedAttributes) {
+			const value = this.getAttribute(attributeName);
+			if (value == null) {
+				continue;
+			}
+			this.attributeChangedCallback(attributeName, null, value);
 		}
-		if (Number.isFinite(maxAttr) && maxAttr > 0) {
-			this.model.maxRangeYears = maxAttr;
-		}
+	}
+
+	reflectNumberAttribute(attributeName, value) {
+		const next = Number(value);
+		if (!Number.isFinite(next)) return;
+		const nextSerialized = String(next);
+		if (this.getAttribute(attributeName) === nextSerialized) return;
+		this.setAttribute(attributeName, nextSerialized);
 	}
 
 	set domainMinYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next)) return;
 		this.model.domainMinYear = next;
+		this.reflectNumberAttribute("domain-min-year", next);
 		this.applyView();
+	}
+
+	get domainMinYear() {
+		return this.model.domainMinYear;
 	}
 
 	set domainMaxYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next)) return;
 		this.model.domainMaxYear = next;
+		this.reflectNumberAttribute("domain-max-year", next);
 		this.applyView();
+	}
+
+	get domainMaxYear() {
+		return this.model.domainMaxYear;
 	}
 
 	set focusYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next)) return;
 		this.model.focusYear = next;
+		this.reflectNumberAttribute("focus-year", next);
 		this.applyView();
+	}
+
+	get focusYear() {
+		return this.model.focusYear;
 	}
 
 	set activeRangeYears(value) {
@@ -129,35 +179,60 @@ class TimeSliderV5RulerElement extends HTMLElement {
 		const next = Number(value);
 		if (!Number.isFinite(next) || next <= 0) return;
 		this.model.minRangeYears = next;
+		this.reflectNumberAttribute("min-range-years", next);
 		this.applyView();
+	}
+
+	get minRangeYears() {
+		return this.model.minRangeYears;
 	}
 
 	set maxRangeYears(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next) || next <= 0) return;
 		this.model.maxRangeYears = next;
+		this.reflectNumberAttribute("max-range-years", next);
 		this.applyView();
+	}
+
+	get maxRangeYears() {
+		return this.model.maxRangeYears;
 	}
 
 	set pixelsPerYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next) || next <= 0) return;
 		this.model.pixelsPerYear = next;
+		this.reflectNumberAttribute("pixels-per-year", next);
 		this.applyView();
+	}
+
+	get pixelsPerYear() {
+		return this.model.pixelsPerYear;
 	}
 
 	set activeRangeStartYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next)) return;
 		this.model.activeRangeStartYear = next;
+		this.reflectNumberAttribute("active-range-start-year", next);
 		this.applyView();
+	}
+
+	get activeRangeStartYear() {
+		return this.model.activeRangeStartYear;
 	}
 
 	set activeRangeEndYear(value) {
 		const next = Number(value);
 		if (!Number.isFinite(next)) return;
 		this.model.activeRangeEndYear = next;
+		this.reflectNumberAttribute("active-range-end-year", next);
 		this.applyView();
+	}
+
+	get activeRangeEndYear() {
+		return this.model.activeRangeEndYear;
 	}
 
 	bindEvents() {

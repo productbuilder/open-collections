@@ -479,7 +479,7 @@ class TimeSliderV5RulerElement extends HTMLElement {
 					border-radius: 0;
 					overflow: hidden;
 					border: none;
-					background: #686868;
+					background: var(--timeslider-v5-frame-background, #686868);
 					user-select: none;
 				}
 				.stage {

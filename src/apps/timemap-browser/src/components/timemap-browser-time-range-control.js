@@ -61,12 +61,23 @@ function normalizeCanonicalRange({ start, end, domainMin, domainMax }) {
 	const domain = resolveDomain(domainMin, domainMax);
 	const startYear = toFiniteNumber(start);
 	const endYear = toFiniteNumber(end);
-	if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+	const hasStart = Number.isFinite(startYear);
+	const hasEnd = Number.isFinite(endYear);
+	if (!hasStart && !hasEnd) {
 		const { start: embeddedStart, end: embeddedEnd } = resolveEmbeddedStartupRange(domain);
 		return {
 			domain,
 			start: embeddedStart,
 			end: embeddedEnd,
+		};
+	}
+	if (!hasStart || !hasEnd) {
+		const singleBound = hasStart ? startYear : endYear;
+		const clampedBound = clamp(singleBound, domain.min, domain.max);
+		return {
+			domain,
+			start: clampedBound,
+			end: clampedBound,
 		};
 	}
 	const orderedStart = Math.min(startYear, endYear);

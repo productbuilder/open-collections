@@ -113,6 +113,10 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			"data-workbench-embed",
 			"data-shell-embed",
 			"data-oc-app-mode",
+			"map-default-center-lat",
+			"map-default-center-lng",
+			"map-default-zoom",
+			"map-default-bounds",
 		];
 	}
 
@@ -667,8 +671,24 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		const appMode = appModeAttr
 			? ` data-oc-app-mode="${appModeAttr.replaceAll('"', "&quot;")}"`
 			: "";
+		const mapDefaultAttrs = [
+			"map-default-center-lat",
+			"map-default-center-lng",
+			"map-default-zoom",
+			"map-default-bounds",
+		]
+			.map((name) => {
+				if (!this.hasAttribute(name)) {
+					return "";
+				}
+				const value = this.getAttribute(name);
+				return value === null
+					? ""
+					: ` ${name}="${escapeAttribute(value)}"`;
+			})
+			.join("");
 		if (mode === BROWSE_MODES.MAP) {
-			return `<timemap-browser data-shell-map-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode} show-top-chrome="false" show-filter-entry="false" map-edge-to-edge="true"></timemap-browser>`;
+			return `<timemap-browser data-shell-map-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode}${mapDefaultAttrs} show-top-chrome="false" show-filter-entry="false" map-edge-to-edge="true"></timemap-browser>`;
 		}
 		return `<collection-browser data-shell-list-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode}></collection-browser>`;
 	}

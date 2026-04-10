@@ -76,6 +76,54 @@ test("shell map bridge applies query filtering in new path", () => {
 	assert.equal(payload.projection.diagnostics.filteredVisibleItems, 0);
 });
 
+test("shell map bridge applies active time-range on the first projection", () => {
+	const payload = buildMapSurfaceBridgePayload({
+		runtimeStore: seedStore(),
+		browseQueryState: {
+			query: {
+				timeRange: {
+					start: "1920",
+					end: "1929",
+				},
+			},
+		},
+	});
+	assert.equal(payload.projection.response.features.length, 0);
+	assert.equal(payload.projection.diagnostics.skippedByTime, 2);
+});
+
+test("shell map bridge keeps timeline updates functional after first projection", () => {
+	const store = seedStore();
+	const initialPayload = buildMapSurfaceBridgePayload({
+		runtimeStore: store,
+		browseQueryState: {
+			query: {
+				timeRange: {
+					start: "1920",
+					end: "1929",
+				},
+			},
+		},
+	});
+	assert.equal(initialPayload.projection.response.features.length, 0);
+
+	const updatedPayload = buildMapSurfaceBridgePayload({
+		runtimeStore: store,
+		browseQueryState: {
+			query: {
+				timeRange: {
+					start: "1930",
+					end: "1930",
+				},
+			},
+		},
+	});
+	assert.deepEqual(
+		updatedPayload.projection.response.features.map((feature) => feature.id),
+		["source-a::collection-a#item-1"],
+	);
+});
+
 test("map bridge projection path does not require direct manifest fetching", () => {
 	const originalFetch = globalThis.fetch;
 	let fetchCalled = false;

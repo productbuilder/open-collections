@@ -10,6 +10,23 @@ function mapEmbeddedRuntimeAttributes(_config, context) {
 	};
 }
 
+function mapMapDefaultViewAttributes(config = {}) {
+	const mapDefaults =
+		config?.mapDefaults && typeof config.mapDefaults === "object"
+			? config.mapDefaults
+			: {};
+	return {
+		"map-default-center-lat":
+			mapDefaults.centerLat === undefined ? null : String(mapDefaults.centerLat),
+		"map-default-center-lng":
+			mapDefaults.centerLng === undefined ? null : String(mapDefaults.centerLng),
+		"map-default-zoom":
+			mapDefaults.zoom === undefined ? null : String(mapDefaults.zoom),
+		"map-default-bounds":
+			mapDefaults.bounds === undefined ? null : String(mapDefaults.bounds),
+	};
+}
+
 export const SHELL_SECTION_ADAPTERS = {
 	browse: {
 		appId: "open-collections-browse-shell",
@@ -18,6 +35,7 @@ export const SHELL_SECTION_ADAPTERS = {
 			tagName: "open-collections-browse-shell",
 			mapConfigToAttributes: (config, context) => ({
 				...mapEmbeddedRuntimeAttributes(config, context),
+				...mapMapDefaultViewAttributes(config),
 				"default-browse-mode": "collection",
 			}),
 		}),

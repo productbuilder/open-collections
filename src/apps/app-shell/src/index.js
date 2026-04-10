@@ -26,6 +26,13 @@ import {
 import { MANAGER_CONFIG } from "../../collection-manager/src/config.js";
 
 const DEFAULT_SECTION_KEY = "browse";
+const BROWSE_SECTION_DEFAULTS = Object.freeze({
+	mapDefaults: {
+		centerLat: 52.225,
+		centerLng: 5.1769,
+		zoom: 13.6,
+	},
+});
 const SHELL_SECTION_KEYS_BY_APP_ID = {
 	"collection-account": "account",
 	"collection-connector": "connect",
@@ -187,6 +194,7 @@ class OpenAppShellElement extends HTMLElement {
 				target: mountTarget,
 				config: {
 					sectionKey,
+					...(sectionKey === "browse" ? BROWSE_SECTION_DEFAULTS : {}),
 				},
 				hostCapabilities: this.createHostCapabilities(),
 				onEvent: (type, detail) => {

@@ -36,6 +36,10 @@ const PRESENTATION_ATTRIBUTES = [
 	"map-edge-to-edge",
 	"embed-density",
 	"map-clear-selection-on-background",
+	"map-default-center-lat",
+	"map-default-center-lng",
+	"map-default-zoom",
+	"map-default-bounds",
 ];
 
 function absDelta(left, right) {

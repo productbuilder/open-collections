@@ -2,6 +2,11 @@ import {
 	buildTimelineRangeNote,
 	resolveTimelineQueryTimeRange,
 } from "./timeline-sync-utils.js";
+import {
+	parseBoundsAttribute,
+	parseNumericAttribute,
+	resolveConfiguredInitialMapView,
+} from "./map-initial-view.js";
 
 const timemapBrowserShellStyles = `
 	:host {
@@ -784,6 +789,10 @@ class TimemapBrowserShellElement extends HTMLElement {
 			"map-edge-to-edge",
 			"embed-density",
 			"map-clear-selection-on-background",
+			"map-default-center-lat",
+			"map-default-center-lng",
+			"map-default-zoom",
+			"map-default-bounds",
 		];
 	}
 
@@ -800,6 +809,7 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._lastSpatialRenderSignature = null;
 		this._lastFeatureClickTimestamp = 0;
 		this._hasAutoFitInitialCollectionPoints = false;
+		this._hasAppliedConfiguredInitialView = false;
 		this._suppressTimelineChangeEvent = false;
 		this._handleMapReady = this._onMapReady.bind(this);
 		this._handleViewportChange = this._onMapViewportChange.bind(this);
@@ -885,6 +895,16 @@ class TimemapBrowserShellElement extends HTMLElement {
 			mapClearSelectionOnBackground: parseBooleanAttribute(
 				this.getAttribute("map-clear-selection-on-background"),
 				mapClearFallback,
+			),
+			mapDefaultCenterLat: parseNumericAttribute(
+				this.getAttribute("map-default-center-lat"),
+			),
+			mapDefaultCenterLng: parseNumericAttribute(
+				this.getAttribute("map-default-center-lng"),
+			),
+			mapDefaultZoom: parseNumericAttribute(this.getAttribute("map-default-zoom")),
+			mapDefaultBounds: parseBoundsAttribute(
+				this.getAttribute("map-default-bounds"),
 			),
 		};
 	}
@@ -1147,6 +1167,9 @@ class TimemapBrowserShellElement extends HTMLElement {
 		if (!mapElement) {
 			return;
 		}
+		if (this._hasAppliedConfiguredInitialView) {
+			return;
+		}
 		const centerSignature = toCenterSignature(viewport);
 		if (this._lastAppliedCenterSignature === centerSignature) {
 			return;
@@ -1170,8 +1193,33 @@ class TimemapBrowserShellElement extends HTMLElement {
 		this._lastAppliedCenterSignature = centerSignature;
 	}
 
+	applyConfiguredInitialMapView() {
+		if (this._hasAppliedConfiguredInitialView !== false) {
+			return true;
+		}
+		const mapElement = this.shadowRoot.querySelector("oc-map");
+		if (!mapElement || !this._mapReady) {
+			return false;
+		}
+		const strategy = resolveConfiguredInitialMapView(this.getConfig());
+		if (strategy?.mode === "bounds") {
+			mapElement.fitToBounds(strategy.bounds, { duration: 0, padding: 56 });
+			this._hasAppliedConfiguredInitialView = true;
+			return true;
+		}
+		if (strategy?.mode === "center_zoom") {
+			mapElement.setAttribute("center-lat", String(strategy.centerLat));
+			mapElement.setAttribute("center-lng", String(strategy.centerLng));
+			mapElement.setAttribute("zoom", String(strategy.zoom));
+			this._hasAppliedConfiguredInitialView = true;
+			return true;
+		}
+		return false;
+	}
+
 	_onMapReady() {
 		this._mapReady = true;
+		this.applyConfiguredInitialMapView();
 		this.renderSpatialLayers();
 	}
 
@@ -1357,6 +1405,13 @@ class TimemapBrowserShellElement extends HTMLElement {
 				visible: Boolean(state.visibleOverlays?.features),
 			},
 		);
+
+		if (!this._hasAutoFitInitialCollectionPoints && adjustedPointFeatures.length > 0) {
+			const usedConfiguredInitialView = this.applyConfiguredInitialMapView();
+			if (usedConfiguredInitialView) {
+				this._hasAutoFitInitialCollectionPoints = true;
+			}
+		}
 
 		if (!this._hasAutoFitInitialCollectionPoints && adjustedPointFeatures.length > 0) {
 			const mobileViewport = this.isMobileViewport();

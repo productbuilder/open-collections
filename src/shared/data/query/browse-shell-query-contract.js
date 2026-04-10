@@ -136,14 +136,37 @@ export function normalizeBrowseShellQueryPatch(filterPatch = {}, baseQuery = nul
 		partial.filters && typeof partial.filters === "object"
 			? partial.filters
 			: partial;
+	const timeRangeSource =
+		partial.timeRange && typeof partial.timeRange === "object"
+			? partial.timeRange
+			: partial.query?.timeRange && typeof partial.query.timeRange === "object"
+				? partial.query.timeRange
+				: null;
 	const nextQuery = normalizeCollectionQueryFilterPatch(patchSource, baseQuery);
+	const mergedQuery = timeRangeSource
+		? normalizeCollectionQueryState(
+				{
+					timeRange: {
+						start:
+							timeRangeSource.start === undefined
+								? nextQuery.timeRange?.start
+								: timeRangeSource.start,
+						end:
+							timeRangeSource.end === undefined
+								? nextQuery.timeRange?.end
+								: timeRangeSource.end,
+					},
+				},
+				nextQuery,
+			)
+		: nextQuery;
 	return {
 		filters: {
-			text: nextQuery.text,
-			types: nextQuery.types,
-			categories: nextQuery.categories,
+			text: mergedQuery.text,
+			types: mergedQuery.types,
+			categories: mergedQuery.categories,
 		},
-		query: nextQuery,
+		query: mergedQuery,
 	};
 }
 

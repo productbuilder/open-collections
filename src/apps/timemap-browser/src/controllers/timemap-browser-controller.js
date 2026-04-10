@@ -9,7 +9,7 @@ import {
 	normalizeSpatialQueryInput,
 } from "../../../../shared/data/spatial/spatial-query-contract.js";
 import { createTimemapBrowserInitialState } from "../state/initial-state.js";
-import { loadCollectionSpatialResponse } from "../services/collection-spatial-loader.js";
+import { loadStubSpatialResponse } from "../services/stub-spatial-loader.js";
 
 function buildSpatialRequest(state) {
 	return normalizeSpatialQueryInput(
@@ -93,8 +93,25 @@ function hasFeatureWithId(features, featureId) {
 	});
 }
 
+function cloneSpatialResponse(response = {}) {
+	return {
+		...(response || {}),
+		features: [...(response?.features || [])],
+		clusters: [...(response?.clusters || [])],
+		aggregates: {
+			...(response?.aggregates || {}),
+			byType: [...(response?.aggregates?.byType || [])],
+			byTimeBucket: [...(response?.aggregates?.byTimeBucket || [])],
+		},
+		pageInfo: { ...(response?.pageInfo || {}) },
+		meta: { ...(response?.meta || {}) },
+		request: { ...(response?.request || {}) },
+	};
+}
+
 export function createTimemapBrowserController(
 	initialState = createTimemapBrowserInitialState(),
+	{ loadSpatialResponse = loadStubSpatialResponse } = {},
 ) {
 	let state = cloneState(initialState);
 	const listeners = new Set();
@@ -140,7 +157,7 @@ export function createTimemapBrowserController(
 			});
 
 			try {
-				const spatialResponse = await loadCollectionSpatialResponse(requestAtStart);
+				const spatialResponse = await loadSpatialResponse(requestAtStart);
 				if (loadToken !== latestSpatialLoadToken) {
 					return;
 				}
@@ -178,6 +195,35 @@ export function createTimemapBrowserController(
 					},
 				});
 			}
+		},
+		setSpatialResponse(spatialResponse = {}, status = {}) {
+			const normalizedResponse = cloneSpatialResponse(spatialResponse);
+			const featureCount = Array.isArray(normalizedResponse.features)
+				? normalizedResponse.features.length
+				: 0;
+			const georeferencedItems = Number(
+				normalizedResponse?.meta?.georeferencedItems ?? featureCount,
+			);
+			patchState({
+				spatial: {
+					...state.spatial,
+					response: normalizedResponse,
+					status: "ready",
+				},
+				selectedFeatureId: hasFeatureWithId(
+					normalizedResponse.features,
+					state.selectedFeatureId,
+				)
+					? state.selectedFeatureId
+					: null,
+				status: {
+					...state.status,
+					tone: status?.tone || "positive",
+					text:
+						status?.text ||
+						`Shell map projection ready (${featureCount} visible features from ${georeferencedItems} georeferenced items).`,
+				},
+			});
 		},
 		setFilters(partialFilters) {
 			const nextQuery = normalizeCollectionQueryFilterPatch(

@@ -9,10 +9,11 @@
 - bottom timeline region reserved as a primary timemap control area (placeholder content for now)
 - selection-driven detail overlay above the timeline region
 - controller/state/query/spatial contracts preserved from scaffold iteration
+- embedded shell-map-adapter bridge path from `open-collections-browse-shell`
 
 ## Not included yet
 
-- production data loading and map layers
+- full map adapter parity with all legacy behaviors
 - full filter behavior
 - reusable shared timeline slider implementation
 - full cards/detail domain logic
@@ -65,6 +66,8 @@ Configurability:
 ## Internal structure (this phase)
 
 - `src/state/initial-state.js` defines the app-local state shape and seeds query defaults from `src/shared/data/query/collection-query-contract.js`.
-- `src/controllers/timemap-browser-controller.js` orchestrates state updates (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, selection handling, etc.).
+- `src/controllers/timemap-browser-controller.js` orchestrates state updates (`subscribe`, `setFilters`, `setTimeRange`, `setViewport`, selection handling, etc.) and can apply shell-provided spatial responses.
 - `src/app.js` resolves runtime/host presentation config and wires controller state/events to shell.
+  - In embedded `data-shell-map-adapter="true"` mode, it consumes `browse-shell-map-projection` and does not run local ingestion.
+  - Non-shell fallback remains fixture-backed for standalone shell development, but no longer fetches manifests or owns collection ingestion.
 - `src/components/timemap-browser-shell.js` owns map-first visual composition and overlay stacking while delegating non-visual orchestration to the controller.

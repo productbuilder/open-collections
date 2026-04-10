@@ -4,6 +4,10 @@ import {
 	normalizeBrowseShellQueryPatch,
 	normalizeBrowseShellQueryState,
 } from "../../../../shared/data/query/browse-shell-query-contract.js";
+import { createBrowseShellRuntime } from "./browse-shell-runtime.js";
+import { buildListSurfaceBridgePayload } from "./list-surface-bridge.js";
+import { buildMapSurfaceBridgePayload } from "./map-surface-bridge.js";
+import { createBrowseProjectionCache } from "./projection-cache.js";
 
 const BROWSE_MODES = Object.freeze({
 	LIST: "collection",
@@ -132,13 +136,42 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
 		};
 		this._browseQueryState = createBrowseShellQueryState();
+		this._lastProjectionQuerySignature = JSON.stringify(
+			this._browseQueryState?.query || {},
+		);
+		this._activeMapViewport = null;
+		this._lastListProjectionDiagnostics = null;
+		this._lastMapProjectionDiagnostics = null;
+		this._lastProjectionCacheStats = null;
 		this._filterInputTimer = null;
 		this._shellSearchTimer = null;
+		this.shellRuntime = createBrowseShellRuntime({
+			baseUrl:
+				typeof window !== "undefined" && window.location?.href
+					? window.location.href
+					: "http://localhost/",
+			fetchImpl: typeof fetch === "function" ? fetch.bind(globalThis) : undefined,
+		});
+		this.projectionCache = createBrowseProjectionCache({
+			buildListPayload: ({ runtimeStore, browseQueryState, viewMode }) =>
+				buildListSurfaceBridgePayload({
+					runtimeStore,
+					browseQueryState,
+					viewMode,
+				}),
+			buildMapPayload: ({ runtimeStore, browseQueryState, viewport }) =>
+				buildMapSurfaceBridgePayload({
+					runtimeStore,
+					browseQueryState,
+					viewport,
+				}),
+		});
 	}
 
 	connectedCallback() {
 		this.render();
 		this.bindEvents();
+		this.initializeShellStartupIngestion();
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -206,7 +239,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
 			const normalizedState = normalizeBrowseShellQueryState(detail);
+			const previousSignature = this._lastProjectionQuerySignature;
 			this._browseQueryState = normalizedState;
+			this._lastProjectionQuerySignature = JSON.stringify(
+				normalizedState?.query || {},
+			);
 			this.state.filterState = {
 				text: toText(normalizedState.filters.text),
 				types: toUniqueStringList(normalizedState.filters.types),
@@ -218,8 +255,45 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			this.state.filterOptionsStatus = normalizedState.status.filterOptions;
 			this.syncShellSearchState();
 			this.syncFilterPanelState();
+			if (previousSignature !== this._lastProjectionQuerySignature) {
+				this.publishProjectionToActiveChild();
+			}
 		};
 		this.shadowRoot.addEventListener("browse-query-state", handleBrowseQueryState);
+		this.shadowRoot.addEventListener("browse-query-patch", (event) => {
+			const detail =
+				event?.detail && typeof event.detail === "object" ? event.detail : {};
+			const normalizedPatch = normalizeBrowseShellQueryPatch(
+				detail,
+				this._browseQueryState?.query,
+			);
+			this._browseQueryState = normalizeBrowseShellQueryState(
+				{
+					...this._browseQueryState,
+					query: normalizedPatch.query,
+					filters: normalizedPatch.filters,
+				},
+				this._browseQueryState,
+			);
+			this._lastProjectionQuerySignature = JSON.stringify(
+				this._browseQueryState?.query || {},
+			);
+			this.syncShellSearchState();
+			this.syncFilterPanelState();
+			this.publishProjectionToActiveChild();
+		});
+		this.shadowRoot.addEventListener(
+			"timemap-browser-map-viewport-change",
+			(event) => {
+				if (this.currentBrowseMode() !== BROWSE_MODES.MAP) {
+					return;
+				}
+				const detail =
+					event?.detail && typeof event.detail === "object" ? event.detail : null;
+				this._activeMapViewport = detail;
+				this.publishMapProjectionToActiveChild();
+			},
+		);
 		this.shadowRoot.addEventListener("input", (event) => {
 			const target = event.target;
 			if (!(target instanceof HTMLInputElement)) {
@@ -282,6 +356,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					filters: clearedFilters,
 				},
 				this._browseQueryState,
+			);
+			this._lastProjectionQuerySignature = JSON.stringify(
+				this._browseQueryState?.query || {},
 			);
 			this.syncShellSearchState();
 			this.syncFilterPanelState();
@@ -360,11 +437,213 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			filterPatch,
 			this._browseQueryState?.query,
 		);
+		this._browseQueryState = normalizeBrowseShellQueryState(
+			{
+				...this._browseQueryState,
+				query: normalizedPatch.query,
+				filters: normalizedPatch.filters,
+			},
+			this._browseQueryState,
+		);
+		this._lastProjectionQuerySignature = JSON.stringify(
+			this._browseQueryState?.query || {},
+		);
 		activeChildElement.dispatchEvent(
 			new CustomEvent("browse-query-patch", {
 				detail: normalizedPatch,
 			}),
 		);
+		this.publishProjectionToActiveChild();
+	}
+
+	getActiveChildElement() {
+		const targetSelector =
+			this.currentBrowseMode() === BROWSE_MODES.MAP
+				? "timemap-browser"
+				: "collection-browser";
+		return this.shadowRoot.querySelector(targetSelector);
+	}
+
+	emitRuntimeCompatibilityState() {
+		const compatibilityState = this.shellRuntime.getCompatibilityState();
+		const activeChildElement = this.getActiveChildElement();
+		if (activeChildElement) {
+			activeChildElement.dispatchEvent(
+				new CustomEvent("browse-shell-runtime-state", {
+					detail: compatibilityState,
+				}),
+			);
+		}
+		this.dispatchEvent(
+			new CustomEvent("browse-shell-runtime-state", {
+				detail: compatibilityState,
+				bubbles: true,
+				composed: true,
+			}),
+		);
+		this.emitShellDiagnostics();
+	}
+
+	emitShellDiagnostics() {
+		const runtimeSummary = this.shellRuntime.getDiagnosticsSummary();
+		const cacheStats = this.projectionCache.getStats();
+		this._lastProjectionCacheStats = cacheStats;
+		const detail = {
+			modelVersion: "browser-diagnostics-v1",
+			kind: "shell-status",
+			ingestionStatus: runtimeSummary.ingestionStatus,
+			runtime: runtimeSummary,
+			performance: {
+				projectionCache: cacheStats,
+			},
+			projections: {
+				list: this._lastListProjectionDiagnostics,
+				map: this._lastMapProjectionDiagnostics,
+			},
+		};
+		this.dispatchEvent(
+			new CustomEvent("browse-shell-diagnostics", {
+				detail,
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	}
+
+	initializeShellStartupIngestion() {
+		this.shellRuntime.initializeOwnership();
+		this.emitRuntimeCompatibilityState();
+		this.publishProjectionToActiveChild();
+		void this.shellRuntime.runStartupIngestionOnce().then((result) => {
+			const summary = this.shellRuntime.getDiagnosticsSummary();
+			console.info("[browse-shell] startup ingestion summary", {
+				ingestionStatus: summary.ingestionStatus,
+				sourcesIngested: summary.sourcesIngested,
+				collectionsIngested: summary.collectionsIngested,
+				itemsIngested: summary.itemsIngested,
+				warningCount: summary.warningCount,
+				failureCount: summary.failureCount,
+				fetchRequestCount: summary.fetchRequestCount,
+				fetchNetworkCount: summary.fetchNetworkCount,
+				fetchDedupedHitCount: summary.fetchDedupedHitCount,
+				normalizeCount: summary.normalizeCount,
+			});
+			if (
+				Array.isArray(result?.failures) &&
+				result.failures.length > 0
+			) {
+				console.warn("[browse-shell] startup ingestion failures", result.failures);
+			}
+			this.emitRuntimeCompatibilityState();
+			this.publishProjectionToActiveChild();
+		});
+	}
+
+	publishProjectionToActiveChild() {
+		this.publishListProjectionToActiveChild();
+		this.publishMapProjectionToActiveChild();
+	}
+
+	publishListProjectionToActiveChild() {
+		if (this.currentBrowseMode() !== BROWSE_MODES.LIST) {
+			return;
+		}
+		const activeChildElement = this.getActiveChildElement();
+		if (!activeChildElement || activeChildElement.tagName.toLowerCase() !== "collection-browser") {
+			return;
+		}
+		const runtimeStore = this.shellRuntime.getRuntimeStore();
+		if (!runtimeStore) {
+			return;
+		}
+		try {
+			const listProjection = this.projectionCache.getListProjection({
+				runtimeStore,
+				browseQueryState: this._browseQueryState,
+				viewMode: "all",
+			});
+			const payload = {
+				...listProjection.payload,
+				compatibility: {
+					...(listProjection.payload?.compatibility || {}),
+					diagnostics: {
+						...(listProjection.payload?.compatibility?.diagnostics || {}),
+						cache: {
+							layer: "list",
+							...listProjection.cache,
+						},
+					},
+				},
+			};
+			activeChildElement.dispatchEvent(
+				new CustomEvent("browse-shell-list-projection", {
+					detail: payload,
+				}),
+			);
+			this._lastListProjectionDiagnostics =
+				payload?.projection?.diagnostics?.structured || payload?.projection?.diagnostics || null;
+			this.dispatchEvent(
+				new CustomEvent("browse-shell-list-projection", {
+					detail: payload,
+					bubbles: true,
+					composed: true,
+				}),
+			);
+			this.emitShellDiagnostics();
+		} catch (error) {
+			console.warn("[browse-shell] list projection bridge failed", error);
+		}
+	}
+
+	publishMapProjectionToActiveChild() {
+		if (this.currentBrowseMode() !== BROWSE_MODES.MAP) {
+			return;
+		}
+		const activeChildElement = this.getActiveChildElement();
+		if (!activeChildElement || activeChildElement.tagName.toLowerCase() !== "timemap-browser") {
+			return;
+		}
+		const runtimeStore = this.shellRuntime.getRuntimeStore();
+		if (!runtimeStore) {
+			return;
+		}
+		try {
+			const mapProjection = this.projectionCache.getMapProjection({
+				runtimeStore,
+				browseQueryState: this._browseQueryState,
+				viewport: this._activeMapViewport,
+			});
+			const payload = {
+				...mapProjection.payload,
+				compatibility: {
+					...(mapProjection.payload?.compatibility || {}),
+					diagnostics: {
+						...(mapProjection.payload?.compatibility?.diagnostics || {}),
+						cache: {
+							layer: "map",
+							...mapProjection.cache,
+						},
+					},
+				},
+			};
+			activeChildElement.dispatchEvent(
+				new CustomEvent("browse-shell-map-projection", {
+					detail: payload,
+				}),
+			);
+			this._lastMapProjectionDiagnostics =
+				payload?.projection?.diagnostics?.structured || payload?.projection?.diagnostics || null;
+			this.dispatchEvent(
+				new CustomEvent("browse-shell-map-projection", {
+					detail: payload,
+					bubbles: true,
+					composed: true,
+				}),
+			);
+			this.emitShellDiagnostics();
+		} catch (error) {
+			console.warn("[browse-shell] map projection bridge failed", error);
+		}
 	}
 
 	currentBrowseMode() {
@@ -389,9 +668,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			? ` data-oc-app-mode="${appModeAttr.replaceAll('"', "&quot;")}"`
 			: "";
 		if (mode === BROWSE_MODES.MAP) {
-			return `<timemap-browser${embeddedAttrs}${shellEmbedAttrs}${appMode} show-top-chrome="false" show-filter-entry="false" map-edge-to-edge="true"></timemap-browser>`;
+			return `<timemap-browser data-shell-map-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode} show-top-chrome="false" show-filter-entry="false" map-edge-to-edge="true"></timemap-browser>`;
 		}
-		return `<collection-browser${embeddedAttrs}${shellEmbedAttrs}${appMode}></collection-browser>`;
+		return `<collection-browser data-shell-list-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode}></collection-browser>`;
 	}
 
 	renderModeButton(option, currentMode) {
@@ -705,6 +984,8 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		`;
 		this.syncShellSearchState();
 		this.syncFilterPanelState();
+		this.emitRuntimeCompatibilityState();
+		this.publishProjectionToActiveChild();
 	}
 }
 

@@ -1,5 +1,13 @@
 import { browserStyles } from "../css/browser.css.js";
-import { backButtonStyles, renderBackButton } from "../../../../shared/components/back-button.js";
+import {
+	backButtonStyles,
+	renderBackButton,
+} from "../../../../shared/components/back-button.js";
+import {
+	computeAllModePatchPlan,
+	getEntityRenderKey,
+	normalizeSourceCardPreviewRows,
+} from "./browser-collection-browser-rendering.js";
 import "../../../../shared/ui/primitives/grid5-card-source.js";
 import "../../../../shared/ui/primitives/grid5-card-collection.js";
 import "../../../../shared/ui/primitives/grid5-card-item.js";
@@ -23,20 +31,23 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			collectionCards: [],
 			itemCards: [],
 		};
+		this._renderedGridKeys = [];
+		this._boundHostClick = null;
 	}
 
 	connectedCallback() {
-		this.render();
+		this.renderShell();
 		this.bindPreviewFailureEvents();
+		this.bindHostEvents();
+		this.renderModel();
 	}
 
 	disconnectedCallback() {
-		if (this._grid && this._boundGridClickHandler) {
-			this._grid.removeEventListener("click", this._boundGridClickHandler);
-		}
 		this.teardownAllModeAppendObserver();
-		this._grid = null;
-		this._boundGridClickHandler = null;
+		if (this._boundHostClick) {
+			this.shadowRoot?.removeEventListener("click", this._boundHostClick);
+		}
+		this._boundHostClick = null;
 	}
 
 	update(data = {}) {
@@ -44,7 +55,100 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		if (!this.model.isAppendingAllFeedChunk) {
 			this._allModeAppendRequestPending = false;
 		}
-		this.render();
+		this.renderModel();
+	}
+
+	renderShell() {
+		this.shadowRoot.innerHTML = `
+      <style>${backButtonStyles}</style>
+      <style>${browserStyles}</style>
+      <div class="root">
+        <div class="sticky-chrome">
+          <header class="header" aria-label="Browser header">
+            <div class="header-top">
+              <span id="backButtonSlot"></span>
+              <div class="header-copy">
+                <h2 id="viewportTitle" class="title">Browser</h2>
+                <p id="viewportSubtitle" class="subtitle">Browse available entities.</p>
+              </div>
+            </div>
+          </header>
+          <div id="toggleBar" class="toggle-bar" role="toolbar" aria-label="Browse mode"></div>
+        </div>
+        <div class="scroll-container-wrapper">
+          <div id="scrollContainer" class="scroll-container">
+            <div class="grid-host">
+              <div id="browseGrid" class="browse-grid"></div>
+              <div id="allModeFeedSentinel" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+		this._titleElement = this.shadowRoot.getElementById("viewportTitle");
+		this._subtitleElement = this.shadowRoot.getElementById("viewportSubtitle");
+		this._toggleBar = this.shadowRoot.getElementById("toggleBar");
+		this._backButtonSlot = this.shadowRoot.getElementById("backButtonSlot");
+		this._grid = this.shadowRoot.getElementById("browseGrid");
+	}
+
+	bindHostEvents() {
+		if (this._boundHostClick) {
+			return;
+		}
+		this._boundHostClick = (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			if (!target) {
+				return;
+			}
+			const modeButton = target.closest(".mode-toggle[data-mode]");
+			if (modeButton) {
+				const mode = String(modeButton.getAttribute("data-mode") || "").trim();
+				if (!VALID_MODES.includes(mode) || mode === this.normalizedMode()) {
+					return;
+				}
+				const modeChangeEvent = new CustomEvent("view-mode-change", {
+					bubbles: true,
+					composed: true,
+					cancelable: true,
+					detail: { mode },
+				});
+				const shouldApplyLocally = this.dispatchEvent(modeChangeEvent);
+				if (!shouldApplyLocally) {
+					return;
+				}
+				this.model.viewMode = mode;
+				this.renderModel();
+				return;
+			}
+
+			if (target.closest("#panelBackBtn")) {
+				this.dispatch("panel-back");
+				return;
+			}
+
+			const cell = target.closest(".browse-cell");
+			if (!cell) {
+				return;
+			}
+			const actionType = String(cell.dataset.actionType || "").trim();
+			const actionValue = String(cell.dataset.actionValue || "").trim();
+			if (!actionType || !actionValue) {
+				return;
+			}
+			if (actionType === "source") {
+				this.dispatch("source-open", { sourceId: actionValue });
+				return;
+			}
+			if (actionType === "collection") {
+				this.dispatch("collection-open", { manifestUrl: actionValue });
+				return;
+			}
+			if (actionType === "item") {
+				this.dispatch("item-open", { itemId: actionValue });
+			}
+		};
+		this.shadowRoot.addEventListener("click", this._boundHostClick);
 	}
 
 	safeArray(value) {
@@ -52,9 +156,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	}
 
 	normalizedMode() {
-		return VALID_MODES.includes(this.model.viewMode)
-			? this.model.viewMode
-			: "items";
+		return VALID_MODES.includes(this.model.viewMode) ? this.model.viewMode : "items";
 	}
 
 	renderCards() {
@@ -65,14 +167,11 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		const allBrowseEntities = this.safeArray(this.model.allBrowseEntities);
 
 		if (mode === "all") {
-			if (allBrowseEntities.length > 0) {
-				return allBrowseEntities.filter((entity) =>
-					this.shouldRenderEntity(entity),
-				);
-			}
-			return [...sourceCards, ...collectionCards, ...itemCards].filter(
-				(entity) => this.shouldRenderEntity(entity),
-			);
+			const preferred =
+				allBrowseEntities.length > 0
+					? allBrowseEntities
+					: [...sourceCards, ...collectionCards, ...itemCards];
+			return preferred.filter((entity) => this.shouldRenderEntity(entity));
 		}
 		if (mode === "sources") {
 			return sourceCards.filter((entity) => this.shouldRenderEntity(entity));
@@ -95,7 +194,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	itemPreviewFailureKey(entity = {}) {
 		const actionValue = String(entity?.actionValue || entity?.id || "").trim();
 		const previewUrl = String(
-			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+			entity?.previewUrl ||
+				entity?.item?.media?.thumbnailUrl ||
+				entity?.item?.media?.url ||
+				"",
 		).trim();
 		return `${actionValue}|${previewUrl}`;
 	}
@@ -106,7 +208,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			return true;
 		}
 		const previewUrl = String(
-			entity?.previewUrl || entity?.item?.media?.thumbnailUrl || entity?.item?.media?.url || "",
+			entity?.previewUrl ||
+				entity?.item?.media?.thumbnailUrl ||
+				entity?.item?.media?.url ||
+				"",
 		).trim();
 		if (!previewUrl) {
 			return false;
@@ -134,8 +239,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			if (!(target instanceof Element)) {
 				return;
 			}
-			const cardCell = target.closest(".browse-cell.kind-item");
-			cardCell?.remove();
+			target.closest(".browse-cell.kind-item")?.remove();
 		});
 	}
 
@@ -165,16 +269,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 	}
 
 	normalizeSourcePreviewRows(previewRows = []) {
-		const rows = Array.isArray(previewRows) ? previewRows.slice(0, 3) : [];
-		return rows.map((row) => {
-			if (Array.isArray(row)) {
-				return row.filter(Boolean);
-			}
-			if (row && typeof row === "object" && Array.isArray(row.images)) {
-				return row.images.filter(Boolean);
-			}
-			return [];
-		});
+		return normalizeSourceCardPreviewRows(previewRows);
 	}
 
 	resolveCollectionSubtitle(entity = {}) {
@@ -193,35 +288,46 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		if (!subtitleText) {
 			return;
 		}
-		const updateSubtitle = () => {
-			const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
-			if (subtitleElement) {
-				subtitleElement.textContent = subtitleText;
-			}
-		};
-		updateSubtitle();
-		queueMicrotask(updateSubtitle);
-		requestAnimationFrame(updateSubtitle);
+		const subtitleElement = card.shadowRoot?.querySelector(".subtitle");
+		if (subtitleElement && subtitleElement.textContent !== subtitleText) {
+			subtitleElement.textContent = subtitleText;
+		}
 	}
 
 	itemTileConfig(entity = {}) {
 		const variant = String(entity.itemTileVariant || entity.tileVariant || "").trim();
 		if (variant === "1x2" || variant === "tile-1x2") {
-			return { className: "tile-1x2", cols: 1, rows: 2, colsMobile: 1, rowsMobile: 2 };
+			return {
+				className: "tile-1x2",
+				cols: 1,
+				rows: 2,
+				colsMobile: 1,
+				rowsMobile: 2,
+			};
 		}
 		if (variant === "1x1" || variant === "tile-1x1") {
-			return { className: "tile-1x1", cols: 1, rows: 1, colsMobile: 1, rowsMobile: 1 };
+			return {
+				className: "tile-1x1",
+				cols: 1,
+				rows: 1,
+				colsMobile: 1,
+				rowsMobile: 1,
+			};
 		}
-		return { className: "tile-2x1", cols: 2, rows: 1, colsMobile: 2, rowsMobile: 1 };
+		return {
+			className: "tile-2x1",
+			cols: 2,
+			rows: 1,
+			colsMobile: 2,
+			rowsMobile: 1,
+		};
 	}
 
 	buildCard(entity = {}) {
 		const kind = this.entityKind(entity);
 		if (kind === "source") {
 			const card = document.createElement("grid5-card-source");
-			const sourceTitle = String(
-				entity.organizationName || entity.title || "",
-			).trim();
+			const sourceTitle = String(entity.organizationName || entity.title || "").trim();
 			const subtitleText = String(entity.subtitle || "").trim();
 			const placeName = String(
 				entity.placeName || this.firstTextPart(subtitleText) || "",
@@ -250,23 +356,16 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 
 		if (kind === "collection") {
 			const card = document.createElement("grid5-card-collection");
-			const manifestUrl = String(
-				entity.actionValue || entity.manifestUrl || "",
-			).trim();
+			const manifestUrl = String(entity.actionValue || entity.manifestUrl || "").trim();
 			card.update({
 				title: entity.title || "Collection",
 				countLabel: entity.countLabel || "",
-				previewImages: Array.isArray(entity.previewImages)
-					? entity.previewImages
-					: [],
+				previewImages: Array.isArray(entity.previewImages) ? entity.previewImages : [],
 				actionLabel: "Open collection",
 				actionValue: manifestUrl,
 				disabled: Boolean(entity.disabled),
 			});
-			this.applyCollectionSubtitle(
-				card,
-				this.resolveCollectionSubtitle(entity),
-			);
+			this.applyCollectionSubtitle(card, this.resolveCollectionSubtitle(entity));
 			card.classList.add("tile-2x2");
 			return card;
 		}
@@ -295,12 +394,8 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		wrapper.dataset.browseKind = kind;
 		wrapper.dataset.actionType = kind;
 		wrapper.dataset.actionValue = actionValue;
-		if (kind === "source") {
-			wrapper.style.setProperty("--oc-span-cols", "2");
-			wrapper.style.setProperty("--oc-span-rows", "2");
-			wrapper.style.setProperty("--oc-span-cols-mobile", "2");
-			wrapper.style.setProperty("--oc-span-rows-mobile", "2");
-		} else if (kind === "collection") {
+		wrapper.dataset.entityKey = getEntityRenderKey(entity);
+		if (kind === "source" || kind === "collection") {
 			wrapper.style.setProperty("--oc-span-cols", "2");
 			wrapper.style.setProperty("--oc-span-rows", "2");
 			wrapper.style.setProperty("--oc-span-cols-mobile", "2");
@@ -322,55 +417,17 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		);
 	}
 
-	resolveGridCellFromEvent(event) {
-		const path = typeof event.composedPath === "function" ? event.composedPath() : [];
-		for (const node of path) {
-			if (!(node instanceof HTMLElement)) {
-				continue;
-			}
-			if (node.classList?.contains("browse-cell")) {
-				return node;
-			}
-		}
-		return null;
+	captureScrollPosition() {
+		const root = this.shadowRoot?.querySelector(".root");
+		return root ? Number(root.scrollTop || 0) : 0;
 	}
 
-	bindGridInteractions() {
-		if (this._grid && this._boundGridClickHandler) {
-			this._grid.removeEventListener("click", this._boundGridClickHandler);
-		}
-		const grid = this.shadowRoot?.getElementById("browseGrid");
-		if (!grid) {
-			this._grid = null;
-			this._boundGridClickHandler = null;
+	restoreScrollPosition(scrollTop = 0) {
+		const root = this.shadowRoot?.querySelector(".root");
+		if (!root) {
 			return;
 		}
-
-		this._grid = grid;
-		this._boundGridClickHandler = (event) => {
-			const cell = this.resolveGridCellFromEvent(event);
-			if (!cell) {
-				return;
-			}
-			const actionType = String(cell.dataset.actionType || "").trim();
-			const actionValue = String(cell.dataset.actionValue || "").trim();
-			if (!actionType || !actionValue) {
-				return;
-			}
-			if (actionType === "source") {
-				this.dispatch("source-open", { sourceId: actionValue });
-				return;
-			}
-			if (actionType === "collection") {
-				this.dispatch("collection-open", { manifestUrl: actionValue });
-				return;
-			}
-			if (actionType === "item") {
-				this.dispatch("item-open", { itemId: actionValue });
-			}
-		};
-
-		grid.addEventListener("click", this._boundGridClickHandler);
+		root.scrollTop = Math.max(0, Number(scrollTop) || 0);
 	}
 
 	teardownAllModeAppendObserver() {
@@ -397,10 +454,8 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this._allModeAppendObserver = new IntersectionObserver(
 			(entries) => {
 				const isVisible = entries.some((entry) => entry.isIntersecting);
-				if (!isVisible) {
-					return;
-				}
 				if (
+					!isVisible ||
 					this._allModeAppendRequestPending ||
 					this.model.isAppendingAllFeedChunk ||
 					this.model.allFeedExhausted
@@ -412,7 +467,7 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			},
 			{
 				root,
-				rootMargin: "0px 0px 480px 0px",
+				rootMargin: "0px 0px 320px 0px",
 				threshold: 0,
 			},
 		);
@@ -432,112 +487,106 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		return "Items";
 	}
 
-	renderToggleBar() {
-		const mode = this.normalizedMode();
-		return `
-			<div class="toggle-bar" role="toolbar" aria-label="Browse mode">
-				${VALID_MODES.map(
-					(entry) => `
-						<button
-							type="button"
-							class="mode-toggle"
-							data-mode="${entry}"
-							data-active="${entry === mode ? "true" : "false"}"
-						>
-							${this.modeButtonLabel(entry)}
-						</button>
-					`,
-				).join("")}
-			</div>
-		`;
-	}
-
-	bindToggleEvents() {
-		const buttons = this.shadowRoot.querySelectorAll(".mode-toggle[data-mode]");
-		for (const button of buttons) {
-			button.addEventListener("click", () => {
-				const mode = String(button.dataset.mode || "").trim();
-				if (!VALID_MODES.includes(mode) || mode === this.normalizedMode()) {
-					return;
-				}
-				const modeChangeEvent = new CustomEvent("view-mode-change", {
-					bubbles: true,
-					composed: true,
-					cancelable: true,
-					detail: { mode },
-				});
-				const shouldApplyLocally = this.dispatchEvent(modeChangeEvent);
-				if (!shouldApplyLocally) {
-					return;
-				}
-				this.model.viewMode = mode;
-				this.render();
-			});
+	updateHeader() {
+		if (this._titleElement) {
+			const nextTitle = this.model.viewportTitle || "Browser";
+			if (this._titleElement.textContent !== nextTitle) {
+				this._titleElement.textContent = nextTitle;
+			}
+		}
+		if (this._subtitleElement) {
+			const nextSubtitle = this.model.viewportSubtitle || "Browse available entities.";
+			if (this._subtitleElement.textContent !== nextSubtitle) {
+				this._subtitleElement.textContent = nextSubtitle;
+			}
+		}
+		if (this._backButtonSlot) {
+			if (this.model.showBack) {
+				this._backButtonSlot.hidden = false;
+				this._backButtonSlot.innerHTML = renderBackButton({ id: "panelBackBtn" });
+			} else {
+				this._backButtonSlot.hidden = true;
+				this._backButtonSlot.innerHTML = "";
+			}
 		}
 	}
 
-	render() {
-		const previousMode = this._lastRenderMode || "";
-		const previousSessionKey = this._lastAllFeedSessionKey || "";
-		const currentMode = this.normalizedMode();
-		const currentSessionKey = String(this.model.allFeedSessionKey || "").trim();
-		const shouldPreserveScroll =
-			currentMode === "all" &&
-			previousMode === "all" &&
-			currentSessionKey &&
-			currentSessionKey === previousSessionKey;
-		const priorScrollTop = shouldPreserveScroll
-			? Number(this.shadowRoot?.getElementById("scrollContainer")?.scrollTop || 0)
-			: 0;
-
-		this.shadowRoot.innerHTML = `
-      <style>${backButtonStyles}</style>
-      <style>${browserStyles}</style>
-      <div class="root">
-        <div class="sticky-chrome">
-          <header class="header" aria-label="Browser header">
-            <div class="header-top">
-              ${this.model.showBack ? renderBackButton({ id: "panelBackBtn" }) : ""}
-              <div class="header-copy">
-                <h2 class="title">${this.model.viewportTitle || "Browser"}</h2>
-                <p class="subtitle">${this.model.viewportSubtitle || "Browse available entities."}</p>
-              </div>
-            </div>
-          </header>
-          ${this.renderToggleBar()}
-        </div>
-        <div class="scroll-container-wrapper">
-          <div id="scrollContainer" class="scroll-container">
-            <div class="grid-host">
-              <div id="browseGrid" class="browse-grid"></div>
-              <div id="allModeFeedSentinel" aria-hidden="true"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-		const grid = this.shadowRoot.getElementById("browseGrid");
-		if (!grid) {
+	updateToggleBar() {
+		if (!this._toggleBar) {
 			return;
 		}
-
-		for (const entity of this.renderCards()) {
-			// TODO(perf): Virtualize/window item cells so only in-viewport rows are mounted.
-			grid.appendChild(this.buildGridCell(entity));
+		const currentMode = this.normalizedMode();
+		const nextMarkup = VALID_MODES.map(
+			(entry) => `
+        <button
+          type="button"
+          class="mode-toggle"
+          data-mode="${entry}"
+          data-active="${entry === currentMode ? "true" : "false"}"
+        >
+          ${this.modeButtonLabel(entry)}
+        </button>
+      `,
+		).join("");
+		if (this._toggleBar.innerHTML !== nextMarkup) {
+			this._toggleBar.innerHTML = nextMarkup;
 		}
-		this.shadowRoot.getElementById("scrollContainer").scrollTop = priorScrollTop;
+	}
 
-		const backBtn = this.shadowRoot.getElementById("panelBackBtn");
-		backBtn?.addEventListener("click", () => {
-			this.dispatch("panel-back");
-		});
+	clearGrid() {
+		if (this._grid) {
+			this._grid.replaceChildren();
+		}
+		this._renderedGridKeys = [];
+	}
 
-		this.bindToggleEvents();
-		this.bindGridInteractions();
+	appendGridEntities(entities = []) {
+		if (!this._grid || !Array.isArray(entities) || entities.length === 0) {
+			return;
+		}
+		const fragment = document.createDocumentFragment();
+		for (const entity of entities) {
+			fragment.appendChild(this.buildGridCell(entity));
+			this._renderedGridKeys.push(getEntityRenderKey(entity));
+		}
+		this._grid.appendChild(fragment);
+	}
+
+	renderGridEntities(entities = []) {
+		const currentMode = this.normalizedMode();
+		const nextSessionKey = String(this.model.allFeedSessionKey || "").trim();
+		if (currentMode === "all") {
+			const plan = computeAllModePatchPlan({
+				previousSessionKey: this._lastAllFeedSessionKey || "",
+				nextSessionKey,
+				previousEntities: this._lastRenderedEntities || [],
+				nextEntities: entities,
+			});
+			if (plan.mode === "append") {
+				this.appendGridEntities(plan.appendEntities);
+			} else if (plan.mode === "preserve") {
+				// Keep existing DOM and observer state.
+			} else {
+				this.clearGrid();
+				this.appendGridEntities(entities);
+			}
+			this._lastAllFeedSessionKey = nextSessionKey;
+		} else {
+			this._lastAllFeedSessionKey = "";
+			this.clearGrid();
+			this.appendGridEntities(entities);
+		}
+		this._lastRenderedEntities = [...entities];
+	}
+
+	renderModel() {
+		this.updateHeader();
+		this.updateToggleBar();
+		const entities = this.renderCards().filter(
+			(entity) => entity && typeof entity === "object",
+		);
+		this.renderGridEntities(entities);
 		this.bindAllModeAppendObserver();
-		this._lastRenderMode = currentMode;
-		this._lastAllFeedSessionKey = currentSessionKey;
 	}
 }
 

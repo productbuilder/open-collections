@@ -41,13 +41,19 @@ import {
 	createBrowseFeedStreamSession,
 	orderBrowseModeCards,
 } from "./state/feed/index.js";
+import { createFeedAppendScheduler } from "./rendering/feed-append-scheduler.js";
+import { preserveScrollPosition } from "./rendering/scroll-preservation.js";
+import {
+	isShellListAdapterModeEnabled,
+	shouldRunEmbeddedLegacyCollectionLoading,
+} from "./shell-adapter-mode.js";
 import "./components/browser-collection-browser.js";
 import "./components/browser-manifest-controls.js";
 import "./components/browser-metadata-panel.js";
 import "./components/browser-viewer-dialog.js";
 
 const ALL_MODE_INITIAL_CHUNK_SIZE = 24;
-const ALL_MODE_APPEND_CHUNK_SIZE = 24;
+const ALL_MODE_APPEND_CHUNK_SIZE = 16;
 const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
 
 function deriveItemPreviewUrl(item) {
@@ -173,6 +179,12 @@ class CollectionBrowserElement extends ComponentBase {
 			isLoadingCollection: false,
 			hasResolvedFilterOptionData: false,
 			browseShellQuery: createBrowseShellQueryState(),
+			shellListProjection: null,
+			shellAllModeFeedState: {
+				key: "",
+				renderedCount: 0,
+				exhausted: true,
+			},
 			allModeFeedSession: null,
 			isAppendingAllModeFeedChunk: false,
 		};
@@ -180,6 +192,9 @@ class CollectionBrowserElement extends ComponentBase {
 		this.lastBrowseDiagnosticsSignature = "";
 		this.shadow = this.attachShadow({ mode: "open" });
 		this.handleBrowseQueryPatch = this.onBrowseQueryPatch.bind(this);
+		this.handleShellListProjection = this.onShellListProjection.bind(this);
+		this.handleShellRuntimeState = this.onShellRuntimeState.bind(this);
+		this.allModeAppendScheduler = createFeedAppendScheduler();
 	}
 
 	connectedCallback() {
@@ -193,6 +208,8 @@ class CollectionBrowserElement extends ComponentBase {
 		this._eventsBound = false;
 		this.bindEvents();
 		this.addEventListener("browse-query-patch", this.handleBrowseQueryPatch);
+		this.addEventListener("browse-shell-list-projection", this.handleShellListProjection);
+		this.addEventListener("browse-shell-runtime-state", this.handleShellRuntimeState);
 		this.setStatus(this.state.statusText, this.state.statusTone);
 		this.renderHeader();
 		this.renderManifestControls();
@@ -200,8 +217,24 @@ class CollectionBrowserElement extends ComponentBase {
 		this.renderViewport();
 		this.renderMetadata();
 		this.syncMetadataPanelVisibility();
-		if (this.isEmbeddedRuntime()) {
-			void this.initializeEmbeddedSources();
+		const embeddedRuntime = this.isEmbeddedRuntime();
+		const shellListAdapterMode = this.isShellListAdapterMode();
+		if (embeddedRuntime) {
+			if (shellListAdapterMode) {
+				this.state.isLoadingCollection = true;
+				this.state.hasResolvedFilterOptionData = false;
+				this.setStatus("Waiting for shell data...", "neutral");
+				this.renderViewport();
+				return;
+			}
+			if (
+				shouldRunEmbeddedLegacyCollectionLoading({
+					embeddedRuntime,
+					shellListAdapterAttribute: this.hasAttribute("data-shell-list-adapter"),
+				})
+			) {
+				void this.initializeEmbeddedSources();
+			}
 			return;
 		}
 		void this.hydrateRecentStateAndInitialize();
@@ -215,18 +248,26 @@ class CollectionBrowserElement extends ComponentBase {
 
 	disconnectedCallback() {
 		this.removeEventListener("browse-query-patch", this.handleBrowseQueryPatch);
+		this.removeEventListener("browse-shell-list-projection", this.handleShellListProjection);
+		this.removeEventListener("browse-shell-runtime-state", this.handleShellRuntimeState);
 		if (this._handleWindowResize) {
 			window.removeEventListener("resize", this._handleWindowResize);
 			this._handleWindowResize = null;
 		}
 		this._eventsBound = false;
+		this.allModeAppendScheduler.cancel();
 	}
 
 	onBrowseQueryPatch(event) {
 		const detail =
 			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		this.applyBrowseQueryPatch(detail);
+		this.renderViewport();
+	}
+
+	applyBrowseQueryPatch(patch = {}) {
 		const normalizedPatch = normalizeBrowseShellQueryPatch(
-			detail,
+			patch,
 			this.state.browseShellQuery?.query,
 		);
 		this.state.browseShellQuery = normalizeBrowseShellQueryState(
@@ -237,7 +278,96 @@ class CollectionBrowserElement extends ComponentBase {
 			},
 			this.state.browseShellQuery || createBrowseShellQueryState(),
 		);
+	}
+
+	isShellListAdapterMode() {
+		return isShellListAdapterModeEnabled({
+			embeddedRuntime: this.isEmbeddedRuntime(),
+			shellListAdapterAttribute: this.hasAttribute("data-shell-list-adapter"),
+		});
+	}
+
+	onShellRuntimeState(event) {
+		if (!this.isShellListAdapterMode()) {
+			return;
+		}
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const diagnosticsSummary =
+			detail?.diagnosticsSummary && typeof detail.diagnosticsSummary === "object"
+				? detail.diagnosticsSummary
+				: {};
+		const status = String(diagnosticsSummary.ingestionStatus || "").trim();
+		if (status === "loading" || status === "idle") {
+			this.state.isLoadingCollection = true;
+			this.state.hasResolvedFilterOptionData = false;
+			this.setStatus("Loading shell browser data...", "neutral");
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
+			return;
+		}
+		if (status === "error") {
+			this.state.isLoadingCollection = false;
+			this.state.hasResolvedFilterOptionData = true;
+			this.setStatus("Shell browser data failed to load.", "warn");
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
+			return;
+		}
+	}
+
+	onShellListProjection(event) {
+		if (!this.isShellListAdapterMode()) {
+			return;
+		}
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const projection =
+			detail?.projection && typeof detail.projection === "object"
+				? detail.projection
+				: null;
+		if (!projection) {
+			return;
+		}
+		this.state.shellListProjection = projection;
+		const projectionModel =
+			projection?.model && typeof projection.model === "object"
+				? projection.model
+				: {};
+		const incomingSessionKey = String(projectionModel.allFeedSessionKey || "").trim();
+		const incomingInitialCount = Array.isArray(projectionModel.allBrowseEntities)
+			? projectionModel.allBrowseEntities.length
+			: 0;
+		const incomingExhausted = Boolean(projectionModel.allFeedExhausted);
+		const previousSessionKey = String(
+			this.state.shellAllModeFeedState?.key || "",
+		).trim();
+		if (incomingSessionKey && incomingSessionKey !== previousSessionKey) {
+			this.state.shellAllModeFeedState = {
+				key: incomingSessionKey,
+				renderedCount: incomingInitialCount,
+				exhausted: incomingExhausted,
+			};
+		} else if (!incomingSessionKey) {
+			this.state.shellAllModeFeedState = {
+				key: "",
+				renderedCount: incomingInitialCount,
+				exhausted: true,
+			};
+		}
+		this.state.isLoadingCollection = false;
+		this.state.hasResolvedFilterOptionData = true;
+		const totals = projection?.total?.filtered || projection?.diagnostics?.filteredTotals || {};
+		const filteredItemCount = Number(totals.items || 0);
+		this.setStatus(
+			`Shell browse data ready (${filteredItemCount} item${filteredItemCount === 1 ? "" : "s"} visible).`,
+			"ok",
+		);
+		this.renderEmbeddedSourceControls();
 		this.renderViewport();
+		this.renderMetadata();
+		this.renderViewer();
+		this.syncMetadataPanelVisibility();
 	}
 
 	buildAllModeFeedSessionKey({
@@ -320,6 +450,44 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	appendNextAllModeFeedChunk() {
+		if (this.isShellListAdapterMode()) {
+			const projection = this.state.shellListProjection;
+			const model =
+				projection?.model && typeof projection.model === "object"
+					? projection.model
+					: null;
+			if (!model || this.state.viewMode !== "all") {
+				return;
+			}
+			const fullEntities = Array.isArray(model.fullAllBrowseEntities)
+				? model.fullAllBrowseEntities
+				: [];
+			if (!fullEntities.length) {
+				return;
+			}
+			const feedState =
+				this.state.shellAllModeFeedState &&
+				typeof this.state.shellAllModeFeedState === "object"
+					? this.state.shellAllModeFeedState
+					: { key: "", renderedCount: 0, exhausted: true };
+			if (feedState.exhausted) {
+				this.state.isAppendingAllModeFeedChunk = false;
+				return;
+			}
+			const currentCount = Number(feedState.renderedCount || 0);
+			const nextCount = Math.min(
+				fullEntities.length,
+				currentCount + ALL_MODE_APPEND_CHUNK_SIZE,
+			);
+			this.state.shellAllModeFeedState = {
+				...feedState,
+				renderedCount: nextCount,
+				exhausted: nextCount >= fullEntities.length,
+			};
+			this.state.isAppendingAllModeFeedChunk = false;
+			this.renderViewport();
+			return;
+		}
 		const activeSession = this.state.allModeFeedSession;
 		if (
 			!activeSession ||
@@ -345,6 +513,17 @@ class CollectionBrowserElement extends ComponentBase {
 		if (nextChunk.length > 0 || activeSession.exhausted) {
 			this.renderViewport();
 		}
+	}
+
+	requestAppendNextAllModeFeedChunk() {
+		if (this.state.isAppendingAllModeFeedChunk) {
+			return;
+		}
+		this.state.isAppendingAllModeFeedChunk = true;
+		this.renderViewport();
+		this.allModeAppendScheduler.request(() => {
+			this.appendNextAllModeFeedChunk();
+		});
 	}
 
 	bindEvents() {
@@ -434,12 +613,27 @@ class CollectionBrowserElement extends ComponentBase {
 			return;
 		}
 
-		const canUseCollections = this.state.collectionsIndex.length > 0;
-		const canUseItems = this.state.sourceItems.length > 0;
-		const canUseAll =
-			this.state.embeddedSourceCards.length > 0 ||
-			this.state.collectionsIndex.length > 0 ||
-			this.state.sourceItems.length > 0;
+		const shellProjection = this.state.shellListProjection;
+		const shellSourceCount = Array.isArray(shellProjection?.sourceCards)
+			? shellProjection.sourceCards.length
+			: 0;
+		const shellCollectionCount = Array.isArray(shellProjection?.collectionCards)
+			? shellProjection.collectionCards.length
+			: 0;
+		const shellItemCount = Array.isArray(shellProjection?.itemCards)
+			? shellProjection.itemCards.length
+			: 0;
+		const canUseCollections = this.isShellListAdapterMode()
+			? shellCollectionCount > 0
+			: this.state.collectionsIndex.length > 0;
+		const canUseItems = this.isShellListAdapterMode()
+			? shellItemCount > 0
+			: this.state.sourceItems.length > 0;
+		const canUseAll = this.isShellListAdapterMode()
+			? shellSourceCount > 0 || shellCollectionCount > 0 || shellItemCount > 0
+			: this.state.embeddedSourceCards.length > 0 ||
+				this.state.collectionsIndex.length > 0 ||
+				this.state.sourceItems.length > 0;
 		if (allBtn) {
 			allBtn.disabled = this.state.isLoadingCollection || !canUseAll;
 			allBtn.dataset.active =
@@ -475,20 +669,44 @@ class CollectionBrowserElement extends ComponentBase {
 				: mode === "collections"
 					? "collections"
 					: "items";
+		const shellProjection = this.state.shellListProjection;
+		const shellSourceCount = Array.isArray(shellProjection?.sourceCards)
+			? shellProjection.sourceCards.length
+			: 0;
+		const shellCollectionCount = Array.isArray(shellProjection?.collectionCards)
+			? shellProjection.collectionCards.length
+			: 0;
+		const shellItemCount = Array.isArray(shellProjection?.itemCards)
+			? shellProjection.itemCards.length
+			: 0;
 		if (
 			nextMode === "all" &&
 			!(
-				this.state.embeddedSourceCards.length ||
-				this.state.collectionsIndex.length ||
-				this.state.sourceItems.length
+				this.isShellListAdapterMode()
+					? shellSourceCount || shellCollectionCount || shellItemCount
+					: this.state.embeddedSourceCards.length ||
+						this.state.collectionsIndex.length ||
+						this.state.sourceItems.length
 			)
 		) {
 			return;
 		}
-		if (nextMode === "collections" && !this.state.collectionsIndex.length) {
+		if (
+			nextMode === "collections" &&
+			!(
+				this.isShellListAdapterMode()
+					? shellCollectionCount
+					: this.state.collectionsIndex.length
+			)
+		) {
 			return;
 		}
-		if (nextMode === "items" && !this.state.sourceItems.length) {
+		if (
+			nextMode === "items" &&
+			!(
+				this.isShellListAdapterMode() ? shellItemCount : this.state.sourceItems.length
+			)
+		) {
 			return;
 		}
 		this.state.viewMode = nextMode;
@@ -500,6 +718,12 @@ class CollectionBrowserElement extends ComponentBase {
 			this.state.viewerItemId = null;
 			this.state.mobileMetadataOpen = false;
 			this.closeViewer();
+			if (this.isShellListAdapterMode()) {
+				this.applyBrowseQueryPatch({
+					sourceIds: [],
+					collectionManifestUrls: [],
+				});
+			}
 		}
 		if (
 			nextMode === "collections" &&
@@ -514,6 +738,15 @@ class CollectionBrowserElement extends ComponentBase {
 
 	async openSourceFromBrowse(sourceId = "") {
 		if (!this.isEmbeddedRuntime()) {
+			return;
+		}
+		if (this.isShellListAdapterMode()) {
+			this.applyBrowseQueryPatch({
+				sourceIds: [sourceId],
+			});
+			this.state.viewMode = "collections";
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
 			return;
 		}
 		if (this.state.viewMode === "all" || this.state.viewMode === "sources") {
@@ -574,6 +807,15 @@ class CollectionBrowserElement extends ComponentBase {
 
 	async openCollectionFromBrowse(manifestUrl = "") {
 		if (!this.isEmbeddedRuntime()) {
+			return;
+		}
+		if (this.isShellListAdapterMode()) {
+			this.applyBrowseQueryPatch({
+				collectionManifestUrls: [manifestUrl],
+			});
+			this.state.viewMode = "items";
+			this.renderEmbeddedSourceControls();
+			this.renderViewport();
 			return;
 		}
 		const shouldPush =
@@ -805,6 +1047,10 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	getCurrentItems() {
+		if (this.isShellListAdapterMode()) {
+			const modelItems = this.state.shellListProjection?.model?.items;
+			return Array.isArray(modelItems) ? modelItems : [];
+		}
 		return this.buildBrowseCandidatePools().items;
 	}
 
@@ -949,8 +1195,10 @@ class CollectionBrowserElement extends ComponentBase {
 				this.state.explicitEmbeddedSourceId = sourceIdFromItem;
 			}
 		}
-		this.selectItem(itemId);
-		this.openViewer(itemId);
+		this.preserveViewportScroll(() => {
+			this.selectItem(itemId);
+			this.openViewer(itemId);
+		});
 	}
 
 	openMetadataFromViewer() {
@@ -1488,6 +1736,96 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	viewportModel() {
+		if (this.isShellListAdapterMode()) {
+			const projection = this.state.shellListProjection;
+			if (!projection || typeof projection !== "object") {
+				return {
+					viewportTitle: "Browse and collect",
+					viewportSubtitle: "Loading shell browser data...",
+					showBack: false,
+					viewMode: this.state.viewMode || "all",
+					sourceCards: [],
+					collectionCards: [],
+					itemCards: [],
+					allBrowseEntities: [],
+					fullAllBrowseEntities: [],
+					allFeedSessionKey: "",
+					allFeedExhausted: true,
+					isAppendingAllFeedChunk: false,
+					sources: [],
+					collections: [],
+					items: [],
+					selectedCollectionManifestUrl: "",
+					selectedItemId: this.state.selectedItemId,
+					isLoading: this.state.isLoadingCollection,
+				};
+			}
+			const model =
+				projection?.model && typeof projection.model === "object"
+					? projection.model
+					: {};
+			if ((this.state.viewMode || model.viewMode || "all") === "sources") {
+				const sourceCards = Array.isArray(model.sourceCardsForSourcesMode)
+					? model.sourceCardsForSourcesMode
+					: Array.isArray(model.sourceCards)
+						? model.sourceCards
+						: [];
+				return {
+					...model,
+					viewportTitle: "Sources",
+					viewportSubtitle:
+						sourceCards.length > 0
+							? `${sourceCards.length} source${sourceCards.length === 1 ? "" : "s"} available. Select one to continue.`
+							: "No sources available.",
+					showBack: false,
+					viewMode: "sources",
+					sourceCards,
+					collectionCards: [],
+					itemCards: [],
+					sources: sourceCards,
+					collections: [],
+					items: [],
+					selectedCollectionManifestUrl: "",
+					selectedItemId: null,
+					isLoading: this.state.isLoadingCollection,
+				};
+			}
+			if ((this.state.viewMode || model.viewMode || "all") === "all") {
+				const fullEntities = Array.isArray(model.fullAllBrowseEntities)
+					? model.fullAllBrowseEntities
+					: Array.isArray(model.allBrowseEntities)
+						? model.allBrowseEntities
+						: [];
+				const feedState =
+					this.state.shellAllModeFeedState &&
+					typeof this.state.shellAllModeFeedState === "object"
+						? this.state.shellAllModeFeedState
+						: { key: "", renderedCount: 0, exhausted: true };
+				const renderedCount = Math.max(
+					0,
+					Math.min(
+						fullEntities.length,
+						Number(feedState.renderedCount || model.allBrowseEntities?.length || 0),
+					),
+				);
+				return {
+					...model,
+					allBrowseEntities: fullEntities.slice(0, renderedCount),
+					allFeedExhausted:
+						feedState.exhausted || renderedCount >= fullEntities.length,
+					isAppendingAllFeedChunk: this.state.isAppendingAllModeFeedChunk,
+					viewMode: this.state.viewMode || model.viewMode || "all",
+					isLoading: this.state.isLoadingCollection,
+					selectedItemId: this.state.selectedItemId || model.selectedItemId || null,
+				};
+			}
+			return {
+				...model,
+				viewMode: this.state.viewMode || model.viewMode || "all",
+				isLoading: this.state.isLoadingCollection,
+				selectedItemId: this.state.selectedItemId || model.selectedItemId || null,
+			};
+		}
 		// Resolve one current browse context and derive all mode slices from it.
 		const browseContext = this.resolveBrowseContext();
 		const candidatePools = this.buildBrowseCandidatePools(browseContext);
@@ -1802,6 +2140,54 @@ class CollectionBrowserElement extends ComponentBase {
 	}
 
 	emitQueryState(model = {}) {
+		if (this.isShellListAdapterMode()) {
+			const projection = this.state.shellListProjection || {};
+			const types = Array.isArray(projection?.filterOptions?.types)
+				? projection.filterOptions.types
+				: [];
+			const options = {
+				types: types.map((entry) => ({
+					value: String(entry?.value || "").trim(),
+					label: String(entry?.label || entry?.value || "").trim(),
+					count: Number.isFinite(Number(entry?.count))
+						? Number(entry.count)
+						: null,
+				})).filter((entry) => entry.value),
+				categories: [],
+			};
+			const currentQueryState =
+				this.state.browseShellQuery || createBrowseShellQueryState();
+			const optionsStatus = this.state.isLoadingCollection
+				? FILTER_OPTION_STATUS.LOADING
+				: options.types.length
+					? FILTER_OPTION_STATUS.READY
+					: FILTER_OPTION_STATUS.EMPTY;
+			const normalizedState = normalizeBrowseShellQueryState(
+				{
+					source: {
+						app: "collection-browser",
+						mode: "collection",
+					},
+					query: currentQueryState.query,
+					filters: currentQueryState.filters,
+					options,
+					status: {
+						loading: this.state.isLoadingCollection,
+						filterOptions: optionsStatus,
+					},
+				},
+				currentQueryState,
+			);
+			this.state.browseShellQuery = normalizedState;
+			this.dispatchEvent(
+				new CustomEvent("browse-query-state", {
+					bubbles: true,
+					composed: true,
+					detail: normalizedState,
+				}),
+			);
+			return;
+		}
 		const renderedEntities = Array.isArray(model.allBrowseEntities)
 			? model.allBrowseEntities
 			: [];
@@ -1917,6 +2303,26 @@ class CollectionBrowserElement extends ComponentBase {
 
 	clearRecentManifestUrls() {
 		clearRecentManifestUrls(this);
+	}
+
+	captureViewportScrollPosition() {
+		return typeof this.dom?.browserViewport?.captureScrollPosition === "function"
+			? this.dom.browserViewport.captureScrollPosition()
+			: 0;
+	}
+
+	restoreViewportScrollPosition(scrollTop = 0) {
+		if (typeof this.dom?.browserViewport?.restoreScrollPosition === "function") {
+			this.dom.browserViewport.restoreScrollPosition(scrollTop);
+		}
+	}
+
+	preserveViewportScroll(run) {
+		preserveScrollPosition({
+			capture: () => this.captureViewportScrollPosition(),
+			restore: (scrollTop) => this.restoreViewportScrollPosition(scrollTop),
+			run,
+		});
 	}
 
 	async loadCollection({

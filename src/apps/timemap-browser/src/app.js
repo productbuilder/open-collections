@@ -5,6 +5,10 @@ import {
 	normalizeBrowseShellQueryState,
 } from "../../../shared/data/query/browse-shell-query-contract.js";
 import { createTimemapBrowserController } from "./controllers/timemap-browser-controller.js";
+import {
+	isShellMapAdapterModeEnabled,
+	shouldRunLocalSpatialLoader,
+} from "./shell-adapter-mode.js";
 
 const VIEWPORT_REFRESH_THRESHOLDS = Object.freeze({
 	center: 0.00035,
@@ -340,6 +344,17 @@ function resolveFilterOptions(spatialResponse = {}) {
 	};
 }
 
+function resolveCanonicalShellFilterOptions(projection = {}) {
+	const filterOptions =
+		projection?.filterOptions && typeof projection.filterOptions === "object"
+			? projection.filterOptions
+			: {};
+	return {
+		types: normalizeFilterOptionEntries(filterOptions.types),
+		categories: normalizeFilterOptionEntries(filterOptions.categories),
+	};
+}
+
 function resolveFilterOptionsStatus({ spatialStatus = "idle", options = {} } = {}) {
 	if (spatialStatus === "loading" || spatialStatus === "idle") {
 		return FILTER_OPTION_STATUS.LOADING;
@@ -375,8 +390,11 @@ class TimemapBrowserElement extends HTMLElement {
 		this.handleClearSelection = this.onClearSelection.bind(this);
 		this.handleFilterPatch = this.onFilterPatch.bind(this);
 		this.handleTimeRangePatch = this.onTimeRangePatch.bind(this);
+		this.handleShellMapProjection = this.onShellMapProjection.bind(this);
+		this.handleShellRuntimeState = this.onShellRuntimeState.bind(this);
 		this.filterRefreshTimer = null;
 		this.timeRangeRefreshTimer = null;
+		this._latestShellMapProjection = null;
 	}
 
 	connectedCallback() {
@@ -385,7 +403,21 @@ class TimemapBrowserElement extends HTMLElement {
 		this.syncShellPresentationConfig();
 		this.bindState();
 		this.bindMapEvents();
-		this.controller.initializeSpatialData();
+		if (this.isShellMapAdapterMode()) {
+			this.controller.setStatus({
+				tone: "neutral",
+				text: "Waiting for shell map projection...",
+			});
+			return;
+		}
+		if (
+			shouldRunLocalSpatialLoader({
+				embeddedRuntime: this.isEmbeddedRuntime(),
+				shellMapAdapterAttribute: this.hasAttribute("data-shell-map-adapter"),
+			})
+		) {
+			this.controller.initializeSpatialData();
+		}
 	}
 
 	disconnectedCallback() {
@@ -445,6 +477,13 @@ class TimemapBrowserElement extends HTMLElement {
 			this.hasAttribute("data-shell-embed") ||
 			this.hasAttribute("data-workbench-embed")
 		);
+	}
+
+	isShellMapAdapterMode() {
+		return isShellMapAdapterModeEnabled({
+			embeddedRuntime: this.isEmbeddedRuntime(),
+			shellMapAdapterAttribute: this.hasAttribute("data-shell-map-adapter"),
+		});
 	}
 
 	applyRuntimePresentation() {
@@ -539,10 +578,10 @@ class TimemapBrowserElement extends HTMLElement {
 			const responseFeatures = Array.isArray(nextState.spatial?.response?.features)
 				? nextState.spatial.response.features
 				: [];
-			const mapVisibleFeatures = filterMapVisibleFeatures(
-				responseFeatures,
-				nextState.query,
-			);
+			const shellAdapterMode = this.isShellMapAdapterMode();
+			const mapVisibleFeatures = shellAdapterMode
+				? responseFeatures
+				: filterMapVisibleFeatures(responseFeatures, nextState.query);
 			const didFilterSelectedFeature =
 				Boolean(nextState.selectedFeatureId) &&
 				!hasFeatureWithId(mapVisibleFeatures, nextState.selectedFeatureId);
@@ -572,7 +611,10 @@ class TimemapBrowserElement extends HTMLElement {
 				},
 			};
 			shellElement.state = projectedState;
-			const options = resolveFilterOptions(nextState.spatial?.response);
+			const options =
+				shellAdapterMode && this._latestShellMapProjection
+					? resolveCanonicalShellFilterOptions(this._latestShellMapProjection)
+					: resolveFilterOptions(nextState.spatial?.response);
 			const normalizedPayload = normalizeBrowseShellQueryState({
 				source: {
 					app: "timemap-browser",
@@ -626,6 +668,14 @@ class TimemapBrowserElement extends HTMLElement {
 		);
 		this.addEventListener("timemap-browser-time-range-patch", this.handleTimeRangePatch);
 		this.addEventListener("browse-query-patch", this.handleFilterPatch);
+		this.addEventListener(
+			"browse-shell-map-projection",
+			this.handleShellMapProjection,
+		);
+		this.addEventListener(
+			"browse-shell-runtime-state",
+			this.handleShellRuntimeState,
+		);
 	}
 
 	unbindMapEvents() {
@@ -652,11 +702,22 @@ class TimemapBrowserElement extends HTMLElement {
 			this.handleTimeRangePatch,
 		);
 		this.removeEventListener("browse-query-patch", this.handleFilterPatch);
+		this.removeEventListener(
+			"browse-shell-map-projection",
+			this.handleShellMapProjection,
+		);
+		this.removeEventListener(
+			"browse-shell-runtime-state",
+			this.handleShellRuntimeState,
+		);
 	}
 
 	onMapViewportChange(event) {
 		const viewport = event?.detail || {};
 		this.queueViewportStateUpdate(viewport);
+		if (this.isShellMapAdapterMode()) {
+			return;
+		}
 
 		const refreshBaseline =
 			this.pendingSpatialRefreshViewport || this.lastSpatialRefreshViewport;
@@ -710,6 +771,17 @@ class TimemapBrowserElement extends HTMLElement {
 		const detail =
 			event?.detail && typeof event.detail === "object" ? event.detail : {};
 		this.setTimeRange(detail);
+		if (this.isShellMapAdapterMode()) {
+			this.dispatchEvent(
+				new CustomEvent("browse-query-patch", {
+					bubbles: true,
+					composed: true,
+					detail: {
+						timeRange: detail,
+					},
+				}),
+			);
+		}
 	}
 
 	setTimeRange(timeRange = {}) {
@@ -718,6 +790,9 @@ class TimemapBrowserElement extends HTMLElement {
 	}
 
 	queueFilterRefresh() {
+		if (this.isShellMapAdapterMode()) {
+			return;
+		}
 		if (this.filterRefreshTimer) {
 			clearTimeout(this.filterRefreshTimer);
 		}
@@ -728,6 +803,9 @@ class TimemapBrowserElement extends HTMLElement {
 	}
 
 	queueTimeRangeRefresh() {
+		if (this.isShellMapAdapterMode()) {
+			return;
+		}
 		if (this.timeRangeRefreshTimer) {
 			clearTimeout(this.timeRangeRefreshTimer);
 		}
@@ -764,6 +842,54 @@ class TimemapBrowserElement extends HTMLElement {
 			this.pendingViewportStateUpdate = null;
 			this.controller.setViewport(this.lastViewportStateUpdate);
 		}, 72);
+	}
+
+	onShellRuntimeState(event) {
+		if (!this.isShellMapAdapterMode()) {
+			return;
+		}
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const diagnosticsSummary =
+			detail?.diagnosticsSummary && typeof detail.diagnosticsSummary === "object"
+				? detail.diagnosticsSummary
+				: {};
+		const status = String(diagnosticsSummary.ingestionStatus || "").trim();
+		if (status === "idle" || status === "loading") {
+			this.controller.setStatus({
+				tone: "neutral",
+				text: "Loading shell map data...",
+			});
+		} else if (status === "error") {
+			this.controller.setStatus({
+				tone: "critical",
+				text: "Shell map ingestion failed.",
+			});
+		}
+	}
+
+	onShellMapProjection(event) {
+		if (!this.isShellMapAdapterMode()) {
+			return;
+		}
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		const projection =
+			detail?.projection && typeof detail.projection === "object"
+				? detail.projection
+				: null;
+		if (!projection || typeof projection.response !== "object") {
+			return;
+		}
+		this._latestShellMapProjection = projection;
+		const filteredVisibleItems = Number(projection?.diagnostics?.filteredVisibleItems || 0);
+		const totalGeoreferencedItems = Number(
+			projection?.diagnostics?.totalGeoreferencedItems || 0,
+		);
+		this.controller.setSpatialResponse(projection.response, {
+			tone: "positive",
+			text: `Shell map projection ready (${filteredVisibleItems} visible features from ${totalGeoreferencedItems} georeferenced items).`,
+		});
 	}
 
 	render() {

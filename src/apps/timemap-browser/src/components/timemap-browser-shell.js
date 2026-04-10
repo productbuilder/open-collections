@@ -1,3 +1,8 @@
+import {
+	buildTimelineRangeNote,
+	resolveTimelineQueryTimeRange,
+} from "./timeline-sync-utils.js";
+
 const timemapBrowserShellStyles = `
 	:host {
 		display: block;
@@ -380,16 +385,6 @@ const timemapBrowserShellStyles = `
 		}
 	}
 `;
-
-function formatTimeRange(timeRange = {}) {
-	if (!timeRange.start && !timeRange.end) {
-		return "Not set";
-	}
-	if (timeRange.start && timeRange.end) {
-		return `${timeRange.start} to ${timeRange.end}`;
-	}
-	return timeRange.start ? `From ${timeRange.start}` : `Until ${timeRange.end}`;
-}
 
 const TIMELINE_EMBED_DOMAIN_MIN_YEAR = 1800;
 const TIMELINE_EMBED_DOMAIN_MAX_YEAR = 2050;
@@ -1056,12 +1051,9 @@ class TimemapBrowserShellElement extends HTMLElement {
 		
 
 		if (!hasFeatureTemporalDomain) {
-			this.updateText("time-range-note", "No known temporal range in loaded features.");
+			this.updateText("time-range-note", buildTimelineRangeNote(state, false));
 		} else {
-			this.updateText(
-				"time-range-note",
-				`Active time range: ${formatTimeRange(queryTimeRange || {})}.`,
-			);
+			this.updateText("time-range-note", buildTimelineRangeNote(state, true));
 		}
 
 	}

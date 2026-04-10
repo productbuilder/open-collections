@@ -100,8 +100,6 @@ function toFilterOptionEntries(counts = new Map()) {
 		}));
 }
 
-const GENERIC_MEDIA_TYPES = new Set(["image", "video", "audio", "text", "application"]);
-
 function normalizeFilterOptionEntries(entries = []) {
 	if (!Array.isArray(entries)) {
 		return [];
@@ -135,22 +133,7 @@ function collectTypeValues(properties = {}) {
 	if (resolvedType) {
 		return [resolvedType];
 	}
-	const orderedCandidates = [
-		String(properties.format ?? "").trim(),
-		String(properties.mediaType ?? "").trim(),
-	].filter(Boolean);
-	const uniqueValues = [];
-	for (const value of orderedCandidates) {
-		if (!uniqueValues.includes(value)) {
-			uniqueValues.push(value);
-		}
-	}
-	if (uniqueValues.length > 1) {
-		return uniqueValues.filter(
-			(value) => !GENERIC_MEDIA_TYPES.has(value.toLowerCase()),
-		);
-	}
-	return uniqueValues;
+	return [];
 }
 
 function createTypeFilterSet(query = {}) {

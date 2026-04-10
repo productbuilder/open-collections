@@ -112,9 +112,10 @@ Example:
 ## Data requirements for map usage
 
 For map-based usage, items must include:
-- `type`
 - `location.lat`
 - `location.lon`
+
+`type` is recommended so items can participate in type-based filtering. If `type` is missing, items can still render on map/timeline views when valid coordinates are present.
 
 ## Filtering behavior
 

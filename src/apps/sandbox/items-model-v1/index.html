@@ -317,6 +317,19 @@
         color: #ddf7ff;
       }
 
+      .version-tag {
+        position: fixed;
+        right: 0.75rem;
+        bottom: 0.75rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid rgba(134, 179, 255, 0.35);
+        border-radius: 999px;
+        font-size: 0.7rem;
+        color: var(--muted);
+        background: rgba(6, 11, 26, 0.8);
+        pointer-events: none;
+      }
+
       @media (max-width: 960px) {
         .layout {
           grid-template-columns: 1fr;
@@ -355,6 +368,7 @@
         <main id="scene-container" class="scene-stack"></main>
       </div>
     </div>
+    <div class="version-tag">items-model-v1 · test update</div>
 
     <script type="module" src="./app.js"></script>
   </body>

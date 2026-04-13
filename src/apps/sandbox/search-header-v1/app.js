@@ -92,12 +92,10 @@ const createUi = () => {
               aria-pressed="false"
             >
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M3.5 7.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="8.5" cy="7.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M3.5 12h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="15.5" cy="12" r="1.9" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M3.5 16.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="11.5" cy="16.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M4 9h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="9" cy="9" r="1.5" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M4 15h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="15" cy="15" r="1.5" stroke="currentColor" stroke-width="1.8"></circle>
               </svg>
               <span>Filters</span>
               <span class="badge" data-role="filters-badge" hidden></span>

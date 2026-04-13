@@ -152,6 +152,12 @@
         font-size: 0.9rem;
         white-space: nowrap;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition:
+          background-color 120ms ease,
+          border-color 120ms ease,
+          box-shadow 120ms ease;
+        overflow: hidden;
       }
 
       .pill-btn svg,
@@ -191,6 +197,7 @@
         padding: 0;
         border-color: transparent;
         background: transparent;
+        border-radius: 50%;
       }
 
       .search-wrap:not(.expanded):not(.has-query) .clear-btn {
@@ -202,6 +209,20 @@
         border-color: #9bb8ff;
         background: var(--accent-soft);
         color: #173d9f;
+      }
+
+      .pill-btn:active {
+        border-color: rgba(157, 180, 228, 0.98);
+        background: rgba(235, 242, 255, 0.96);
+      }
+
+      .pill-btn.active:active {
+        border-color: #8baeff;
+        background: #dbe7ff;
+      }
+
+      .clear-btn:active {
+        background: rgba(128, 152, 197, 0.18);
       }
 
       .badge {

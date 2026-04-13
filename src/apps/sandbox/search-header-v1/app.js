@@ -98,7 +98,6 @@ const createUi = () => {
                 <circle cx="15" cy="15" r="1.5" stroke="currentColor" stroke-width="1.8"></circle>
               </svg>
               <span>Filters</span>
-              <span class="badge" data-role="filters-badge" hidden></span>
             </button>
 
             <button type="button" class="pill-btn" data-action="toggle-view" data-role="view-btn">
@@ -131,7 +130,6 @@ const cacheRefs = () => {
   refs.clearSearch = appRoot.querySelector('[data-role="clear-search"]');
   refs.rowActions = appRoot.querySelector('[data-role="row-actions"]');
   refs.filtersBtn = appRoot.querySelector('[data-role="filters-btn"]');
-  refs.filtersBadge = appRoot.querySelector('[data-role="filters-badge"]');
   refs.viewBtnIcon = appRoot.querySelector('[data-role="view-btn-icon"]');
   refs.viewBtnLabel = appRoot.querySelector('[data-role="view-btn-label"]');
   refs.backgroundLayer = appRoot.querySelector('[data-role="background-layer"]');
@@ -157,8 +155,20 @@ const render = () => {
 
   refs.filtersBtn.classList.toggle('active', hasFilters);
   refs.filtersBtn.setAttribute('aria-pressed', String(hasFilters));
-  refs.filtersBadge.hidden = !hasFilters;
-  refs.filtersBadge.textContent = hasFilters ? String(state.activeFilterCount) : '';
+
+  const existingFilterBadge = refs.filtersBtn.querySelector('[data-role="filters-badge"]');
+  if (hasFilters) {
+    if (!existingFilterBadge) {
+      refs.filtersBtn.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge" data-role="filters-badge">${state.activeFilterCount}</span>`
+      );
+    } else {
+      existingFilterBadge.textContent = String(state.activeFilterCount);
+    }
+  } else if (existingFilterBadge) {
+    existingFilterBadge.remove();
+  }
 
   refs.viewBtnIcon.innerHTML = getViewToggleIcon();
   refs.viewBtnLabel.textContent = getViewToggleLabel();

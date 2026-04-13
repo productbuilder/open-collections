@@ -45,24 +45,35 @@
         gap: 0.5rem;
       }
 
-      .base-row {
-        transition: opacity 180ms ease, transform 220ms ease;
-      }
-
-      .expanded .base-row {
-        opacity: 0;
-        pointer-events: none;
-        transform: scale(0.985);
-      }
-
       .search-wrap {
         position: relative;
         min-width: 0;
-        flex: 1;
+        flex: 0 1 56%;
+        transition: flex-basis 200ms ease, flex-grow 200ms ease, transform 200ms ease;
+        z-index: 2;
       }
 
-      .search-wrap.compact {
-        max-width: 55%;
+      .expanded .search-wrap {
+        flex-basis: 100%;
+        flex-grow: 1;
+        transform: translateZ(0);
+      }
+
+      .row-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        transition: opacity 190ms ease, transform 200ms ease, visibility 0ms linear 0ms;
+      }
+
+      .expanded .row-actions {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(10px) scale(0.98);
+        transition: opacity 180ms ease, transform 200ms ease, visibility 0ms linear 200ms;
       }
 
       .search-icon {
@@ -152,20 +163,6 @@
         text-align: center;
       }
 
-      .search-overlay {
-        position: absolute;
-        inset: 0;
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(-2px) scale(0.985);
-        transition: opacity 200ms ease, transform 220ms ease;
-      }
-
-      .expanded .search-overlay {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateY(0) scale(1);
-      }
 
       .background-layer {
         position: absolute;

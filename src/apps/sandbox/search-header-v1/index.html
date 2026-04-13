@@ -36,8 +36,7 @@
         position: absolute;
         inset: 0.8rem 0.8rem auto;
         z-index: 10;
-        display: grid;
-        gap: 0.55rem;
+        min-height: 42px;
       }
 
       .control-row {
@@ -46,10 +45,24 @@
         gap: 0.5rem;
       }
 
+      .base-row {
+        transition: opacity 180ms ease, transform 220ms ease;
+      }
+
+      .expanded .base-row {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.985);
+      }
+
       .search-wrap {
         position: relative;
         min-width: 0;
         flex: 1;
+      }
+
+      .search-wrap.compact {
+        max-width: 55%;
       }
 
       .search-icon {
@@ -72,6 +85,10 @@
         font-size: 0.95rem;
         color: var(--ink);
         outline: none;
+      }
+
+      .search-wrap.expanded .search-input {
+        padding-right: 2.6rem;
       }
 
       .search-input:focus {
@@ -107,6 +124,18 @@
         padding-inline: 0.7rem;
       }
 
+      .clear-btn {
+        position: absolute;
+        right: 0.34rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-color: transparent;
+        background: transparent;
+      }
+
       .pill-btn.active {
         border-color: #9bb8ff;
         background: var(--accent-soft);
@@ -123,22 +152,19 @@
         text-align: center;
       }
 
-      .expanded .control-row.default-row .pill-btn {
-        display: none;
+      .search-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-2px) scale(0.985);
+        transition: opacity 200ms ease, transform 220ms ease;
       }
 
-      .expanded .search-wrap {
-        flex: 1;
-      }
-
-      .expanded .control-row.secondary-row {
-        display: flex;
-      }
-
-      .secondary-row {
-        display: none;
-        justify-content: flex-end;
-        gap: 0.5rem;
+      .expanded .search-overlay {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
       }
 
       .background-layer {

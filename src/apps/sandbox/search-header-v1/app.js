@@ -16,6 +16,18 @@ const escapeHtml = (value) =>
     .replaceAll("'", '&#39;');
 
 const getViewToggleLabel = () => (state.viewMode === 'list' ? 'Map' : 'List');
+const getViewToggleIcon = () =>
+  state.viewMode === 'list'
+    ? `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M8 6.5 3.5 8v10l4.5-1.5 8 1.5 4.5-1.5V6.5L16 8 8 6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+        <path d="M8 6.5v10M16 8v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+      </svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="4" y="5" width="7" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"></rect>
+        <rect x="13" y="5" width="7" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"></rect>
+        <rect x="4" y="13" width="7" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"></rect>
+        <rect x="13" y="13" width="7" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"></rect>
+      </svg>`;
 
 const getPreviewSummary = () => {
   const queryLabel = state.query.trim() ? `“${state.query.trim()}”` : 'no query';
@@ -63,17 +75,8 @@ const render = () => {
       <div class="background-layer">${state.viewMode === 'map' ? renderMapBackground() : renderListBackground()}</div>
 
       <header class="floating-header ${isExpanded ? 'expanded' : ''}">
-        <div class="control-row default-row">
-          ${
-            isExpanded
-              ? `<button type="button" class="icon-btn" data-action="collapse-search" aria-label="Back from search">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>
-                </button>`
-              : ''
-          }
-          <label class="search-wrap" aria-label="Search collections">
+        <div class="control-row base-row" aria-hidden="${isExpanded ? 'true' : 'false'}">
+          <label class="search-wrap compact" aria-label="Search collections">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
               <path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
@@ -87,30 +90,6 @@ const render = () => {
             />
           </label>
 
-          <button
-            type="button"
-            class="pill-btn${!isExpanded && hasFilters ? ' active' : ''}"
-            data-action="toggle-filters"
-            aria-pressed="${String(hasFilters)}"
-          >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3.5 7.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              <circle cx="8.5" cy="7.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
-              <path d="M3.5 12h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              <circle cx="15.5" cy="12" r="1.9" stroke="currentColor" stroke-width="2"></circle>
-              <path d="M3.5 16.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              <circle cx="11.5" cy="16.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
-            </svg>
-            <span>Filters</span>
-            ${!isExpanded && hasFilters ? `<span class="badge">${state.activeFilterCount}</span>` : ''}
-          </button>
-
-          <button type="button" class="pill-btn" data-action="toggle-view">
-            <span>${getViewToggleLabel()}</span>
-          </button>
-        </div>
-
-        <div class="control-row secondary-row">
           <button
             type="button"
             class="pill-btn${hasFilters ? ' active' : ''}"
@@ -130,8 +109,34 @@ const render = () => {
           </button>
 
           <button type="button" class="pill-btn" data-action="toggle-view">
+            ${getViewToggleIcon()}
             <span>${getViewToggleLabel()}</span>
           </button>
+        </div>
+
+        <div class="search-overlay" aria-hidden="${isExpanded ? 'false' : 'true'}">
+          <label class="search-wrap expanded" aria-label="Search collections">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+            <input
+              class="search-input"
+              data-role="search-input"
+              type="search"
+              placeholder="Search collections"
+              value="${escapeHtml(state.query)}"
+            />
+            ${
+              state.query
+                ? `<button type="button" class="icon-btn clear-btn" data-action="clear-search" aria-label="Clear search">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                  </button>`
+                : ''
+            }
+          </label>
         </div>
       </header>
 
@@ -154,14 +159,20 @@ const render = () => {
 };
 
 appRoot.addEventListener('click', (event) => {
+  if (state.searchExpanded && !event.target.closest('.floating-header')) {
+    state.searchExpanded = false;
+    render();
+    return;
+  }
+
   const target = event.target.closest('[data-action]');
   if (!target) {
     return;
   }
 
   switch (target.dataset.action) {
-    case 'collapse-search':
-      state.searchExpanded = false;
+    case 'clear-search':
+      state.query = '';
       break;
     case 'toggle-filters':
       state.activeFilterCount = state.activeFilterCount > 0 ? 0 : 2;
@@ -197,6 +208,19 @@ document.addEventListener('keydown', (event) => {
     state.searchExpanded = false;
     render();
   }
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (!state.searchExpanded) {
+    return;
+  }
+
+  if (event.target.closest('.floating-header')) {
+    return;
+  }
+
+  state.searchExpanded = false;
+  render();
 });
 
 render();

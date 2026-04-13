@@ -65,7 +65,8 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				this._searchValue = toText(newValue);
 				break;
 			case "search-placeholder":
-				this._searchPlaceholder = toText(newValue || "Search") || "Search";
+				this._searchPlaceholder =
+					toText(newValue || "Search") || "Search";
 				break;
 			case "filter-count":
 				this._filterCount = Math.max(0, toNumber(newValue, 0));
@@ -106,7 +107,10 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 	}
 
 	set filterCount(value) {
-		this.setAttribute("filter-count", String(Math.max(0, toNumber(value, 0))));
+		this.setAttribute(
+			"filter-count",
+			String(Math.max(0, toNumber(value, 0))),
+		);
 	}
 
 	get viewMode() {
@@ -147,7 +151,8 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 		}
 		this._isBound = true;
 		this.shadowRoot.addEventListener("click", (event) => {
-			const target = event.target instanceof Element ? event.target : null;
+			const target =
+				event.target instanceof Element ? event.target : null;
 			if (!target || this.disabled) {
 				return;
 			}
@@ -165,7 +170,10 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 			}
 			const modeButton = target.closest("button[data-mode]");
 			if (modeButton) {
-				const nextMode = normalizeMode(modeButton.getAttribute("data-mode"), this._viewMode);
+				const nextMode = normalizeMode(
+					modeButton.getAttribute("data-mode"),
+					this._viewMode,
+				);
 				if (nextMode === this._viewMode) {
 					return;
 				}
@@ -195,7 +203,10 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				return;
 			}
 			const relatedTarget = event.relatedTarget;
-			if (relatedTarget instanceof Node && this.shadowRoot.contains(relatedTarget)) {
+			if (
+				relatedTarget instanceof Node &&
+				this.shadowRoot.contains(relatedTarget)
+			) {
 				return;
 			}
 			if (!this._searchValue.trim()) {
@@ -240,13 +251,22 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 	syncState() {
 		const root = this.shadowRoot.querySelector(".header-row");
 		const input = this.shadowRoot.querySelector(".search-input");
-		const clearButton = this.shadowRoot.querySelector('[data-action="search-clear"]');
+		const clearButton = this.shadowRoot.querySelector(
+			'[data-action="search-clear"]',
+		);
 		const filtersBadge = this.shadowRoot.querySelector(".filters-badge");
-		const modeButtons = this.shadowRoot.querySelectorAll(".mode-button");
+		const viewToggle = this.shadowRoot.querySelector(
+			'[data-action="view-toggle"]',
+		);
+		const viewToggleLabel =
+			this.shadowRoot.querySelector(".view-toggle-label");
+		const viewToggleIcon =
+			this.shadowRoot.querySelector(".view-toggle-icon");
 		if (!root || !input || !clearButton || !filtersBadge) {
 			return;
 		}
 		const hasQuery = Boolean(this._searchValue.trim());
+		const targetMode = this._viewMode === "map" ? "list" : "map";
 		root.toggleAttribute("data-expanded", this._searchExpanded);
 		root.toggleAttribute("data-has-query", hasQuery);
 		root.toggleAttribute("data-disabled", this.disabled);
@@ -257,13 +277,21 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 		input.disabled = this.disabled;
 		clearButton.hidden = !hasQuery;
 		filtersBadge.hidden = this._filterCount < 1;
-		filtersBadge.textContent = this._filterCount > 0 ? String(this._filterCount) : "";
-		for (const button of modeButtons) {
-			const mode = normalizeMode(button.getAttribute("data-mode"), "list");
-			const active = mode === this._viewMode;
-			button.setAttribute("aria-pressed", String(active));
-			button.toggleAttribute("data-active", active);
-			button.disabled = this.disabled;
+		filtersBadge.textContent =
+			this._filterCount > 0 ? String(this._filterCount) : "";
+		if (viewToggle) {
+			viewToggle.setAttribute("data-mode", targetMode);
+			viewToggle.setAttribute("aria-label", `Show ${targetMode} view`);
+			viewToggle.disabled = this.disabled;
+		}
+		if (viewToggleLabel) {
+			viewToggleLabel.textContent = targetMode === "map" ? "Map" : "List";
+		}
+		if (viewToggleIcon) {
+			viewToggleIcon.innerHTML =
+				targetMode === "map"
+					? '<path d="M3 5h8v6H3zM13 5h8v6h-8zM3 13h8v6H3zM13 13h8v6h-8z"></path>'
+					: '<path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"></path>';
 		}
 	}
 
@@ -274,8 +302,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					display: block;
 				}
 				.header-row {
-					display: grid;
-					grid-template-columns: minmax(0, 1fr) auto;
+					display: flex;
 					align-items: center;
 					gap: 0.45rem;
 					min-width: 0;
@@ -283,6 +310,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				.search-wrap {
 					display: flex;
 					align-items: center;
+					flex: 1 1 auto;
 					gap: 0.42rem;
 					min-width: 0;
 					block-size: 2rem;
@@ -321,8 +349,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				.search-input::placeholder {
 					color: #6b6258;
 				}
-				.pill-btn,
-				.mode-switch {
+				.pill-btn {
 					border: 1px solid #cbc6be;
 					background: #fff;
 					color: #2e2924;
@@ -338,8 +365,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					font-size: 0.81rem;
 					font-weight: 600;
 				}
-				.pill-btn:active,
-				.mode-button:active {
+				.pill-btn:active {
 					transform: translateY(0.5px) scale(0.99);
 					filter: saturate(0.95);
 				}
@@ -357,35 +383,13 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					color: #fff;
 				}
 				.row-actions {
-					display: inline-flex;
+					display: flex;
 					align-items: center;
-					justify-self: end;
 					gap: 0.4rem;
+					flex: 0 0 auto;
 				}
-				.mode-switch {
-					display: inline-flex;
-					align-items: center;
-					padding: 0.12rem;
-					border-radius: 999px;
-					gap: 0.12rem;
-				}
-				.mode-button {
-					display: inline-flex;
-					align-items: center;
-					gap: 0.3rem;
-					border: 0;
-					background: transparent;
-					border-radius: 999px;
-					padding: 0 0.55rem;
-					block-size: 1.75rem;
-					font: inherit;
-					font-size: 0.78rem;
-					font-weight: 620;
-					color: #514a43;
-				}
-				.mode-button[data-active] {
-					background: #2f2f2a;
-					color: #fff;
+				.view-toggle {
+					min-width: 4.3rem;
 				}
 				.clear-btn {
 					display: inline-grid;
@@ -406,19 +410,19 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					pointer-events: none;
 				}
 				@media (max-width: 760px) {
-					.header-row {
-						grid-template-columns: minmax(0, 1fr);
-					}
 					.row-actions {
 						overflow: hidden;
-						transition: max-height 180ms ease, opacity 160ms ease;
-						max-height: 2.2rem;
+						transition: max-width 180ms ease, opacity 160ms ease;
+						max-width: 20rem;
 						opacity: 1;
 					}
 					.header-row[data-expanded] .row-actions {
-						max-height: 0;
+						max-width: 0;
 						opacity: 0;
 						pointer-events: none;
+					}
+					.header-row[data-expanded] .search-wrap {
+						flex: 1 1 100%;
 					}
 					.search-wrap,
 					.pill-btn {
@@ -436,14 +440,14 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				</label>
 				<div class="row-actions">
 					<button type="button" class="pill-btn" data-action="filters" aria-label="Open filters">
-						<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M7 12h10M10 19h4"></path></svg>
+						<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2"></circle><circle cx="15" cy="17" r="2"></circle></svg>
 						<span>Filters</span>
 						<span class="filters-badge" hidden></span>
 					</button>
-					<div class="mode-switch" role="group" aria-label="Browse view mode">
-						<button type="button" class="mode-button" data-mode="list">List</button>
-						<button type="button" class="mode-button" data-mode="map">Map</button>
-					</div>
+					<button type="button" class="pill-btn view-toggle" data-action="view-toggle" aria-label="Switch browse view">
+						<svg class="icon view-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"></svg>
+						<span class="view-toggle-label"></span>
+					</button>
 				</div>
 			</div>
 		`;

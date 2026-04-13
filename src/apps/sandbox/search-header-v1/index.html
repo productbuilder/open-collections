@@ -40,6 +40,7 @@
       }
 
       .control-row {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -63,17 +64,28 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+        max-width: 220px;
+        overflow: hidden;
         opacity: 1;
         transform: translateX(0) scale(1);
-        transition: opacity 190ms ease, transform 200ms ease, visibility 0ms linear 0ms;
+        transition:
+          max-width 220ms ease,
+          opacity 190ms ease,
+          transform 200ms ease,
+          visibility 0ms linear 0ms;
       }
 
       .expanded .row-actions {
+        max-width: 0;
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
         transform: translateX(10px) scale(0.98);
-        transition: opacity 180ms ease, transform 200ms ease, visibility 0ms linear 200ms;
+        transition:
+          max-width 220ms ease,
+          opacity 180ms ease,
+          transform 200ms ease,
+          visibility 0ms linear 200ms;
       }
 
       .search-icon {

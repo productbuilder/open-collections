@@ -231,6 +231,25 @@ appRoot.addEventListener('focusin', (event) => {
   }
 });
 
+appRoot.addEventListener('focusout', (event) => {
+  if (!event.target.matches('[data-role="search-input"]')) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const nextFocus = document.activeElement;
+    if (nextFocus === refs.searchInput) {
+      return;
+    }
+
+    if (nextFocus && nextFocus.closest('[data-role="search-wrap"]')) {
+      return;
+    }
+
+    collapseSearch();
+  });
+});
+
 appRoot.addEventListener('input', (event) => {
   if (!event.target.matches('[data-role="search-input"]')) {
     return;
@@ -242,6 +261,14 @@ appRoot.addEventListener('input', (event) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
+    if (state.query) {
+      state.query = '';
+      render();
+      refs.searchInput.focus({ preventScroll: true });
+      return;
+    }
+
+    refs.searchInput.blur();
     collapseSearch();
   }
 });

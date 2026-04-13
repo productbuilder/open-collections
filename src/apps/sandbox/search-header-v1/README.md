@@ -8,7 +8,7 @@ This version moves away from a standalone demo card and instead mocks an in-cont
 
 - Floating header controls over full-screen content
 - Default one-row controls: **Search + Filters + Map/List**
-- Search-focused expansion behavior with a back affordance
+- Search-focused expansion behavior using a single persistent input
 - Background content switching between realistic map-style and list/grid-style previews
 
 ## Real-app alignment goals
@@ -22,10 +22,11 @@ This version moves away from a standalone demo card and instead mocks an in-cont
 ## Key interaction behavior
 
 - **Default state:** one row with search as the widest control, then Filters and Map/List to the right.
-- **Search active:** tapping/focusing search expands it with a back button; Filters and Map/List move to a secondary row.
-- **Back/Escape:** collapses the expanded search state.
+- **Search active:** first tap/focus expands the same search input to full width while Filters and Map/List fade away.
+- **Collapse:** blur/outside tap collapses the search state; **Escape** clears query first, then collapses when empty.
 - **Filters:** toggles a demo active filter count and visual active state.
 - **Map/List:** toggles preview background between map-like and collection-results-like layouts.
+- **Clear button:** shown only when query is non-empty, and only clears typed text.
 - **Typed query:** reflected in the live state summary for quick iteration checks.
 
 ## Files

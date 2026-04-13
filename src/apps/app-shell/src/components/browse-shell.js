@@ -8,24 +8,12 @@ import { createBrowseShellRuntime } from "./browse-shell-runtime.js";
 import { buildListSurfaceBridgePayload } from "./list-surface-bridge.js";
 import { buildMapSurfaceBridgePayload } from "./map-surface-bridge.js";
 import { createBrowseProjectionCache } from "./projection-cache.js";
+import "../../../../shared/ui/primitives/open-collections-browse-header.js";
 
 const BROWSE_MODES = Object.freeze({
 	LIST: "collection",
 	MAP: "map",
 });
-
-const BROWSE_MODE_OPTIONS = Object.freeze([
-	{
-		key: BROWSE_MODES.LIST,
-		label: "List",
-		icon: '<path d="M6 7h12M6 12h12M6 17h12"></path>',
-	},
-	{
-		key: BROWSE_MODES.MAP,
-		label: "Map",
-		icon: '<path d="M3.75 6.25 9 4.25l6 2 5.25-2v13.5L15 19.75l-6-2-5.25 2V6.25Z"></path><path d="M9 4.25v13.5M15 6.25v13.5"></path>',
-	},
-]);
 
 function normalizeBrowseMode(value, fallback = BROWSE_MODES.LIST) {
 	const normalized = String(value || "")
@@ -103,6 +91,14 @@ function setElementProperty(element, key, value) {
 		}
 	}
 	element[key] = value;
+}
+
+function countActiveFilters(filterState = {}) {
+	const typeCount = Array.isArray(filterState?.types) ? filterState.types.length : 0;
+	const categoryCount = Array.isArray(filterState?.categories)
+		? filterState.categories.length
+		: 0;
+	return typeCount + categoryCount;
 }
 
 class OpenCollectionsBrowseShellElement extends HTMLElement {
@@ -203,41 +199,66 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			if (!element) {
 				return;
 			}
-
-			const modeButton = element.closest("button[data-browse-mode]");
-			if (modeButton) {
-				const nextMode = normalizeBrowseMode(
-					modeButton?.dataset?.browseMode,
-					this.currentBrowseMode(),
-				);
-				if (nextMode === this.currentBrowseMode()) {
-					return;
-				}
-				this.setAttribute("browse-mode", nextMode);
-				this.dispatchEvent(
-					new CustomEvent("browse-shell-mode-change", {
-						detail: { mode: nextMode },
-						bubbles: true,
-						composed: true,
-					}),
-				);
-				return;
-			}
-
-			if (element.closest('[data-action="filter-entry"]')) {
-				this.openFilterPanel();
-				this.dispatchEvent(
-					new CustomEvent("browse-shell-filter-entry", {
-						bubbles: true,
-						composed: true,
-					}),
-				);
-				return;
-			}
-
 			if (element.closest('[data-action="close-filter-panel"]')) {
 				this.closeFilterPanel();
 			}
+		});
+		this.shadowRoot.addEventListener("filters-click", () => {
+			this.openFilterPanel();
+			this.dispatchEvent(
+				new CustomEvent("browse-shell-filter-entry", {
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		});
+		this.shadowRoot.addEventListener("view-mode-change", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement) || target.tagName.toLowerCase() !== "open-collections-browse-header") {
+				return;
+			}
+			const nextMode = normalizeBrowseMode(event?.detail?.mode, this.currentBrowseMode());
+			if (nextMode === this.currentBrowseMode()) {
+				return;
+			}
+			this.setAttribute("browse-mode", nextMode);
+			this.dispatchEvent(
+				new CustomEvent("browse-shell-mode-change", {
+					detail: { mode: nextMode },
+					bubbles: true,
+					composed: true,
+				}),
+			);
+		});
+		this.shadowRoot.addEventListener("search-change", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement) || target.tagName.toLowerCase() !== "open-collections-browse-header") {
+				return;
+			}
+			const nextText = toText(event?.detail?.value).trim();
+			this.state.filterState = {
+				...this.state.filterState,
+				text: nextText,
+			};
+			if (this._shellSearchTimer) {
+				clearTimeout(this._shellSearchTimer);
+			}
+			this._shellSearchTimer = setTimeout(() => {
+				this._shellSearchTimer = null;
+				this.sendBrowseQueryPatchToActiveChild({ text: nextText });
+			}, 120);
+		});
+		this.shadowRoot.addEventListener("search-focus", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement) || target.tagName.toLowerCase() !== "open-collections-browse-header") {
+				return;
+			}
+			this.dispatchEvent(
+				new CustomEvent("browse-shell-search-entry", {
+					bubbles: true,
+					composed: true,
+				}),
+			);
 		});
 		const handleBrowseQueryState = (event) => {
 			const detail =
@@ -298,40 +319,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.publishMapProjectionToActiveChild();
 			},
 		);
-		this.shadowRoot.addEventListener("input", (event) => {
-			const target = event.target;
-			if (!(target instanceof HTMLInputElement)) {
-				return;
-			}
-			if (target.matches('[data-bind="shell-search-input"]')) {
-				const nextText = String(target.value ?? "").trim();
-				this.state.filterState = {
-					...this.state.filterState,
-					text: nextText,
-				};
-				if (this._shellSearchTimer) {
-					clearTimeout(this._shellSearchTimer);
-				}
-				this._shellSearchTimer = setTimeout(() => {
-					this._shellSearchTimer = null;
-					this.sendBrowseQueryPatchToActiveChild({ text: nextText });
-				}, 120);
-			}
-		});
-		this.shadowRoot.addEventListener("focusin", (event) => {
-			const target = event.target;
-			if (
-				target instanceof HTMLInputElement &&
-				target.matches('[data-bind="shell-search-input"]')
-			) {
-				this.dispatchEvent(
-					new CustomEvent("browse-shell-search-entry", {
-						bubbles: true,
-						composed: true,
-					}),
-				);
-			}
-		});
 		this.shadowRoot.addEventListener("oc-filter-panel-change", (event) => {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
@@ -416,16 +403,17 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 	}
 
 	syncShellSearchState() {
-		const searchInput = this.shadowRoot.querySelector(
-			'[data-bind="shell-search-input"]',
-		);
-		if (!searchInput) {
+		const header = this.shadowRoot.querySelector("open-collections-browse-header");
+		if (!header) {
 			return;
 		}
 		const nextValue = String(this.state.filterState?.text ?? "");
-		if (searchInput.value !== nextValue) {
-			searchInput.value = nextValue;
+		if (header.searchValue !== nextValue) {
+			header.searchValue = nextValue;
 		}
+		header.filterCount = countActiveFilters(this.state.filterState);
+		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
+		header.searchPlaceholder = "Search titles, places, and sources";
 	}
 
 	sendBrowseQueryPatchToActiveChild(filterPatch = {}) {
@@ -693,23 +681,6 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		return `<collection-browser data-shell-list-adapter="true"${embeddedAttrs}${shellEmbedAttrs}${appMode}></collection-browser>`;
 	}
 
-	renderModeButton(option, currentMode) {
-		const isActive = option.key === currentMode;
-		return `
-			<button
-				class="mode-button"
-				type="button"
-				role="tab"
-				aria-selected="${isActive ? "true" : "false"}"
-				data-active="${isActive ? "true" : "false"}"
-				data-browse-mode="${option.key}"
-			>
-				<svg class="mode-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${option.icon}</svg>
-				<span class="mode-label">${option.label}</span>
-			</button>
-		`;
-	}
-
 	render() {
 		const browseMode = this.currentBrowseMode();
 
@@ -731,106 +702,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.control-strip {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr);
-					gap: 0.45rem;
 					padding: 0.45rem 0.5rem;
 					background: #ecebe7;
 					border-bottom: 1px solid #d8d5cf;
 					z-index: 1;
 				}
-				.control-row {
-					display: grid;
-					align-items: center;
+				open-collections-browse-header {
 					min-width: 0;
-				}
-				.control-row--primary {
-					grid-template-columns: minmax(0, 1fr);
-				}
-				.control-row--secondary {
-					grid-template-columns: minmax(0, 1fr) auto;
-					gap: 0.45rem;
-				}
-				.search-entry,
-				.filter-entry,
-				.mode-button {
-					border: 1px solid #cbc6be;
-					background: #ffffff;
-					color: inherit;
-					font: inherit;
-					line-height: 1;
-					
-				}
-				.search-entry,
-				.filter-entry {
-					display: inline-flex;
-					align-items: center;
-					gap: 0.42rem;
-					block-size: 2rem;
-					padding: 0 0.65rem;
-					border-radius: 0.65rem;
-					font-size: 0.82rem;
-					font-weight: 540;
-					
-				}
-				.search-entry {
-					inline-size: 100%;
-					justify-content: flex-start;
-					min-inline-size: 0;
-					box-sizing:border-box;
-				}
-				.search-entry-input {
-					min-inline-size: 0;
-					inline-size: 100%;
-					border: none;
-					background: transparent;
-					color: #2e2924;
-					font: inherit;
-					font-size: 0.82rem;
-					font-weight: 540;
-					outline: none;
-				}
-				.search-entry-input::placeholder {
-					color: #6b6258;
-				}
-				.filter-entry {
-					inline-size: fit-content;
-					justify-self: start;
-				}
-				.mode-switch {
-					display: inline-flex;
-					align-items: center;
-					padding: 0.12rem;
-					border-radius: 999px;
-					background: #ffffff;
-					border: 1px solid #d4d4cf;
-					gap: 0.15rem;
-				}
-				.mode-button {
-					display: inline-flex;
-					align-items: center;
-					gap: 0.3rem;
-					block-size: 1.8rem;
-					padding: 0 0.55rem;
-					border-radius: 999px;
-					border-color: transparent;
-					background: transparent;
-					font-size: 0.78rem;
-					font-weight: 620;
-					color: #514a43;
-				}
-				.mode-button[data-active="true"] {
-					background: #2f2f2a;
-					color: #ffffff;
-				}
-				.mode-icon,
-				.entry-icon {
-					inline-size: 0.9rem;
-					block-size: 0.9rem;
-					stroke: currentColor;
-					stroke-width: 1.8;
-					fill: none;
-					stroke-linecap: round;
-					stroke-linejoin: round;
-					flex-shrink: 0;
 				}
 				.app-viewport {
 					height: 100%;
@@ -905,59 +783,18 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					pointer-events: none;
 					z-index: 8;
 				}
-				.browse-shell[data-mode="map"] .control-row {
+				.browse-shell[data-mode="map"] open-collections-browse-header {
 					pointer-events: auto;
-					background: transparent;
-				}
-				.browse-shell[data-mode="map"] .search-entry,
-				.browse-shell[data-mode="map"] .filter-entry,
-				.browse-shell[data-mode="map"] .mode-switch {
-					box-shadow: 0 2px 10px rgba(45, 42, 38, 0.16);
-					border-color: rgba(65, 61, 56, 0.2);
-					background: rgba(255, 255, 255, 0.96);
-					backdrop-filter: blur(6px);
-				}
-				.browse-shell[data-mode="map"] .search-entry,
-				.browse-shell[data-mode="map"] .filter-entry {
-					block-size: 2.2rem;
-					border-radius: 999px;
-				}
-				.browse-shell[data-mode="map"] .mode-switch {
-					padding: 0.16rem;
-				}
-				.browse-shell[data-mode="map"] .mode-button {
-					block-size: 1.9rem;
 				}
 
 				@media (max-width: 760px) {
 					.control-strip {
-						gap: 0.38rem;
 						padding: 0.42rem;
-					}
-					.control-row--secondary {
-						gap: 0.35rem;
-					}
-					.search-entry,
-					.filter-entry {
-						block-size: 1.9rem;
-						font-size: 0.78rem;
-					}
-					.mode-switch {
-						justify-self: end;
-					}
-					.mode-button {
-						block-size: 1.7rem;
-						font-size: 0.75rem;
-						padding: 0 0.46rem;
 					}
 					.browse-shell[data-mode="map"] .control-strip {
 						top: 0.45rem;
 						left: 0.45rem;
 						right: 0.45rem;
-					}
-					.browse-shell[data-mode="map"] .search-entry,
-					.browse-shell[data-mode="map"] .filter-entry {
-						block-size: 2.05rem;
 					}
 					.filter-dialog {
 						inline-size: calc(100vw - 0.6rem);
@@ -969,27 +806,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			</style>
 			<section class="browse-shell" data-mode="${browseMode}" aria-label="Browse mode shell">
 				<div class="control-strip" aria-label="Browse controls">
-					<div class="control-row control-row--primary">
-						<label class="search-entry" aria-label="Search browse results">
-							<svg class="entry-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>
-							<input
-								data-bind="shell-search-input"
-								class="search-entry-input"
-								type="search"
-								placeholder="Search titles, places, and sources"
-								value="${escapeAttribute(this.state.filterState.text)}"
-							>
-						</label>
-					</div>
-					<div class="control-row control-row--secondary">
-						<button class="filter-entry" type="button" data-action="filter-entry" aria-label="Open browse filters">
-							<svg class="entry-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18M7 12h10M10 19h4"></path></svg>
-							<span>Filters</span>
-						</button>
-						<div class="mode-switch" role="tablist" aria-label="Browse mode">
-							${BROWSE_MODE_OPTIONS.map((option) => this.renderModeButton(option, browseMode)).join("")}
-						</div>
-					</div>
+					<open-collections-browse-header></open-collections-browse-header>
 				</div>
 				<div class="app-viewport">${this.renderChildApp(browseMode)}</div>
 			</section>

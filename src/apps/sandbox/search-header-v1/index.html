@@ -117,6 +117,15 @@
         text-overflow: ellipsis;
       }
 
+
+      .search-input::-webkit-search-decoration,
+      .search-input::-webkit-search-cancel-button,
+      .search-input::-webkit-search-results-button,
+      .search-input::-webkit-search-results-decoration {
+        appearance: none;
+        display: none;
+      }
+
       .search-wrap.expanded .search-input {
         padding-right: 2.6rem;
       }
@@ -137,7 +146,9 @@
         padding: 0 0.82rem;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.42rem;
+        line-height: 1;
         font-size: 0.9rem;
         white-space: nowrap;
         cursor: pointer;
@@ -148,6 +159,14 @@
         width: 16px;
         height: 16px;
         color: #687da4;
+        display: block;
+      }
+
+      .pill-btn span,
+      [data-role="view-btn-icon"] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .icon-btn {

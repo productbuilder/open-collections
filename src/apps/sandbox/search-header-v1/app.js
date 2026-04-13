@@ -65,7 +65,7 @@ const createUi = () => {
 
       <header class="floating-header" data-role="floating-header">
         <div class="control-row" data-role="control-row">
-          <label class="search-wrap" aria-label="Search collections" data-role="search-wrap">
+          <label class="search-wrap" aria-label="Search" data-role="search-wrap">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
               <path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
@@ -74,7 +74,7 @@ const createUi = () => {
               class="search-input"
               data-role="search-input"
               type="search"
-              placeholder="Search collections"
+              placeholder="Search"
             />
             <button type="button" class="icon-btn clear-btn" data-action="clear-search" aria-label="Clear search" data-role="clear-search">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">

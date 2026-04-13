@@ -652,9 +652,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		const embeddedAttrs = this.hasAttribute("data-workbench-embed")
 			? ' data-workbench-embed="true"'
 			: "";
-		const shellEmbedAttrs = this.hasAttribute("data-shell-embed")
-			? ' data-shell-embed="true"'
-			: "";
+		const shellEmbedAttrs = ' data-shell-embed="true"';
 		const appModeAttr = this.getAttribute("data-oc-app-mode");
 		const appMode = appModeAttr
 			? ` data-oc-app-mode="${appModeAttr.replaceAll('"', "&quot;")}"`
@@ -702,7 +700,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.control-strip {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr);
-					padding: 0.45rem 0.5rem;
+					padding: 0.5rem 0.65rem;
 					background: #ecebe7;
 					border-bottom: 1px solid #d8d5cf;
 					z-index: 1;
@@ -773,7 +771,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					align-items: stretch;
 					gap: 0.45rem;
 					position: absolute;
-					top: 0.6rem;
+					top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
 					left: 0.6rem;
 					right: 0.6rem;
 					background: transparent;
@@ -792,7 +790,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						padding: 0.42rem;
 					}
 					.browse-shell[data-mode="map"] .control-strip {
-						top: 0.45rem;
+						top: calc(env(safe-area-inset-top, 0px) + 0.45rem);
 						left: 0.45rem;
 						right: 0.45rem;
 					}

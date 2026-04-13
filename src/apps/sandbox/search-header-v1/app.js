@@ -144,16 +144,18 @@ const cacheRefs = () => {
 };
 
 const render = () => {
+  const hasQuery = state.query.trim().length > 0;
   const hasFilters = state.activeFilterCount > 0;
 
   refs.floatingHeader.classList.toggle('expanded', state.searchExpanded);
   refs.searchWrap.classList.toggle('expanded', state.searchExpanded);
+  refs.searchWrap.classList.toggle('has-query', hasQuery);
 
   if (refs.searchInput.value !== state.query) {
     refs.searchInput.value = state.query;
   }
 
-  refs.clearSearch.hidden = state.query.length === 0;
+  refs.clearSearch.hidden = !hasQuery;
 
   refs.filtersBtn.classList.toggle('active', hasFilters);
   refs.filtersBtn.setAttribute('aria-pressed', String(hasFilters));

@@ -1,12 +1,11 @@
 import { scenes } from './data.js';
 
 const state = {
-  current: 0,
-  sceneEls: []
+  current: 0
 };
 
-const sceneContainer = document.getElementById('scene-container');
-const progressRail = document.getElementById('progress-rail');
+const sceneTrack = document.getElementById('scene-container');
+const progressDots = document.getElementById('progress-dots');
 const sceneCounter = document.getElementById('scene-counter');
 const prevButton = document.getElementById('prev-scene');
 const nextButton = document.getElementById('next-scene');
@@ -16,6 +15,7 @@ const getHashSceneIndex = () => {
   if (!hash) {
     return 0;
   }
+
   const found = scenes.findIndex((scene) => scene.id === hash);
   return found >= 0 ? found : 0;
 };
@@ -90,13 +90,13 @@ const renderVisual = (visual) => {
   }
 };
 
-const renderScene = (scene, index) => {
+const renderScene = (scene) => {
   const bulletHtml = scene.bullets?.length
     ? `<ul>${scene.bullets.map((line) => `<li>${line}</li>`).join('')}</ul>`
     : '';
 
   return `
-    <section class="scene" id="${scene.id}" data-index="${index}">
+    <section class="scene" id="${scene.id}">
       <div class="scene-content">
         <p class="kicker">${scene.kicker}</p>
         <h2>${scene.title}</h2>
@@ -110,24 +110,19 @@ const renderScene = (scene, index) => {
 };
 
 const renderProgress = () => {
-  progressRail.innerHTML = scenes
+  progressDots.innerHTML = scenes
     .map(
-      (scene, index) => `
-      <a href="#${scene.id}" class="progress-dot" data-index="${index}" aria-label="Go to ${scene.title}">
-        <span>${String(index + 1).padStart(2, '0')}</span>
-      </a>`
+      (scene, index) =>
+        `<button type="button" class="step-dot" data-index="${index}" aria-label="Go to ${scene.title}"></button>`
     )
     .join('');
 };
 
 const syncUi = () => {
   sceneCounter.textContent = `${state.current + 1} / ${scenes.length}`;
+  sceneTrack.style.transform = `translateX(-${state.current * 100}%)`;
 
-  for (const [index, sceneEl] of state.sceneEls.entries()) {
-    sceneEl.classList.toggle('active', index === state.current);
-  }
-
-  for (const dot of progressRail.querySelectorAll('.progress-dot')) {
+  for (const dot of progressDots.querySelectorAll('.step-dot')) {
     dot.classList.toggle('active', Number(dot.dataset.index) === state.current);
   }
 
@@ -137,35 +132,31 @@ const syncUi = () => {
 
 const goToScene = (index, { updateHash = true } = {}) => {
   state.current = Math.max(0, Math.min(index, scenes.length - 1));
-  const activeScene = scenes[state.current];
 
   if (updateHash) {
-    history.replaceState(null, '', `#${activeScene.id}`);
+    history.replaceState(null, '', `#${scenes[state.current].id}`);
   }
 
-  state.sceneEls[state.current].scrollIntoView({ behavior: 'smooth', block: 'start' });
   syncUi();
 };
 
 const init = () => {
-  sceneContainer.innerHTML = scenes.map(renderScene).join('');
-  state.sceneEls = Array.from(sceneContainer.querySelectorAll('.scene'));
+  sceneTrack.innerHTML = scenes.map(renderScene).join('');
   renderProgress();
 
   state.current = getHashSceneIndex();
   syncUi();
-  state.sceneEls[state.current].scrollIntoView({ behavior: 'auto', block: 'start' });
 
   prevButton.addEventListener('click', () => goToScene(state.current - 1));
   nextButton.addEventListener('click', () => goToScene(state.current + 1));
 
-  progressRail.addEventListener('click', (event) => {
-    const link = event.target.closest('.progress-dot');
-    if (!link) {
+  progressDots.addEventListener('click', (event) => {
+    const dot = event.target.closest('.step-dot');
+    if (!dot) {
       return;
     }
-    event.preventDefault();
-    goToScene(Number(link.dataset.index));
+
+    goToScene(Number(dot.dataset.index));
   });
 
   document.addEventListener('keydown', (event) => {
@@ -175,43 +166,11 @@ const init = () => {
     if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
       goToScene(state.current - 1);
     }
-    if (event.key === 'Home') {
-      goToScene(0);
-    }
-    if (event.key === 'End') {
-      goToScene(scenes.length - 1);
-    }
   });
 
   window.addEventListener('hashchange', () => {
     goToScene(getHashSceneIndex(), { updateHash: false });
   });
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-      if (!visible) {
-        return;
-      }
-
-      const index = Number(visible.target.dataset.index);
-      if (index !== state.current) {
-        state.current = index;
-        history.replaceState(null, '', `#${scenes[index].id}`);
-        syncUi();
-      }
-    },
-    {
-      threshold: [0.55, 0.8]
-    }
-  );
-
-  for (const sceneEl of state.sceneEls) {
-    observer.observe(sceneEl);
-  }
 };
 
 init();

@@ -12,6 +12,8 @@
         --surface: #ffffff;
         --accent: #245ff2;
         --accent-soft: #e8efff;
+        --content-max-width: 100%;
+        --content-gutter: 0.85rem;
       }
 
       * {
@@ -34,7 +36,9 @@
 
       .floating-header {
         position: absolute;
-        inset: 0.8rem 0.8rem auto;
+        top: 0.8rem;
+        left: max(var(--content-gutter), calc((100% - var(--content-max-width)) / 2 + var(--content-gutter)));
+        right: max(var(--content-gutter), calc((100% - var(--content-max-width)) / 2 + var(--content-gutter)));
         z-index: 10;
         min-height: 42px;
       }
@@ -296,7 +300,8 @@
 
       .list-view {
         background: linear-gradient(180deg, #f5f8ff 0%, #eaf1ff 100%);
-        padding: 5.2rem 0.85rem 1rem;
+        padding-block: 5.2rem 1rem;
+        padding-inline: max(var(--content-gutter), calc((100% - var(--content-max-width)) / 2 + var(--content-gutter)));
         overflow: auto;
       }
 
@@ -339,8 +344,8 @@
 
       .state-panel {
         position: absolute;
-        left: 0.8rem;
-        right: 0.8rem;
+        left: max(var(--content-gutter), calc((100% - var(--content-max-width)) / 2 + var(--content-gutter)));
+        right: max(var(--content-gutter), calc((100% - var(--content-max-width)) / 2 + var(--content-gutter)));
         bottom: 0.8rem;
         z-index: 12;
         border: 1px solid rgba(199, 213, 236, 0.9);
@@ -371,11 +376,35 @@
       }
 
       @media (min-width: 680px) {
-        .screen {
-          max-width: 460px;
-          margin: 0 auto;
-          border-inline: 1px solid rgba(194, 210, 236, 0.9);
-          box-shadow: 0 14px 30px rgba(42, 69, 120, 0.14);
+        :root {
+          --content-max-width: 46rem;
+          --content-gutter: 1rem;
+        }
+
+        .result-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.9rem;
+        }
+
+        .pill-btn,
+        .icon-btn {
+          padding-inline: 0.86rem;
+        }
+      }
+
+      @media (min-width: 1080px) {
+        :root {
+          --content-max-width: 72rem;
+          --content-gutter: 1.25rem;
+        }
+
+        .result-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1rem;
+        }
+
+        .state-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
       }
     </style>

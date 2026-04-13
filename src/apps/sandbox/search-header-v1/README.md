@@ -1,33 +1,34 @@
 # search-header-v1
 
-Versioned sandbox prototype for a mobile-first **collection-browser header** pattern that combines search + filters + map/list view switching.
+Versioned sandbox prototype for a mobile-first **Open Collections browser header** that now mirrors the real in-app layout more closely.
 
-## What this is
+## What this version is testing
 
-This prototype explores a compact Open Collections header that supports fast searching while still keeping key browse actions available:
+This version moves away from a standalone demo card and instead mocks an in-context browser screen:
 
-- Search field
-- Filters button (with a settings/sliders icon)
-- Map/List view switch button
+- Floating header controls over full-screen content
+- Default one-row controls: **Search + Filters + Map/List**
+- Search-focused expansion behavior with a back affordance
+- Background content switching between realistic map-style and list/grid-style previews
 
-## Why it is in `src/apps/sandbox`
+## Real-app alignment goals
 
-- It is intentionally experimental and versioned (`v1`).
-- It supports rapid UX iteration before app-shell integration.
-- It isolates interaction details so behavior can be tested and discussed quickly.
+- Header controls sit directly on top of content, near the top edge.
+- Content fills the full screen behind the controls.
+- Rounded pill controls and search input match mobile collection browser patterns.
+- Filters uses a sliders/settings icon and text label.
+- Map/List toggle changes underlying preview mode so interaction feels real.
 
 ## Key interaction behavior
 
-- Default (compact) layout shows search + Filters + Map/List on one row.
-- Focusing/tapping search expands the header into a two-row state:
-  - Row 1: back/close affordance + dominant search field
-  - Row 2: Filters and Map/List actions
-- Back/close (or `Escape`) collapses search to compact layout.
-- Filters toggles a demo active-filter count and active visual styling.
-- Map/List toggles between list and map modes.
-- Typing in search updates fake result text and the debug state summary.
+- **Default state:** one row with search as the widest control, then Filters and Map/List to the right.
+- **Search active:** tapping/focusing search expands it with a back button; Filters and Map/List move to a secondary row.
+- **Back/Escape:** collapses the expanded search state.
+- **Filters:** toggles a demo active filter count and visual active state.
+- **Map/List:** toggles preview background between map-like and collection-results-like layouts.
+- **Typed query:** reflected in the live state summary for quick iteration checks.
 
 ## Files
 
-- `index.html` — sandbox page shell and all prototype CSS
-- `app.js` — in-memory state, render function, and interaction handlers
+- `index.html` — page shell and visual system for floating controls + realistic full-screen previews
+- `app.js` — state model, render logic, and interaction handlers

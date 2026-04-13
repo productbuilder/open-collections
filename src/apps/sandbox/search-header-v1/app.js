@@ -18,106 +18,130 @@ const escapeHtml = (value) =>
 const getViewToggleLabel = () => (state.viewMode === 'list' ? 'Map' : 'List');
 
 const getPreviewSummary = () => {
-  const queryLabel = state.query.trim() ? `for “${state.query.trim()}”` : 'with no query';
-  const filterLabel =
-    state.activeFilterCount > 0
-      ? `${state.activeFilterCount} active filter${state.activeFilterCount > 1 ? 's' : ''}`
-      : 'no active filters';
-
-  return `${state.viewMode === 'list' ? 'List' : 'Map'} view ${queryLabel}, ${filterLabel}.`;
+  const queryLabel = state.query.trim() ? `“${state.query.trim()}”` : 'no query';
+  const filterLabel = state.activeFilterCount > 0 ? `${state.activeFilterCount} active` : 'none';
+  return `${state.viewMode} mode · ${queryLabel} · filters ${filterLabel}`;
 };
+
+const renderMapBackground = () => `
+  <section class="map-view" aria-label="Map preview background">
+    <div class="map-grid"></div>
+    <div class="map-water"></div>
+    <span class="pin" style="top: 28%; left: 22%"></span>
+    <span class="pin" style="top: 38%; left: 62%"></span>
+    <span class="pin" style="top: 54%; left: 34%"></span>
+    <span class="pin" style="top: 66%; left: 72%"></span>
+  </section>
+`;
+
+const renderListBackground = () => `
+  <section class="list-view" aria-label="Collection results preview background">
+    <div class="result-grid">
+      ${Array.from({ length: 8 })
+        .map(
+          () => `
+            <article class="result-card">
+              <div class="result-thumb"></div>
+              <div class="result-meta">
+                <div class="line"></div>
+                <div class="line short"></div>
+              </div>
+            </article>
+          `
+        )
+        .join('')}
+    </div>
+  </section>
+`;
 
 const render = () => {
   const isExpanded = state.searchExpanded;
   const hasFilters = state.activeFilterCount > 0;
 
   appRoot.innerHTML = `
-    <main class="shell">
-      <h1 class="title">Open Collections · Search Header v1</h1>
-      <p class="subtitle">Mobile-first sandbox for search, filters, and map/list switching.</p>
+    <main class="screen">
+      <div class="background-layer">${state.viewMode === 'map' ? renderMapBackground() : renderListBackground()}</div>
 
-      <section class="header-card">
-        <div class="header-grid${isExpanded ? ' expanded' : ''}">
-          <div class="search-row">
-            ${
-              isExpanded
-                ? `<button type="button" class="icon-btn" data-action="collapse-search" aria-label="Collapse search">←</button>`
-                : ''
-            }
-            <label class="search-wrap" aria-label="Search collections">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-              <input
-                class="search-input"
-                data-role="search-input"
-                type="search"
-                placeholder="Search collections"
-                value="${escapeHtml(state.query)}"
-              />
-            </label>
-          </div>
+      <header class="floating-header ${isExpanded ? 'expanded' : ''}">
+        <div class="control-row default-row">
+          ${
+            isExpanded
+              ? `<button type="button" class="icon-btn" data-action="collapse-search" aria-label="Back from search">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </button>`
+              : ''
+          }
+          <label class="search-wrap" aria-label="Search collections">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+            <input
+              class="search-input"
+              data-role="search-input"
+              type="search"
+              placeholder="Search collections"
+              value="${escapeHtml(state.query)}"
+            />
+          </label>
 
-          <div class="action-row">
-            <button
-              type="button"
-              class="action-btn${hasFilters ? ' active' : ''}"
-              data-action="toggle-filters"
-              aria-pressed="${String(hasFilters)}"
-            >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="9" cy="7" r="2" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <circle cx="11" cy="17" r="2" stroke="currentColor" stroke-width="2"></circle>
-              </svg>
-              <span>Filters</span>
-              ${hasFilters ? `<span class="badge">${state.activeFilterCount}</span>` : ''}
-            </button>
+          <button
+            type="button"
+            class="pill-btn${!isExpanded && hasFilters ? ' active' : ''}"
+            data-action="toggle-filters"
+            aria-pressed="${String(hasFilters)}"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.5 7.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="8.5" cy="7.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M3.5 12h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="15.5" cy="12" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M3.5 16.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="11.5" cy="16.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+            </svg>
+            <span>Filters</span>
+            ${!isExpanded && hasFilters ? `<span class="badge">${state.activeFilterCount}</span>` : ''}
+          </button>
 
-            <button type="button" class="action-btn" data-action="toggle-view">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2" rx="1"></path>
-                <path d="M12 6v12" stroke="currentColor" stroke-width="2"></path>
-              </svg>
-              <span>${getViewToggleLabel()}</span>
-            </button>
-          </div>
+          <button type="button" class="pill-btn" data-action="toggle-view">
+            <span>${getViewToggleLabel()}</span>
+          </button>
         </div>
-      </section>
 
-      <section class="preview" aria-live="polite">
-        <p class="preview-title">Preview area</p>
-        <div class="preview-box">
-          <p class="preview-mode">${state.viewMode === 'list' ? 'List results' : 'Map results'}</p>
-          <p class="preview-text">${escapeHtml(getPreviewSummary())}</p>
-          ${isExpanded ? '<p class="preview-text">Search is expanded for focused query refinement.</p>' : ''}
-          ${hasFilters ? '<p class="preview-text">Active filters are currently narrowing these demo results.</p>' : ''}
+        <div class="control-row secondary-row">
+          <button
+            type="button"
+            class="pill-btn${hasFilters ? ' active' : ''}"
+            data-action="toggle-filters"
+            aria-pressed="${String(hasFilters)}"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.5 7.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="8.5" cy="7.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M3.5 12h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="15.5" cy="12" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M3.5 16.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <circle cx="11.5" cy="16.5" r="1.9" stroke="currentColor" stroke-width="2"></circle>
+            </svg>
+            <span>Filters</span>
+            ${hasFilters ? `<span class="badge">${state.activeFilterCount}</span>` : ''}
+          </button>
+
+          <button type="button" class="pill-btn" data-action="toggle-view">
+            <span>${getViewToggleLabel()}</span>
+          </button>
         </div>
-      </section>
+      </header>
 
-      <section class="status" aria-live="polite">
-        <h2>State summary ${hasFilters ? '<span class="chip">filters active</span>' : ''}</h2>
-        <div class="status-grid">
-          <div class="status-item">
-            <p class="status-label">Current view</p>
-            <p class="status-value">${state.viewMode}</p>
-          </div>
-          <div class="status-item">
-            <p class="status-label">Search expanded</p>
-            <p class="status-value">${state.searchExpanded ? 'true' : 'false'}</p>
-          </div>
-          <div class="status-item">
-            <p class="status-label">Search query</p>
-            <p class="status-value">${state.query.trim() ? escapeHtml(state.query.trim()) : '—'}</p>
-          </div>
-          <div class="status-item">
-            <p class="status-label">Active filter count</p>
-            <p class="status-value">${state.activeFilterCount}</p>
-          </div>
+      <section class="state-panel" aria-live="polite">
+        <h2>Prototype state</h2>
+        <div class="state-grid">
+          <div class="state-item">Mode: <b>${state.viewMode}</b></div>
+          <div class="state-item">Search active: <b>${state.searchExpanded ? 'true' : 'false'}</b></div>
+          <div class="state-item">Filters: <b>${state.activeFilterCount}</b></div>
+          <div class="state-item">Summary: <b>${escapeHtml(getPreviewSummary())}</b></div>
         </div>
       </section>
     </main>
@@ -135,9 +159,7 @@ appRoot.addEventListener('click', (event) => {
     return;
   }
 
-  const { action } = target.dataset;
-
-  switch (action) {
+  switch (target.dataset.action) {
     case 'collapse-search':
       state.searchExpanded = false;
       break;

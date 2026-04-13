@@ -377,8 +377,38 @@
 
       @media (min-width: 680px) {
         :root {
-          --content-max-width: 46rem;
+          --content-max-width: 72rem;
           --content-gutter: 1rem;
+        }
+
+        .control-row {
+          gap: 0.65rem;
+        }
+
+        .search-wrap {
+          flex: 1 1 auto;
+        }
+
+        .expanded .search-wrap {
+          flex-basis: auto;
+        }
+
+        .row-actions {
+          gap: 0.65rem;
+          overflow: visible;
+        }
+
+        .expanded .row-actions {
+          max-width: none;
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+          transform: none;
+          transition:
+            max-width 220ms ease,
+            opacity 190ms ease,
+            transform 200ms ease,
+            visibility 0ms linear 0ms;
         }
 
         .result-grid {
@@ -394,7 +424,7 @@
 
       @media (min-width: 1080px) {
         :root {
-          --content-max-width: 72rem;
+          --content-max-width: 82rem;
           --content-gutter: 1.25rem;
         }
 

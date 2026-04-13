@@ -706,6 +706,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					z-index: 1;
 				}
 				open-collections-browse-header {
+					width: 100%;
 					min-width: 0;
 				}
 				.app-viewport {

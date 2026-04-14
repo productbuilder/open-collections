@@ -266,9 +266,11 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 			return;
 		}
 		const hasQuery = Boolean(this._searchValue.trim());
+		const hasFilters = this._filterCount > 0;
 		const targetMode = this._viewMode === "map" ? "list" : "map";
 		root.toggleAttribute("data-expanded", this._searchExpanded);
 		root.toggleAttribute("data-has-query", hasQuery);
+		root.toggleAttribute("data-has-filters", hasFilters);
 		root.toggleAttribute("data-disabled", this.disabled);
 		if (input.value !== this._searchValue) {
 			input.value = this._searchValue;
@@ -276,7 +278,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 		input.placeholder = this._searchPlaceholder;
 		input.disabled = this.disabled;
 		clearButton.hidden = !hasQuery;
-		filtersBadge.hidden = this._filterCount < 1;
+		filtersBadge.hidden = !hasFilters;
 		filtersBadge.textContent =
 			this._filterCount > 0 ? String(this._filterCount) : "";
 		if (viewToggle) {
@@ -336,6 +338,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					flex-shrink: 0;
 				}
 				.search-input {
+					appearance: none;
 					border: 0;
 					background: transparent;
 					outline: none;
@@ -345,6 +348,10 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					color: #2e2924;
 					min-width: 0;
 					width: 100%;
+				}
+				.search-input::-webkit-search-cancel-button {
+					appearance: none;
+					display: none;
 				}
 				.search-input::placeholder {
 					color: #6b6258;
@@ -373,14 +380,24 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					display: inline-flex;
 					align-items: center;
 					justify-content: center;
-					min-width: 1rem;
-					height: 1rem;
-					padding: 0 0.24rem;
+					min-width: 1.05rem;
+					height: 1.05rem;
+					padding: 0 0.28rem;
 					border-radius: 999px;
 					font-size: 0.67rem;
-					font-weight: 700;
-					background: #2e2924;
-					color: #fff;
+					font-weight: 650;
+					background: #ede7de;
+					border: 1px solid #cec5b8;
+					color: #5e554a;
+				}
+				.header-row[data-has-filters] [data-action="filters"] {
+					background: #f8f3eb;
+					border-color: #d4c9ba;
+				}
+				.filters-icon {
+					inline-size: 0.88rem;
+					block-size: 0.88rem;
+					stroke-width: 1.55;
 				}
 				.row-actions {
 					display: flex;
@@ -410,6 +427,9 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					pointer-events: none;
 				}
 				@media (max-width: 760px) {
+					.header-row:not([data-expanded]) .search-wrap {
+						flex: 0 1 54%;
+					}
 					.row-actions {
 						overflow: hidden;
 						transition: max-width 180ms ease, opacity 160ms ease;
@@ -423,6 +443,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					}
 					.header-row[data-expanded] .search-wrap {
 						flex: 1 1 100%;
+						max-width: none;
 					}
 					.search-wrap,
 					.pill-btn {
@@ -440,7 +461,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				</label>
 				<div class="row-actions">
 					<button type="button" class="pill-btn" data-action="filters" aria-label="Open filters">
-						<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2"></circle><circle cx="15" cy="17" r="2"></circle></svg>
+						<svg class="icon filters-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="1.75"></circle><circle cx="15" cy="17" r="1.75"></circle></svg>
 						<span>Filters</span>
 						<span class="filters-badge" hidden></span>
 					</button>

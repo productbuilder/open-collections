@@ -44,6 +44,31 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 				}),
 			);
 		});
+		this.shadowRoot
+			.getElementById("collectActionBtn")
+			?.addEventListener("click", () => {
+				if (!this.model.item) {
+					return;
+				}
+				this.dispatchEvent(
+					new CustomEvent("collect-item", {
+						bubbles: true,
+						composed: true,
+						detail: {
+							item: this.model.item,
+						},
+					}),
+				);
+			});
+		this.shadowRoot
+			.getElementById("sourceActionBtn")
+			?.addEventListener("click", () => {
+				const sourceUrl = this.resolveSourceUrl(this.model.item);
+				if (!sourceUrl) {
+					return;
+				}
+				window.open(sourceUrl, "_blank", "noopener,noreferrer");
+			});
 	}
 
 	setItem(item) {
@@ -239,22 +264,30 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 	applyView() {
 		const title = this.shadowRoot.getElementById("viewerTitle");
 		const body = this.shadowRoot.getElementById("viewerBody");
-		if (!title || !body) {
+		const mediaArea = this.shadowRoot.getElementById("viewerMediaArea");
+		const collectActionBtn = this.shadowRoot.getElementById("collectActionBtn");
+		const sourceActionBtn = this.shadowRoot.getElementById("sourceActionBtn");
+		if (!title || !body || !mediaArea || !collectActionBtn || !sourceActionBtn) {
 			return;
 		}
 
 		body.innerHTML = "";
+		mediaArea.innerHTML = "";
 		const item = this.model.item;
 		if (!item) {
 			title.textContent = "Viewer";
 			const empty = document.createElement("div");
 			empty.className = "empty";
 			empty.textContent = "Choose an item to view.";
-			body.appendChild(empty);
+			mediaArea.appendChild(empty);
+			collectActionBtn.disabled = true;
+			sourceActionBtn.disabled = true;
 			return;
 		}
 
 		title.textContent = item.title || item.id || "Viewer";
+		collectActionBtn.disabled = false;
+		sourceActionBtn.disabled = !this.resolveSourceUrl(item);
 		if (
 			String(item.appId || "").toLowerCase() ===
 			"time-comparer"
@@ -269,7 +302,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 					items: compareItems,
 				});
 			}
-			body.appendChild(comparer);
+			mediaArea.appendChild(comparer);
 			this.appendItemDetails(body, item);
 			return;
 		}
@@ -287,7 +320,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			empty.className = "empty";
 			empty.textContent = "No media URL available.";
 			shell.appendChild(empty);
-			body.appendChild(shell);
+			mediaArea.appendChild(shell);
 			this.appendItemDetails(body, item);
 			return;
 		}
@@ -318,7 +351,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 				skeleton.hidden = true;
 			});
 			shell.appendChild(video);
-			body.appendChild(shell);
+			mediaArea.appendChild(shell);
 			this.appendItemDetails(body, item);
 			return;
 		}
@@ -363,7 +396,7 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
 			shell.appendChild(empty);
 		});
 		shell.appendChild(image);
-		body.appendChild(shell);
+		mediaArea.appendChild(shell);
 		this.appendItemDetails(body, item);
 	}
 
@@ -372,6 +405,9 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
       <style>
         :host { display: contents; }
         :host {
+          --viewer-dialog-margin-top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+          --viewer-dialog-margin-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+          --viewer-dialog-margin-inline: max(12px, calc(env(safe-area-inset-left, 0px) + 12px), calc(env(safe-area-inset-right, 0px) + 12px));
           --oc-browser-bg-card: #fffdfa;
           --oc-browser-bg-card-soft: #f7f4f1;
           --oc-browser-border: #d9d5d0;
@@ -385,17 +421,33 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         }
         * { box-sizing: border-box; }
         dialog {
-          width: min(980px, 96vw);
-          max-height: min(96vh, 1100px);
+          width: min(920px, calc(100vw - (var(--viewer-dialog-margin-inline) * 2)));
+          max-height: min(1100px, calc(100dvh - var(--viewer-dialog-margin-top) - var(--viewer-dialog-margin-bottom)));
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 12px;
           padding: 0;
           background: var(--oc-browser-bg-card, #fffdfa);
+          margin-block: var(--viewer-dialog-margin-top) var(--viewer-dialog-margin-bottom);
+          margin-inline: auto;
         }
         dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
         .dialog-shell {
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-rows: auto auto minmax(0, 1fr) auto;
+          min-height: 0;
+          height: min(100%, calc(100dvh - var(--viewer-dialog-margin-top) - var(--viewer-dialog-margin-bottom)));
+          max-height: inherit;
+        }
+        .dialog-media {
+          padding: 0.6rem 0.85rem 0.4rem;
+        }
+        .dialog-footer {
+          padding: 0.7rem 0.85rem;
+          border-top: 1px solid var(--oc-browser-divider, #e2d8cd);
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.55rem;
+          background: var(--oc-browser-bg-card, #fffdfa);
           min-height: 0;
         }
         .dialog-header {
@@ -413,15 +465,14 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           gap: 0.45rem;
         }
         .dialog-body {
-          padding: 0.85rem;
+          padding: 0.15rem 0.85rem 0.85rem;
           overflow: auto;
-          flex: 1;
           min-height: 0;
         }
         .viewer-media-shell {
           width: 100%;
-          height: min(64vh, 720px);
-          min-height: 260px;
+          height: min(42dvh, 420px);
+          min-height: 180px;
           border-radius: 8px;
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           background: var(--oc-browser-bg-card-soft, #f8f3ed);
@@ -527,6 +578,20 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
           font-size: 0.88rem;
           font-weight: 600;
         }
+        .btn[disabled] {
+          opacity: 0.55;
+          cursor: default;
+        }
+        .btn-secondary {
+          background: var(--oc-browser-bg-card, #fffdfa);
+          color: var(--oc-browser-text, #2e2924);
+          border-color: var(--oc-browser-border, #d9d5d0);
+        }
+        .btn-primary {
+          background: #0f6cc6;
+          border-color: #0f6cc6;
+          color: #ffffff;
+        }
         .empty {
           border: 1px solid var(--oc-browser-border, #d9d5d0);
           border-radius: 8px;
@@ -555,12 +620,24 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
         }
         @media (max-width: 760px) {
           dialog {
-            width: min(980px, 96vw);
-            max-height: min(96vh, 1100px);
+            width: calc(100vw - (var(--viewer-dialog-margin-inline) * 2));
+            max-height: calc(100dvh - var(--viewer-dialog-margin-top) - var(--viewer-dialog-margin-bottom));
           }
           .viewer-media-shell {
-            height: min(56vh, 480px);
-            min-height: 220px;
+            height: min(33dvh, 280px);
+            min-height: 160px;
+          }
+          .dialog-header {
+            padding: 0.65rem 0.75rem;
+          }
+          .dialog-media {
+            padding: 0.55rem 0.75rem 0.35rem;
+          }
+          .dialog-body {
+            padding: 0.1rem 0.75rem 0.75rem;
+          }
+          .dialog-footer {
+            padding: 0.65rem 0.75rem calc(env(safe-area-inset-bottom, 0px) + 0.65rem);
           }
         }
       </style>
@@ -572,7 +649,12 @@ class OpenBrowserViewerDialogElement extends HTMLElement {
               <button id="closeViewerBtn" class="icon-btn" type="button" aria-label="Close viewer">${renderCloseIcon("icon icon-close")}</button>
             </div>
           </div>
+          <div id="viewerMediaArea" class="dialog-media"></div>
           <div id="viewerBody" class="dialog-body"></div>
+          <footer class="dialog-footer">
+            <button id="collectActionBtn" class="btn btn-primary" type="button">Collect</button>
+            <button id="sourceActionBtn" class="btn btn-secondary" type="button">Source</button>
+          </footer>
         </div>
       </dialog>
     `;

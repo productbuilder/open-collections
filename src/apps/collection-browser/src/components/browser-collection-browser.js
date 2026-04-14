@@ -515,6 +515,12 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		if (!this._toggleBar) {
 			return;
 		}
+		if (this.hasAttribute("data-shell-list-adapter")) {
+			this._toggleBar.innerHTML = "";
+			this._toggleBar.hidden = true;
+			return;
+		}
+		this._toggleBar.hidden = false;
 		const currentMode = this.normalizedMode();
 		const nextMarkup = VALID_MODES.map(
 			(entry) => `

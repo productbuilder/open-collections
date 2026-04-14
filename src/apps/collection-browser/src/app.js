@@ -194,6 +194,7 @@ class CollectionBrowserElement extends ComponentBase {
 		this.handleBrowseQueryPatch = this.onBrowseQueryPatch.bind(this);
 		this.handleShellListProjection = this.onShellListProjection.bind(this);
 		this.handleShellRuntimeState = this.onShellRuntimeState.bind(this);
+		this.handleShellViewModeChange = this.onShellViewModeChange.bind(this);
 		this.allModeAppendScheduler = createFeedAppendScheduler();
 	}
 
@@ -210,6 +211,10 @@ class CollectionBrowserElement extends ComponentBase {
 		this.addEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		this.addEventListener("browse-shell-list-projection", this.handleShellListProjection);
 		this.addEventListener("browse-shell-runtime-state", this.handleShellRuntimeState);
+		this.addEventListener(
+			"browse-shell-view-mode-change",
+			this.handleShellViewModeChange,
+		);
 		this.setStatus(this.state.statusText, this.state.statusTone);
 		this.renderHeader();
 		this.renderManifestControls();
@@ -250,6 +255,10 @@ class CollectionBrowserElement extends ComponentBase {
 		this.removeEventListener("browse-query-patch", this.handleBrowseQueryPatch);
 		this.removeEventListener("browse-shell-list-projection", this.handleShellListProjection);
 		this.removeEventListener("browse-shell-runtime-state", this.handleShellRuntimeState);
+		this.removeEventListener(
+			"browse-shell-view-mode-change",
+			this.handleShellViewModeChange,
+		);
 		if (this._handleWindowResize) {
 			window.removeEventListener("resize", this._handleWindowResize);
 			this._handleWindowResize = null;
@@ -263,6 +272,15 @@ class CollectionBrowserElement extends ComponentBase {
 			event?.detail && typeof event.detail === "object" ? event.detail : {};
 		this.applyBrowseQueryPatch(detail);
 		this.renderViewport();
+	}
+
+	onShellViewModeChange(event) {
+		if (!this.isShellListAdapterMode()) {
+			return;
+		}
+		const detail =
+			event?.detail && typeof event.detail === "object" ? event.detail : {};
+		this.setEmbeddedViewMode(detail.mode);
 	}
 
 	applyBrowseQueryPatch(patch = {}) {
@@ -655,6 +673,21 @@ class CollectionBrowserElement extends ComponentBase {
 			itemsBtn.dataset.active =
 				this.state.viewMode === "items" ? "true" : "false";
 		}
+		this.dispatchEvent(
+			new CustomEvent("browse-shell-embedded-view-mode-state", {
+				detail: {
+					activeMode: this.state.viewMode,
+					disabledModes: {
+						all: this.state.isLoadingCollection || !canUseAll,
+						sources: this.state.isLoadingCollection,
+						collections: this.state.isLoadingCollection || !canUseCollections,
+						items: this.state.isLoadingCollection || !canUseItems,
+					},
+				},
+				bubbles: true,
+				composed: true,
+			}),
+		);
 	}
 
 	setEmbeddedViewMode(mode) {
@@ -1329,6 +1362,9 @@ class CollectionBrowserElement extends ComponentBase {
           `
 			: `<open-browser-manifest-controls id="manifestControls" slot="toolbar"></open-browser-manifest-controls>`;
 
+		const viewportAttrs = this.isShellListAdapterMode()
+			? ' data-shell-list-adapter="true"'
+			: "";
 		this.shadow.innerHTML = `
       <style>
         :host {
@@ -1586,7 +1622,7 @@ class CollectionBrowserElement extends ComponentBase {
           <p id="browserManifest" class="manifest" hidden></p>
         </header>
         <div class="shell">
-          <open-browser-collection-browser id="browserViewport">
+          <open-browser-collection-browser id="browserViewport"${viewportAttrs}>
             ${toolbarTemplate}
             <open-browser-metadata-panel id="metadataPanel" slot="inspector"></open-browser-metadata-panel>
           </open-browser-collection-browser>

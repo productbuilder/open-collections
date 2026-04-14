@@ -413,7 +413,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		}
 		header.filterCount = countActiveFilters(this.state.filterState);
 		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
-		header.searchPlaceholder = "Search titles, places, and sources";
+		header.searchPlaceholder = "Search";
 	}
 
 	sendBrowseQueryPatchToActiveChild(filterPatch = {}) {

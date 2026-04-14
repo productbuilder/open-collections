@@ -292,8 +292,8 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 		if (viewToggleIcon) {
 			viewToggleIcon.innerHTML =
 				targetMode === "map"
-					? '<path d="M3 5h8v6H3zM13 5h8v6h-8zM3 13h8v6H3zM13 13h8v6h-8z"></path>'
-					: '<path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"></path>';
+					? '<path d="M3.5 6.5 7 5l5 2 5-2 3.5 1.5v11L17 16l-5 2-5-2-3.5 1.5z"></path><path d="M7 5v11M12 7v11M17 5v11"></path>'
+					: '<path d="M8.5 7h12M8.5 12h12M8.5 17h12"></path><path d="M4 7h.01M4 12h.01M4 17h.01"></path>';
 		}
 	}
 
@@ -455,7 +455,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				<label class="search-wrap" aria-label="Search">
 					<svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>
 					<input class="search-input" type="search" part="search-input" />
-					<button type="button" class="clear-btn" data-action="search-clear" aria-label="Clear search">
+					<button type="button" class="clear-btn" data-action="search-clear" aria-label="Clear search" hidden>
 						<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
 					</button>
 				</label>

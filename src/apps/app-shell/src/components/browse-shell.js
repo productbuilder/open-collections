@@ -132,6 +132,15 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				types: [],
 			},
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
+			listBrowseModeState: {
+				activeMode: "all",
+				disabledModes: {
+					all: false,
+					sources: false,
+					collections: false,
+					items: false,
+				},
+			},
 		};
 		this._browseQueryState = createBrowseShellQueryState();
 		this._lastProjectionQuerySignature = JSON.stringify(
@@ -195,6 +204,14 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		this.shadowRoot.addEventListener("click", (event) => {
 			const element = event.target instanceof Element ? event.target : null;
 			if (!element) {
+				return;
+			}
+			const typeModeButton = element.closest('[data-action="browse-type-mode"]');
+			if (typeModeButton instanceof HTMLElement) {
+				const nextMode = toText(typeModeButton.getAttribute("data-mode")).toLowerCase();
+				if (nextMode) {
+					this.dispatchBrowseTypeModeChange(nextMode);
+				}
 				return;
 			}
 			if (element.closest('[data-action="close-filter-panel"]')) {
@@ -317,6 +334,30 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.publishMapProjectionToActiveChild();
 			},
 		);
+		this.shadowRoot.addEventListener(
+			"browse-shell-embedded-view-mode-state",
+			(event) => {
+				const detail =
+					event?.detail && typeof event.detail === "object" ? event.detail : {};
+				const activeMode = toText(detail.activeMode).toLowerCase();
+				this.state.listBrowseModeState = {
+					activeMode:
+						activeMode === "all" ||
+						activeMode === "sources" ||
+						activeMode === "collections" ||
+						activeMode === "items"
+							? activeMode
+							: this.state.listBrowseModeState?.activeMode || "all",
+					disabledModes: {
+						all: Boolean(detail?.disabledModes?.all),
+						sources: Boolean(detail?.disabledModes?.sources),
+						collections: Boolean(detail?.disabledModes?.collections),
+						items: Boolean(detail?.disabledModes?.items),
+					},
+				};
+				this.render();
+			},
+		);
 		this.shadowRoot.addEventListener("oc-filter-panel-change", (event) => {
 			const detail =
 				event?.detail && typeof event.detail === "object" ? event.detail : {};
@@ -362,6 +403,57 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.state.filterPanelOpen = false;
 			}
 		});
+	}
+
+	dispatchBrowseTypeModeChange(mode = "") {
+		if (this.currentBrowseMode() !== BROWSE_MODES.LIST) {
+			return;
+		}
+		const nextMode = toText(mode).toLowerCase();
+		if (!["all", "sources", "collections", "items"].includes(nextMode)) {
+			return;
+		}
+		const activeChildElement = this.getActiveChildElement();
+		if (!activeChildElement || activeChildElement.tagName.toLowerCase() !== "collection-browser") {
+			return;
+		}
+		activeChildElement.dispatchEvent(
+			new CustomEvent("browse-shell-view-mode-change", {
+				detail: { mode: nextMode },
+			}),
+		);
+	}
+
+	renderListBrowseTypeControls() {
+		const currentState = this.state.listBrowseModeState || {};
+		const activeMode = toText(currentState.activeMode).toLowerCase() || "all";
+		const disabledModes = currentState.disabledModes || {};
+		const modes = [
+			{ mode: "all", label: "All" },
+			{ mode: "sources", label: "Sources" },
+			{ mode: "collections", label: "Collections" },
+			{ mode: "items", label: "Items" },
+		];
+		return `
+			<div class="browse-type-row" role="toolbar" aria-label="Browse types">
+				${modes
+					.map(
+						({ mode, label }) => `
+							<button
+								type="button"
+								class="browse-type-chip"
+								data-action="browse-type-mode"
+								data-mode="${mode}"
+								data-active="${mode === activeMode ? "true" : "false"}"
+								${disabledModes[mode] ? "disabled" : ""}
+							>
+								${label}
+							</button>
+						`,
+					)
+					.join("")}
+			</div>
+		`;
 	}
 
 	openFilterPanel() {
@@ -701,10 +793,41 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.control-strip {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr);
-					padding: 0.72rem 0.9rem;
+					gap: 0.62rem;
+					padding: 0.72rem 0.9rem 0.56rem;
 					background: #ecebe7;
-					border-bottom: 1px solid #d8d5cf;
 					z-index: 1;
+				}
+				.browse-type-row {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+					flex-wrap: wrap;
+				}
+				.browse-type-chip {
+					border: 1px solid #d1ccc4;
+					border-radius: 999px;
+					background: #fffdfa;
+					color: #2e2924;
+					font: inherit;
+					font-size: 0.87rem;
+					line-height: 1;
+					padding: 0.45rem 0.8rem;
+					font-weight: 600;
+					cursor: pointer;
+				}
+				.browse-type-chip[data-active="true"] {
+					border-color: #756c64;
+					background: #ece7e1;
+					color: #756c64;
+				}
+				.browse-type-chip:disabled {
+					opacity: 0.5;
+					cursor: not-allowed;
+				}
+				.control-divider {
+					height: 1px;
+					background: #d8d5cf;
 				}
 				open-collections-browse-header {
 					width: 100%;
@@ -783,13 +906,16 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					pointer-events: none;
 					z-index: 8;
 				}
+				.browse-shell[data-mode="map"] .control-divider {
+					display: none;
+				}
 				.browse-shell[data-mode="map"] open-collections-browse-header {
 					pointer-events: auto;
 				}
 
 				@media (max-width: 760px) {
 					.control-strip {
-						padding: 0.62rem;
+						padding: 0.62rem 0.62rem 0.5rem;
 					}
 					.browse-shell[data-mode="map"] .control-strip {
 						top: calc(env(safe-area-inset-top, 0px) + 0.62rem);
@@ -807,7 +933,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			<section class="browse-shell" data-mode="${browseMode}" aria-label="Browse mode shell">
 				<div class="control-strip" aria-label="Browse controls">
 					<open-collections-browse-header></open-collections-browse-header>
+					${browseMode === BROWSE_MODES.LIST ? this.renderListBrowseTypeControls() : ""}
 				</div>
+				<div class="control-divider" aria-hidden="true"></div>
 				<div class="app-viewport">${this.renderChildApp(browseMode)}</div>
 			</section>
 			<dialog class="filter-dialog" data-bind="filter-dialog">

@@ -251,10 +251,10 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 	syncState() {
 		const root = this.shadowRoot.querySelector(".header-row");
 		const input = this.shadowRoot.querySelector(".search-input");
-		const clearButton = this.shadowRoot.querySelector(
-			'[data-action="search-clear"]',
+		const clearSlot = this.shadowRoot.querySelector('[data-slot="search-clear"]');
+		const filtersBadgeSlot = this.shadowRoot.querySelector(
+			'[data-slot="filters-badge"]',
 		);
-		const filtersBadge = this.shadowRoot.querySelector(".filters-badge");
 		const viewToggle = this.shadowRoot.querySelector(
 			'[data-action="view-toggle"]',
 		);
@@ -262,7 +262,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 			this.shadowRoot.querySelector(".view-toggle-label");
 		const viewToggleIcon =
 			this.shadowRoot.querySelector(".view-toggle-icon");
-		if (!root || !input || !clearButton || !filtersBadge) {
+		if (!root || !input || !clearSlot || !filtersBadgeSlot) {
 			return;
 		}
 		const hasQuery = Boolean(this._searchValue.trim());
@@ -277,10 +277,8 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 		}
 		input.placeholder = this._searchPlaceholder;
 		input.disabled = this.disabled;
-		clearButton.hidden = !hasQuery;
-		filtersBadge.hidden = !hasFilters;
-		filtersBadge.textContent =
-			this._filterCount > 0 ? String(this._filterCount) : "";
+		this.syncSearchClearControl(clearSlot, hasQuery);
+		this.syncFilterBadge(filtersBadgeSlot, hasFilters);
 		if (viewToggle) {
 			viewToggle.setAttribute("data-mode", targetMode);
 			viewToggle.setAttribute("aria-label", `Show ${targetMode} view`);
@@ -295,6 +293,41 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					? '<path d="M3.5 6.5 7 5l5 2 5-2 3.5 1.5v11L17 16l-5 2-5-2-3.5 1.5z"></path><path d="M7 5v11M12 7v11M17 5v11"></path>'
 					: '<path d="M8.5 7h12M8.5 12h12M8.5 17h12"></path><path d="M4 7h.01M4 12h.01M4 17h.01"></path>';
 		}
+	}
+
+	syncSearchClearControl(slot, hasQuery) {
+		const existingButton = slot.querySelector('[data-action="search-clear"]');
+		if (!hasQuery) {
+			existingButton?.remove();
+			return;
+		}
+		if (existingButton) {
+			return;
+		}
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "clear-btn";
+		button.setAttribute("data-action", "search-clear");
+		button.setAttribute("aria-label", "Clear search");
+		button.innerHTML =
+			'<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>';
+		slot.append(button);
+	}
+
+	syncFilterBadge(slot, hasFilters) {
+		const existingBadge = slot.querySelector(".filters-badge");
+		if (!hasFilters) {
+			existingBadge?.remove();
+			return;
+		}
+		if (existingBadge) {
+			existingBadge.textContent = String(this._filterCount);
+			return;
+		}
+		const badge = document.createElement("span");
+		badge.className = "filters-badge";
+		badge.textContent = String(this._filterCount);
+		slot.append(badge);
 	}
 
 	render() {
@@ -455,15 +488,13 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				<label class="search-wrap" aria-label="Search">
 					<svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>
 					<input class="search-input" type="search" part="search-input" />
-					<button type="button" class="clear-btn" data-action="search-clear" aria-label="Clear search" hidden>
-						<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
-					</button>
+					<span data-slot="search-clear"></span>
 				</label>
 				<div class="row-actions">
 					<button type="button" class="pill-btn" data-action="filters" aria-label="Open filters">
 						<svg class="icon filters-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="1.75"></circle><circle cx="15" cy="17" r="1.75"></circle></svg>
 						<span>Filters</span>
-						<span class="filters-badge" hidden></span>
+						<span data-slot="filters-badge"></span>
 					</button>
 					<button type="button" class="pill-btn view-toggle" data-action="view-toggle" aria-label="Switch browse view">
 						<svg class="icon view-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"></svg>

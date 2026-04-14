@@ -806,7 +806,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 				.browse-shell {
 					display: grid;
-					grid-template-rows: auto minmax(0, 1fr);
+					grid-template-rows: auto auto minmax(0, 1fr);
 					height: 100%;
 					min-height: 0;
 				}

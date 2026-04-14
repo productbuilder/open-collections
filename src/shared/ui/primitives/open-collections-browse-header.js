@@ -306,17 +306,17 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				.header-row {
 					display: flex;
 					align-items: center;
-					gap: 0.45rem;
+					gap: 0.52rem;
 					min-width: 0;
 				}
 				.search-wrap {
 					display: flex;
 					align-items: center;
 					flex: 1 1 auto;
-					gap: 0.42rem;
+					gap: 0.5rem;
 					min-width: 0;
-					block-size: 2rem;
-					padding: 0 0.65rem;
+					block-size: 2.45rem;
+					padding: 0 0.85rem;
 					border-radius: 999px;
 					border: 1px solid #cbc6be;
 					background: #fff;
@@ -343,7 +343,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					background: transparent;
 					outline: none;
 					font: inherit;
-					font-size: 0.83rem;
+					font-size: 0.88rem;
 					font-weight: 540;
 					color: #2e2924;
 					min-width: 0;
@@ -365,11 +365,11 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				.pill-btn {
 					display: inline-flex;
 					align-items: center;
-					gap: 0.42rem;
-					block-size: 2rem;
-					padding: 0 0.7rem;
+					gap: 0.46rem;
+					block-size: 2.45rem;
+					padding: 0 0.88rem;
 					border-radius: 999px;
-					font-size: 0.81rem;
+					font-size: 0.86rem;
 					font-weight: 600;
 				}
 				.pill-btn:active {
@@ -402,11 +402,11 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 				.row-actions {
 					display: flex;
 					align-items: center;
-					gap: 0.4rem;
+					gap: 0.5rem;
 					flex: 0 0 auto;
 				}
 				.view-toggle {
-					min-width: 4.3rem;
+					min-width: 4.7rem;
 				}
 				.clear-btn {
 					display: inline-grid;
@@ -447,7 +447,7 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					}
 					.search-wrap,
 					.pill-btn {
-						block-size: 2.05rem;
+						block-size: 2.5rem;
 					}
 				}
 			</style>

@@ -700,7 +700,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				.control-strip {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr);
-					padding: 0.5rem 0.65rem;
+					padding: 0.72rem 0.9rem;
 					background: #ecebe7;
 					border-bottom: 1px solid #d8d5cf;
 					z-index: 1;
@@ -772,9 +772,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					align-items: stretch;
 					gap: 0.45rem;
 					position: absolute;
-					top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
-					left: 0.6rem;
-					right: 0.6rem;
+					top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+					left: 0.75rem;
+					right: 0.75rem;
 					background: transparent;
 					border-bottom: none;
 					padding: 0;
@@ -788,12 +788,12 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 
 				@media (max-width: 760px) {
 					.control-strip {
-						padding: 0.42rem;
+						padding: 0.62rem;
 					}
 					.browse-shell[data-mode="map"] .control-strip {
-						top: calc(env(safe-area-inset-top, 0px) + 0.45rem);
-						left: 0.45rem;
-						right: 0.45rem;
+						top: calc(env(safe-area-inset-top, 0px) + 0.62rem);
+						left: 0.62rem;
+						right: 0.62rem;
 					}
 					.filter-dialog {
 						inline-size: calc(100vw - 0.6rem);

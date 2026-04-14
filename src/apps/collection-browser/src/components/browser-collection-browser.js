@@ -77,6 +77,10 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
         </div>
         <div class="scroll-container-wrapper">
           <div id="scrollContainer" class="scroll-container">
+            <div id="contentIntro" class="content-intro" hidden>
+              <h2 id="contentIntroTitle" class="content-intro-title">Browser</h2>
+              <p id="contentIntroSubtitle" class="content-intro-subtitle">Browse available entities.</p>
+            </div>
             <div class="grid-host">
               <div id="browseGrid" class="browse-grid"></div>
               <div id="allModeFeedSentinel" aria-hidden="true"></div>
@@ -90,6 +94,11 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 		this._toggleBar = this.shadowRoot.getElementById("toggleBar");
 		this._backButtonSlot = this.shadowRoot.getElementById("backButtonSlot");
 		this._grid = this.shadowRoot.getElementById("browseGrid");
+		this._contentIntro = this.shadowRoot.getElementById("contentIntro");
+		this._contentIntroTitle = this.shadowRoot.getElementById("contentIntroTitle");
+		this._contentIntroSubtitle = this.shadowRoot.getElementById(
+			"contentIntroSubtitle",
+		);
 	}
 
 	bindHostEvents() {
@@ -507,6 +516,21 @@ class OpenBrowserCollectionBrowserElement extends HTMLElement {
 			} else {
 				this._backButtonSlot.hidden = true;
 				this._backButtonSlot.innerHTML = "";
+			}
+		}
+		if (this._contentIntro) {
+			const showIntro = this.hasAttribute("data-shell-list-adapter");
+			this._contentIntro.hidden = !showIntro;
+			if (showIntro) {
+				const nextTitle = this.model.viewportTitle || "Browser";
+				const nextSubtitle =
+					this.model.viewportSubtitle || "Browse available entities.";
+				if (this._contentIntroTitle?.textContent !== nextTitle) {
+					this._contentIntroTitle.textContent = nextTitle;
+				}
+				if (this._contentIntroSubtitle?.textContent !== nextSubtitle) {
+					this._contentIntroSubtitle.textContent = nextSubtitle;
+				}
 			}
 		}
 	}

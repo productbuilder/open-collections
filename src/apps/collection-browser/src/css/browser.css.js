@@ -139,6 +139,30 @@ export const browserStyles = `
     min-height: 0;
   }
 
+  .content-intro {
+    display: none;
+  }
+
+  :host([data-shell-list-adapter]) .content-intro {
+    display: block;
+    padding: 0 0 0.62rem;
+  }
+
+  .content-intro-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .content-intro-subtitle {
+    margin: 0.2rem 0 0;
+    color: var(--oc-browser-text-muted, #6c6258);
+    font-size: 0.85rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
   .browse-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

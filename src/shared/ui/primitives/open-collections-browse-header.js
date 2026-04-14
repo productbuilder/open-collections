@@ -439,7 +439,9 @@ class OpenCollectionsBrowseHeaderElement extends HTMLElement {
 					flex: 0 0 auto;
 				}
 				.view-toggle {
-					min-width: 4.7rem;
+					inline-size: 5rem;
+					justify-content: center;
+					flex-shrink: 0;
 				}
 				.clear-btn {
 					display: inline-grid;

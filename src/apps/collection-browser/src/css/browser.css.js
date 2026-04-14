@@ -42,6 +42,10 @@ export const browserStyles = `
     padding-bottom: 0.62rem;
   }
 
+  :host([data-shell-list-adapter]) .sticky-chrome {
+    position: static;
+  }
+
   .header {
     display: block;
     padding: 0.75rem 0 0;

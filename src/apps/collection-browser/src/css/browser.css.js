@@ -52,6 +52,12 @@ export const browserStyles = `
     display: none;
   }
 
+  :host([data-shell-list-adapter]) .root {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
   .header {
     display: block;
     padding: 0.75rem 0 0;
@@ -138,7 +144,14 @@ export const browserStyles = `
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: 118px;
     grid-auto-flow: row dense;
+    align-content: start;
+    justify-content: start;
     gap: 12px;
+  }
+
+  :host([data-shell-list-adapter]) .browse-grid {
+    align-content: start;
+    justify-content: start;
   }
 
   .browse-cell {

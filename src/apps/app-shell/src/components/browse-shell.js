@@ -94,10 +94,8 @@ function setElementProperty(element, key, value) {
 }
 
 function countActiveFilters(filterState = {}) {
-	const typeCount = Array.isArray(filterState?.types) ? filterState.types.length : 0;
-	const categoryCount = Array.isArray(filterState?.categories)
-		? filterState.categories.length
-		: 0;
+	const typeCount = toUniqueStringList(filterState?.types).length;
+	const categoryCount = toUniqueStringList(filterState?.categories).length;
 	return typeCount + categoryCount;
 }
 
@@ -270,7 +268,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				normalizedState?.query || {},
 			);
 			this.state.filterState = {
-				text: toText(normalizedState.filters.text),
+				text: toText(normalizedState.filters.text).trim(),
 				types: toUniqueStringList(normalizedState.filters.types),
 				categories: toUniqueStringList(normalizedState.filters.categories),
 			};
@@ -407,11 +405,14 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		if (!header) {
 			return;
 		}
-		const nextValue = String(this.state.filterState?.text ?? "");
+		const nextValue = toText(this.state.filterState?.text).trim();
 		if (header.searchValue !== nextValue) {
 			header.searchValue = nextValue;
 		}
-		header.filterCount = countActiveFilters(this.state.filterState);
+		header.filterCount = countActiveFilters({
+			types: this.state.filterState?.types,
+			categories: this.state.filterState?.categories,
+		});
 		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
 		header.searchPlaceholder = "Search";
 	}

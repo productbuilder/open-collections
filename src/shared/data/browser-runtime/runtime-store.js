@@ -1,4 +1,5 @@
 import { createStructuredDiagnostics } from "../browser-diagnostics/index.js";
+import { toMetadataDisplayValue } from "../metadata-display-value.js";
 
 function normalizeText(value) {
 	return String(value ?? "").trim();
@@ -164,11 +165,15 @@ function normalizeItemEntity(item = {}) {
 			hasCoordinates,
 			lat: hasCoordinates ? lat : null,
 			lon: hasCoordinates ? lon : null,
-			locationLabel: normalizeText(spatial.locationLabel),
+			locationLabel:
+				toMetadataDisplayValue(spatial.locationLabel) ||
+				normalizeText(spatial.locationLabel),
 		},
 		temporal: {
 			known: temporalKnown,
-			display: normalizeText(temporal.display),
+			display:
+				toMetadataDisplayValue(temporal.display) ||
+				normalizeText(temporal.display),
 			startMs: temporalKnown ? startMs : null,
 			endMs: temporalKnown ? endMs : null,
 		},

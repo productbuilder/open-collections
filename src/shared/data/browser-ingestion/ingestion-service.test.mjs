@@ -114,6 +114,36 @@ test("ingests direct collection.json path", async () => {
 	assert.equal(runtimeStore.getCollection("source-direct::direct-col")?.sourceId, "source-direct");
 });
 
+test("normalizes object-shaped item date metadata for card-ready temporal display", async () => {
+	const routes = {
+		"https://data.example.test/direct/collection.json": {
+			id: "direct-col",
+			title: "Direct Collection",
+			items: [
+				{
+					id: "x1",
+					title: "X1",
+					date: { label: "1932" },
+					media: { type: "image", url: "./x1.jpg" },
+				},
+			],
+		},
+	};
+	const { runtimeStore, service } = createServiceWithRoutes({ routes });
+	await service.ingest([
+		{
+			sourceId: "source-direct",
+			label: "Direct",
+			sourceType: "collection.json",
+			entryUrl: "https://data.example.test/direct/collection.json",
+		},
+	]);
+
+	const items = runtimeStore.getItemsForCollection("source-direct::direct-col");
+	assert.equal(items.length, 1);
+	assert.equal(items[0]?.temporal?.display, "1932");
+});
+
 test("skips disabled entries", async () => {
 	const { service } = createServiceWithRoutes({ routes: {} });
 	const result = await service.ingest([

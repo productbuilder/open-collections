@@ -355,7 +355,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						items: Boolean(detail?.disabledModes?.items),
 					},
 				};
-				this.render();
+				this.syncListBrowseTypeControls();
 			},
 		);
 		this.shadowRoot.addEventListener("oc-filter-panel-change", (event) => {
@@ -507,6 +507,26 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		});
 		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
 		header.searchPlaceholder = "Search";
+	}
+
+	syncListBrowseTypeControls() {
+		const controls = this.shadowRoot.querySelectorAll(
+			'[data-action="browse-type-mode"]',
+		);
+		if (!controls.length) {
+			return;
+		}
+		const currentState = this.state.listBrowseModeState || {};
+		const activeMode = toText(currentState.activeMode).toLowerCase() || "all";
+		const disabledModes = currentState.disabledModes || {};
+		for (const control of controls) {
+			if (!(control instanceof HTMLButtonElement)) {
+				continue;
+			}
+			const mode = toText(control.getAttribute("data-mode")).toLowerCase();
+			control.dataset.active = mode === activeMode ? "true" : "false";
+			control.disabled = Boolean(disabledModes[mode]);
+		}
 	}
 
 	sendBrowseQueryPatchToActiveChild(filterPatch = {}) {
@@ -948,6 +968,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			</dialog>
 		`;
 		this.syncShellSearchState();
+		this.syncListBrowseTypeControls();
 		this.syncFilterPanelState();
 		this.emitRuntimeCompatibilityState();
 		this.publishProjectionToActiveChild();

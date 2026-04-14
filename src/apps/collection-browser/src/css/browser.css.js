@@ -44,6 +44,12 @@ export const browserStyles = `
 
   :host([data-shell-list-adapter]) .sticky-chrome {
     position: static;
+    padding-bottom: 0;
+  }
+
+  :host([data-shell-list-adapter]) .header,
+  :host([data-shell-list-adapter]) .toggle-bar {
+    display: none;
   }
 
   .header {

@@ -4,7 +4,7 @@ export const ENTRY_VIEW_HEADERS = {
 		subtitle: "Connect sources for reliable sharing.",
 	},
 	browse: {
-		title: "Browse and collect",
+		title: "Explore and collect",
 		subtitle: "Read collections across connected manifest sources.",
 	},
 	collect: {

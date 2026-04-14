@@ -650,7 +650,8 @@ export function createListProjection({
 		},
 		diagnostics,
 		model: {
-			viewportTitle: resolvedViewMode === "sources" ? "Sources" : "Browse and collect",
+			viewportTitle:
+				resolvedViewMode === "sources" ? "Sources" : "Explore and collect",
 			viewportSubtitle,
 			viewMode: resolvedViewMode,
 			showBack:

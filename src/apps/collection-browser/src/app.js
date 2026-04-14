@@ -1776,7 +1776,7 @@ class CollectionBrowserElement extends ComponentBase {
 			const projection = this.state.shellListProjection;
 			if (!projection || typeof projection !== "object") {
 				return {
-					viewportTitle: "Browse and collect",
+					viewportTitle: "Explore and collect",
 					viewportSubtitle: "Loading shell browser data...",
 					showBack: false,
 					viewMode: this.state.viewMode || "all",
@@ -1947,7 +1947,7 @@ class CollectionBrowserElement extends ComponentBase {
 			: null;
 		if (this.isEmbeddedRuntime() && this.state.viewMode === "all") {
 			return {
-				viewportTitle: "Browse and collect",
+				viewportTitle: "Explore and collect",
 				viewportSubtitle: "Across multiple collections",
 				showBack: showBackInViewport,
 				viewMode: "all",

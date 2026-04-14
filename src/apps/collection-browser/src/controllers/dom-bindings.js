@@ -112,5 +112,22 @@ export function bindDomEvents(app) {
 	app.dom.viewerDialog?.addEventListener("close-viewer", () => {
 		app.state.viewerItemId = null;
 	});
-	// Details action intentionally hidden in viewer header for now.
+	app.dom.viewerDialog?.addEventListener("collect-item", (event) => {
+		const item = event.detail?.item || null;
+		app.dispatchEvent(
+			new CustomEvent("add-to-collection", {
+				bubbles: true,
+				composed: true,
+				detail: { item },
+			}),
+		);
+		if (item?.title || item?.id) {
+			app.setStatus(
+				`Collect requested for ${item.title || item.id}.`,
+				"ok",
+			);
+		} else {
+			app.setStatus("Collect requested for selected item.", "ok");
+		}
+	});
 }

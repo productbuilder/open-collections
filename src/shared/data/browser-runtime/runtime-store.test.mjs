@@ -185,6 +185,26 @@ test("temporal index population and temporal lookup", () => {
 	assert.equal(snapshot.indexes.temporal.byStartMs[0].itemRef, "collection-a#item-001");
 });
 
+test("normalizes object-shaped metadata values for temporal display fields", () => {
+	const store = createBrowserRuntimeStore();
+	store.mutate.upsertSource(makeSource());
+	store.mutate.upsertCollection(makeCollection());
+	store.mutate.upsertItem(
+		makeItem({
+			itemRef: "collection-a#item-004",
+			rawItemId: "item-004",
+			temporal: {
+				known: false,
+				display: { label: "1932" },
+				startMs: null,
+				endMs: null,
+			},
+		}),
+	);
+
+	assert.equal(store.getItem("collection-a#item-004")?.temporal?.display, "1932");
+});
+
 test("version increments only on effective mutation", () => {
 	const store = createBrowserRuntimeStore();
 	const source = makeSource();

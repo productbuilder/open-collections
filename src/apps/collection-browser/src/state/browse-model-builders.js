@@ -1,3 +1,5 @@
+import { toMetadataDisplayValue } from "../../../../shared/data/metadata-display-value.js";
+
 function deriveItemPreviewUrl(item) {
 	return String(item?.media?.thumbnailUrl || item?.media?.url || "").trim();
 }
@@ -30,15 +32,25 @@ function cleanShortText(value, maxLength = 110) {
 }
 
 function deriveItemSubtitle(item) {
-	const directSubtitle = cleanShortText(item?.subtitle || item?.subTitle || "");
+	const directSubtitle = cleanShortText(
+		toMetadataDisplayValue(item?.subtitle) ||
+			toMetadataDisplayValue(item?.subTitle) ||
+			"",
+	);
 	if (directSubtitle) {
 		return directSubtitle;
 	}
-	const description = cleanShortText(item?.description || "", 140);
+	const description = cleanShortText(toMetadataDisplayValue(item?.description) || "", 140);
 	if (description) {
 		return description;
 	}
-	const date = cleanShortText(item?.date || item?.created || item?.year || "", 60);
+	const date = cleanShortText(
+		toMetadataDisplayValue(item?.date) ||
+			toMetadataDisplayValue(item?.created) ||
+			toMetadataDisplayValue(item?.year) ||
+			"",
+		60,
+	);
 	return date || "";
 }
 

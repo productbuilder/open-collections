@@ -1,4 +1,5 @@
 import { normalizeCollection } from "../../library-core/src/model.js";
+import { toMetadataDisplayValue } from "../metadata-display-value.js";
 import { normalizeIdToken, normalizeText } from "./url-utils.js";
 
 function toFiniteNumber(value) {
@@ -107,12 +108,12 @@ function parseDateRange(value) {
 
 function parseTemporal(rawItem = {}) {
 	const temporalCandidate = normalizeText(
-		rawItem?.date ||
-			rawItem?.time ||
-			rawItem?.year ||
-			rawItem?.dateLabel ||
-			rawItem?.temporal?.start ||
-			rawItem?.temporal?.from ||
+		toMetadataDisplayValue(rawItem?.date) ||
+			toMetadataDisplayValue(rawItem?.time) ||
+			toMetadataDisplayValue(rawItem?.year) ||
+			toMetadataDisplayValue(rawItem?.dateLabel) ||
+			toMetadataDisplayValue(rawItem?.temporal?.start) ||
+			toMetadataDisplayValue(rawItem?.temporal?.from) ||
 			"",
 	);
 	if (!temporalCandidate) {

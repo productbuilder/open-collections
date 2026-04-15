@@ -2318,11 +2318,37 @@ class CollectionBrowserElement extends ComponentBase {
 			this.closeViewer();
 			return;
 		}
+		const viewerManifestUrl = String(
+			item?.__manifestUrl ||
+				item?.sourceCollectionManifestUrl ||
+				this.state.selectedCollectionManifestUrl ||
+				this.state.currentManifestUrl ||
+				this.state.manifestUrlInput ||
+				"",
+		).trim();
+		const viewerCollectionItems = this.resolveViewerCollectionItems(item);
 		this.dom.viewerDialog?.setItem({
 			...item,
-			__collectionItems: this.state.collection?.items || [],
-			__manifestUrl: this.state.currentManifestUrl || "",
+			__collectionItems: viewerCollectionItems,
+			__manifestUrl: viewerManifestUrl,
 		});
+	}
+
+	resolveViewerCollectionItems(item) {
+		const explicitManifestUrl = String(
+			item?.sourceCollectionManifestUrl || item?.__manifestUrl || "",
+		).trim();
+		if (explicitManifestUrl) {
+			const indexedCollection = (this.state.collectionsIndex || []).find(
+				(entry) => String(entry?.manifestUrl || "").trim() === explicitManifestUrl,
+			);
+			const indexedItems = indexedCollection?.collection?.items;
+			if (Array.isArray(indexedItems) && indexedItems.length > 0) {
+				return indexedItems;
+			}
+		}
+		const collectionItems = this.state.collection?.items;
+		return Array.isArray(collectionItems) ? collectionItems : [];
 	}
 
 	selectItem(itemId) {

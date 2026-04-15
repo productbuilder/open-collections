@@ -115,25 +115,40 @@ const filterPanelStyles = `
 		display: grid;
 		grid-template-rows: minmax(0, 1fr) auto;
 		min-height: 0;
+		inline-size: 100%;
+		max-inline-size: 100%;
+		min-inline-size: 0;
+		box-sizing: border-box;
+		overflow-x: hidden;
 		color: var(--oc-text-primary, #0f172a);
+	}
+
+	*,
+	*::before,
+	*::after {
+		box-sizing: inherit;
 	}
 
 	.filter-panel {
 		display: grid;
 		grid-template-rows: minmax(0, 1fr);
 		min-height: 0;
+		min-inline-size: 0;
 	}
 
 	.panel-body {
 		display: grid;
 		min-height: 0;
-		overflow: auto;
+		min-inline-size: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	.group {
 		display: grid;
 		gap: 0.65rem;
 		padding: 1rem;
+		min-inline-size: 0;
 		border-bottom: 1px solid #dbe3ed;
 	}
 
@@ -220,6 +235,7 @@ const filterPanelStyles = `
 		);
 		background: #ffffff;
 		border-top: 1px solid #dbe3ed;
+		min-inline-size: 0;
 	}
 
 	.sr-only {

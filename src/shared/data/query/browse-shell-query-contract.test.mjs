@@ -48,3 +48,14 @@ test("browse shell query patch keeps existing time-range bounds when partially p
 	});
 });
 
+test("browse shell query patch includes mediaTypes in filters and query", () => {
+	const patched = normalizeBrowseShellQueryPatch(
+		{
+			types: ["image"],
+			mediaTypes: ["image"],
+		},
+		createBrowseShellQueryState().query,
+	);
+	assert.deepEqual(patched.query.mediaTypes, ["image"]);
+	assert.deepEqual(patched.filters.mediaTypes, ["image"]);
+});

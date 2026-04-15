@@ -8,6 +8,7 @@ import { createBrowseShellRuntime } from "./browse-shell-runtime.js";
 import { buildListSurfaceBridgePayload } from "./list-surface-bridge.js";
 import { buildMapSurfaceBridgePayload } from "./map-surface-bridge.js";
 import { createBrowseProjectionCache } from "./projection-cache.js";
+import { renderCloseIcon } from "../../../../shared/components/icons.js";
 import "../../../../shared/ui/primitives/open-collections-browse-header.js";
 
 const BROWSE_MODES = Object.freeze({
@@ -95,8 +96,9 @@ function setElementProperty(element, key, value) {
 
 function countActiveFilters(filterState = {}) {
 	const typeCount = toUniqueStringList(filterState?.types).length;
+	const mediaTypeCount = toUniqueStringList(filterState?.mediaTypes).length;
 	const categoryCount = toUniqueStringList(filterState?.categories).length;
-	return typeCount + categoryCount;
+	return typeCount + mediaTypeCount + categoryCount;
 }
 
 class OpenCollectionsBrowseShellElement extends HTMLElement {
@@ -126,10 +128,12 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			filterState: {
 				text: "",
 				types: [],
+				mediaTypes: [],
 				categories: [],
 			},
 			filterOptions: {
 				types: [],
+				mediaTypes: [],
 			},
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
 			listBrowseModeState: {
@@ -287,10 +291,14 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			this.state.filterState = {
 				text: toText(normalizedState.filters.text).trim(),
 				types: toUniqueStringList(normalizedState.filters.types),
+				mediaTypes: toUniqueStringList(normalizedState.filters.mediaTypes),
 				categories: toUniqueStringList(normalizedState.filters.categories),
 			};
 			this.state.filterOptions = {
 				types: normalizeFilterOptionEntries(normalizedState.options.types),
+				mediaTypes: normalizeFilterOptionEntries(
+					normalizedState.options.mediaTypes,
+				),
 			};
 			this.state.filterOptionsStatus = normalizedState.status.filterOptions;
 			this.syncShellSearchState();
@@ -373,6 +381,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			const clearedFilters = {
 				text: "",
 				types: [],
+				mediaTypes: [],
 				categories: [],
 			};
 			this.state.filterState = { ...clearedFilters };
@@ -503,6 +512,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		}
 		header.filterCount = countActiveFilters({
 			types: this.state.filterState?.types,
+			mediaTypes: this.state.filterState?.mediaTypes,
 			categories: this.state.filterState?.categories,
 		});
 		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
@@ -890,17 +900,32 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 				.filter-dialog-header {
 					display: flex;
-					justify-content: flex-end;
+					align-items: center;
+					justify-content: space-between;
+					gap: 0.75rem;
+				}
+				.filter-dialog-title {
+					margin: 0;
+					font-size: 1rem;
+					font-weight: 700;
+					color: #0f172a;
 				}
 				.close-filter-button {
+					width: 2rem;
+					height: 2rem;
+					display: inline-grid;
+					place-items: center;
 					border: 1px solid #cbd5e1;
 					background: #ffffff;
 					color: #1f2937;
-					border-radius: 999px;
-					padding: 0.3rem 0.62rem;
-					font: inherit;
-					font-size: 0.78rem;
-					font-weight: 600;
+					border-radius: 0.55rem;
+					padding: 0;
+					cursor: pointer;
+				}
+				.close-filter-button .icon-close {
+					width: 1rem;
+					height: 1rem;
+					fill: currentColor;
 				}
 				.browse-shell[data-mode="map"] {
 					grid-template-rows: minmax(0, 1fr);
@@ -961,9 +986,12 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			<dialog class="filter-dialog" data-bind="filter-dialog">
 				<div class="filter-dialog-shell">
 					<header class="filter-dialog-header">
-						<button class="close-filter-button" type="button" data-action="close-filter-panel">Done</button>
+						<h2 class="filter-dialog-title">Filters</h2>
+						<button class="close-filter-button" type="button" data-action="close-filter-panel" aria-label="Close filters">
+							${renderCloseIcon("icon-close")}
+						</button>
 					</header>
-					<open-collections-filter-panel show-text-search="false"></open-collections-filter-panel>
+					<open-collections-filter-panel show-text-search="false" show-panel-header="false"></open-collections-filter-panel>
 				</div>
 			</dialog>
 		`;

@@ -24,6 +24,7 @@ function normalizeFilterState(value = {}) {
 	return {
 		text: toText(source.text),
 		types: toUniqueStringList(source.types),
+		mediaTypes: toUniqueStringList(source.mediaTypes),
 	};
 }
 
@@ -45,11 +46,13 @@ function normalizeFilterOptions(value = {}) {
 					count: Number.isFinite(Number(entry.count))
 						? Number(entry.count)
 						: null,
+					children: normalizeEntryList(entry.children),
 				};
 			})
 			.filter(Boolean);
 	return {
 		types: normalizeEntryList(source.types),
+		mediaTypes: normalizeEntryList(source.mediaTypes),
 	};
 }
 
@@ -202,7 +205,7 @@ const filterPanelStyles = `
 
 class OpenCollectionsFilterPanelElement extends BaseElement {
 	static get observedAttributes() {
-		return ["show-text-search"];
+		return ["show-text-search", "show-panel-header"];
 	}
 
 	constructor() {
@@ -253,6 +256,14 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		return rawValue !== "false";
 	}
 
+	get showPanelHeader() {
+		if (!this.hasAttribute("show-panel-header")) {
+			return true;
+		}
+		const rawValue = this.getAttribute("show-panel-header");
+		return rawValue !== "false";
+	}
+
 	onConnected() {
 		this.shadowRoot.addEventListener("input", this._onInput);
 		this.shadowRoot.addEventListener("change", this._onInput);
@@ -291,6 +302,13 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		);
 		const detail = {
 			types: [...typeInputs]
+				.map((entry) => toText(entry.value))
+				.filter(Boolean),
+			mediaTypes: [
+				...this.shadowRoot.querySelectorAll(
+					'input[name="media-type-filter"]:checked',
+				),
+			]
 				.map((entry) => toText(entry.value))
 				.filter(Boolean),
 		};
@@ -332,16 +350,21 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		const state = this._filterState;
 		const options = this._filterOptions;
 		const showTextSearch = this.showTextSearch;
+		const showPanelHeader = this.showPanelHeader;
 		const filterOptionsStatus = this.filterOptionsStatus;
 		const subtitle = showTextSearch
-			? "Search and narrow items by type."
-			: "Narrow items by type.";
+			? "Search and narrow items by type and media type."
+			: "Narrow items by type and media type.";
 		return `
 			<section class="filter-panel" aria-label="Browse filters">
-				<header class="header">
+				${
+					showPanelHeader
+						? `<header class="header">
 					<h2 class="title">Filters</h2>
 					<p class="subtitle">${subtitle}</p>
-				</header>
+				</header>`
+						: ""
+				}
 				${
 					showTextSearch
 						? `<label>
@@ -362,6 +385,15 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 						options.types,
 						"type-filter",
 						state.types,
+						filterOptionsStatus,
+					)}
+				</section>
+				<section class="group" aria-label="Media type filters">
+					<h3 class="group-title">Media type</h3>
+					${this.renderOptions(
+						options.mediaTypes,
+						"media-type-filter",
+						state.mediaTypes,
 						filterOptionsStatus,
 					)}
 				</section>

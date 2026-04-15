@@ -139,6 +139,56 @@ function normalizeEmbeddedSourceUrl(value) {
 	return String(value || "").trim();
 }
 
+function normalizeCollectionFilterList(values) {
+	if (!Array.isArray(values)) {
+		return [];
+	}
+	return values
+		.map((value) => String(value || "").trim())
+		.filter(Boolean);
+}
+
+function normalizeCollectionFilterToken(value) {
+	return String(value || "").trim().toLowerCase();
+}
+
+function toCollectionFilterTokenSet(values = []) {
+	const set = new Set();
+	for (const value of values) {
+		const token = normalizeCollectionFilterToken(value);
+		if (token) {
+			set.add(token);
+		}
+	}
+	return set;
+}
+
+function createCollectionFilterTokens(collection = {}) {
+	const tokens = new Set();
+	const collectionId = normalizeCollectionFilterToken(collection.id);
+	if (collectionId) {
+		tokens.add(collectionId);
+	}
+	const manifestUrl = normalizeCollectionFilterToken(collection.manifestUrl);
+	if (manifestUrl) {
+		tokens.add(manifestUrl);
+	}
+	return tokens;
+}
+
+export function isCollectionAllowedForEmbeddedSource(source = {}, collection = {}) {
+	const includeSet = toCollectionFilterTokenSet(source.includeCollections || []);
+	const excludeSet = toCollectionFilterTokenSet(source.excludeCollections || []);
+	const collectionTokens = createCollectionFilterTokens(collection);
+
+	const isIncluded =
+		includeSet.size === 0 ||
+		[...collectionTokens].some((token) => includeSet.has(token));
+	const isExcluded = [...collectionTokens].some((token) => excludeSet.has(token));
+
+	return isIncluded && !isExcluded;
+}
+
 export function normalizeEmbeddedSourceCatalog(entries = []) {
 	if (!Array.isArray(entries)) {
 		return [];
@@ -168,6 +218,12 @@ export function normalizeEmbeddedSourceCatalog(entries = []) {
 			label: label || `Source ${index + 1}`,
 			sourceType,
 			sourceUrl,
+			includeCollections: normalizeCollectionFilterList(
+				entry.includeCollections,
+			),
+			excludeCollections: normalizeCollectionFilterList(
+				entry.excludeCollections,
+			),
 			organizationName: String(entry.organizationName || "").trim(),
 			curatorName: String(entry.curatorName || "").trim(),
 			placeName: String(entry.placeName || "").trim(),
@@ -239,12 +295,15 @@ export async function resolveEmbeddedSourceDescriptor(source) {
 	if (!collections.length) {
 		throw new Error("Source catalog does not contain a collection manifest.");
 	}
+	const filteredCollections = collections.filter((entry) =>
+		isCollectionAllowedForEmbeddedSource(source, entry),
+	);
 
 	return {
 		sourceType,
 		sourceUrl: sourceCatalogUrl.href,
 		manifestUrl: "",
-		collections,
+		collections: filteredCollections,
 		organizationName: String(json?.organizationName || source.organizationName || "").trim(),
 		curatorName: String(json?.curatorName || source.curatorName || "").trim(),
 		placeName: String(json?.placeName || source.placeName || "").trim(),

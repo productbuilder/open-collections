@@ -7,6 +7,11 @@ export const BROWSER_CONFIG = {
 			label: "Example collections",
 			sourceType: "source.json",
 			sourceUrl: "../../collections/source.json",
+			excludeCollections: [
+				"example-dataset",
+				"city-photos",
+				"collection",
+			],
 		},
 		{
 			id: "collectie-hilversum",

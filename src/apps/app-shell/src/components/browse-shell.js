@@ -99,7 +99,10 @@ function countActiveFilters(filterState = {}) {
 	const typeCount = toUniqueStringList(filterState?.types).length;
 	const mediaTypeCount = toUniqueStringList(filterState?.mediaTypes).length;
 	const categoryCount = toUniqueStringList(filterState?.categories).length;
-	return typeCount + mediaTypeCount + categoryCount;
+	const hasTimeStart = toText(filterState?.timeRange?.start).length > 0;
+	const hasTimeEnd = toText(filterState?.timeRange?.end).length > 0;
+	const timeCount = hasTimeStart || hasTimeEnd ? 1 : 0;
+	return typeCount + mediaTypeCount + categoryCount + timeCount;
 }
 
 class OpenCollectionsBrowseShellElement extends HTMLElement {
@@ -131,12 +134,17 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				types: [],
 				mediaTypes: [],
 				categories: [],
+				timeRange: {
+					start: "",
+					end: "",
+				},
 			},
 			filterOptions: {
 				types: [],
 				mediaTypes: [],
 			},
 			filterOptionsStatus: FILTER_OPTION_STATUS.LOADING,
+			filteredResultCount: null,
 			listBrowseModeState: {
 				activeMode: "all",
 				disabledModes: {
@@ -209,6 +217,13 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 		this.shadowRoot.addEventListener("click", (event) => {
 			const element = event.target instanceof Element ? event.target : null;
 			if (!element) {
+				return;
+			}
+			if (
+				element instanceof HTMLDialogElement &&
+				element.matches('[data-bind="filter-dialog"]')
+			) {
+				this.closeFilterPanel();
 				return;
 			}
 			const typeModeButton = element.closest('[data-action="browse-type-mode"]');
@@ -294,6 +309,10 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				types: toUniqueStringList(normalizedState.filters.types),
 				mediaTypes: toUniqueStringList(normalizedState.filters.mediaTypes),
 				categories: toUniqueStringList(normalizedState.filters.categories),
+				timeRange: {
+					start: toText(normalizedState.query?.timeRange?.start),
+					end: toText(normalizedState.query?.timeRange?.end),
+				},
 			};
 			this.state.filterOptions = {
 				types: normalizeFilterOptionEntries(normalizedState.options.types),
@@ -378,12 +397,19 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				this.sendBrowseQueryPatchToActiveChild(detail);
 			}, 120);
 		});
+		this.shadowRoot.addEventListener("oc-filter-panel-submit", () => {
+			this.closeFilterPanel();
+		});
 		this.shadowRoot.addEventListener("oc-filter-panel-clear", () => {
 			const clearedFilters = {
 				text: "",
 				types: [],
 				mediaTypes: [],
 				categories: [],
+				timeRange: {
+					start: null,
+					end: null,
+				},
 			};
 			this.state.filterState = { ...clearedFilters };
 			this._browseQueryState = normalizeBrowseShellQueryState(
@@ -500,6 +526,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			"filterOptionsStatus",
 			this.state.filterOptionsStatus,
 		);
+		setElementProperty(filterPanel, "resultCount", this.state.filteredResultCount);
 	}
 
 	syncShellSearchState() {
@@ -515,6 +542,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 			types: this.state.filterState?.types,
 			mediaTypes: this.state.filterState?.mediaTypes,
 			categories: this.state.filterState?.categories,
+			timeRange: this.state.filterState?.timeRange,
 		});
 		header.viewMode = this.currentBrowseMode() === BROWSE_MODES.MAP ? "map" : "list";
 		header.searchPlaceholder = "Search";
@@ -691,6 +719,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					},
 				},
 			};
+			const listResultCount = Number(payload?.projection?.total?.filtered?.items);
+			this.state.filteredResultCount = Number.isFinite(listResultCount)
+				? Math.max(0, Math.floor(listResultCount))
+				: null;
+			this.syncFilterPanelState();
 			activeChildElement.dispatchEvent(
 				new CustomEvent("browse-shell-list-projection", {
 					detail: payload,
@@ -742,6 +775,11 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					},
 				},
 			};
+			const mapResultCount = Number(payload?.projection?.total?.filtered?.items);
+			this.state.filteredResultCount = Number.isFinite(mapResultCount)
+				? Math.max(0, Math.floor(mapResultCount))
+				: this.state.filteredResultCount;
+			this.syncFilterPanelState();
 			activeChildElement.dispatchEvent(
 				new CustomEvent("browse-shell-map-projection", {
 					detail: payload,
@@ -883,27 +921,31 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					outline-offset: 1px;
 				}
 				.filter-dialog {
-					inline-size: min(30rem, calc(100vw - 1.2rem));
-					max-inline-size: min(30rem, calc(100vw - 1.2rem));
-					border: 1px solid #cbd5e1;
-					border-radius: 0.95rem;
+					inline-size: min(32rem, calc(100vw - 1.2rem));
+					max-inline-size: min(32rem, calc(100vw - 1.2rem));
+					border: 1px solid #d7e0ea;
+					border-radius: 1rem;
 					padding: 0;
-					background: #f8fafc;
-					box-shadow: 0 20px 45px rgba(15, 23, 42, 0.33);
+					background: #ffffff;
+					box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
 				}
 				.filter-dialog::backdrop {
 					background: rgba(15, 23, 42, 0.42);
 				}
 				.filter-dialog-shell {
 					display: grid;
-					gap: 0.72rem;
-					padding: 0.82rem;
+					grid-template-rows: auto minmax(0, 1fr);
+					block-size: min(80dvh, 42rem);
+					min-height: 0;
 				}
 				.filter-dialog-header {
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
 					gap: 0.75rem;
+					padding: 0.82rem 1rem;
+					border-bottom: 1px solid #dbe3ed;
+					background: #ffffff;
 				}
 				.filter-dialog-title {
 					margin: 0;
@@ -922,6 +964,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					border-radius: 0.55rem;
 					padding: 0;
 					cursor: pointer;
+				}
+				.filter-dialog-panel {
+					min-height: 0;
 				}
 				.icon-btn .icon-close {
 					width: 1rem;
@@ -969,10 +1014,26 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						right: 0.62rem;
 					}
 					.filter-dialog {
-						inline-size: calc(100vw - 0.6rem);
-						max-inline-size: calc(100vw - 0.6rem);
-						margin: auto;
-						border-radius: 1rem;
+						inline-size: 100vw;
+						max-inline-size: 100vw;
+						border: none;
+						border-radius: 1rem 1rem 0 0;
+						margin: auto 0 0;
+						max-height: none;
+						block-size: min(calc(100dvh - env(safe-area-inset-top, 0px) - 4.75rem), 42rem);
+						transform: translateY(100%);
+						opacity: 0;
+						transition:
+							transform 230ms cubic-bezier(0.2, 0.8, 0.2, 1),
+							opacity 170ms ease;
+						box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.25);
+					}
+					.filter-dialog[open] {
+						transform: translateY(0);
+						opacity: 1;
+					}
+					.filter-dialog::backdrop {
+						background: rgba(15, 23, 42, 0.36);
 					}
 				}
 			</style>
@@ -992,7 +1053,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 							${renderCloseIcon("icon icon-close")}
 						</button>
 					</header>
-					<open-collections-filter-panel show-text-search="false" show-panel-header="false"></open-collections-filter-panel>
+					<open-collections-filter-panel class="filter-dialog-panel" show-text-search="false" show-panel-header="false"></open-collections-filter-panel>
 				</div>
 			</dialog>
 		`;

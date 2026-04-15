@@ -21,10 +21,18 @@ function toUniqueStringList(value) {
 
 function normalizeFilterState(value = {}) {
 	const source = value && typeof value === "object" ? value : {};
+	const timeRange =
+		source.timeRange && typeof source.timeRange === "object"
+			? source.timeRange
+			: {};
 	return {
 		text: toText(source.text),
 		types: toUniqueStringList(source.types),
 		mediaTypes: toUniqueStringList(source.mediaTypes),
+		timeRange: {
+			start: toText(timeRange.start),
+			end: toText(timeRange.end),
+		},
 	};
 }
 
@@ -104,74 +112,56 @@ const filterPanelStyles = `
 	${appFoundationTokenStyles}
 
 	:host {
-		display: block;
+		display: grid;
+		grid-template-rows: minmax(0, 1fr) auto;
+		min-height: 0;
 		color: var(--oc-text-primary, #0f172a);
 	}
 
 	.filter-panel {
 		display: grid;
-		gap: 0.9rem;
+		grid-template-rows: minmax(0, 1fr);
+		min-height: 0;
 	}
 
-	.header {
+	.panel-body {
 		display: grid;
-		gap: 0.25rem;
-	}
-
-	.title {
-		margin: 0;
-		font-size: 0.95rem;
-		font-weight: 700;
-	}
-
-	.subtitle {
-		margin: 0;
-		font-size: 0.8rem;
-		color: var(--oc-text-muted, #475569);
-	}
-
-	.search-input {
-		inline-size: 100%;
-		block-size: 2.25rem;
-		border-radius: 0.68rem;
-		border: 1px solid #cbd5e1;
-		padding: 0 0.68rem;
-		font: inherit;
-		font-size: 0.86rem;
-		background: #ffffff;
-		color: inherit;
+		min-height: 0;
+		overflow: auto;
 	}
 
 	.group {
 		display: grid;
-		gap: 0.5rem;
+		gap: 0.65rem;
+		padding: 1rem;
+		border-bottom: 1px solid #dbe3ed;
 	}
 
 	.group-title {
 		margin: 0;
-		font-size: 0.78rem;
+		font-size: 0.82rem;
 		font-weight: 700;
 		color: #334155;
-		letter-spacing: 0.02em;
-		text-transform: uppercase;
 	}
 
 	.option-list {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.45rem;
+		gap: 0.5rem;
 	}
 
 	.option {
 		display: flex;
 		align-items: center;
-		gap: 0.45rem;
-		border: 1px solid #dbe3ed;
-		border-radius: 0.64rem;
-		padding: 0.4rem 0.48rem;
-		background: #f8fafc;
-		font-size: 0.8rem;
+		gap: 0.6rem;
+		padding: 0.25rem 0;
+		font-size: 0.88rem;
 		min-inline-size: 0;
+	}
+
+	.option input[type="checkbox"] {
+		inline-size: 1.1rem;
+		block-size: 1.1rem;
+		flex: 0 0 auto;
 	}
 
 	.option-label {
@@ -183,7 +173,7 @@ const filterPanelStyles = `
 
 	.option-count {
 		margin-inline-start: auto;
-		font-size: 0.72rem;
+		font-size: 0.78rem;
 		color: #64748b;
 	}
 
@@ -193,10 +183,41 @@ const filterPanelStyles = `
 		color: #64748b;
 	}
 
-	.actions {
-		display: flex;
-		gap: 0.5rem;
-		justify-content: flex-end;
+	.time-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.65rem;
+	}
+
+	.time-field {
+		display: grid;
+		gap: 0.35rem;
+		font-size: 0.8rem;
+		color: #475569;
+	}
+
+	.time-input {
+		inline-size: 100%;
+		min-width: 0;
+		block-size: 2.35rem;
+		border-radius: 0.65rem;
+		border: 1px solid #cbd5e1;
+		padding: 0 0.65rem;
+		background: #fff;
+		font: inherit;
+		color: inherit;
+	}
+
+	.panel-footer {
+		position: sticky;
+		bottom: 0;
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 0.6rem;
+		align-items: center;
+		padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+		background: #ffffff;
+		border-top: 1px solid #dbe3ed;
 	}
 
 	.sr-only {
@@ -212,19 +233,36 @@ const filterPanelStyles = `
 	}
 
 	.action-button {
-		border: 1px solid #cbd5e1;
+		border: 1px solid #d0d7e2;
 		background: #ffffff;
 		color: inherit;
 		font: inherit;
-		font-size: 0.82rem;
+		font-size: 0.84rem;
 		font-weight: 600;
 		border-radius: 999px;
-		block-size: 2rem;
-		padding: 0 0.72rem;
+		block-size: 2.25rem;
+		padding: 0 0.9rem;
+	}
+
+	.primary-button {
+		border: none;
+		background: #0f172a;
+		color: #ffffff;
+		font: inherit;
+		font-size: 0.94rem;
+		font-weight: 700;
+		border-radius: 0.78rem;
+		block-size: 2.8rem;
+		padding: 0 1rem;
+		cursor: pointer;
 	}
 
 	@media (max-width: 760px) {
-		.option-list {
+		.panel-footer {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.time-grid {
 			grid-template-columns: minmax(0, 1fr);
 		}
 	}
@@ -240,6 +278,7 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 		this._filterState = normalizeFilterState();
 		this._filterOptions = normalizeFilterOptions();
 		this._filterOptionsStatus = "empty";
+		this._resultCount = null;
 		this._onInput = this.onInput.bind(this);
 		this._onClick = this.onClick.bind(this);
 	}
@@ -273,6 +312,16 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 
 	get filterOptionsStatus() {
 		return normalizeFilterOptionsStatus(this._filterOptionsStatus);
+	}
+
+	set resultCount(value) {
+		const parsed = Number(value);
+		this._resultCount = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : null;
+		this.render();
+	}
+
+	get resultCount() {
+		return Number.isFinite(this._resultCount) ? this._resultCount : null;
 	}
 
 	get showTextSearch() {
@@ -319,6 +368,15 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 					composed: true,
 				}),
 			);
+			return;
+		}
+		if (target.closest('[data-action="apply-filters"]')) {
+			this.dispatchEvent(
+				new CustomEvent("oc-filter-panel-submit", {
+					bubbles: true,
+					composed: true,
+				}),
+			);
 		}
 	}
 
@@ -338,6 +396,14 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 			]
 				.map((entry) => toText(entry.value))
 				.filter(Boolean),
+			timeRange: {
+				start: toText(
+					this.shadowRoot.querySelector('[data-bind="time-start"]')?.value,
+				),
+				end: toText(
+					this.shadowRoot.querySelector('[data-bind="time-end"]')?.value,
+				),
+			},
 		};
 		if (this.showTextSearch) {
 			detail.text = toText(textInput?.value);
@@ -376,57 +442,60 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 	renderTemplate() {
 		const state = this._filterState;
 		const options = this._filterOptions;
-		const showTextSearch = this.showTextSearch;
-		const showPanelHeader = this.showPanelHeader;
 		const filterOptionsStatus = this.filterOptionsStatus;
-		const subtitle = showTextSearch
-			? "Search and narrow items by type and media type."
-			: "Narrow items by type and media type.";
+		const resultsCount = this.resultCount;
+		const showResultsLabel = Number.isFinite(resultsCount)
+			? `Show ${resultsCount} result${resultsCount === 1 ? "" : "s"}`
+			: "Show results";
 		return `
 			<section class="filter-panel" aria-label="Browse filters">
-				${
-					showPanelHeader
-						? `<header class="header">
-					<h2 class="title">Filters</h2>
-					<p class="subtitle">${subtitle}</p>
-				</header>`
-						: ""
-				}
-				${
-					showTextSearch
-						? `<label>
-					<span class="sr-only">Search text</span>
-					<input
-						data-bind="text-input"
-						class="search-input"
-						type="search"
-						placeholder="Search titles, tags, and places"
-						value="${escapeHtml(state.text)}"
-					>
-				</label>`
-						: ""
-				}
-				<section class="group" aria-label="Type filters">
-					<h3 class="group-title">Type</h3>
-					${this.renderOptions(
-						flattenOptionEntries(options.types),
-						"type-filter",
-						state.types,
-						filterOptionsStatus,
-					)}
-				</section>
-				<section class="group" aria-label="Media type filters">
-					<h3 class="group-title">Media type</h3>
-					${this.renderOptions(
-						options.mediaTypes,
-						"media-type-filter",
-						state.mediaTypes,
-						filterOptionsStatus,
-					)}
-				</section>
-				<div class="actions">
-					<button type="button" class="action-button" data-action="clear-filters">Clear all</button>
+				<div class="panel-body">
+					<section class="group" aria-label="Type filters">
+						<h3 class="group-title">Type</h3>
+						${this.renderOptions(
+							flattenOptionEntries(options.types),
+							"type-filter",
+							state.types,
+							filterOptionsStatus,
+						)}
+					</section>
+					<section class="group" aria-label="Media type filters">
+						<h3 class="group-title">Media type</h3>
+						${this.renderOptions(
+							options.mediaTypes,
+							"media-type-filter",
+							state.mediaTypes,
+							filterOptionsStatus,
+						)}
+					</section>
+					<section class="group" aria-label="Time filters">
+						<h3 class="group-title">Time</h3>
+						<div class="time-grid">
+							<label class="time-field">
+								<span>From</span>
+								<input
+									class="time-input"
+									type="date"
+									data-bind="time-start"
+									value="${escapeHtml(state.timeRange?.start || "")}"
+								>
+							</label>
+							<label class="time-field">
+								<span>To</span>
+								<input
+									class="time-input"
+									type="date"
+									data-bind="time-end"
+									value="${escapeHtml(state.timeRange?.end || "")}"
+								>
+							</label>
+						</div>
+					</section>
 				</div>
+				<footer class="panel-footer">
+					<button type="button" class="action-button" data-action="clear-filters">Clear all</button>
+					<button type="button" class="primary-button" data-action="apply-filters">${showResultsLabel}</button>
+				</footer>
 			</section>
 		`;
 	}

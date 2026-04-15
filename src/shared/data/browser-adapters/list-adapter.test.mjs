@@ -211,7 +211,25 @@ test("filter options and totals reflect adapter result set", () => {
 	assert.equal(projection.total.available.items, 3);
 	assert.equal(projection.total.filtered.items, 2);
 	assert.equal(projection.filterOptions.types.some((entry) => entry.value === "image"), true);
+	assert.equal(
+		projection.filterOptions.mediaTypes.some((entry) => entry.value === "image"),
+		true,
+	);
 	assert.equal(projection.diagnostics.structured.counts.filtered.items, 2);
+});
+
+test("filters by media type facet", () => {
+	const projection = createListProjection({
+		store: seedStore(),
+		browseQueryState: {
+			query: {
+				mediaTypes: ["application"],
+			},
+		},
+		viewMode: "items",
+	});
+	assert.equal(projection.itemCards.length, 1);
+	assert.equal(projection.itemCards[0].id, "source-a::collection-b#item-3");
 });
 
 test("list diagnostics include unsupported filter warnings", () => {

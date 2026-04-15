@@ -129,11 +129,24 @@ function buildTextMatchBlob(item = {}, collection = {}, source = {}) {
 
 function collectFilterOptions(items = []) {
 	const typeCounts = new Map();
+	const mediaTypeCounts = new Map();
 	const tagCounts = new Map();
 	for (const item of items) {
 		const type = normalizeText(item.type);
 		if (type) {
 			typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+		}
+		const mediaTypeToken = normalizeToken(item?.media?.type);
+		if (mediaTypeToken) {
+			const slashIndex = mediaTypeToken.indexOf("/");
+			const normalizedMediaType =
+				slashIndex > 0
+					? mediaTypeToken.slice(0, slashIndex).trim() || mediaTypeToken
+					: mediaTypeToken;
+			mediaTypeCounts.set(
+				normalizedMediaType,
+				(mediaTypeCounts.get(normalizedMediaType) || 0) + 1,
+			);
 		}
 		for (const tag of Array.isArray(item.tags) ? item.tags : []) {
 			const token = normalizeText(tag);
@@ -149,6 +162,7 @@ function collectFilterOptions(items = []) {
 			.map(([value, count]) => ({ value, label: value, count }));
 	return {
 		types: toOptions(typeCounts),
+		mediaTypes: toOptions(mediaTypeCounts),
 		tags: toOptions(tagCounts),
 	};
 }
@@ -394,6 +408,7 @@ export function createListProjection({
 	const sourceScopeSet = new Set(normalizeTokenList(query.sourceIds));
 	const collectionManifestScopeSet = new Set(normalizeTokenList(query.collectionManifestUrls));
 	const typeFilterSet = new Set(normalizeTokenList(query.types));
+	const mediaTypeFilterSet = new Set(normalizeTokenList(query.mediaTypes));
 	const tagFilterSet = new Set(normalizeTokenList(query.tags));
 	const textQuery = normalizeToken(query.text);
 	const timeRange = parseActiveTimeRange(query);
@@ -475,6 +490,23 @@ export function createListProjection({
 		preTypeItems.push(item);
 		const itemType = normalizeToken(item.type);
 		if (typeFilterSet.size > 0 && !typeFilterSet.has(itemType)) {
+			skippedCounts.excludedByType += 1;
+			continue;
+		}
+		const itemMediaType = normalizeToken(item?.media?.type);
+		const mediaTypeFacetToken = (() => {
+			if (!itemMediaType) {
+				return "";
+			}
+			const slashIndex = itemMediaType.indexOf("/");
+			return slashIndex > 0
+				? itemMediaType.slice(0, slashIndex).trim() || itemMediaType
+				: itemMediaType;
+		})();
+		if (
+			mediaTypeFilterSet.size > 0 &&
+			(!mediaTypeFacetToken || !mediaTypeFilterSet.has(mediaTypeFacetToken))
+		) {
 			skippedCounts.excludedByType += 1;
 			continue;
 		}

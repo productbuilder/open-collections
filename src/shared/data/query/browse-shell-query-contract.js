@@ -38,7 +38,10 @@ function normalizeFilterOptionEntries(entries = []) {
 
 function hasAnyFilterOptionEntries(options = {}) {
 	const source = options && typeof options === "object" ? options : {};
-	return Array.isArray(source.types) && source.types.length > 0;
+	return (
+		(Array.isArray(source.types) && source.types.length > 0) ||
+		(Array.isArray(source.mediaTypes) && source.mediaTypes.length > 0)
+	);
 }
 
 function normalizeFilterOptionsStatus(status = "", options = {}) {
@@ -67,10 +70,12 @@ export function createBrowseShellQueryState() {
 		filters: {
 			text: "",
 			types: [],
+			mediaTypes: [],
 			categories: [],
 		},
 		options: {
 			types: [],
+			mediaTypes: [],
 			categories: [],
 		},
 		status: {
@@ -91,6 +96,7 @@ export function normalizeBrowseShellQueryState(partialState = {}, baseState = nu
 		partial.options && typeof partial.options === "object" ? partial.options : {};
 	const nextOptions = {
 		types: normalizeFilterOptionEntries(optionsSource.types),
+		mediaTypes: normalizeFilterOptionEntries(optionsSource.mediaTypes),
 		categories: [],
 	};
 	const query = normalizeCollectionQueryState(partial.query, base.query);
@@ -111,6 +117,13 @@ export function normalizeBrowseShellQueryState(partialState = {}, baseState = nu
 				filterSource.types === undefined
 					? [...query.types]
 					: normalizeCollectionQueryState({ types: filterSource.types }, query).types,
+			mediaTypes:
+				filterSource.mediaTypes === undefined
+					? [...query.mediaTypes]
+					: normalizeCollectionQueryState(
+							{ mediaTypes: filterSource.mediaTypes },
+							query,
+						).mediaTypes,
 			categories:
 				filterSource.categories === undefined
 					? [...query.categories]
@@ -164,6 +177,7 @@ export function normalizeBrowseShellQueryPatch(filterPatch = {}, baseQuery = nul
 		filters: {
 			text: mergedQuery.text,
 			types: mergedQuery.types,
+			mediaTypes: mergedQuery.mediaTypes,
 			categories: mergedQuery.categories,
 		},
 		query: mergedQuery,

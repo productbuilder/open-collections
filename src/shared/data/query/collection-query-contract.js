@@ -3,6 +3,7 @@ const DEFAULT_COLLECTION_QUERY = Object.freeze({
 	keywords: [],
 	tags: [],
 	types: [],
+	mediaTypes: [],
 	categories: [],
 	sourceIds: [],
 	collectionManifestUrls: [],
@@ -51,6 +52,7 @@ export function createCollectionQueryState() {
 		keywords: [],
 		tags: [],
 		types: [],
+		mediaTypes: [],
 		categories: [],
 		sourceIds: [],
 		collectionManifestUrls: [],
@@ -103,6 +105,10 @@ export function normalizeCollectionQueryState(partialQuery = {}, baseQuery = nul
 			partial.types === undefined
 				? normalizeStringList(base.types)
 				: normalizeStringList(partial.types),
+		mediaTypes:
+			partial.mediaTypes === undefined
+				? normalizeStringList(base.mediaTypes)
+				: normalizeStringList(partial.mediaTypes),
 		categories:
 			partial.categories === undefined
 				? normalizeStringList(base.categories)
@@ -162,6 +168,7 @@ export function normalizeCollectionQueryFilterPatch(
 			keywords: partial.keywords,
 			tags: partial.tags,
 			types: partial.types,
+			mediaTypes: partial.mediaTypes,
 			categories: partial.categories,
 			sourceIds: partial.sourceIds,
 			collectionManifestUrls: partial.collectionManifestUrls,

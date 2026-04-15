@@ -90,6 +90,18 @@ function toFilterOptionEntries(counts = new Map()) {
 		}));
 }
 
+function normalizeMediaTypeFacetValue(value = "") {
+	const mediaType = String(value ?? "").trim().toLowerCase();
+	if (!mediaType) {
+		return "";
+	}
+	const slashIndex = mediaType.indexOf("/");
+	if (slashIndex <= 0) {
+		return mediaType;
+	}
+	return mediaType.slice(0, slashIndex).trim() || mediaType;
+}
+
 function collectTypeValues(item = {}) {
 	const directType = String(item?.type || "").trim();
 	if (directType) {
@@ -2219,13 +2231,24 @@ class CollectionBrowserElement extends ComponentBase {
 						? Number(entry.count)
 						: null,
 				})).filter((entry) => entry.value),
+				mediaTypes: Array.isArray(projection?.filterOptions?.mediaTypes)
+					? projection.filterOptions.mediaTypes
+							.map((entry) => ({
+								value: String(entry?.value || "").trim(),
+								label: String(entry?.label || entry?.value || "").trim(),
+								count: Number.isFinite(Number(entry?.count))
+									? Number(entry.count)
+									: null,
+							}))
+							.filter((entry) => entry.value)
+					: [],
 				categories: [],
 			};
 			const currentQueryState =
 				this.state.browseShellQuery || createBrowseShellQueryState();
 			const optionsStatus = this.state.isLoadingCollection
 				? FILTER_OPTION_STATUS.LOADING
-				: options.types.length
+				: options.types.length || options.mediaTypes.length
 					? FILTER_OPTION_STATUS.READY
 					: FILTER_OPTION_STATUS.EMPTY;
 			const normalizedState = normalizeBrowseShellQueryState(
@@ -2272,6 +2295,7 @@ class CollectionBrowserElement extends ComponentBase {
 					? itemsFromModel
 					: renderedItemCards;
 		const typeCounts = new Map();
+		const mediaTypeCounts = new Map();
 		const incrementCount = (counts, value) => {
 			const normalized = String(value ?? "").trim();
 			if (!normalized) {
@@ -2285,15 +2309,20 @@ class CollectionBrowserElement extends ComponentBase {
 			for (const typeValue of uniqueTypes) {
 				incrementCount(typeCounts, typeValue);
 			}
+			incrementCount(
+				mediaTypeCounts,
+				normalizeMediaTypeFacetValue(item?.media?.type),
+			);
 		}
 
 		const options = {
 			types: toFilterOptionEntries(typeCounts),
+			mediaTypes: toFilterOptionEntries(mediaTypeCounts),
 			categories: [],
 		};
 		const currentQueryState =
 			this.state.browseShellQuery || createBrowseShellQueryState();
-		const hasOptions = options.types.length > 0;
+		const hasOptions = options.types.length > 0 || options.mediaTypes.length > 0;
 		const hasResolvedFilterOptions =
 			this.state.hasResolvedFilterOptionData ||
 			!this.state.isLoadingCollection;

@@ -31,6 +31,47 @@ function parseCatalogCollectionRefs(catalogJson, catalogUrl) {
 	return refs;
 }
 
+function normalizeCollectionFilterToken(value) {
+	return normalizeText(value).toLowerCase();
+}
+
+function toCollectionFilterTokenSet(values = []) {
+	if (!Array.isArray(values)) {
+		return new Set();
+	}
+	const tokens = values
+		.map((value) => normalizeCollectionFilterToken(value))
+		.filter(Boolean);
+	return new Set(tokens);
+}
+
+function createCollectionRefFilterTokens(collectionRef = {}) {
+	const tokens = new Set();
+	const collectionId = normalizeCollectionFilterToken(collectionRef.collectionRefId);
+	if (collectionId) {
+		tokens.add(collectionId);
+	}
+	const manifestUrl = normalizeCollectionFilterToken(collectionRef.manifestUrl);
+	if (manifestUrl) {
+		tokens.add(manifestUrl);
+	}
+	return tokens;
+}
+
+function isCollectionRefAllowed(collectionRef = {}, registrationEntry = {}) {
+	const includeSet = toCollectionFilterTokenSet(
+		registrationEntry?.options?.includeCollections || [],
+	);
+	const excludeSet = toCollectionFilterTokenSet(
+		registrationEntry?.options?.excludeCollections || [],
+	);
+	const refTokens = createCollectionRefFilterTokens(collectionRef);
+	const isIncluded =
+		includeSet.size === 0 || [...refTokens].some((token) => includeSet.has(token));
+	const isExcluded = [...refTokens].some((token) => excludeSet.has(token));
+	return isIncluded && !isExcluded;
+}
+
 export async function resolveSourceDescriptor(
 	registrationEntry,
 	{ repository, diagnostics = null } = {},
@@ -55,7 +96,10 @@ export async function resolveSourceDescriptor(
 	}
 
 	const catalogJson = await repository.fetchJson(sourceUrl);
-	const collectionRefs = parseCatalogCollectionRefs(catalogJson, sourceUrl);
+	const parsedCollectionRefs = parseCatalogCollectionRefs(catalogJson, sourceUrl);
+	const collectionRefs = parsedCollectionRefs.filter((collectionRef) =>
+		isCollectionRefAllowed(collectionRef, registrationEntry),
+	);
 	if (!collectionRefs.length) {
 		diagnostics?.addWarning({
 			code: "empty_source_catalog",
@@ -102,4 +146,3 @@ export function listDescriptorCollectionRefs(descriptor) {
 	}
 	return [];
 }
-

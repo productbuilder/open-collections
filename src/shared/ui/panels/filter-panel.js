@@ -56,6 +56,33 @@ function normalizeFilterOptions(value = {}) {
 	};
 }
 
+function flattenOptionEntries(entries = []) {
+	if (!Array.isArray(entries) || entries.length === 0) {
+		return [];
+	}
+	const flattened = [];
+	const walk = (nodes = []) => {
+		for (const node of nodes) {
+			if (!node || typeof node !== "object") {
+				continue;
+			}
+			const value = toText(node.value);
+			if (value) {
+				flattened.push({
+					value,
+					label: toText(node.label) || value,
+					count: Number.isFinite(Number(node.count)) ? Number(node.count) : null,
+				});
+			}
+			if (Array.isArray(node.children) && node.children.length > 0) {
+				walk(node.children);
+			}
+		}
+	};
+	walk(entries);
+	return flattened;
+}
+
 function normalizeFilterOptionsStatus(value) {
 	const status = toText(value).toLowerCase();
 	if (status === "loading" || status === "ready" || status === "empty") {
@@ -382,7 +409,7 @@ class OpenCollectionsFilterPanelElement extends BaseElement {
 				<section class="group" aria-label="Type filters">
 					<h3 class="group-title">Type</h3>
 					${this.renderOptions(
-						options.types,
+						flattenOptionEntries(options.types),
 						"type-filter",
 						state.types,
 						filterOptionsStatus,

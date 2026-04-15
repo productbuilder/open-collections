@@ -74,6 +74,7 @@ function normalizeFilterOptionEntries(value) {
 				value: normalizedValue,
 				label: toText(entry.label) || normalizedValue,
 				count: Number.isFinite(count) ? count : null,
+				children: normalizeFilterOptionEntries(entry.children),
 			};
 		})
 		.filter(Boolean);
@@ -910,7 +911,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					font-weight: 700;
 					color: #0f172a;
 				}
-				.close-filter-button {
+				.icon-btn {
 					width: 2rem;
 					height: 2rem;
 					display: inline-grid;
@@ -922,7 +923,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 					padding: 0;
 					cursor: pointer;
 				}
-				.close-filter-button .icon-close {
+				.icon-btn .icon-close {
 					width: 1rem;
 					height: 1rem;
 					fill: currentColor;
@@ -987,8 +988,8 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				<div class="filter-dialog-shell">
 					<header class="filter-dialog-header">
 						<h2 class="filter-dialog-title">Filters</h2>
-						<button class="close-filter-button" type="button" data-action="close-filter-panel" aria-label="Close filters">
-							${renderCloseIcon("icon-close")}
+						<button class="icon-btn" type="button" data-action="close-filter-panel" aria-label="Close filters">
+							${renderCloseIcon("icon icon-close")}
 						</button>
 					</header>
 					<open-collections-filter-panel show-text-search="false" show-panel-header="false"></open-collections-filter-panel>

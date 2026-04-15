@@ -19,21 +19,36 @@ function normalizeFilterOptionEntries(entries = []) {
 		return [];
 	}
 	const normalized = new Map();
-	for (const entry of entries) {
-		const value = normalizeText(entry?.value);
-		if (!value) {
-			continue;
+	const childrenByValue = new Map();
+	const visitEntries = (nodes = []) => {
+		for (const entry of nodes) {
+			const value = normalizeText(entry?.value);
+			if (!value) {
+				continue;
+			}
+			const count = Number(entry?.count);
+			if (!normalized.has(value)) {
+				normalized.set(value, {
+					value,
+					label: normalizeText(entry?.label) || value,
+					count: Number.isFinite(count) ? count : null,
+				});
+			}
+			const children = Array.isArray(entry?.children)
+				? normalizeFilterOptionEntries(entry.children)
+				: [];
+			if (children.length > 0) {
+				childrenByValue.set(value, children);
+			}
 		}
-		const count = Number(entry?.count);
-		normalized.set(value, {
-			value,
-			label: normalizeText(entry?.label) || value,
-			count: Number.isFinite(count) ? count : null,
-		});
-	}
-	return [...normalized.values()].sort((left, right) =>
-		left.value.localeCompare(right.value),
-	);
+	};
+	visitEntries(entries);
+	return [...normalized.values()]
+		.sort((left, right) => left.value.localeCompare(right.value))
+		.map((entry) => ({
+			...entry,
+			children: childrenByValue.get(entry.value) || [],
+		}));
 }
 
 function hasAnyFilterOptionEntries(options = {}) {

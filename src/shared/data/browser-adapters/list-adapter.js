@@ -158,6 +158,8 @@ function createItemCard(item = {}, collection = {}, source = {}, selectedItemRef
 		normalizeText(item.temporal?.display) ||
 		normalizeText(collection.title) ||
 		normalizeText(source.label);
+	const rawItem = item?.raw && typeof item.raw === "object" ? item.raw : {};
+	const rawMedia = rawItem?.media && typeof rawItem.media === "object" ? rawItem.media : {};
 	return {
 		browseKind: "item",
 		id: item.itemRef,
@@ -168,6 +170,7 @@ function createItemCard(item = {}, collection = {}, source = {}, selectedItemRef
 		actionValue: item.itemRef,
 		active: selectedItemRef === item.itemRef,
 		item: {
+			...rawItem,
 			id: item.itemRef,
 			title: item.title || item.itemRef,
 			description: item.description || "",
@@ -179,12 +182,18 @@ function createItemCard(item = {}, collection = {}, source = {}, selectedItemRef
 			sourceCollectionTitle: collection.title || "",
 			sourceCollectionManifestUrl: collection.manifestUrl || "",
 			media: {
-				type: item.media?.type || "image",
-				url: item.media?.url || "",
-				thumbnailUrl: item.media?.thumbnailUrl || item.media?.url || "",
+				...rawMedia,
+				type: item.media?.type || rawMedia?.type || "image",
+				url: item.media?.url || rawMedia?.url || "",
+				thumbnailUrl:
+					item.media?.thumbnailUrl ||
+					rawMedia?.thumbnailUrl ||
+					item.media?.url ||
+					rawMedia?.url ||
+					"",
 			},
 			tags: Array.isArray(item.tags) ? [...item.tags] : [],
-			type: item.type || "",
+			type: item.type || rawItem?.type || "",
 			itemRef: item.itemRef,
 		},
 	};

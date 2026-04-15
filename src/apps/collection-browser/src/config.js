@@ -11,6 +11,7 @@ export const BROWSER_CONFIG = {
 				"example-dataset",
 				"city-photos",
 				"collection",
+"presentations"
 			],
 		},
 		{

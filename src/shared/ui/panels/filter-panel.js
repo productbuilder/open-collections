@@ -215,7 +215,9 @@ const filterPanelStyles = `
 		grid-template-columns: 1fr auto;
 		gap: 0.6rem;
 		align-items: center;
-		padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+		padding: 0.8rem 1rem calc(
+			0.8rem + var(--oc-filter-panel-footer-safe-area, env(safe-area-inset-bottom, 0px))
+		);
 		background: #ffffff;
 		border-top: 1px solid #dbe3ed;
 	}

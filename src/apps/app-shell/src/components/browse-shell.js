@@ -1023,12 +1023,7 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						border-radius: 1rem 1rem 0 0;
 						margin: auto 0 var(--browse-filter-mobile-nav-offset);
 						max-height: none;
-						block-size: min(
-							calc(
-								100dvh - env(safe-area-inset-top, 0px) - var(--browse-filter-mobile-nav-offset) - 0.2rem
-							),
-							42rem
-						);
+						block-size: min(80dvh, 42rem);
 						transform: translateY(calc(100% + var(--browse-filter-mobile-nav-offset)));
 						opacity: 0;
 						transition:
@@ -1036,12 +1031,21 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 							opacity 170ms ease;
 						box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.25);
 					}
+					.filter-dialog-panel {
+						--oc-filter-panel-footer-safe-area: 0px;
+					}
 					.filter-dialog[open] {
 						transform: translateY(0);
 						opacity: 1;
 					}
 					.filter-dialog::backdrop {
-						background: rgba(15, 23, 42, 0.36);
+						background: linear-gradient(
+							to top,
+							transparent 0,
+							transparent var(--browse-filter-mobile-nav-offset),
+							rgba(15, 23, 42, 0.36) var(--browse-filter-mobile-nav-offset),
+							rgba(15, 23, 42, 0.36) 100%
+						);
 					}
 				}
 			</style>

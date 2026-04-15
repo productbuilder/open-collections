@@ -89,6 +89,57 @@ test("ingests source.json descriptor path and populates canonical store", async 
 	assert.equal(runtimeStore.getItemsForCollection("source-a::city-photos").length, 1);
 });
 
+test("applies registration include/exclude filters during source descriptor resolution", async () => {
+	const routes = {
+		"https://data.example.test/sources/a/source.json": {
+			title: "Source A",
+			collections: [
+				{ id: "public-a", manifest: "./public-a/collection.json" },
+				{ id: "private-a", manifest: "./private-a/collection.json" },
+				{ id: "private-b", manifest: "./private-b/collection.json" },
+			],
+		},
+		"https://data.example.test/sources/a/public-a/collection.json": {
+			id: "public-a",
+			title: "Public A",
+			items: [{ id: "item-1", title: "Item 1", media: { type: "image", url: "./1.jpg" } }],
+		},
+		"https://data.example.test/sources/a/private-a/collection.json": {
+			id: "private-a",
+			title: "Private A",
+			items: [{ id: "item-2", title: "Item 2", media: { type: "image", url: "./2.jpg" } }],
+		},
+		"https://data.example.test/sources/a/private-b/collection.json": {
+			id: "private-b",
+			title: "Private B",
+			items: [{ id: "item-3", title: "Item 3", media: { type: "image", url: "./3.jpg" } }],
+		},
+	};
+	const { runtimeStore, service } = createServiceWithRoutes({ routes });
+	await service.ingest([
+		{
+			sourceId: "source-a",
+			label: "Source A",
+			sourceType: "source.json",
+			entryUrl: "https://data.example.test/sources/a/source.json",
+			options: {
+				includeCollections: ["public-a", "private-a"],
+				excludeCollections: ["private-a"],
+			},
+		},
+	]);
+
+	assert.deepEqual(
+		runtimeStore
+			.getCollectionsForSource("source-a")
+			.map((collection) => collection.rawCollectionId),
+		["public-a"],
+	);
+	assert.equal(runtimeStore.getItemsForCollection("source-a::public-a").length, 1);
+	assert.equal(runtimeStore.getItemsForCollection("source-a::private-a").length, 0);
+	assert.equal(runtimeStore.getItemsForCollection("source-a::private-b").length, 0);
+});
+
 test("ingests direct collection.json path", async () => {
 	const routes = {
 		"https://data.example.test/direct/collection.json": {

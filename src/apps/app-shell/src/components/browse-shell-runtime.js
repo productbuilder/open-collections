@@ -15,33 +15,55 @@ function toSourceType(value) {
 	return sourceType === "source.json" ? "source.json" : "collection.json";
 }
 
+function normalizeCollectionFilterList(values) {
+	if (!Array.isArray(values)) {
+		return [];
+	}
+	return values
+		.map((value) => normalizeText(value))
+		.filter(Boolean);
+}
+
 export function mapEmbeddedSourceCatalogToRegistrations(catalogEntries = []) {
 	const entries = Array.isArray(catalogEntries) ? catalogEntries : [];
 	return entries
 		.filter((entry) => entry && typeof entry === "object")
-		.map((entry, index) => ({
-			sourceId: normalizeText(entry.id) || `source-${index + 1}`,
-			label:
-				normalizeText(entry.label) ||
-				normalizeText(entry.title) ||
-				`Source ${index + 1}`,
-			sourceType: toSourceType(entry.sourceType || entry.type),
-			entryUrl: normalizeText(entry.sourceUrl || entry.url),
-			enabled: entry.enabled !== false,
-			priority: Number.isFinite(Number(entry.priority))
-				? Number(entry.priority)
-				: 100,
-			options:
+		.map((entry, index) => {
+			const normalizedOptions =
 				entry.options && typeof entry.options === "object"
 					? { ...entry.options }
-					: {},
-			meta: entry.meta && typeof entry.meta === "object" ? { ...entry.meta } : {},
-			organizationName: normalizeText(entry.organizationName),
-			curatorName: normalizeText(entry.curatorName),
-			placeName: normalizeText(entry.placeName),
-			countryName: normalizeText(entry.countryName),
-			countryCode: normalizeText(entry.countryCode),
-		}))
+					: {};
+			if (!Object.prototype.hasOwnProperty.call(normalizedOptions, "includeCollections")) {
+				normalizedOptions.includeCollections = normalizeCollectionFilterList(
+					entry.includeCollections,
+				);
+			}
+			if (!Object.prototype.hasOwnProperty.call(normalizedOptions, "excludeCollections")) {
+				normalizedOptions.excludeCollections = normalizeCollectionFilterList(
+					entry.excludeCollections,
+				);
+			}
+			return {
+				sourceId: normalizeText(entry.id) || `source-${index + 1}`,
+				label:
+					normalizeText(entry.label) ||
+					normalizeText(entry.title) ||
+					`Source ${index + 1}`,
+				sourceType: toSourceType(entry.sourceType || entry.type),
+				entryUrl: normalizeText(entry.sourceUrl || entry.url),
+				enabled: entry.enabled !== false,
+				priority: Number.isFinite(Number(entry.priority))
+					? Number(entry.priority)
+					: 100,
+				options: normalizedOptions,
+				meta: entry.meta && typeof entry.meta === "object" ? { ...entry.meta } : {},
+				organizationName: normalizeText(entry.organizationName),
+				curatorName: normalizeText(entry.curatorName),
+				placeName: normalizeText(entry.placeName),
+				countryName: normalizeText(entry.countryName),
+				countryCode: normalizeText(entry.countryCode),
+			};
+		})
 		.filter((entry) => Boolean(entry.entryUrl));
 }
 

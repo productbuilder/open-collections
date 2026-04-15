@@ -19,6 +19,7 @@ import {
 	normalizeEmbeddedSourceCatalog,
 	readRecentManifestUrls,
 	rememberRecentManifestUrl,
+	isCollectionAllowedForEmbeddedSource,
 	resolveEmbeddedSourceDescriptor,
 	resolveStartupManifestUrl,
 } from "./controllers/manifest-controller.js";
@@ -937,6 +938,14 @@ class CollectionBrowserElement extends ComponentBase {
 			const collection = await this.loadCollectionManifest(
 				descriptor.manifestUrl,
 			);
+			if (
+				!isCollectionAllowedForEmbeddedSource(source, {
+					id: `${source.id}::single`,
+					manifestUrl: descriptor.manifestUrl,
+				})
+			) {
+				continue;
+			}
 			allEntries.push({
 				id: `${source.id}::single`,
 				label: collection.title || source.label || "Collection",
@@ -1013,6 +1022,27 @@ class CollectionBrowserElement extends ComponentBase {
 			const collection = await this.loadCollectionManifest(
 				descriptor.manifestUrl,
 			);
+			if (
+				!isCollectionAllowedForEmbeddedSource(source, {
+					id: `${source.id}::single`,
+					manifestUrl: descriptor.manifestUrl,
+				})
+			) {
+				return {
+					id: source.id,
+					label: source.label,
+					organizationName: source.organizationName || source.label || "",
+					curatorName: source.curatorName || "",
+					placeName: source.placeName || "",
+					countryName: source.countryName || "",
+					countryCode: source.countryCode || "",
+					subtitle: "",
+					countLabel: "0 items",
+					previewRows: [],
+					previewImages: [],
+					sourceType: descriptor.sourceType,
+				};
+			}
 			const items = Array.isArray(collection.items) ? collection.items : [];
 			return {
 				id: source.id,

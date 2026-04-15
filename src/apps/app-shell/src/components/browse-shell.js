@@ -1005,6 +1005,9 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 				}
 
 				@media (max-width: 760px) {
+					:host {
+						--browse-filter-mobile-nav-offset: var(--oc-shell-mobile-nav-offset, 0px);
+					}
 					.control-strip {
 						padding: 0.62rem 0.62rem 0.5rem;
 					}
@@ -1018,10 +1021,15 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						max-inline-size: 100vw;
 						border: none;
 						border-radius: 1rem 1rem 0 0;
-						margin: auto 0 0;
+						margin: auto 0 var(--browse-filter-mobile-nav-offset);
 						max-height: none;
-						block-size: min(calc(100dvh - env(safe-area-inset-top, 0px) - 4.75rem), 42rem);
-						transform: translateY(100%);
+						block-size: min(
+							calc(
+								100dvh - env(safe-area-inset-top, 0px) - var(--browse-filter-mobile-nav-offset) - 0.2rem
+							),
+							42rem
+						);
+						transform: translateY(calc(100% + var(--browse-filter-mobile-nav-offset)));
 						opacity: 0;
 						transition:
 							transform 230ms cubic-bezier(0.2, 0.8, 0.2, 1),

@@ -135,6 +135,10 @@ export const browserStyles = `
     min-height: 0;
   }
 
+  :host([data-shell-list-adapter]) .scroll-container {
+    padding: 1rem 0;
+  }
+
   .grid-host {
     min-height: 0;
   }

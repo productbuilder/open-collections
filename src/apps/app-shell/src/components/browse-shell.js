@@ -1017,13 +1017,15 @@ class OpenCollectionsBrowseShellElement extends HTMLElement {
 						right: 0.62rem;
 					}
 					.filter-dialog {
-						inline-size: 100vw;
-						max-inline-size: 100vw;
+						inline-size: 100%;
+						max-inline-size: 100%;
 						border: none;
 						border-radius: 1rem 1rem 0 0;
 						margin: auto 0 var(--browse-filter-mobile-nav-offset);
 						max-height: none;
 						block-size: min(80dvh, 42rem);
+						box-sizing: border-box;
+						overflow-x: clip;
 						transform: translateY(calc(100% + var(--browse-filter-mobile-nav-offset)));
 						opacity: 0;
 						transition:

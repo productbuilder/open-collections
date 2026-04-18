@@ -12,12 +12,14 @@ import "./grid5-card-collection.js";
 import "./grid5-card-item.js";
 import "./section-header.js";
 import "./oc-map.js";
+import "./oc-map-three-layer.js";
 import "./oc-time-range-slider.js";
 import "./open-collections-browse-header.js";
 
 export { OpenCollectionsEmptyStateElement } from "./empty-state.js";
 export { OpenCollectionsSectionHeaderElement } from "./section-header.js";
 export { OcMapElement } from "./oc-map.js";
+export { OcMapThreeLayerElement } from "./oc-map-three-layer.js";
 
 export { OpenCollectionsActionRowElement } from "./action-row.js";
 export { OcGridElement, OpenCollectionsCardLayoutElement } from "./oc-grid.js";

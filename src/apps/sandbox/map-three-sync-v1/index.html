@@ -1,270 +1,521 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Map + Three sync v1 — Sandbox</title>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Map + Three sync v1 — Sandbox</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
 
-      :root {
-        color-scheme: dark;
-      }
+			:root {
+				color-scheme: dark;
+			}
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-        background: #020617;
-        color: #e2e8f0;
-      }
+			body {
+				margin: 0;
+				min-height: 100vh;
+				font-family:
+					Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					Segoe UI,
+					Roboto,
+					Helvetica,
+					Arial,
+					sans-serif;
+				background: #020617;
+				color: #e2e8f0;
+			}
 
-      main {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-      }
+			main {
+				position: relative;
+				width: 100vw;
+				height: 100vh;
+				overflow: hidden;
+			}
 
-      oc-map {
-        display: block;
-        width: 100%;
-        height: 100%;
-        --oc-map-height: 100vh;
-      }
+			oc-map {
+				display: block;
+				width: 100%;
+				height: 100%;
+				--oc-map-height: 100vh;
+			}
 
-      .horizon-stage {
-        position: absolute;
-        inset: 0;
-        z-index: 12;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 180ms ease;
-      }
+			.horizon-stage {
+				position: absolute;
+				inset: 0;
+				z-index: 12;
+				pointer-events: none;
+				opacity: 0;
+				transition: opacity 180ms ease;
+			}
 
-      .horizon-stage::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(
-            140% 58% at 50% -16%,
-            rgb(153 193 255 / 28%) 0%,
-            rgb(153 193 255 / 10%) 46%,
-            rgb(153 193 255 / 0%) 100%
-          ),
-          linear-gradient(
-            to bottom,
-            rgb(12 22 43 / 40%) 0%,
-            rgb(16 30 57 / 24%) 22%,
-            rgb(17 33 61 / 12%) 38%,
-            rgb(2 6 23 / 0%) 66%
-          );
-      }
+			.horizon-stage::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(
+						140% 58% at 50% -16%,
+						rgb(153 193 255 / 28%) 0%,
+						rgb(153 193 255 / 10%) 46%,
+						rgb(153 193 255 / 0%) 100%
+					),
+					linear-gradient(
+						to bottom,
+						rgb(12 22 43 / 40%) 0%,
+						rgb(16 30 57 / 24%) 22%,
+						rgb(17 33 61 / 12%) 38%,
+						rgb(2 6 23 / 0%) 66%
+					);
+			}
 
-      .horizon-stage::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(
-            120% 52% at 50% 2%,
-            rgb(203 224 255 / 32%) 0%,
-            rgb(191 219 254 / 11%) 32%,
-            rgb(191 219 254 / 0%) 58%
-          ),
-          linear-gradient(to bottom, rgb(2 6 23 / 0%) 52%, rgb(2 6 23 / 22%) 100%);
-        mask-image: radial-gradient(120% 88% at 50% 2%, #000 42%, transparent 72%);
-      }
+			.horizon-stage::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(
+						120% 52% at 50% 2%,
+						rgb(203 224 255 / 32%) 0%,
+						rgb(191 219 254 / 11%) 32%,
+						rgb(191 219 254 / 0%) 58%
+					),
+					linear-gradient(
+						to bottom,
+						rgb(2 6 23 / 0%) 52%,
+						rgb(2 6 23 / 22%) 100%
+					);
+				mask-image: radial-gradient(
+					120% 88% at 50% 2%,
+					#000 42%,
+					transparent 72%
+				);
+			}
 
-      main[data-horizon-enabled="true"] .horizon-stage {
-        opacity: 1;
-      }
+			main[data-horizon-enabled="true"] .horizon-stage {
+				opacity: 1;
+			}
 
-      .overlay {
-        position: absolute;
-        z-index: 20;
-        display: grid;
-        gap: 0.65rem;
-        width: min(360px, calc(100vw - 1.5rem));
-        max-height: calc(100vh - 1.5rem);
-        padding: 0.8rem;
-        top: 0.75rem;
-        left: 0.75rem;
-        background: rgb(15 23 42 / 82%);
-        border: 1px solid rgb(96 165 250 / 42%);
-        border-radius: 12px;
-        backdrop-filter: blur(2px);
-        overflow: auto;
-      }
+			.scene-ui-layer {
+				position: absolute;
+				inset: 0;
+				z-index: 30;
+				pointer-events: none;
+			}
 
-      .title {
-        margin: 0;
-        font-size: 0.98rem;
-      }
+			.active-card {
+				position: absolute;
+				min-width: 210px;
+				max-width: min(320px, calc(100vw - 2rem));
+				padding: 0.75rem 0.8rem;
+				border-radius: 12px;
+				border: 1px solid rgb(125 211 252 / 55%);
+				background: rgb(15 23 42 / 92%);
+				box-shadow: 0 14px 36px rgb(2 6 23 / 55%);
+				transform: translate(-50%, -100%);
+				transform-origin: 50% 100%;
+				transition:
+					left 140ms linear,
+					top 140ms linear;
+			}
 
-      .subtitle {
-        margin: 0.15rem 0 0;
-        font-size: 0.76rem;
-        color: #cbd5e1;
-      }
+			.active-card::after {
+				content: "";
+				position: absolute;
+				left: 50%;
+				bottom: -24px;
+				width: 2px;
+				height: 24px;
+				transform: translateX(-50%);
+				background: linear-gradient(
+					to bottom,
+					rgb(125 211 252 / 70%),
+					rgb(125 211 252 / 10%)
+				);
+			}
 
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.45rem;
-        margin: 0;
-      }
+			.active-card[hidden] {
+				display: none;
+			}
 
-      .stat {
-        background: rgb(15 23 42 / 78%);
-        border: 1px solid #334155;
-        border-radius: 9px;
-        padding: 0.42rem 0.5rem;
-      }
+			.active-card-year {
+				margin: 0;
+				font-size: 0.68rem;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: #bae6fd;
+			}
 
-      .stat dt {
-        margin: 0;
-        font-size: 0.68rem;
-        color: #93c5fd;
-      }
+			.active-card-title {
+				margin: 0.2rem 0 0;
+				font-size: 0.9rem;
+			}
 
-      .stat dd {
-        margin: 0.2rem 0 0;
-        font-size: 0.84rem;
-      }
+			.active-card-description {
+				margin: 0.35rem 0 0;
+				font-size: 0.78rem;
+				line-height: 1.35;
+				color: #cbd5e1;
+			}
 
-      .pitch-row {
-        display: grid;
-        gap: 0.2rem;
-      }
+			.helper-toggle {
+				position: absolute;
+				z-index: 36;
+				top: 0.75rem;
+				left: 0.75rem;
+				pointer-events: auto;
+				border: 1px solid rgb(96 165 250 / 80%);
+				border-radius: 999px;
+				background: rgb(29 78 216 / 86%);
+				color: #eff6ff;
+				font-size: 0.76rem;
+				padding: 0.42rem 0.72rem;
+				cursor: pointer;
+			}
 
-      .pitch-row label {
-        font-size: 0.72rem;
-        color: #bfdbfe;
-      }
+			.overlay {
+				position: absolute;
+				z-index: 35;
+				display: grid;
+				gap: 0.65rem;
+				width: min(360px, calc(100vw - 1.5rem));
+				max-height: calc(100vh - 8rem);
+				padding: 0.8rem;
+				top: 0.75rem;
+				left: 0.75rem;
+				background: rgb(15 23 42 / 88%);
+				border: 1px solid rgb(96 165 250 / 42%);
+				border-radius: 12px;
+				backdrop-filter: blur(2px);
+				overflow: auto;
+			}
 
-      .pitch-row input {
-        width: 100%;
-      }
+			.overlay[hidden] {
+				display: none;
+			}
 
-      .btn-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.45rem;
-      }
+			.overlay-header {
+				display: flex;
+				align-items: start;
+				justify-content: space-between;
+				gap: 0.5rem;
+			}
 
-      .toggle-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.45rem;
-        padding: 0.32rem 0.45rem;
-        border-radius: 8px;
-        border: 1px solid #334155;
-        background: rgb(2 6 23 / 74%);
-      }
+			.overlay-close {
+				pointer-events: auto;
+				border: 1px solid #475569;
+				border-radius: 8px;
+				background: #0f172a;
+				color: #cbd5e1;
+				padding: 0.2rem 0.45rem;
+				font-size: 0.72rem;
+				cursor: pointer;
+			}
 
-      .toggle-label {
-        font-size: 0.74rem;
-        color: #bfdbfe;
-      }
+			.title {
+				margin: 0;
+				font-size: 0.98rem;
+			}
 
-      .toggle-row input {
-        inline-size: 1rem;
-        block-size: 1rem;
-      }
+			.subtitle {
+				margin: 0.15rem 0 0;
+				font-size: 0.76rem;
+				color: #cbd5e1;
+			}
 
-      button {
-        border: 1px solid #3b82f6;
-        border-radius: 8px;
-        background: #1d4ed8;
-        color: #eff6ff;
-        padding: 0.42rem 0.55rem;
-        cursor: pointer;
-        font-size: 0.78rem;
-        font-weight: 600;
-      }
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 0.45rem;
+				margin: 0;
+			}
 
-      .log {
-        margin: 0;
-        min-height: 82px;
-        max-height: 180px;
-        overflow: auto;
-        background: #020617;
-        border: 1px solid #1e293b;
-        border-radius: 9px;
-        padding: 0.5rem;
-        font-size: 0.7rem;
-        line-height: 1.33;
-      }
-    </style>
-  </head>
-  <body>
-    <main id="sandbox-stage" data-horizon-enabled="true">
-      <oc-map
-        id="demo-map"
-        center-lng="5.1214"
-        center-lat="52.0907"
-        zoom="14.5"
-        pitch="40"
-        bearing="18"
-        style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-      ></oc-map>
-      <oc-map-three-layer id="demo-three-layer" for="demo-map" layer-id="demo-three-custom-layer"></oc-map-three-layer>
-      <div class="horizon-stage" aria-hidden="true"></div>
+			.stat {
+				background: rgb(15 23 42 / 78%);
+				border: 1px solid #334155;
+				border-radius: 9px;
+				padding: 0.42rem 0.5rem;
+			}
 
-      <aside class="overlay" aria-label="Three layer debug controls">
-        <header>
-          <h1 class="title">Map + Three sync v1</h1>
-          <p class="subtitle">Full-screen scene test for pitch, fake horizon, and depth cues.</p>
-        </header>
+			.stat dt {
+				margin: 0;
+				font-size: 0.68rem;
+				color: #93c5fd;
+			}
 
-        <dl class="stats" id="viewport-stats">
-          <div class="stat">
-            <dt>Center</dt>
-            <dd id="stat-center">—</dd>
-          </div>
-          <div class="stat">
-            <dt>Zoom</dt>
-            <dd id="stat-zoom">—</dd>
-          </div>
-          <div class="stat">
-            <dt>Pitch</dt>
-            <dd id="stat-pitch">—</dd>
-          </div>
-          <div class="stat">
-            <dt>Bearing</dt>
-            <dd id="stat-bearing">—</dd>
-          </div>
-        </dl>
+			.stat dd {
+				margin: 0.2rem 0 0;
+				font-size: 0.84rem;
+			}
 
-        <div class="pitch-row">
-          <label for="pitch-control">Pitch slider: <strong id="pitch-slider-value">0</strong>°</label>
-          <input id="pitch-control" type="range" min="0" max="60" value="40" step="1" />
-        </div>
+			.pitch-row {
+				display: grid;
+				gap: 0.2rem;
+			}
 
-        <div class="toggle-row">
-          <label class="toggle-label" for="horizon-toggle">Fake horizon treatment</label>
-          <input id="horizon-toggle" type="checkbox" checked />
-        </div>
+			.pitch-row label {
+				font-size: 0.72rem;
+				color: #bfdbfe;
+			}
 
-        <div class="btn-grid">
-          <button type="button" data-action="reset-view">Reset view</button>
-          <button type="button" data-action="add-anchors">Add anchors</button>
-          <button type="button" data-action="clear-anchors">Clear anchors</button>
-          <button type="button" data-action="flat">Flat</button>
-          <button type="button" data-action="browse">Browse</button>
-          <button type="button" data-action="spatial">Spatial</button>
-          <button type="button" data-action="horizon-test">Horizon test</button>
-        </div>
+			.pitch-row input {
+				width: 100%;
+			}
 
-        <pre class="log" id="event-log">Waiting for map...</pre>
-      </aside>
-    </main>
+			.btn-grid {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 0.45rem;
+			}
 
-    <script type="module" src="./app.js"></script>
-  </body>
+			.toggle-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.45rem;
+				padding: 0.32rem 0.45rem;
+				border-radius: 8px;
+				border: 1px solid #334155;
+				background: rgb(2 6 23 / 74%);
+			}
+
+			.toggle-label {
+				font-size: 0.74rem;
+				color: #bfdbfe;
+			}
+
+			.toggle-row input {
+				inline-size: 1rem;
+				block-size: 1rem;
+			}
+
+			button {
+				border: 1px solid #3b82f6;
+				border-radius: 8px;
+				background: #1d4ed8;
+				color: #eff6ff;
+				padding: 0.42rem 0.55rem;
+				cursor: pointer;
+				font-size: 0.78rem;
+				font-weight: 600;
+			}
+
+			.log {
+				margin: 0;
+				min-height: 82px;
+				max-height: 180px;
+				overflow: auto;
+				background: #020617;
+				border: 1px solid #1e293b;
+				border-radius: 9px;
+				padding: 0.5rem;
+				font-size: 0.7rem;
+				line-height: 1.33;
+			}
+
+			.timeline-overlay {
+				position: absolute;
+				left: 0.75rem;
+				right: 0.75rem;
+				bottom: 0.75rem;
+				z-index: 34;
+				pointer-events: auto;
+				border-radius: 12px;
+				border: 1px solid rgb(125 211 252 / 35%);
+				background: rgb(15 23 42 / 82%);
+				box-shadow: 0 8px 25px rgb(2 6 23 / 42%);
+				padding: 0.75rem 0.85rem 0.65rem;
+			}
+
+			.timeline-header {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 0.5rem;
+			}
+
+			.timeline-label {
+				margin: 0;
+				font-size: 0.74rem;
+				color: #93c5fd;
+			}
+
+			.timeline-year {
+				margin: 0;
+				font-size: 1.15rem;
+				font-weight: 700;
+				color: #e0f2fe;
+			}
+
+			.timeline-range {
+				width: 100%;
+				margin-top: 0.4rem;
+			}
+
+			.timeline-extents {
+				margin-top: 0.25rem;
+				display: flex;
+				justify-content: space-between;
+				font-size: 0.7rem;
+				color: #bfdbfe;
+			}
+		</style>
+	</head>
+	<body>
+		<main id="sandbox-stage" data-horizon-enabled="true">
+			<oc-map
+				id="demo-map"
+				center-lng="5.1214"
+				center-lat="52.0907"
+				zoom="14.5"
+				pitch="40"
+				bearing="18"
+				style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+			></oc-map>
+			<oc-map-three-layer
+				id="demo-three-layer"
+				for="demo-map"
+				layer-id="demo-three-custom-layer"
+			></oc-map-three-layer>
+			<div class="horizon-stage" aria-hidden="true"></div>
+
+			<div class="scene-ui-layer" aria-hidden="true">
+				<article class="active-card" id="active-card" hidden>
+					<p class="active-card-year" id="active-card-year">Year</p>
+					<h2 class="active-card-title" id="active-card-title">
+						Focused item
+					</h2>
+					<p
+						class="active-card-description"
+						id="active-card-description"
+					></p>
+				</article>
+			</div>
+
+			<button
+				type="button"
+				id="helper-toggle"
+				class="helper-toggle"
+				aria-expanded="false"
+				aria-controls="helper-panel"
+			>
+				Debug
+			</button>
+
+			<aside
+				class="overlay"
+				id="helper-panel"
+				aria-label="Three layer debug controls"
+				hidden
+			>
+				<header class="overlay-header">
+					<div>
+						<h1 class="title">Map + Three sync v1</h1>
+						<p class="subtitle">
+							Timeline + anchored focus card prototype (sandbox
+							only).
+						</p>
+					</div>
+					<button
+						type="button"
+						id="helper-close"
+						class="overlay-close"
+					>
+						Close
+					</button>
+				</header>
+
+				<dl class="stats" id="viewport-stats">
+					<div class="stat">
+						<dt>Center</dt>
+						<dd id="stat-center">—</dd>
+					</div>
+					<div class="stat">
+						<dt>Zoom</dt>
+						<dd id="stat-zoom">—</dd>
+					</div>
+					<div class="stat">
+						<dt>Pitch</dt>
+						<dd id="stat-pitch">—</dd>
+					</div>
+					<div class="stat">
+						<dt>Bearing</dt>
+						<dd id="stat-bearing">—</dd>
+					</div>
+				</dl>
+
+				<div class="pitch-row">
+					<label for="pitch-control"
+						>Pitch slider:
+						<strong id="pitch-slider-value">0</strong>°</label
+					>
+					<input
+						id="pitch-control"
+						type="range"
+						min="0"
+						max="60"
+						value="40"
+						step="1"
+					/>
+				</div>
+
+				<div class="toggle-row">
+					<label class="toggle-label" for="horizon-toggle"
+						>Fake horizon treatment</label
+					>
+					<input id="horizon-toggle" type="checkbox" checked />
+				</div>
+
+				<div class="btn-grid">
+					<button type="button" data-action="reset-view">
+						Reset view
+					</button>
+					<button type="button" data-action="add-anchors">
+						Refresh anchors
+					</button>
+					<button type="button" data-action="clear-anchors">
+						Clear anchors
+					</button>
+					<button type="button" data-action="flat">Flat</button>
+					<button type="button" data-action="browse">Browse</button>
+					<button type="button" data-action="spatial">Spatial</button>
+					<button type="button" data-action="horizon-test">
+						Horizon test
+					</button>
+				</div>
+
+				<pre class="log" id="event-log">Waiting for map...</pre>
+			</aside>
+
+			<section
+				class="timeline-overlay"
+				aria-label="Year timeline controller"
+			>
+				<div class="timeline-header">
+					<p class="timeline-label">Timeline</p>
+					<p class="timeline-year" id="timeline-year">1850</p>
+				</div>
+				<input
+					class="timeline-range"
+					id="timeline-control"
+					type="range"
+					min="1850"
+					max="2020"
+					step="1"
+					value="1850"
+					aria-label="Timeline year"
+				/>
+				<div class="timeline-extents" aria-hidden="true">
+					<span>1850</span>
+					<span>2020</span>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="./app.js"></script>
+	</body>
 </html>

@@ -3,15 +3,39 @@
 Sandbox experiment to validate a **shared companion primitive architecture**:
 
 - `oc-map` remains the MapLibre world owner.
-- `oc-map-three-layer` becomes a reusable Three.js scene companion.
-- the sandbox app acts as a focused test harness.
+- `oc-map-three-layer` remains the reusable Three.js scene companion.
+- the sandbox app remains a focused test harness for scene feel.
 
-## What this prototype proves
+## What this prototype now focuses on
 
-1. A shared `oc-map-three-layer` can attach to an existing shared `oc-map`.
-2. The layer can wait for `oc-map-ready`, read `mapElement.mapInstance`, and register a MapLibre custom 3D layer.
-3. Anchored Three.js objects stay aligned while panning, zooming, rotating, and pitching.
-4. A tiny API (`setAnchors`, `clearScene`) is enough for first integration and future growth.
+This iteration is tuned for quick evaluation of **spatial feel**, **pitch control**, and **horizon visibility**:
+
+1. Full-screen map stage with compact debug overlays.
+2. Sandbox-only pitch controls (slider + presets) for immediate comparison.
+3. Non-flat default reset view (mild spatial baseline).
+4. A stronger horizon test preset (high pitch + wider view).
+5. Depth-readability anchors with near / mid / far references.
+
+## View presets
+
+- **Reset view**: mild spatial baseline (`pitch: 40`, slight bearing).
+- **Flat**: analytical baseline (`pitch: 0`).
+- **Browse**: medium pitch (`pitch: 33`).
+- **Spatial**: stronger spatial read (`pitch: 48`).
+- **Horizon test**: strong pitch and wider framing (`pitch: 58`, lower zoom).
+
+## Debug overlay actions
+
+- readouts: center, zoom, pitch, bearing
+- controls:
+  - reset view
+  - add anchors
+  - clear anchors
+  - flat
+  - browse
+  - spatial
+  - horizon test
+  - pitch slider (`0` to `60`)
 
 ## Intentionally not implemented yet
 
@@ -21,12 +45,12 @@ Sandbox experiment to validate a **shared companion primitive architecture**:
 - story layers / paths
 - relation lines
 
-Those are future milestones. This v1 is only the first structural proof-of-alignment step.
+Those remain future milestones. This sandbox continues to focus on scene alignment and feel testing only.
 
 ## Files
 
-- `index.html` — static sandbox shell + map + debug controls.
-- `app.js` — wiring for map events, layer API calls, and debug actions.
+- `index.html` — full-screen map stage + compact overlay controls.
+- `app.js` — preset logic, pitch slider wiring, depth anchor setup, and debug actions.
 
 ## Run locally
 

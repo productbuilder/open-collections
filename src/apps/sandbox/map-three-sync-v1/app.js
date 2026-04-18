@@ -34,23 +34,27 @@ const VIEW_PRESETS = {
 };
 
 const TEST_ANCHORS = [
-  // Near references (larger, close to center)
+  // Near references (tight cluster around center)
   { id: "near-core-box", lng: 5.1214, lat: 52.0907, altitude: 0, kind: "box" },
-  { id: "near-core-pillar", lng: 5.1209, lat: 52.0905, altitude: 0, kind: "pillar" },
-  { id: "near-west-box", lng: 5.1185, lat: 52.0901, altitude: 0, kind: "box" },
+  { id: "near-core-pillar", lng: 5.1209, lat: 52.0905, altitude: 4, kind: "pillar" },
+  { id: "near-west-box", lng: 5.1185, lat: 52.0901, altitude: 2, kind: "box" },
+  { id: "near-east-pillar", lng: 5.1244, lat: 52.0906, altitude: 6, kind: "pillar" },
 
-  // Mid references
-  { id: "mid-museum", lng: 5.1162, lat: 52.0905, altitude: 0, kind: "pillar" },
-  { id: "mid-station-east", lng: 5.1129, lat: 52.0891, altitude: 0, kind: "box" },
-  { id: "mid-canal-south", lng: 5.1228, lat: 52.0878, altitude: 0, kind: "pillar" },
+  // Mid references (medium spread and moderate altitude offsets)
+  { id: "mid-museum", lng: 5.1162, lat: 52.0905, altitude: 12, kind: "pillar" },
+  { id: "mid-station-east", lng: 5.1129, lat: 52.0891, altitude: 10, kind: "box" },
+  { id: "mid-canal-south", lng: 5.1228, lat: 52.0878, altitude: 8, kind: "pillar" },
+  { id: "mid-north-lane", lng: 5.1235, lat: 52.0946, altitude: 15, kind: "box" },
 
-  // Far references with altitude offsets to improve depth read
-  { id: "far-north", lng: 5.123, lat: 52.0984, altitude: 15, kind: "pillar" },
-  { id: "far-east", lng: 5.1352, lat: 52.0939, altitude: 30, kind: "box" },
-  { id: "far-west", lng: 5.1049, lat: 52.0934, altitude: 45, kind: "pillar" },
-  { id: "far-south", lng: 5.1126, lat: 52.0811, altitude: 25, kind: "box" },
+  // Far references (kept visible with stronger altitude stepping)
+  { id: "far-north", lng: 5.123, lat: 52.0984, altitude: 26, kind: "pillar" },
+  { id: "far-far-north", lng: 5.1224, lat: 52.103, altitude: 38, kind: "box" },
+  { id: "far-east", lng: 5.1352, lat: 52.0939, altitude: 34, kind: "box" },
+  { id: "far-west", lng: 5.1049, lat: 52.0934, altitude: 42, kind: "pillar" },
+  { id: "far-south", lng: 5.1126, lat: 52.0811, altitude: 28, kind: "box" },
 ];
 
+const sandboxStage = document.getElementById("sandbox-stage");
 const mapEl = document.getElementById("demo-map");
 const threeLayerEl = document.getElementById("demo-three-layer");
 const statCenter = document.getElementById("stat-center");
@@ -59,6 +63,7 @@ const statPitch = document.getElementById("stat-pitch");
 const statBearing = document.getElementById("stat-bearing");
 const pitchControl = document.getElementById("pitch-control");
 const pitchSliderValue = document.getElementById("pitch-slider-value");
+const horizonToggle = document.getElementById("horizon-toggle");
 const eventLog = document.getElementById("event-log");
 
 let map = null;
@@ -66,6 +71,16 @@ let map = null;
 const appendLog = (message) => {
   const stamp = new Date().toISOString();
   eventLog.textContent = `${stamp} ${message}\n${eventLog.textContent}`.slice(0, 3500);
+};
+
+const setHorizonEnabled = (enabled, source = "ui") => {
+  if (!sandboxStage || !horizonToggle) {
+    return;
+  }
+  const isEnabled = Boolean(enabled);
+  sandboxStage.dataset.horizonEnabled = String(isEnabled);
+  horizonToggle.checked = isEnabled;
+  appendLog(`fake horizon ${isEnabled ? "ON" : "OFF"} (${source})`);
 };
 
 const syncPitchSlider = (pitch) => {
@@ -138,6 +153,10 @@ pitchControl.addEventListener("input", (event) => {
   map.easeTo({ pitch: nextPitch, duration: 120 });
 });
 
+horizonToggle.addEventListener("change", (event) => {
+  setHorizonEnabled(event.target.checked);
+});
+
 document.querySelectorAll("[data-action]").forEach((button) => {
   button.addEventListener("click", () => {
     const action = button.dataset.action;
@@ -178,3 +197,5 @@ document.querySelectorAll("[data-action]").forEach((button) => {
     }
   });
 });
+
+setHorizonEnabled(true, "default");

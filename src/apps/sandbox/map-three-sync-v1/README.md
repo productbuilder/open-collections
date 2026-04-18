@@ -13,8 +13,9 @@ This iteration is tuned for quick evaluation of **spatial feel**, **pitch contro
 1. Full-screen map stage with compact debug overlays.
 2. Sandbox-only pitch controls (slider + presets) for immediate comparison.
 3. Non-flat default reset view (mild spatial baseline).
-4. A stronger horizon test preset (high pitch + wider view).
-5. Depth-readability anchors with near / mid / far references.
+4. Fake horizon presentation layer (haze + curved far-edge mask) that can be toggled on/off.
+5. A stronger horizon test preset (high pitch + wider view).
+6. Depth-readability anchors with clearer near / mid / far stepping.
 
 ## View presets
 
@@ -28,6 +29,7 @@ This iteration is tuned for quick evaluation of **spatial feel**, **pitch contro
 
 - readouts: center, zoom, pitch, bearing
 - controls:
+  - fake horizon toggle (ON/OFF comparison)
   - reset view
   - add anchors
   - clear anchors
@@ -36,6 +38,16 @@ This iteration is tuned for quick evaluation of **spatial feel**, **pitch contro
   - spatial
   - horizon test
   - pitch slider (`0` to `60`)
+
+## Fake horizon treatment (sandbox-only)
+
+This experiment adds a presentation-only layer above the map stage:
+
+- subtle atmospheric fade toward the far/top area
+- curved distant-mask composition to reduce the hard rectangular far edge
+- softened high-distance contrast so the scene reads as receding space
+
+Important: this does **not** modify map coordinates, MapLibre projection, or `oc-map` ↔ `oc-map-three-layer` sync behavior. It is purely an overlaid visual treatment for concept evaluation.
 
 ## Intentionally not implemented yet
 

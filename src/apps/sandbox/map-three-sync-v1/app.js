@@ -1,17 +1,54 @@
 import "../../../shared/ui/primitives/index.js";
 
-const INITIAL_VIEW = {
-  center: [5.1214, 52.0907],
-  zoom: 14.8,
-  pitch: 60,
-  bearing: 25,
+const VIEW_PRESETS = {
+  reset: {
+    center: [5.1214, 52.0907],
+    zoom: 14.5,
+    pitch: 40,
+    bearing: 18,
+  },
+  flat: {
+    center: [5.1214, 52.0907],
+    zoom: 14.9,
+    pitch: 0,
+    bearing: 0,
+  },
+  browse: {
+    center: [5.1214, 52.0907],
+    zoom: 14.6,
+    pitch: 33,
+    bearing: 16,
+  },
+  spatial: {
+    center: [5.1214, 52.0907],
+    zoom: 14.35,
+    pitch: 48,
+    bearing: 24,
+  },
+  horizonTest: {
+    center: [5.1214, 52.0907],
+    zoom: 13.8,
+    pitch: 58,
+    bearing: 28,
+  },
 };
 
 const TEST_ANCHORS = [
-  { id: "utrecht-core", lng: 5.1214, lat: 52.0907, altitude: 0, kind: "box" },
-  { id: "museum-quarter", lng: 5.1162, lat: 52.0905, altitude: 0, kind: "pillar" },
-  { id: "station-east", lng: 5.1129, lat: 52.0891, altitude: 0, kind: "box" },
-  { id: "canal-north", lng: 5.1225, lat: 52.0945, altitude: 0, kind: "pillar" },
+  // Near references (larger, close to center)
+  { id: "near-core-box", lng: 5.1214, lat: 52.0907, altitude: 0, kind: "box" },
+  { id: "near-core-pillar", lng: 5.1209, lat: 52.0905, altitude: 0, kind: "pillar" },
+  { id: "near-west-box", lng: 5.1185, lat: 52.0901, altitude: 0, kind: "box" },
+
+  // Mid references
+  { id: "mid-museum", lng: 5.1162, lat: 52.0905, altitude: 0, kind: "pillar" },
+  { id: "mid-station-east", lng: 5.1129, lat: 52.0891, altitude: 0, kind: "box" },
+  { id: "mid-canal-south", lng: 5.1228, lat: 52.0878, altitude: 0, kind: "pillar" },
+
+  // Far references with altitude offsets to improve depth read
+  { id: "far-north", lng: 5.123, lat: 52.0984, altitude: 15, kind: "pillar" },
+  { id: "far-east", lng: 5.1352, lat: 52.0939, altitude: 30, kind: "box" },
+  { id: "far-west", lng: 5.1049, lat: 52.0934, altitude: 45, kind: "pillar" },
+  { id: "far-south", lng: 5.1126, lat: 52.0811, altitude: 25, kind: "box" },
 ];
 
 const mapEl = document.getElementById("demo-map");
@@ -20,13 +57,21 @@ const statCenter = document.getElementById("stat-center");
 const statZoom = document.getElementById("stat-zoom");
 const statPitch = document.getElementById("stat-pitch");
 const statBearing = document.getElementById("stat-bearing");
+const pitchControl = document.getElementById("pitch-control");
+const pitchSliderValue = document.getElementById("pitch-slider-value");
 const eventLog = document.getElementById("event-log");
 
 let map = null;
 
 const appendLog = (message) => {
   const stamp = new Date().toISOString();
-  eventLog.textContent = `${stamp} ${message}\n${eventLog.textContent}`.slice(0, 2500);
+  eventLog.textContent = `${stamp} ${message}\n${eventLog.textContent}`.slice(0, 3500);
+};
+
+const syncPitchSlider = (pitch) => {
+  const roundedPitch = Math.round(pitch);
+  pitchControl.value = String(roundedPitch);
+  pitchSliderValue.textContent = String(roundedPitch);
 };
 
 const updateViewportStats = (viewport) => {
@@ -38,40 +83,29 @@ const updateViewportStats = (viewport) => {
   statZoom.textContent = viewport.zoom.toFixed(2);
   statPitch.textContent = viewport.pitch.toFixed(1);
   statBearing.textContent = viewport.bearing.toFixed(1);
+  syncPitchSlider(viewport.pitch);
 };
 
-const resetView = () => {
-  if (!map) {
+const applyPreset = (preset, label = "preset") => {
+  if (!map || !preset) {
     return;
   }
+
   map.easeTo({
-    center: INITIAL_VIEW.center,
-    zoom: INITIAL_VIEW.zoom,
-    pitch: INITIAL_VIEW.pitch,
-    bearing: INITIAL_VIEW.bearing,
-    duration: 600,
+    center: preset.center,
+    zoom: preset.zoom,
+    pitch: preset.pitch,
+    bearing: preset.bearing,
+    duration: 650,
   });
-};
-
-const tiltMap = () => {
-  if (!map) {
-    return;
-  }
-  const nextPitch = map.getPitch() > 45 ? 30 : 68;
-  map.easeTo({ pitch: nextPitch, duration: 500 });
-};
-
-const rotateMap = () => {
-  if (!map) {
-    return;
-  }
-  map.easeTo({ bearing: map.getBearing() + 35, duration: 500 });
+  appendLog(`${label} → pitch ${preset.pitch}, zoom ${preset.zoom}, bearing ${preset.bearing}`);
 };
 
 mapEl.addEventListener("oc-map-ready", () => {
   map = mapEl.mapInstance;
   appendLog("oc-map-ready received");
   threeLayerEl.setAnchors(TEST_ANCHORS);
+  appendLog(`setAnchors(${TEST_ANCHORS.length}) depth references`);
 
   if (map) {
     updateViewportStats({
@@ -95,12 +129,20 @@ threeLayerEl.addEventListener("oc-map-three-layer-error", (event) => {
   appendLog(`oc-map-three-layer-error: ${event.detail.message}`);
 });
 
+pitchControl.addEventListener("input", (event) => {
+  if (!map) {
+    return;
+  }
+
+  const nextPitch = Number(event.target.value);
+  map.easeTo({ pitch: nextPitch, duration: 120 });
+});
+
 document.querySelectorAll("[data-action]").forEach((button) => {
   button.addEventListener("click", () => {
     const action = button.dataset.action;
     if (action === "reset-view") {
-      resetView();
-      appendLog("reset view");
+      applyPreset(VIEW_PRESETS.reset, "reset view");
       return;
     }
 
@@ -116,15 +158,23 @@ document.querySelectorAll("[data-action]").forEach((button) => {
       return;
     }
 
-    if (action === "tilt-map") {
-      tiltMap();
-      appendLog("toggle pitch");
+    if (action === "flat") {
+      applyPreset(VIEW_PRESETS.flat, "flat preset");
       return;
     }
 
-    if (action === "rotate-map") {
-      rotateMap();
-      appendLog("rotate bearing +35");
+    if (action === "browse") {
+      applyPreset(VIEW_PRESETS.browse, "browse preset");
+      return;
+    }
+
+    if (action === "spatial") {
+      applyPreset(VIEW_PRESETS.spatial, "spatial preset");
+      return;
+    }
+
+    if (action === "horizon-test") {
+      applyPreset(VIEW_PRESETS.horizonTest, "horizon test preset");
     }
   });
 });

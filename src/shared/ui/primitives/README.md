@@ -31,6 +31,11 @@ This folder holds the first modest set of app-shell family shared primitives.
     - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`).
     - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `selectFeature`, `clearSelection`, and backward-compatible `highlightFeature` alias).
     - Emits `oc-map-ready`, `oc-map-feature-click`, `oc-map-viewport-change`, and `oc-map-error` (for loader/init failures).
+- `oc-map-three-layer`
+    - Shared companion primitive for syncing a Three.js custom layer on top of `oc-map`.
+    - Attaches to an existing `oc-map`, waits for `oc-map-ready`, then manages anchored scene objects via `setAnchors(...)` and `clearScene()`.
+    - First-step architecture proof only: validates MapLibre + Three alignment while panning/zooming/rotating/pitching.
+    - Intentionally does **not** implement cards/story logic, relation lines, terrain, or 3D tiles yet.
 
 ## Why these first
 

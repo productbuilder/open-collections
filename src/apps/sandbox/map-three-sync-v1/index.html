@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map + Three sync v1 — Sandbox</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+
+      main {
+        width: min(1200px, 100%);
+        margin: 0 auto;
+        padding: 1rem;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      }
+
+      p {
+        margin: 0.35rem 0 0;
+        color: #cbd5e1;
+      }
+
+      .layout {
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      @media (min-width: 960px) {
+        .layout {
+          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+          align-items: start;
+        }
+      }
+
+      .panel {
+        border: 1px solid #334155;
+        border-radius: 12px;
+        background: #111c33;
+        padding: 0.85rem;
+      }
+
+      oc-map {
+        --oc-map-height: min(74vh, 680px);
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+      }
+
+      .stat {
+        background: #1b2948;
+        border: 1px solid #2f4268;
+        border-radius: 10px;
+        padding: 0.45rem 0.55rem;
+      }
+
+      .stat dt {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #93c5fd;
+      }
+
+      .stat dd {
+        margin: 0.2rem 0 0;
+        font-size: 0.9rem;
+      }
+
+      .btn-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      button {
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        background: #1d4ed8;
+        color: #f8fafc;
+        padding: 0.45rem 0.6rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .log {
+        margin: 0;
+        min-height: 120px;
+        max-height: 220px;
+        overflow: auto;
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 0.5rem;
+        font-size: 0.76rem;
+        line-height: 1.35;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Map + Three sync v1</h1>
+        <p>Sandbox prototype: shared <code>oc-map</code> + shared <code>oc-map-three-layer</code>.</p>
+      </header>
+
+      <section class="layout">
+        <article class="panel">
+          <oc-map
+            id="demo-map"
+            center-lng="5.1214"
+            center-lat="52.0907"
+            zoom="14.8"
+            pitch="60"
+            bearing="25"
+            style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+          ></oc-map>
+          <oc-map-three-layer id="demo-three-layer" for="demo-map" layer-id="demo-three-custom-layer"></oc-map-three-layer>
+        </article>
+
+        <aside class="panel controls" aria-label="Three layer debug controls">
+          <dl class="stats" id="viewport-stats">
+            <div class="stat">
+              <dt>Center</dt>
+              <dd id="stat-center">—</dd>
+            </div>
+            <div class="stat">
+              <dt>Zoom</dt>
+              <dd id="stat-zoom">—</dd>
+            </div>
+            <div class="stat">
+              <dt>Pitch</dt>
+              <dd id="stat-pitch">—</dd>
+            </div>
+            <div class="stat">
+              <dt>Bearing</dt>
+              <dd id="stat-bearing">—</dd>
+            </div>
+          </dl>
+
+          <div class="btn-grid">
+            <button type="button" data-action="reset-view">Reset view</button>
+            <button type="button" data-action="add-anchors">Add anchors</button>
+            <button type="button" data-action="clear-anchors">Clear anchors</button>
+            <button type="button" data-action="tilt-map">Tilt map</button>
+            <button type="button" data-action="rotate-map">Rotate map</button>
+          </div>
+
+          <pre class="log" id="event-log">Waiting for map...</pre>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

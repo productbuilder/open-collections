@@ -34,7 +34,7 @@ This sandbox deliberately does **not** use:
   - white fog
   - stronger horizon/fog blending for earlier horizon perception
 - Minimal preset controls:
-  - Reset view (Hilversum default)
+  - Reset view (Hilversum baseline tuned for readability)
   - Browse
   - Spatial
   - Horizon
@@ -44,7 +44,7 @@ This sandbox deliberately does **not** use:
   - preset buttons stay in sync with slider
 - Vertical FOV testing controls:
   - slider (`30` to `70`) with live FOV readout
-  - FOV preset buttons (**Default 36.87**, **Wide 45**, **Wider 55**, **Extra Wide 70**)
+  - FOV preset buttons (**Default 55**, **Wide 45**, **Wider 55**, **Extra Wide 70**)
   - horizon comparison buttons (**Hzn 45**, **Hzn 50**, **Hzn 55**, **Hzn 60**, **Hzn 70**)
 - `Sky enabled` checkbox
 
@@ -64,6 +64,12 @@ Field of view (FOV) controls how much vertical scene area the camera captures.
 ## Local default reference point
 
 - The default start/reset location is now **Hilversum** (`lng 5.1766`, `lat 52.2292`) as the local Dutch baseline.
+- The baseline camera was adjusted to be less extreme and more locally readable:
+  - pitch `65`
+  - vertical FOV `55`
+  - slightly closer zoom than the earlier baseline
+  - modest bearing retained for spatial context
+- The dedicated **Horizon** preset remains intentionally stronger as a comparison mode.
 - A **Mountain test** preset is kept as a stronger terrain contrast/reference case.
 
 ## Visual notes

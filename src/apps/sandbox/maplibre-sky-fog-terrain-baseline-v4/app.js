@@ -382,9 +382,13 @@ function createCardElement(card, index) {
 }
 
 function setupDepthCarousel() {
+  const interactionZone = document.getElementById('depth-carousel-interaction-zone');
   const track = document.getElementById('depth-carousel-track');
   const prevButton = document.getElementById('carousel-prev-btn');
   const nextButton = document.getElementById('carousel-next-btn');
+  if (!interactionZone || !track || !prevButton || !nextButton) {
+    return;
+  }
   let activeIndex = 2;
   let gestureStartY = 0;
   let dragProgress = 0;
@@ -495,7 +499,7 @@ function setupDepthCarousel() {
   prevButton.addEventListener('click', () => shiftBy(-1));
   nextButton.addEventListener('click', () => shiftBy(1));
 
-  track.addEventListener('pointerdown', event => {
+  interactionZone.addEventListener('pointerdown', event => {
     if (isSnapping) {
       return;
     }
@@ -504,10 +508,10 @@ function setupDepthCarousel() {
     dragProgress = 0;
     animateTopCardInteractionBlend(1, 160);
     renderCarousel({ animate: false });
-    track.setPointerCapture(event.pointerId);
+    interactionZone.setPointerCapture(event.pointerId);
   });
 
-  track.addEventListener('pointermove', event => {
+  interactionZone.addEventListener('pointermove', event => {
     if (!isPointerDragging) {
       return;
     }
@@ -517,7 +521,7 @@ function setupDepthCarousel() {
     renderCarousel({ animate: false });
   });
 
-  track.addEventListener('pointerup', event => {
+  interactionZone.addEventListener('pointerup', event => {
     if (!isPointerDragging) {
       return;
     }
@@ -525,8 +529,8 @@ function setupDepthCarousel() {
     isPointerDragging = false;
     const nextStep = Math.abs(dragProgress) >= SWIPE_COMMIT_THRESHOLD ? (dragProgress < 0 ? 1 : -1) : 0;
 
-    if (track.hasPointerCapture(event.pointerId)) {
-      track.releasePointerCapture(event.pointerId);
+    if (interactionZone.hasPointerCapture(event.pointerId)) {
+      interactionZone.releasePointerCapture(event.pointerId);
     }
 
     if (nextStep === 0) {
@@ -538,10 +542,10 @@ function setupDepthCarousel() {
     animateToDragProgress(targetProgress, nextStep);
   });
 
-  track.addEventListener('pointercancel', event => {
+  interactionZone.addEventListener('pointercancel', event => {
     isPointerDragging = false;
-    if (track.hasPointerCapture(event.pointerId)) {
-      track.releasePointerCapture(event.pointerId);
+    if (interactionZone.hasPointerCapture(event.pointerId)) {
+      interactionZone.releasePointerCapture(event.pointerId);
     }
     animateToDragProgress(0, 0);
   });

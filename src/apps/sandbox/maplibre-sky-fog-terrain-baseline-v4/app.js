@@ -390,6 +390,8 @@ function setupDepthCarousel() {
   let dragProgress = 0;
   let isPointerDragging = false;
   let isSnapping = false;
+  let topCardInteractionBlend = 0;
+  let topCardBlendAnimationFrame = null;
   const snapDurationMs = 320;
 
   const cardElements = CAROUSEL_CARDS.map((card, index) => {
@@ -397,6 +399,43 @@ function setupDepthCarousel() {
     track.appendChild(element);
     return element;
   });
+
+  function animateTopCardInteractionBlend(targetBlend, durationMs = 180) {
+    if (topCardBlendAnimationFrame) {
+      window.cancelAnimationFrame(topCardBlendAnimationFrame);
+      topCardBlendAnimationFrame = null;
+    }
+
+    const startBlend = topCardInteractionBlend;
+    const clampedTarget = Math.max(0, Math.min(1, targetBlend));
+    const delta = clampedTarget - startBlend;
+
+    if (Math.abs(delta) < 0.001 || durationMs <= 0) {
+      topCardInteractionBlend = clampedTarget;
+      renderCarousel({ animate: false });
+      return;
+    }
+
+    const startTime = performance.now();
+    const easeOut = value => 1 - (1 - value) ** 3;
+
+    const step = currentTime => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.max(0, Math.min(1, elapsed / durationMs));
+      const easedProgress = easeOut(progress);
+      topCardInteractionBlend = startBlend + delta * easedProgress;
+      renderCarousel({ animate: false });
+
+      if (progress < 1) {
+        topCardBlendAnimationFrame = window.requestAnimationFrame(step);
+        return;
+      }
+
+      topCardBlendAnimationFrame = null;
+    };
+
+    topCardBlendAnimationFrame = window.requestAnimationFrame(step);
+  }
 
   function renderCarousel({ animate = true } = {}) {
     track.classList.toggle('is-dragging', isPointerDragging);
@@ -406,10 +445,10 @@ function setupDepthCarousel() {
     cardElements.forEach((element, index) => {
       const wrappedDelta = getWrappedDelta(index, activePosition);
       const scene = getCardDepthScenePosition(wrappedDelta);
-      const isActiveDragMotion = isPointerDragging && Math.abs(dragProgress) > 0.01;
-      const isTransientTopCard = isActiveDragMotion && wrappedDelta < 0 && wrappedDelta > -1.25;
+      const isTransientTopCardPosition = wrappedDelta < 0 && wrappedDelta > -1.25;
+      const isTransientTopCard = topCardInteractionBlend > 0.001 && isTransientTopCardPosition;
       const shouldHideAboveActive = wrappedDelta < 0 && !isTransientTopCard;
-      const visibility = shouldHideAboveActive ? 0 : 1;
+      const visibility = shouldHideAboveActive ? 0 : isTransientTopCard ? topCardInteractionBlend : 1;
       const transientScaleBoost = isTransientTopCard ? 1.06 : 1;
       const transientYBoost = isTransientTopCard ? -14 : 0;
       const baseTransform = `translate3d(-50%, ${scene.y + transientYBoost}px, ${scene.z}px) scale(${scene.scaleX * transientScaleBoost}, ${scene.scaleY * transientScaleBoost})`;
@@ -432,6 +471,7 @@ function setupDepthCarousel() {
     renderCarousel({ animate: false });
     track.classList.remove('is-snapping');
     isSnapping = false;
+    animateTopCardInteractionBlend(0, 200);
   }
 
   function animateToDragProgress(targetProgress, stepAfterSnap = 0) {
@@ -462,6 +502,7 @@ function setupDepthCarousel() {
     isPointerDragging = true;
     gestureStartY = event.clientY;
     dragProgress = 0;
+    animateTopCardInteractionBlend(1, 160);
     renderCarousel({ animate: false });
     track.setPointerCapture(event.pointerId);
   });

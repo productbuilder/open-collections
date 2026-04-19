@@ -20,7 +20,7 @@
         left: 12px;
         bottom: 12px;
         z-index: 1;
-        width: 240px;
+        width: 252px;
         border-radius: 8px;
         padding: 10px;
         background: rgba(35, 35, 35, 0.62);
@@ -42,6 +42,13 @@
         font-weight: 600;
       }
 
+      .panel h2 {
+        margin: 8px 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #f0f0f0;
+      }
+
       .presets {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -49,7 +56,15 @@
         margin-bottom: 8px;
       }
 
-      .presets button {
+      .fov-presets {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .presets button,
+      .fov-presets button {
         border: 1px solid #777;
         border-radius: 4px;
         padding: 6px;
@@ -62,6 +77,16 @@
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+
+      .fov-label {
+        justify-content: space-between;
+        margin: 4px 0;
+      }
+
+      .fov-slider {
+        width: 100%;
+        margin-bottom: 8px;
       }
 
       .hint {
@@ -81,11 +106,37 @@
         <button id="spatial-btn" type="button">Spatial</button>
         <button id="horizon-btn" type="button">Horizon</button>
       </div>
+
+      <h2>FOV test</h2>
+      <label for="fov-slider" class="fov-label">
+        Vertical FOV
+        <span id="fov-value">36.87°</span>
+      </label>
+      <input
+        id="fov-slider"
+        class="fov-slider"
+        type="range"
+        min="30"
+        max="55"
+        step="0.01"
+        value="36.87"
+      />
+      <div class="fov-presets" aria-label="fov presets">
+        <button id="fov-default-btn" type="button">Default</button>
+        <button id="fov-wide-btn" type="button">Wide</button>
+        <button id="fov-wider-btn" type="button">Wider</button>
+      </div>
+      <div class="fov-presets" aria-label="horizon fov compare">
+        <button id="horizon-default-btn" type="button">Hzn 36.87</button>
+        <button id="horizon-wide-btn" type="button">Hzn 45</button>
+        <button id="horizon-wider-btn" type="button">Hzn 50</button>
+      </div>
+
       <label for="sky-enabled">
         <input id="sky-enabled" type="checkbox" checked />
         Sky enabled
       </label>
-      <div class="hint">Use “Horizon” for high pitch (official-style baseline view).</div>
+      <div class="hint">Use “Horizon” plus FOV controls to compare horizon visibility/depth quickly.</div>
     </div>
 
     <script>
@@ -96,6 +147,19 @@
         'sky-horizon-blend': 0.75,
         'horizon-fog-blend': 0.9,
         'fog-ground-blend': 0.45
+      };
+
+      const FOV_PRESETS = {
+        default: 36.87,
+        wide: 45,
+        wider: 50
+      };
+
+      const HORIZON_CAMERA = {
+        center: [11.2953, 47.5479],
+        zoom: 10.5,
+        pitch: 78,
+        bearing: 15
       };
 
       const map = new maplibregl.Map({
@@ -164,6 +228,22 @@
         });
       }
 
+      function formatFov(value) {
+        return `${Number(value).toFixed(2)}°`;
+      }
+
+      function setVerticalFov(value) {
+        const numericValue = Number(value);
+        map.setVerticalFieldOfView(numericValue);
+        document.getElementById('fov-slider').value = String(numericValue);
+        document.getElementById('fov-value').textContent = formatFov(numericValue);
+      }
+
+      function jumpToHorizonWithFov(fov) {
+        map.jumpTo(HORIZON_CAMERA);
+        setVerticalFov(fov);
+      }
+
       map.addControl(
         new maplibregl.NavigationControl({
           visualizePitch: true,
@@ -174,6 +254,7 @@
 
       map.on('load', () => {
         setSkyEnabled(true);
+        setVerticalFov(FOV_PRESETS.default);
 
         const panel = document.querySelector('.panel');
         panel.classList.add('is-visible');
@@ -195,7 +276,35 @@
         });
 
         document.getElementById('horizon-btn').addEventListener('click', () => {
-          flyToPreset({ center: [11.2953, 47.5479], zoom: 10.5, pitch: 78, bearing: 15 });
+          flyToPreset(HORIZON_CAMERA);
+        });
+
+        document.getElementById('fov-slider').addEventListener('input', event => {
+          setVerticalFov(event.target.value);
+        });
+
+        document.getElementById('fov-default-btn').addEventListener('click', () => {
+          setVerticalFov(FOV_PRESETS.default);
+        });
+
+        document.getElementById('fov-wide-btn').addEventListener('click', () => {
+          setVerticalFov(FOV_PRESETS.wide);
+        });
+
+        document.getElementById('fov-wider-btn').addEventListener('click', () => {
+          setVerticalFov(FOV_PRESETS.wider);
+        });
+
+        document.getElementById('horizon-default-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.default);
+        });
+
+        document.getElementById('horizon-wide-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.wide);
+        });
+
+        document.getElementById('horizon-wider-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.wider);
         });
       });
     </script>

@@ -38,7 +38,18 @@ This sandbox deliberately does **not** use:
   - Browse
   - Spatial
   - Horizon
+- Vertical FOV testing controls:
+  - slider with live FOV readout
+  - FOV preset buttons (**Default 36.87**, **Wide 45**, **Wider 50**)
+  - horizon comparison buttons for default and wider FOV values
 - `Sky enabled` checkbox
+
+## FOV testing note
+
+Field of view (FOV) controls how much vertical scene area the camera captures.
+
+- MapLibre default vertical FOV is `36.87`.
+- This sandbox tests wider values (`45` and `50`) to evaluate whether the horizon appears earlier/stronger and whether depth perception feels more dramatic.
 
 ## Visual notes
 
@@ -56,6 +67,7 @@ When this sandbox is working as expected, you should see:
 - a white/light horizon band
 - terrain fading smoothly into fog
 - clear and dramatic difference between **Flat** and **Horizon** presets
+- clear side-by-side feel differences between **Hzn 36.87**, **Hzn 45**, and **Hzn 50** controls
 
 ## Known issues / verification notes
 

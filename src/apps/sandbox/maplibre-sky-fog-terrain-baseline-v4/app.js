@@ -61,7 +61,6 @@ const CARD_STACK_STOPS = [
     z: 52,
     scaleX: 0.88,
     scaleY: 0.84,
-    opacity: 0.22,
     blur: 1.8,
     saturation: 0.86,
     contrast: 0.86
@@ -72,19 +71,17 @@ const CARD_STACK_STOPS = [
     z: 104,
     scaleX: 0.96,
     scaleY: 0.93,
-    opacity: 0.74,
     blur: 0.65,
     saturation: 0.94,
     contrast: 0.94
   },
-  { offset: 0, y: -246, z: 158, scaleX: 1, scaleY: 1, opacity: 1, blur: 0, saturation: 1, contrast: 1 },
+  { offset: 0, y: -246, z: 158, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
   {
     offset: 1,
     y: -154,
     z: 84,
     scaleX: 0.93,
     scaleY: 0.83,
-    opacity: 0.78,
     blur: 0.55,
     saturation: 0.91,
     contrast: 0.92
@@ -95,7 +92,6 @@ const CARD_STACK_STOPS = [
     z: 16,
     scaleX: 0.84,
     scaleY: 0.67,
-    opacity: 0.56,
     blur: 1.2,
     saturation: 0.85,
     contrast: 0.86
@@ -106,7 +102,6 @@ const CARD_STACK_STOPS = [
     z: -56,
     scaleX: 0.74,
     scaleY: 0.5,
-    opacity: 0.34,
     blur: 2,
     saturation: 0.78,
     contrast: 0.78
@@ -117,7 +112,6 @@ const CARD_STACK_STOPS = [
     z: -146,
     scaleX: 0.62,
     scaleY: 0.34,
-    opacity: 0.14,
     blur: 2.85,
     saturation: 0.72,
     contrast: 0.72
@@ -357,15 +351,16 @@ function getCardDepthScenePosition(offset) {
   const z = lerp(lower.z, upper.z, t);
   const scaleX = lerp(lower.scaleX, upper.scaleX, t);
   const scaleY = lerp(lower.scaleY, upper.scaleY, t);
-  const opacity = lerp(lower.opacity, upper.opacity, t);
   const blur = lerp(lower.blur, upper.blur, t);
   const saturation = lerp(lower.saturation, upper.saturation, t);
   const contrast = lerp(lower.contrast, upper.contrast, t);
   const zIndex = Math.max(2, 12 - Math.round(Math.max(0, clampedOffset) * 2.2) + Math.round(Math.max(0, -clampedOffset) * 2.4));
 
   return {
-    transform: `translate3d(-50%, ${y}px, ${z}px) scale(${scaleX}, ${scaleY})`,
-    opacity,
+    y,
+    z,
+    scaleX,
+    scaleY,
     zIndex,
     blur,
     saturation,
@@ -411,12 +406,20 @@ function setupDepthCarousel() {
     cardElements.forEach((element, index) => {
       const wrappedDelta = getWrappedDelta(index, activePosition);
       const scene = getCardDepthScenePosition(wrappedDelta);
-      element.style.transform = scene.transform;
-      element.style.opacity = String(scene.opacity);
-      element.style.zIndex = String(scene.zIndex);
+      const isTransientTopCard = isPointerDragging && wrappedDelta < 0 && wrappedDelta > -1.25;
+      const shouldHideAboveActive = wrappedDelta < 0 && !isTransientTopCard;
+      const visibility = shouldHideAboveActive ? 0 : 1;
+      const transientScaleBoost = isTransientTopCard ? 1.06 : 1;
+      const transientYBoost = isTransientTopCard ? -14 : 0;
+      const baseTransform = `translate3d(-50%, ${scene.y + transientYBoost}px, ${scene.z}px) scale(${scene.scaleX * transientScaleBoost}, ${scene.scaleY * transientScaleBoost})`;
+
+      element.style.transform = baseTransform;
+      element.style.opacity = String(visibility);
+      element.style.zIndex = String(scene.zIndex + (isTransientTopCard ? 2 : 0));
       element.style.filter = `blur(${scene.blur}px) saturate(${scene.saturation}) contrast(${scene.contrast})`;
       element.classList.toggle('is-active', wrappedDelta === 0);
-      element.setAttribute('aria-hidden', Math.abs(wrappedDelta) > 1 ? 'true' : 'false');
+      element.classList.toggle('is-transient-top', isTransientTopCard);
+      element.setAttribute('aria-hidden', visibility === 0 || Math.abs(wrappedDelta) > 1 ? 'true' : 'false');
     });
   }
 

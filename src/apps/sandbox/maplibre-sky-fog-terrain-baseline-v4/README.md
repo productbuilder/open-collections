@@ -35,6 +35,14 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
   - drag down moves cards downward,
   - release outcomes now follow both drag direction and threshold.
 
+
+### Interaction boundary + card surface refinement update
+
+- Restricted carousel hit-testing to the top card zone so the map stays draggable/zoomable outside that area.
+- Restored map pan/pinch interaction below and around the top card interaction zone.
+- Changed the outgoing top card to be drag-only: it now appears only while swiping and disappears at rest.
+- Switched card bodies to opaque surfaces (main + trailing cards) and kept depth cues via scale/blur/position/contrast/shadow.
+
 ### Layout cleanup pass
 
 - Controls now start closed on initial load so the first impression prioritizes map/horizon + cards.

@@ -62,6 +62,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - On drag start, the oversized top card now fades in and follows the existing depth-motion path.
 - After release/snap settle, the oversized top card fades back out and the resting composition returns cleanly.
 
+### Interaction zone debug visibility update
+
+- Added a temporary red outline around the top carousel interaction container so gesture bounds are explicitly visible during debugging.
+- Constrained swipe/drag gesture capture to that outlined top container only; map interactions below it should pass through normally.
+- This pass is focused on validating interaction boundaries and hit-testing isolation, not final visual styling.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

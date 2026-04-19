@@ -34,17 +34,18 @@ This sandbox deliberately does **not** use:
   - white fog
   - stronger horizon/fog blending for earlier horizon perception
 - Minimal preset controls:
-  - Flat
+  - Reset view (Hilversum default)
   - Browse
   - Spatial
   - Horizon
+  - Mountain test (contrast/reference preset)
 - Pitch testing controls:
   - slider (`0` to `85`) with live pitch readout
   - preset buttons stay in sync with slider
 - Vertical FOV testing controls:
-  - slider with live FOV readout
-  - FOV preset buttons (**Default 36.87**, **Wide 45**, **Wider 50**, **Extra Wide 55**)
-  - horizon comparison buttons (**Hzn 45**, **Hzn 50**, **Hzn 55**)
+  - slider (`30` to `70`) with live FOV readout
+  - FOV preset buttons (**Default 36.87**, **Wide 45**, **Wider 55**, **Extra Wide 70**)
+  - horizon comparison buttons (**Hzn 45**, **Hzn 50**, **Hzn 55**, **Hzn 60**, **Hzn 70**)
 - `Sky enabled` checkbox
 
 ## FOV testing note
@@ -52,13 +53,18 @@ This sandbox deliberately does **not** use:
 Field of view (FOV) controls how much vertical scene area the camera captures.
 
 - MapLibre default vertical FOV is `36.87`.
-- This sandbox tests wider values (`45`, `50`, `55`) to evaluate whether the horizon appears earlier/stronger and whether depth perception feels more dramatic.
+- This sandbox intentionally tests wider values up to `70` to evaluate whether horizon perception improves in a flatter local context.
 
 ## Pitch testing note
 
 - MapLibre documents `setPitch()` in the `0` to `60` range.
 - MapLibre also supports `setMaxPitch()` above `60` as experimental.
 - This sandbox explicitly sets `map.setMaxPitch(85)` and tests higher pitch values intentionally for horizon perception tuning.
+
+## Local default reference point
+
+- The default start/reset location is now **Hilversum** (`lng 5.1766`, `lat 52.2292`) as the local Dutch baseline.
+- A **Mountain test** preset is kept as a stronger terrain contrast/reference case.
 
 ## Visual notes
 
@@ -76,12 +82,13 @@ When this sandbox is working as expected, you should see:
 - a white/light horizon band
 - terrain fading smoothly into fog
 - clear and dramatic difference between **Flat** and **Horizon** presets
-- clear side-by-side feel differences between **Hzn 45**, **Hzn 50**, and **Hzn 55** controls
+- clear side-by-side feel differences across **Hzn 45** through **Hzn 70** controls
 
 ## Known issues / verification notes
 
 - If horizon/sky is **not** visible with the Horizon preset and `Sky enabled` checked, capture that as an environment-specific issue first (WebGL/GPU/browser/runtime), since this sandbox bypasses `oc-map` integration.
 - Higher pitch behavior (`>60`) should be treated as experimental sandbox behavior.
+- Wider FOV behavior is intentionally stressed in this sandbox and may look exaggerated compared with production camera defaults.
 
 ## Next step after verification
 

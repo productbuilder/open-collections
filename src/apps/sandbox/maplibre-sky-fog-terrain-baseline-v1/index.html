@@ -58,7 +58,7 @@
 
       .fov-presets {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 6px;
         margin-bottom: 8px;
       }
@@ -84,6 +84,7 @@
         margin: 4px 0;
       }
 
+      .pitch-slider,
       .fov-slider {
         width: 100%;
         margin-bottom: 8px;
@@ -107,6 +108,12 @@
         <button id="horizon-btn" type="button">Horizon</button>
       </div>
 
+      <label for="pitch-slider" class="fov-label">
+        Pitch
+        <span id="pitch-value">0°</span>
+      </label>
+      <input id="pitch-slider" class="pitch-slider" type="range" min="0" max="85" step="1" value="0" />
+
       <h2>FOV test</h2>
       <label for="fov-slider" class="fov-label">
         Vertical FOV
@@ -125,11 +132,12 @@
         <button id="fov-default-btn" type="button">Default</button>
         <button id="fov-wide-btn" type="button">Wide</button>
         <button id="fov-wider-btn" type="button">Wider</button>
+        <button id="fov-extra-wide-btn" type="button">Extra Wide</button>
       </div>
       <div class="fov-presets" aria-label="horizon fov compare">
-        <button id="horizon-default-btn" type="button">Hzn 36.87</button>
         <button id="horizon-wide-btn" type="button">Hzn 45</button>
         <button id="horizon-wider-btn" type="button">Hzn 50</button>
+        <button id="horizon-extra-wide-btn" type="button">Hzn 55</button>
       </div>
 
       <label for="sky-enabled">
@@ -152,7 +160,14 @@
       const FOV_PRESETS = {
         default: 36.87,
         wide: 45,
-        wider: 50
+        wider: 50,
+        extraWide: 55
+      };
+
+      const CAMERA_PRESETS = {
+        flat: { center: [11.2953, 47.5479], zoom: 11.3, pitch: 0, bearing: 0 },
+        browse: { center: [11.2953, 47.5479], zoom: 12.6, pitch: 30, bearing: 20 },
+        spatial: { center: [11.2953, 47.5479], zoom: 12.8, pitch: 50, bearing: 35 }
       };
 
       const HORIZON_CAMERA = {
@@ -232,6 +247,22 @@
         return `${Number(value).toFixed(2)}°`;
       }
 
+      function formatPitch(value) {
+        return `${Math.round(Number(value))}°`;
+      }
+
+      function syncPitchUi(value) {
+        const numericValue = Number(value);
+        document.getElementById('pitch-slider').value = String(numericValue);
+        document.getElementById('pitch-value').textContent = formatPitch(numericValue);
+      }
+
+      function setPitchValue(value) {
+        const numericValue = Number(value);
+        map.jumpTo({ pitch: numericValue });
+        syncPitchUi(numericValue);
+      }
+
       function setVerticalFov(value) {
         const numericValue = Number(value);
         map.setVerticalFieldOfView(numericValue);
@@ -253,8 +284,10 @@
       );
 
       map.on('load', () => {
+        map.setMaxPitch(85);
         setSkyEnabled(true);
         setVerticalFov(FOV_PRESETS.default);
+        syncPitchUi(map.getPitch());
 
         const panel = document.querySelector('.panel');
         panel.classList.add('is-visible');
@@ -264,19 +297,23 @@
         skyToggle.addEventListener('change', () => setSkyEnabled(skyToggle.checked));
 
         document.getElementById('flat-btn').addEventListener('click', () => {
-          flyToPreset({ center: [11.2953, 47.5479], zoom: 11.3, pitch: 0, bearing: 0 });
+          flyToPreset(CAMERA_PRESETS.flat);
         });
 
         document.getElementById('browse-btn').addEventListener('click', () => {
-          flyToPreset({ center: [11.2953, 47.5479], zoom: 12.6, pitch: 45, bearing: 20 });
+          flyToPreset(CAMERA_PRESETS.browse);
         });
 
         document.getElementById('spatial-btn').addEventListener('click', () => {
-          flyToPreset({ center: [11.2953, 47.5479], zoom: 12.8, pitch: 63, bearing: 35 });
+          flyToPreset(CAMERA_PRESETS.spatial);
         });
 
         document.getElementById('horizon-btn').addEventListener('click', () => {
           flyToPreset(HORIZON_CAMERA);
+        });
+
+        document.getElementById('pitch-slider').addEventListener('input', event => {
+          setPitchValue(event.target.value);
         });
 
         document.getElementById('fov-slider').addEventListener('input', event => {
@@ -295,8 +332,8 @@
           setVerticalFov(FOV_PRESETS.wider);
         });
 
-        document.getElementById('horizon-default-btn').addEventListener('click', () => {
-          jumpToHorizonWithFov(FOV_PRESETS.default);
+        document.getElementById('fov-extra-wide-btn').addEventListener('click', () => {
+          setVerticalFov(FOV_PRESETS.extraWide);
         });
 
         document.getElementById('horizon-wide-btn').addEventListener('click', () => {
@@ -305,6 +342,14 @@
 
         document.getElementById('horizon-wider-btn').addEventListener('click', () => {
           jumpToHorizonWithFov(FOV_PRESETS.wider);
+        });
+
+        document.getElementById('horizon-extra-wide-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.extraWide);
+        });
+
+        map.on('pitch', () => {
+          syncPitchUi(map.getPitch());
         });
       });
     </script>

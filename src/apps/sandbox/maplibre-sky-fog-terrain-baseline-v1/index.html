@@ -184,12 +184,12 @@
 
     <script>
       const DEFAULT_SKY = {
-        'sky-color': '#bcdfff',
+        'sky-color': '#88C6FC',
         'horizon-color': '#ffffff',
         'fog-color': '#ffffff',
-        'sky-horizon-blend': 0.9,
+        'sky-horizon-blend': 0.75,
         'horizon-fog-blend': 0.9,
-        'fog-ground-blend': 0.7
+        'fog-ground-blend': 0.45
       };
 
       const FOV_PRESETS = {
@@ -220,23 +220,61 @@
         pitch: 70,
         bearing: 22
       };
-      const OC_MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
       const map = new maplibregl.Map({
         container: 'map',
         ...BASELINE_CAMERA,
         hash: true,
-        style: OC_MAP_STYLE_URL,
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; OpenStreetMap Contributors',
+              maxzoom: 19
+            },
+            terrainSource: {
+              type: 'raster-dem',
+              url: 'https://tiles.mapterhorn.com/tilejson.json',
+              tileSize: 256
+            },
+            hillshadeSource: {
+              type: 'raster-dem',
+              url: 'https://tiles.mapterhorn.com/tilejson.json',
+              tileSize: 256
+            }
+          },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm'
+            },
+            {
+              id: 'hills',
+              type: 'hillshade',
+              source: 'hillshadeSource',
+              layout: { visibility: 'visible' },
+              paint: { 'hillshade-shadow-color': '#473B24' }
+            }
+          ],
+          terrain: {
+            source: 'terrainSource',
+            exaggeration: 0.8
+          }
+        },
         maxZoom: 18,
         maxPitch: 85
       });
 
       function setSkyEnabled(isEnabled) {
-        if (!isEnabled) {
-          const skyToggle = document.getElementById('sky-enabled');
-          skyToggle.checked = true;
+        if (isEnabled) {
+          map.setSky(DEFAULT_SKY);
+          return;
         }
-        map.setSky(DEFAULT_SKY);
+        map.setSky(undefined);
       }
 
       function flyToPreset(options) {
@@ -298,77 +336,6 @@
 
       map.on('load', () => {
         map.setMaxPitch(85);
-        if (!map.getSource('terrainSource')) {
-          map.addSource('terrainSource', {
-            type: 'raster-dem',
-            url: 'https://tiles.mapterhorn.com/tilejson.json',
-            tileSize: 256
-          });
-        }
-
-        if (!map.getSource('hillshadeSource')) {
-          map.addSource('hillshadeSource', {
-            type: 'raster-dem',
-            url: 'https://tiles.mapterhorn.com/tilejson.json',
-            tileSize: 256
-          });
-        }
-
-        if (!map.getLayer('hills')) {
-          map.addLayer({
-            id: 'hills',
-            type: 'hillshade',
-            source: 'hillshadeSource',
-            layout: { visibility: 'visible' },
-            paint: { 'hillshade-shadow-color': '#473B24' }
-          });
-        }
-
-        map.setTerrain({
-          source: 'terrainSource',
-          exaggeration: 0.8
-        });
-
-        const layers = map.getStyle().layers || [];
-        layers.forEach(layer => {
-          if (layer.id.includes('road') && layer.type === 'line') {
-            map.setPaintProperty(layer.id, 'line-opacity', [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              10, 0.2,
-              13, 0.6,
-              16, 1.0
-            ]);
-          }
-
-          if (layer.type === 'symbol') {
-            map.setPaintProperty(layer.id, 'text-opacity', [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              10, 0.0,
-              13, 0.5,
-              15, 1.0
-            ]);
-          }
-
-          if (layer.id.includes('minor') || layer.id.includes('path')) {
-            map.setLayoutProperty(layer.id, 'visibility', 'none');
-          }
-        });
-
-        const primaryRoadLayer = layers.find(layer => layer.id === 'road-primary' && layer.type === 'line');
-        if (primaryRoadLayer) {
-          map.setPaintProperty('road-primary', 'line-width', [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            10, 1,
-            16, 4
-          ]);
-        }
-
         setSkyEnabled(true);
         setVerticalFov(FOV_PRESETS.default);
         syncPitchUi(map.getPitch());

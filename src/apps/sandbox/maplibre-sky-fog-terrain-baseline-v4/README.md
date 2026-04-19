@@ -68,6 +68,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Constrained swipe/drag gesture capture to that outlined top container only; map interactions below it should pass through normally.
 - This pass is focused on validating interaction boundaries and hit-testing isolation, not final visual styling.
 
+### Reduced top interaction-zone height update
+
+- Reduced the top carousel interaction-zone height while keeping it full-width and attached to the top edge.
+- The red debug-outlined zone now better matches the visible top card stack instead of extending deep into mid-screen map space.
+- This was done to prevent carousel hit-testing from interfering with map interaction below the card stack region.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

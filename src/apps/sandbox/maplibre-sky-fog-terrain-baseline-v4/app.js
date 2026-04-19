@@ -406,7 +406,8 @@ function setupDepthCarousel() {
     cardElements.forEach((element, index) => {
       const wrappedDelta = getWrappedDelta(index, activePosition);
       const scene = getCardDepthScenePosition(wrappedDelta);
-      const isTransientTopCard = isPointerDragging && wrappedDelta < 0 && wrappedDelta > -1.25;
+      const isActiveDragMotion = isPointerDragging && Math.abs(dragProgress) > 0.01;
+      const isTransientTopCard = isActiveDragMotion && wrappedDelta < 0 && wrappedDelta > -1.25;
       const shouldHideAboveActive = wrappedDelta < 0 && !isTransientTopCard;
       const visibility = shouldHideAboveActive ? 0 : 1;
       const transientScaleBoost = isTransientTopCard ? 1.06 : 1;

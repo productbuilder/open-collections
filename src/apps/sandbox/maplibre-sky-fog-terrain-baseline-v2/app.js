@@ -39,11 +39,6 @@ const HORIZON_CAMERA = {
 const OC_MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 const TERRAIN_SOURCE_ID = 'terrainSource';
 const MAPLIBRE_MAX_ZOOM = 24;
-const SOURCE_TILE_LOD_PARAMS = {
-  maxZoomLevelsOnScreen: 6,
-  tileCountMaxMinRatio: 5
-};
-const DEBUG_TILE_BOUNDARIES = false;
 
 const BASEMAP_LAYER_TUNING = {
   road: { minDelta: 1.5, maxDelta: 1 },
@@ -56,8 +51,7 @@ const map = new maplibregl.Map({
   hash: true,
   style: OC_MAP_STYLE_URL,
   maxZoom: 18,
-  maxPitch: 85,
-  cancelPendingTileRequestsWhileZooming: false
+  maxPitch: 85
 });
 
 function setSkyEnabled(isEnabled) {
@@ -248,15 +242,6 @@ map.addControl(
 
 map.on('load', () => {
   map.setMaxPitch(85);
-  map.setSourceTileLodParams(SOURCE_TILE_LOD_PARAMS);
-  map.showTileBoundaries = DEBUG_TILE_BOUNDARIES;
-
-  console.info('[maplibre-sky-fog-terrain-baseline-v2] source tile LOD tuned', {
-    sourceTileLodParams: SOURCE_TILE_LOD_PARAMS,
-    cancelPendingTileRequestsWhileZooming: false,
-    showTileBoundaries: DEBUG_TILE_BOUNDARIES
-  });
-
   tuneBasemapLayerZoomConsistency();
   configureTerrainAndHillshade();
   setSkyEnabled(true);

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>MapLibre Sky/Fog/Terrain Baseline v2</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
+    <style>
+      :root {
+        --bottom-shelf-height: clamp(168px, 28vh, 260px);
+      }
+
+      html,
+      body,
+      #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .panel {
+        position: absolute;
+        left: 12px;
+        bottom: calc(var(--bottom-shelf-height) + env(safe-area-inset-bottom, 0px) + 12px);
+        z-index: 3;
+        width: 252px;
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(35, 35, 35, 0.62);
+        color: #fff;
+        font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        opacity: 0;
+        transform: translateY(6px);
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
+      }
+
+      .panel.is-open,
+      .panel.is-visible,
+      .panel:hover,
+      .panel:focus-within {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .menu-toggle {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        left: 12px;
+        z-index: 4;
+        min-height: 44px;
+        min-width: 88px;
+        border: 1px solid #777;
+        border-radius: 22px;
+        padding: 8px 14px;
+        cursor: pointer;
+        color: #fff;
+        background: rgba(35, 35, 35, 0.85);
+        font: 600 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        transition: background-color 160ms ease, border-color 160ms ease;
+      }
+
+      .menu-toggle.is-active {
+        background: rgba(70, 70, 70, 0.9);
+        border-color: #aaa;
+      }
+
+      .panel h1 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .panel h2 {
+        margin: 8px 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #f0f0f0;
+      }
+
+      .presets,
+      .fov-presets {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .presets button,
+      .fov-presets button {
+        border: 1px solid #777;
+        border-radius: 4px;
+        padding: 6px;
+        cursor: pointer;
+        color: #fff;
+        background: #4a4a4a;
+      }
+
+      .panel label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .fov-label {
+        justify-content: space-between;
+        margin: 4px 0;
+      }
+
+      .pitch-slider,
+      .fov-slider {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .hint {
+        margin-top: 8px;
+        color: #d8d8d8;
+      }
+
+      .bottom-shelf {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        height: calc(var(--bottom-shelf-height) + env(safe-area-inset-bottom, 0px));
+        background: #ffffff;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -10px 28px rgba(20, 25, 34, 0.22);
+        pointer-events: none;
+      }
+
+      .bottom-shelf-handle {
+        width: 46px;
+        height: 4px;
+        border-radius: 999px;
+        margin: 12px auto 0;
+        background: #d8dde6;
+      }
+
+      .maplibregl-ctrl-top-right {
+        top: auto;
+        right: 12px;
+        bottom: calc(var(--bottom-shelf-height) + env(safe-area-inset-bottom, 0px) + 16px);
+      }
+
+      .maplibregl-ctrl-group {
+        box-shadow: 0 4px 14px rgba(20, 25, 34, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">
+      Controls
+    </button>
+
+    <div id="controls-panel" class="panel" aria-label="camera presets">
+      <h1>Baseline camera presets</h1>
+      <div class="presets">
+        <button id="flat-btn" type="button">Reset view</button>
+        <button id="browse-btn" type="button">Browse</button>
+        <button id="spatial-btn" type="button">Spatial</button>
+        <button id="horizon-btn" type="button">Horizon</button>
+        <button id="mountain-btn" type="button">Mountain test</button>
+      </div>
+
+      <label for="pitch-slider" class="fov-label">
+        Pitch
+        <span id="pitch-value">65°</span>
+      </label>
+      <input id="pitch-slider" class="pitch-slider" type="range" min="0" max="85" step="1" value="65" />
+
+      <h2>FOV test</h2>
+      <label for="fov-slider" class="fov-label">
+        Vertical FOV
+        <span id="fov-value">55.00°</span>
+      </label>
+      <input
+        id="fov-slider"
+        class="fov-slider"
+        type="range"
+        min="30"
+        max="70"
+        step="0.01"
+        value="55"
+      />
+      <div class="fov-presets" aria-label="fov presets">
+        <button id="fov-default-btn" type="button">Default</button>
+        <button id="fov-wide-btn" type="button">Wide</button>
+        <button id="fov-wider-btn" type="button">Wider</button>
+        <button id="fov-extra-wide-btn" type="button">Extra Wide</button>
+      </div>
+      <div class="fov-presets" aria-label="horizon fov compare">
+        <button id="horizon-wide-btn" type="button">Hzn 45</button>
+        <button id="horizon-mid-btn" type="button">Hzn 50</button>
+        <button id="horizon-wider-btn" type="button">Hzn 55</button>
+        <button id="horizon-extra-wide-btn" type="button">Hzn 55</button>
+        <button id="horizon-60-btn" type="button">Hzn 60</button>
+        <button id="horizon-70-btn" type="button">Hzn 70</button>
+      </div>
+
+      <label for="sky-enabled">
+        <input id="sky-enabled" type="checkbox" checked />
+        Sky enabled
+      </label>
+      <div class="hint">Use “Horizon” plus FOV controls to compare horizon visibility/depth quickly.</div>
+    </div>
+
+    <div class="bottom-shelf" aria-hidden="true">
+      <div class="bottom-shelf-handle"></div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

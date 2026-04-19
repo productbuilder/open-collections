@@ -1,33 +1,44 @@
 # map-horizon-v1
 
-Minimal sandbox to replicate the official MapLibre **sky + fog + terrain** setup while using the shared `oc-map` primitive.
+Sandbox baseline that reproduces the official MapLibre **Sky + Fog + Terrain** horizon behavior while reusing `oc-map` without modifying it.
 
-## Purpose
+## What this sandbox does
 
-This experiment isolates one visual question: does a terrain-backed, high-pitch MapLibre scene produce a convincing horizon feel?
+- Waits for `oc-map-ready`, then configures the map via `mapInstance`.
+- Adds DEM sources exactly like the MapLibre example (`terrainSource` + `hillshadeSource`).
+- Applies `setTerrain({ source: 'terrainSource', exaggeration: 1.0 })`.
+- Adds a hillshade layer (`id: 'hills'`) for depth cues.
+- Forces the camera to the horizon-friendly view:
+    - center: `[11.2953, 47.5479]`
+    - zoom: `9`
+    - pitch: `75`
+    - bearing: `20`
+- Applies the example-aligned `setSky(...)` values for sky/horizon/fog blending.
 
-The sandbox intentionally excludes product UI complexity (cards, timeline, and Three.js) so the atmosphere and depth cues can be evaluated on their own.
+## Why the horizon appears
 
-## What is implemented
+You do not directly “turn on” a horizon.
 
-- Fullscreen `oc-map` stage with minimal overlay controls.
-- `oc-map-ready` listener that configures MapLibre terrain runtime settings.
-- Raster DEM source + `setTerrain(...)` for 3D relief.
-- `hillshade` layer for stronger terrain depth perception.
-- `setSky(...)` configuration inspired by the Rekichizu horizon tuning profile.
-- Pitch presets (`0`, `30`, `50`, `70`) to compare horizon readability quickly.
+The horizon appears when these conditions are combined:
 
-## Key insight being validated
+1. 3D terrain is enabled.
+2. Camera pitch is high enough to see far distance.
+3. Zoom is low enough to include distant terrain.
+4. Sky + fog blending can then transition naturally as:
+   **terrain → fog → horizon → sky**.
 
-- Fog blending is most useful over terrain rather than a flat map.
-- Terrain creates depth cues that make horizon transitions believable.
-- Camera pitch controls whether the horizon effect is visible and immersive.
+If you only see terrain, the camera is usually too flat or too zoomed in.
 
-## Next steps
+## Debug camera presets
 
-1. Lift the best sky/fog/terrain defaults into the main explorer map experience.
-2. Re-introduce `oc-map-three-layer` for 3D companion experiments after horizon baseline is validated.
-3. Add timeline and card overlays later, once atmospheric quality is confirmed.
+Buttons in the overlay help validate behavior quickly:
+
+- **Flat**: pitch `0`, zoom `12`
+- **Browse**: pitch `30`, zoom `11`
+- **Spatial**: pitch `50`, zoom `10`
+- **Horizon**: pitch `75`, zoom `9`
+
+The **Horizon** preset should make the sky band and fog transition visibly clear.
 
 ## Run locally
 

@@ -23,9 +23,17 @@
         width: 240px;
         border-radius: 8px;
         padding: 10px;
-        background: rgba(35, 35, 35, 0.88);
+        background: rgba(35, 35, 35, 0.62);
         color: #fff;
         font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        opacity: 0;
+        transition: opacity 220ms ease;
+      }
+
+      .panel.is-visible,
+      .panel:hover,
+      .panel:focus-within {
+        opacity: 1;
       }
 
       .panel h1 {
@@ -82,12 +90,12 @@
 
     <script>
       const DEFAULT_SKY = {
-        'sky-color': '#0000ff',
-        'sky-horizon-blend': 0.5,
-        'horizon-color': '#00ff00',
-        'horizon-fog-blend': 0.5,
-        'fog-color': '#ff0000',
-        'fog-ground-blend': 0.1
+        'sky-color': '#88C6FC',
+        'horizon-color': '#ffffff',
+        'fog-color': '#ffffff',
+        'sky-horizon-blend': 0.75,
+        'horizon-fog-blend': 0.9,
+        'fog-ground-blend': 0.45
       };
 
       const map = new maplibregl.Map({
@@ -133,7 +141,7 @@
           ],
           terrain: {
             source: 'terrainSource',
-            exaggeration: 1
+            exaggeration: 0.8
           }
         },
         maxZoom: 18,
@@ -164,16 +172,12 @@
         })
       );
 
-      map.addControl(new maplibregl.GlobeControl());
-      map.addControl(
-        new maplibregl.TerrainControl({
-          source: 'terrainSource',
-          exaggeration: 1
-        })
-      );
-
       map.on('load', () => {
         setSkyEnabled(true);
+
+        const panel = document.querySelector('.panel');
+        panel.classList.add('is-visible');
+        window.setTimeout(() => panel.classList.remove('is-visible'), 2000);
 
         const skyToggle = document.getElementById('sky-enabled');
         skyToggle.addEventListener('change', () => setSkyEnabled(skyToggle.checked));
@@ -191,7 +195,7 @@
         });
 
         document.getElementById('horizon-btn').addEventListener('click', () => {
-          flyToPreset({ center: [11.2953, 47.5479], zoom: 12, pitch: 77, bearing: 0 });
+          flyToPreset({ center: [11.2953, 47.5479], zoom: 10.5, pitch: 78, bearing: 15 });
         });
       });
     </script>

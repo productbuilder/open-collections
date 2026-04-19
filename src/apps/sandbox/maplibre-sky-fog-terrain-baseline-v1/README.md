@@ -1,16 +1,14 @@
 # maplibre-sky-fog-terrain-baseline-v1
 
-Baseline verification sandbox for the official MapLibre **Sky, Fog, Terrain** example:
+Baseline verification sandbox for a natural-looking MapLibre **Sky, Fog, Terrain** atmosphere.
 
-- Official example: https://maplibre.org/maplibre-gl-js/docs/examples/sky-fog-terrain/
+- Official example reference: https://maplibre.org/maplibre-gl-js/docs/examples/sky-fog-terrain/
 
 ## Purpose
 
 This sandbox is intentionally isolated and uses **raw `maplibregl.Map(...)`** directly.
 
-It exists to answer:
-
-> Can we make the horizon appear at all in our environment if we literally copy the official working example?
+It exists to verify a clean atmospheric baseline that can later support timeline/cards/story layers.
 
 ## Intentional constraints
 
@@ -24,13 +22,17 @@ This sandbox deliberately does **not** use:
 ## What is included
 
 - MapLibre CSS and JS from CDN
-- Inline style object closely matching the official example
+- Inline style object with:
   - OSM raster base source
   - terrain raster-dem source
   - separate hillshade raster-dem source
-  - terrain enabled in style
+  - terrain enabled in style (`exaggeration: 0.8`)
   - hillshade layer enabled
-- `map.setSky(...)` with official baseline values
+- `map.setSky(...)` tuned for soft natural atmosphere
+  - light blue sky
+  - white horizon
+  - white fog
+  - stronger horizon/fog blending for earlier horizon perception
 - Minimal preset controls:
   - Flat
   - Browse
@@ -38,20 +40,32 @@ This sandbox deliberately does **not** use:
   - Horizon
 - `Sky enabled` checkbox
 
+## Visual notes
+
+- The horizon is controlled by **camera + fog blending**, not by a fixed geometric line.
+- “Earlier horizon” perception is achieved by tuning fog blends (`fog-ground-blend`, `horizon-fog-blend`, `sky-horizon-blend`), not by shifting geometry.
+- This version approximates the targeted Rekichizu-style atmospheric read:
+
+`terrain → fog → horizon → sky`
+
 ## Expected baseline result
 
 When this sandbox is working as expected, you should see:
 
-- blue sky at the top of the viewport
-- terrain fading into fog
-- visible horizon at high pitch
-- clear difference between **Flat** and **Horizon** presets
+- soft blue sky at the top of the viewport
+- a white/light horizon band
+- terrain fading smoothly into fog
+- clear and dramatic difference between **Flat** and **Horizon** presets
 
 ## Known issues / verification notes
 
 - If horizon/sky is **not** visible with the Horizon preset and `Sky enabled` checked, capture that as an environment-specific issue first (WebGL/GPU/browser/runtime), since this sandbox bypasses `oc-map` integration.
-- No additional camera constraints are applied beyond the official-style setup (`maxPitch: 85`).
+- No additional camera constraints are applied beyond the current baseline (`maxPitch: 85`).
 
 ## Next step after verification
 
-After this baseline is confirmed visually, port the same terrain/sky/fog setup into `oc-map`-based sandboxes and debug integration differences there.
+After this visual foundation is confirmed, use it as the baseline for:
+
+- timeline layer
+- card emergence
+- story navigation

@@ -17,14 +17,18 @@ This sandbox is based directly on the working horizon/camera baseline from `mapl
   - keeps terrain + hillshade + sky/fog layering so horizon testing remains comparable
   - improves sharpness and label readability under pitched/fov-expanded views
 
+- **v2 local-readability refinement**
+  - tunes road and label rendering so streets are easier to recognize from the default Hilversum/Gooi view
+  - keeps the same horizon/camera baseline while shifting style behavior toward practical local browsing readability
+
 - **Stronger atmospheric fog**
   - sky/fog settings remain in the same soft blue + white direction
   - fog blend values are increased so terrain fades more strongly into the horizon band
 
 - **Bottom white shelf scaffold**
-  - introduces a fixed white bottom panel with rounded top corners
-  - reserves visual space for future timeline/card UI (placeholder only)
-  - no timeline logic and no cards yet
+  - reduces shelf height so it reads as a compact floating panel instead of a dock
+  - detaches shelf from screen edges with left/right/bottom margins + subtle elevation
+  - adds a first simple horizontal slider as a timeline placeholder (no timeline logic yet)
 
 - **Navigation control repositioning**
   - keeps map navigation controls on the right side

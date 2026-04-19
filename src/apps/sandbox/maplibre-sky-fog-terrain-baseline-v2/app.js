@@ -138,6 +138,60 @@ function configureTerrainAndHillshade() {
   }
 }
 
+function improveBasemapReadability() {
+  const style = map.getStyle();
+  if (!style?.layers) {
+    return;
+  }
+
+  for (const layer of style.layers) {
+    const layerId = layer.id;
+    const isRoadLayer = layer.type === 'line' && layerId.includes('road');
+    const isRoadLabelLayer = layer.type === 'symbol' && layerId.includes('road');
+    const isPlaceOrPoiLabelLayer =
+      layer.type === 'symbol' &&
+      (layerId.includes('place') || layerId.includes('poi') || layerId.includes('settlement'));
+
+    if (isRoadLayer) {
+      map.setPaintProperty(layerId, 'line-opacity', 0.94);
+      map.setPaintProperty(layerId, 'line-width', [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        8,
+        1.1,
+        10,
+        1.8,
+        12,
+        2.8,
+        14,
+        4.6,
+        16,
+        7
+      ]);
+    }
+
+    if (isRoadLabelLayer || isPlaceOrPoiLabelLayer) {
+      map.setLayoutProperty(layerId, 'text-size', [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        8,
+        11,
+        10,
+        12,
+        12,
+        13,
+        14,
+        14
+      ]);
+      map.setLayoutProperty(layerId, 'text-optional', false);
+      map.setPaintProperty(layerId, 'text-halo-width', 1.3);
+      map.setPaintProperty(layerId, 'text-halo-color', '#ffffff');
+    }
+  }
+}
+
 map.addControl(
   new maplibregl.NavigationControl({
     visualizePitch: true,
@@ -149,10 +203,17 @@ map.addControl(
 
 map.on('load', () => {
   map.setMaxPitch(85);
+  improveBasemapReadability();
   configureTerrainAndHillshade();
   setSkyEnabled(true);
   setVerticalFov(FOV_PRESETS.default);
   syncPitchUi(map.getPitch());
+
+  const timelineSlider = document.getElementById('timeline-slider');
+  const timelineValue = document.getElementById('timeline-value');
+  timelineSlider.addEventListener('input', event => {
+    timelineValue.textContent = event.target.value;
+  });
 
   const panel = document.getElementById('controls-panel');
   const menuToggle = document.getElementById('menu-toggle');

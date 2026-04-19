@@ -30,6 +30,13 @@ This sandbox is based directly on the working horizon/camera baseline from `mapl
   - keeps map navigation controls on the right side
   - moves them above the bottom white shelf for mobile-friendly access and non-overlap with the reserved bottom area
 
+- **Basemap tile/style consistency tuning for pitched view**
+  - keeps the same `oc-map`-aligned CARTO Voyager vector style, but now inspects loaded vector source zoom bounds and relevant road/transport label layer zoom ranges at runtime
+  - relaxes road layer and transport/road label `minzoom`/`maxzoom` ranges via `setLayerZoomRange(...)` so near, mid-distance, and deeper visible regions stay closer in detail continuity
+  - reduces the visible “cut off” effect where local streets appear in one depth band but disappear abruptly in adjacent bands under high pitch
+  - logs vector source assumptions (`minzoom`/`maxzoom`) and all adjusted layers in the console for easier verification/debugging
+  - note: if upstream vector tiles have limited per-tile feature buffer or constrained source `maxzoom`, client style tuning can reduce artifacts but cannot fully eliminate provider-side edge clipping
+
 ## Still intentionally excluded
 
 v2 still does **not** add:

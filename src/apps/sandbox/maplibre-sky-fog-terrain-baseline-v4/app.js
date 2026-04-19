@@ -531,17 +531,12 @@ map.on('load', () => {
   const panel = document.getElementById('controls-panel');
   const menuToggle = document.getElementById('menu-toggle');
   let isPanelOpen = false;
+  setPanelOpenState(isPanelOpen);
 
   menuToggle.addEventListener('click', () => {
     isPanelOpen = !isPanelOpen;
     setPanelOpenState(isPanelOpen);
   });
-
-  panel.classList.add('is-visible');
-  window.setTimeout(() => {
-    panel.classList.remove('is-visible');
-    setPanelOpenState(isPanelOpen);
-  }, 2000);
 
   const skyToggle = document.getElementById('sky-enabled');
   skyToggle.addEventListener('change', () => setSkyEnabled(skyToggle.checked));

@@ -56,6 +56,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Individual cards remain inset and narrower (roughly 80–90% viewport width) so they do not touch screen edges.
 - The oversized top card is now a drag-only transient state and is removed when drag interaction settles.
 
+### Temporary top-card visibility lifecycle update
+
+- The oversized top card is hidden in the resting/static state so the main focal card stays fully readable.
+- On drag start, the oversized top card now fades in and follows the existing depth-motion path.
+- After release/snap settle, the oversized top card fades back out and the resting composition returns cleanly.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

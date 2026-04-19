@@ -74,6 +74,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - The red debug-outlined zone now better matches the visible top card stack instead of extending deep into mid-screen map space.
 - This was done to prevent carousel hit-testing from interfering with map interaction below the card stack region.
 
+### Internal stack placement refinement update
+
+- Kept the same top full-width interaction container bounds and retained the red debug outline.
+- Moved the card stack's internal resting placement lower within that existing top gesture zone for improved vertical balance.
+- This pass only refines card composition inside the established interaction area; gesture boundaries and behavior remain unchanged.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

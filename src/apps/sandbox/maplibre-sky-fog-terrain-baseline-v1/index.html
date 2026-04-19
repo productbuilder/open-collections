@@ -111,14 +111,14 @@
 
       <label for="pitch-slider" class="fov-label">
         Pitch
-        <span id="pitch-value">0°</span>
+        <span id="pitch-value">65°</span>
       </label>
-      <input id="pitch-slider" class="pitch-slider" type="range" min="0" max="85" step="1" value="0" />
+      <input id="pitch-slider" class="pitch-slider" type="range" min="0" max="85" step="1" value="65" />
 
       <h2>FOV test</h2>
       <label for="fov-slider" class="fov-label">
         Vertical FOV
-        <span id="fov-value">36.87°</span>
+        <span id="fov-value">55.00°</span>
       </label>
       <input
         id="fov-slider"
@@ -127,7 +127,7 @@
         min="30"
         max="70"
         step="0.01"
-        value="36.87"
+        value="55"
       />
       <div class="fov-presets" aria-label="fov presets">
         <button id="fov-default-btn" type="button">Default</button>
@@ -162,7 +162,7 @@
       };
 
       const FOV_PRESETS = {
-        default: 36.87,
+        default: 55,
         wide: 45,
         horizon50: 50,
         wider: 55,
@@ -174,9 +174,10 @@
 
       const HILVERSUM_CENTER = [5.1766, 52.2292];
       const MOUNTAIN_CENTER = [11.2953, 47.5479];
+      const BASELINE_CAMERA = { center: HILVERSUM_CENTER, zoom: 12.5, pitch: 65, bearing: 15 };
 
       const CAMERA_PRESETS = {
-        flat: { center: HILVERSUM_CENTER, zoom: 11.8, pitch: 0, bearing: 0 },
+        flat: BASELINE_CAMERA,
         browse: { center: HILVERSUM_CENTER, zoom: 12.6, pitch: 30, bearing: 15 },
         spatial: { center: HILVERSUM_CENTER, zoom: 12.4, pitch: 50, bearing: 28 },
         mountain: { center: MOUNTAIN_CENTER, zoom: 11.3, pitch: 50, bearing: 30 }
@@ -191,9 +192,7 @@
 
       const map = new maplibregl.Map({
         container: 'map',
-        zoom: 12,
-        center: HILVERSUM_CENTER,
-        pitch: 70,
+        ...BASELINE_CAMERA,
         hash: true,
         style: {
           version: 8,
@@ -310,6 +309,7 @@
 
         document.getElementById('flat-btn').addEventListener('click', () => {
           flyToPreset(CAMERA_PRESETS.flat);
+          setVerticalFov(FOV_PRESETS.default);
         });
 
         document.getElementById('browse-btn').addEventListener('click', () => {

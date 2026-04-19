@@ -75,10 +75,10 @@
 
       .depth-carousel-layer {
         position: absolute;
-        top: calc(env(safe-area-inset-top, 0px) + 58px);
+        top: calc(env(safe-area-inset-top, 0px) + 66px);
         left: 50%;
         width: min(52vw, 290px);
-        height: min(42vh, 340px);
+        height: min(48vh, 380px);
         transform: translateX(-50%);
         z-index: 4;
         pointer-events: none;
@@ -90,7 +90,7 @@
         width: 100%;
         height: 100%;
         perspective: 1200px;
-        perspective-origin: center 24%;
+        perspective-origin: center 14%;
         touch-action: pan-y;
         user-select: none;
       }
@@ -151,9 +151,9 @@
       .depth-carousel-nav {
         pointer-events: auto;
         position: absolute;
-        top: 50%;
+        top: calc(env(safe-area-inset-top, 0px) + 132px);
         right: max(12px, calc(50% - min(52vw, 290px) / 2 - 52px));
-        transform: translateY(-24%);
+        transform: none;
         z-index: 5;
         display: flex;
         flex-direction: column;

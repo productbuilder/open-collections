@@ -55,11 +55,11 @@ const CAROUSEL_CARDS = [
 ];
 
 const CARD_DEPTH_TRANSFORMS = {
-  active: 'translate3d(-50%, -108px, 102px) scale(1)',
-  trailNear: 'translate3d(-50%, -28px, 24px) scale(0.9)',
-  trailMid: 'translate3d(-50%, 48px, -52px) scale(0.78)',
-  trailFar: 'translate3d(-50%, 120px, -132px) scale(0.66)',
-  trailDeep: 'translate3d(-50%, 186px, -216px) scale(0.56)'
+  active: 'translate3d(-50%, -170px, 126px) scale(1)',
+  trailNear: 'translate3d(-50%, -84px, 34px) scale(0.91)',
+  trailMid: 'translate3d(-50%, 4px, -54px) scale(0.8)',
+  trailFar: 'translate3d(-50%, 90px, -138px) scale(0.68)',
+  trailDeep: 'translate3d(-50%, 170px, -232px) scale(0.56)'
 };
 
 const map = new maplibregl.Map({
@@ -325,9 +325,10 @@ function setupDepthCarousel() {
   const prevButton = document.getElementById('carousel-prev-btn');
   const nextButton = document.getElementById('carousel-next-btn');
   let activeIndex = 2;
-  let dragStartY = 0;
-  let dragCurrentY = 0;
-  let isDragging = false;
+  let gestureStartY = 0;
+  let gestureCurrentY = 0;
+  let isPointerDragging = false;
+  let isAnimating = false;
 
   const cardElements = CAROUSEL_CARDS.map((card, index) => {
     const element = createCardElement(card, index);
@@ -354,48 +355,102 @@ function setupDepthCarousel() {
     });
   }
 
+  function animateCardExit(cardElement, direction) {
+    const exitGhost = cardElement.cloneNode(true);
+    const computed = window.getComputedStyle(cardElement);
+    exitGhost.classList.add('is-exit-ghost');
+    exitGhost.style.transform = computed.transform;
+    exitGhost.style.opacity = computed.opacity;
+    exitGhost.style.filter = computed.filter;
+    exitGhost.style.zIndex = '10';
+    track.appendChild(exitGhost);
+
+    const isUpward = direction > 0;
+    const exitTransform = isUpward
+      ? 'translate3d(-50%, -320px, 214px) scale(0.74)'
+      : 'translate3d(-50%, 254px, -248px) scale(0.54)';
+    const exitFilter = isUpward
+      ? 'blur(5px) saturate(0.78) contrast(0.7)'
+      : 'blur(3.5px) saturate(0.72) contrast(0.72)';
+
+    const animation = exitGhost.animate(
+      [
+        {
+          transform: computed.transform,
+          opacity: computed.opacity,
+          filter: computed.filter
+        },
+        {
+          transform: exitTransform,
+          opacity: 0,
+          filter: exitFilter
+        }
+      ],
+      {
+        duration: 420,
+        easing: 'cubic-bezier(0.23, 0.67, 0.2, 1)',
+        fill: 'forwards'
+      }
+    );
+
+    animation.addEventListener('finish', () => {
+      exitGhost.remove();
+    });
+  }
+
   function shiftBy(step) {
+    if (isAnimating) {
+      return;
+    }
+    isAnimating = true;
+
+    const previousActiveCard = cardElements[activeIndex];
+    animateCardExit(previousActiveCard, step);
     activeIndex = normalizeCardIndex(activeIndex + step);
     renderCarousel();
+
+    window.setTimeout(() => {
+      isAnimating = false;
+    }, 430);
   }
 
   prevButton.addEventListener('click', () => shiftBy(-1));
   nextButton.addEventListener('click', () => shiftBy(1));
 
   track.addEventListener('pointerdown', event => {
-    isDragging = true;
-    dragStartY = event.clientY;
-    dragCurrentY = event.clientY;
+    isPointerDragging = true;
+    gestureStartY = event.clientY;
+    gestureCurrentY = event.clientY;
     track.setPointerCapture(event.pointerId);
   });
 
   track.addEventListener('pointermove', event => {
-    if (!isDragging) {
+    if (!isPointerDragging) {
       return;
     }
 
-    dragCurrentY = event.clientY;
+    gestureCurrentY = event.clientY;
   });
 
   track.addEventListener('pointerup', event => {
-    if (!isDragging) {
+    if (!isPointerDragging) {
       return;
     }
 
-    const dragDelta = dragCurrentY - dragStartY;
+    const dragDelta = gestureCurrentY - gestureStartY;
     const threshold = 34;
-    if (dragDelta > threshold) {
+    if (dragDelta < -threshold) {
       shiftBy(1);
-    } else if (dragDelta < -threshold) {
+    } else if (dragDelta > threshold) {
       shiftBy(-1);
     }
 
-    isDragging = false;
+    isPointerDragging = false;
     track.releasePointerCapture(event.pointerId);
   });
 
   track.addEventListener('pointercancel', event => {
-    isDragging = false;
+    isPointerDragging = false;
     track.releasePointerCapture(event.pointerId);
   });
 

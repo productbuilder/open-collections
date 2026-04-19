@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Map Horizon v1 — Sky + Fog + Terrain</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+
+			:root {
+				color-scheme: dark;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				font-family:
+					Inter,
+					system-ui,
+					-apple-system,
+					Segoe UI,
+					Roboto,
+					Helvetica,
+					Arial,
+					sans-serif;
+				background: #020617;
+				color: #e2e8f0;
+			}
+
+			main {
+				position: relative;
+				width: 100vw;
+				height: 100vh;
+				overflow: hidden;
+			}
+
+			oc-map {
+				display: block;
+				width: 100%;
+				height: 100%;
+				--oc-map-height: 100vh;
+				--oc-radius-md: 0;
+				--oc-border-default: transparent;
+			}
+
+			.panel-toggle {
+				position: absolute;
+				top: 0.75rem;
+				left: 0.75rem;
+				z-index: 20;
+				border: 1px solid rgb(148 163 184 / 55%);
+				border-radius: 999px;
+				background: rgb(15 23 42 / 88%);
+				color: #e2e8f0;
+				padding: 0.35rem 0.75rem;
+				font-size: 0.74rem;
+				cursor: pointer;
+			}
+
+			.panel {
+				position: absolute;
+				top: 0.75rem;
+				left: 0.75rem;
+				z-index: 19;
+				width: min(280px, calc(100vw - 1.5rem));
+				padding: 0.75rem;
+				display: grid;
+				gap: 0.55rem;
+				background: rgb(15 23 42 / 84%);
+				border: 1px solid rgb(148 163 184 / 35%);
+				border-radius: 12px;
+				backdrop-filter: blur(2px);
+			}
+
+			.panel[hidden] {
+				display: none;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 0.92rem;
+			}
+
+			p {
+				margin: 0;
+				font-size: 0.74rem;
+				color: #cbd5e1;
+			}
+
+			.btn-grid {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 0.4rem;
+			}
+
+			button {
+				border: 1px solid #3b82f6;
+				border-radius: 8px;
+				background: #1d4ed8;
+				color: #eff6ff;
+				padding: 0.4rem 0.5rem;
+				font-size: 0.74rem;
+				font-weight: 600;
+				cursor: pointer;
+			}
+
+			.toggle-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.38rem 0.5rem;
+				background: rgb(2 6 23 / 65%);
+				border: 1px solid #334155;
+				border-radius: 8px;
+			}
+
+			label {
+				font-size: 0.72rem;
+				color: #bfdbfe;
+			}
+
+			input[type="checkbox"] {
+				inline-size: 1rem;
+				block-size: 1rem;
+			}
+
+			.status {
+				font-size: 0.68rem;
+				color: #cbd5e1;
+				padding: 0.42rem 0.5rem;
+				border-radius: 8px;
+				background: rgb(2 6 23 / 72%);
+				border: 1px solid #1e293b;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<oc-map
+				id="horizon-map"
+				center-lng="11.391"
+				center-lat="47.268"
+				zoom="11"
+				pitch="65"
+				bearing="20"
+				style-url="https://demotiles.maplibre.org/style.json"
+			></oc-map>
+
+			<button
+				type="button"
+				id="panel-toggle"
+				class="panel-toggle"
+				aria-expanded="true"
+				aria-controls="control-panel"
+			>
+				Horizon controls
+			</button>
+
+			<aside id="control-panel" class="panel" aria-label="Map horizon controls">
+				<div>
+					<h1>Map Horizon v1</h1>
+					<p>Sky + fog + terrain validation sandbox.</p>
+				</div>
+
+				<div class="btn-grid">
+					<button type="button" data-action="reset">Reset view</button>
+					<button type="button" data-action="flat">Flat 0°</button>
+					<button type="button" data-action="browse">Browse 30°</button>
+					<button type="button" data-action="spatial">Spatial 50°</button>
+					<button type="button" data-action="horizon" style="grid-column: 1 / -1">
+						Horizon 70°
+					</button>
+				</div>
+
+				<div class="toggle-row">
+					<label for="sky-toggle">Sky + fog</label>
+					<input id="sky-toggle" type="checkbox" checked />
+				</div>
+				<div class="toggle-row">
+					<label for="terrain-toggle">Terrain exaggeration 1.5x</label>
+					<input id="terrain-toggle" type="checkbox" />
+				</div>
+
+				<div class="status" id="status-text">Waiting for oc-map-ready…</div>
+			</aside>
+		</main>
+
+		<script type="module" src="./app.js"></script>
+	</body>
+</html>

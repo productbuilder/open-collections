@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>MapLibre Sky/Fog/Terrain Baseline v4</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
+    <style>
+      :root {
+        --bottom-shelf-height: clamp(92px, 15vh, 124px);
+        --bottom-shelf-side-gap: clamp(12px, 4vw, 28px);
+        --bottom-shelf-bottom-gap: calc(env(safe-area-inset-bottom, 0px) + 12px);
+      }
+
+      html,
+      body,
+      #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .panel {
+        position: absolute;
+        left: 12px;
+        bottom: calc(var(--bottom-shelf-height) + var(--bottom-shelf-bottom-gap) + 14px);
+        z-index: 3;
+        width: 252px;
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(35, 35, 35, 0.62);
+        color: #fff;
+        font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        opacity: 0;
+        transform: translateY(6px);
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
+      }
+
+      .panel.is-open,
+      .panel.is-visible,
+      .panel:hover,
+      .panel:focus-within {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .menu-toggle {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        left: 12px;
+        z-index: 4;
+        min-height: 44px;
+        min-width: 88px;
+        border: 1px solid #777;
+        border-radius: 22px;
+        padding: 8px 14px;
+        cursor: pointer;
+        color: #fff;
+        background: rgba(35, 35, 35, 0.85);
+        font: 600 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        transition: background-color 160ms ease, border-color 160ms ease;
+      }
+
+      .menu-toggle.is-active {
+        background: rgba(70, 70, 70, 0.9);
+        border-color: #aaa;
+      }
+
+      .depth-carousel-layer {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 58px);
+        left: 50%;
+        width: min(52vw, 290px);
+        height: min(42vh, 340px);
+        transform: translateX(-50%);
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .depth-carousel-track {
+        pointer-events: auto;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        perspective: 1200px;
+        perspective-origin: center 24%;
+        touch-action: pan-y;
+        user-select: none;
+      }
+
+      .depth-carousel-card {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: min(50vw, 240px);
+        max-width: 240px;
+        min-height: 108px;
+        padding: 9px 10px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.93);
+        border: 1px solid rgba(208, 218, 234, 0.9);
+        box-shadow: 0 10px 30px rgba(21, 27, 40, 0.18);
+        backdrop-filter: blur(6px);
+        transform-style: preserve-3d;
+        transition: transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 360ms ease,
+          filter 360ms ease;
+        will-change: transform, opacity;
+      }
+
+      .depth-carousel-card.is-active {
+        box-shadow: 0 16px 34px rgba(18, 24, 35, 0.24);
+      }
+
+      .depth-carousel-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 68px;
+        height: 20px;
+        border-radius: 999px;
+        font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #374258;
+        background: rgba(214, 224, 240, 0.62);
+      }
+
+      .depth-carousel-title {
+        margin: 8px 0 4px;
+        color: #1e2636;
+        font: 700 14px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .depth-carousel-meta {
+        color: #5f6a80;
+        font: 500 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .depth-carousel-swatch {
+        margin-top: 10px;
+        height: 16px;
+        border-radius: 8px;
+        background: var(--swatch, #cfd8ea);
+      }
+
+      .depth-carousel-nav {
+        pointer-events: auto;
+        position: absolute;
+        top: 50%;
+        right: max(12px, calc(50% - min(52vw, 290px) / 2 - 52px));
+        transform: translateY(-24%);
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .depth-carousel-nav button {
+        border: 1px solid rgba(134, 147, 168, 0.5);
+        background: rgba(255, 255, 255, 0.86);
+        color: #3c475d;
+        border-radius: 999px;
+        width: 38px;
+        height: 38px;
+        cursor: pointer;
+        font: 700 14px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .depth-carousel-nav button:hover {
+        background: rgba(255, 255, 255, 0.98);
+      }
+
+      .panel h1 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .panel h2 {
+        margin: 8px 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #f0f0f0;
+      }
+
+      .presets,
+      .fov-presets {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .presets button,
+      .fov-presets button {
+        border: 1px solid #777;
+        border-radius: 4px;
+        padding: 6px;
+        cursor: pointer;
+        color: #fff;
+        background: #4a4a4a;
+      }
+
+      .panel label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .fov-label {
+        justify-content: space-between;
+        margin: 4px 0;
+      }
+
+      .pitch-slider,
+      .fov-slider {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .hint {
+        margin-top: 8px;
+        color: #d8d8d8;
+      }
+
+      .bottom-shelf {
+        position: fixed;
+        left: var(--bottom-shelf-side-gap);
+        right: var(--bottom-shelf-side-gap);
+        bottom: var(--bottom-shelf-bottom-gap);
+        z-index: 2;
+        height: var(--bottom-shelf-height);
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 10px 28px rgba(20, 25, 34, 0.2);
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+
+      .bottom-shelf-handle {
+        width: 46px;
+        height: 4px;
+        border-radius: 999px;
+        margin: 0 auto;
+        background: #d8dde6;
+      }
+
+      .timeline-slider-wrap {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .timeline-slider {
+        width: 100%;
+        accent-color: #3659d6;
+      }
+
+      .timeline-value {
+        min-width: 38px;
+        color: #4a4f58;
+        text-align: right;
+        font: 600 12px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .maplibregl-ctrl-top-right {
+        top: auto;
+        right: 12px;
+        bottom: calc(var(--bottom-shelf-height) + var(--bottom-shelf-bottom-gap) + 16px);
+      }
+
+      .maplibregl-ctrl-group {
+        box-shadow: 0 4px 14px rgba(20, 25, 34, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">
+      Controls
+    </button>
+
+    <div class="depth-carousel-layer" aria-label="mock browsing carousel">
+      <div id="depth-carousel-track" class="depth-carousel-track" aria-live="polite"></div>
+    </div>
+
+    <div class="depth-carousel-nav" aria-label="depth carousel controls">
+      <button id="carousel-prev-btn" type="button" aria-label="Previous card">↑</button>
+      <button id="carousel-next-btn" type="button" aria-label="Next card">↓</button>
+    </div>
+
+    <div id="controls-panel" class="panel" aria-label="camera presets">
+      <h1>Baseline camera presets</h1>
+      <div class="presets">
+        <button id="flat-btn" type="button">Reset view</button>
+        <button id="browse-btn" type="button">Browse</button>
+        <button id="spatial-btn" type="button">Spatial</button>
+        <button id="horizon-btn" type="button">Horizon</button>
+        <button id="mountain-btn" type="button">Mountain test</button>
+      </div>
+
+      <label for="pitch-slider" class="fov-label">
+        Pitch
+        <span id="pitch-value">65°</span>
+      </label>
+      <input id="pitch-slider" class="pitch-slider" type="range" min="0" max="85" step="1" value="65" />
+
+      <h2>FOV test</h2>
+      <label for="fov-slider" class="fov-label">
+        Vertical FOV
+        <span id="fov-value">55.00°</span>
+      </label>
+      <input
+        id="fov-slider"
+        class="fov-slider"
+        type="range"
+        min="30"
+        max="70"
+        step="0.01"
+        value="55"
+      />
+      <div class="fov-presets" aria-label="fov presets">
+        <button id="fov-default-btn" type="button">Default</button>
+        <button id="fov-wide-btn" type="button">Wide</button>
+        <button id="fov-wider-btn" type="button">Wider</button>
+        <button id="fov-extra-wide-btn" type="button">Extra Wide</button>
+      </div>
+      <div class="fov-presets" aria-label="horizon fov compare">
+        <button id="horizon-wide-btn" type="button">Hzn 45</button>
+        <button id="horizon-mid-btn" type="button">Hzn 50</button>
+        <button id="horizon-wider-btn" type="button">Hzn 55</button>
+        <button id="horizon-extra-wide-btn" type="button">Hzn 55</button>
+        <button id="horizon-60-btn" type="button">Hzn 60</button>
+        <button id="horizon-70-btn" type="button">Hzn 70</button>
+      </div>
+
+      <label for="sky-enabled">
+        <input id="sky-enabled" type="checkbox" checked />
+        Sky enabled
+      </label>
+      <div class="hint">Use “Horizon” plus FOV controls to compare horizon visibility/depth quickly.</div>
+    </div>
+
+    <div class="bottom-shelf" aria-label="timeline shelf">
+      <div class="bottom-shelf-handle"></div>
+      <div class="timeline-slider-wrap">
+        <input
+          id="timeline-slider"
+          class="timeline-slider"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="35"
+          aria-label="timeline position"
+        />
+        <span id="timeline-value" class="timeline-value">35</span>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

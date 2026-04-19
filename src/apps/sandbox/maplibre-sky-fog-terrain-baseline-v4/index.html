@@ -11,6 +11,8 @@
         --bottom-shelf-height: clamp(92px, 15vh, 124px);
         --bottom-shelf-side-gap: clamp(12px, 4vw, 28px);
         --bottom-shelf-bottom-gap: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        --carousel-layer-width: min(78vw, 380px);
+        --carousel-card-width: min(64vw, 300px);
       }
 
       html,
@@ -77,11 +79,12 @@
         position: absolute;
         top: calc(env(safe-area-inset-top, 0px) + 28px);
         left: 50%;
-        width: min(52vw, 292px);
+        width: var(--carousel-layer-width);
         height: min(66vh, 510px);
         transform: translateX(-50%);
         z-index: 4;
         pointer-events: none;
+        overflow: visible;
       }
 
       .depth-carousel-track {
@@ -93,6 +96,7 @@
         perspective-origin: center 2%;
         touch-action: none;
         user-select: none;
+        overflow: visible;
         mask-image: linear-gradient(
           to bottom,
           rgba(0, 0, 0, 0) 0%,
@@ -107,8 +111,8 @@
         position: absolute;
         top: 50%;
         left: 50%;
-        width: min(50vw, 240px);
-        max-width: 240px;
+        width: var(--carousel-card-width);
+        max-width: 300px;
         min-height: 108px;
         padding: 9px 10px;
         border-radius: 14px;
@@ -165,7 +169,7 @@
         pointer-events: auto;
         position: absolute;
         top: calc(env(safe-area-inset-top, 0px) + 118px);
-        right: max(12px, calc(50% - min(52vw, 292px) / 2 - 52px));
+        right: max(12px, calc(50% - var(--carousel-layer-width) / 2 - 52px));
         transform: none;
         z-index: 5;
         display: flex;

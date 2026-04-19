@@ -26,6 +26,15 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
   - trailing cards are vertically compressed into shallower receding slices,
   - depth fade/disappearance is pushed farther upward toward the horizon region.
 
+### Motion/composition refinement update
+
+- Moved the main resting card slightly higher so the focal card sits closer to the horizon zone.
+- Fixed card width clipping by widening the carousel layout envelope and allowing full-width card rendering.
+- Updated drag behavior to preserve true vertical direction:
+  - drag up moves cards upward,
+  - drag down moves cards downward,
+  - release outcomes now follow both drag direction and threshold.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

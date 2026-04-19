@@ -54,22 +54,44 @@ const CAROUSEL_CARDS = [
   { title: 'Night Tram Exposure', year: '1964', subtitle: 'Photo Plate', swatch: '#f1cbdd' }
 ];
 
-const CARD_DEPTH_STOPS = [
-  { depth: 0, y: -228, z: 158, scaleX: 1, scaleY: 1, opacity: 1, blur: 0, saturation: 1, contrast: 1 },
+const CARD_STACK_STOPS = [
   {
-    depth: 1,
-    y: -146,
+    offset: -2,
+    y: -392,
+    z: 52,
+    scaleX: 0.88,
+    scaleY: 0.84,
+    opacity: 0.22,
+    blur: 1.8,
+    saturation: 0.86,
+    contrast: 0.86
+  },
+  {
+    offset: -1,
+    y: -310,
+    z: 104,
+    scaleX: 0.96,
+    scaleY: 0.93,
+    opacity: 0.74,
+    blur: 0.65,
+    saturation: 0.94,
+    contrast: 0.94
+  },
+  { offset: 0, y: -246, z: 158, scaleX: 1, scaleY: 1, opacity: 1, blur: 0, saturation: 1, contrast: 1 },
+  {
+    offset: 1,
+    y: -154,
     z: 84,
     scaleX: 0.93,
-    scaleY: 0.82,
+    scaleY: 0.83,
     opacity: 0.78,
     blur: 0.55,
     saturation: 0.91,
     contrast: 0.92
   },
   {
-    depth: 2,
-    y: -90,
+    offset: 2,
+    y: -94,
     z: 16,
     scaleX: 0.84,
     scaleY: 0.67,
@@ -79,8 +101,8 @@ const CARD_DEPTH_STOPS = [
     contrast: 0.86
   },
   {
-    depth: 3,
-    y: -48,
+    offset: 3,
+    y: -50,
     z: -56,
     scaleX: 0.74,
     scaleY: 0.5,
@@ -90,7 +112,7 @@ const CARD_DEPTH_STOPS = [
     contrast: 0.78
   },
   {
-    depth: 4,
+    offset: 4,
     y: -14,
     z: -146,
     scaleX: 0.62,
@@ -312,14 +334,24 @@ function getWrappedDelta(index, activePosition) {
 }
 
 function getCardDepthScenePosition(offset) {
-  const depthLevel = Math.abs(offset);
-  const maxDepth = CARD_DEPTH_STOPS[CARD_DEPTH_STOPS.length - 1].depth;
-  const clampedDepth = Math.min(depthLevel, maxDepth);
-  const lowerIndex = Math.floor(clampedDepth);
-  const upperIndex = Math.min(lowerIndex + 1, CARD_DEPTH_STOPS.length - 1);
-  const t = clampedDepth - lowerIndex;
-  const lower = CARD_DEPTH_STOPS[lowerIndex];
-  const upper = CARD_DEPTH_STOPS[upperIndex];
+  const minOffset = CARD_STACK_STOPS[0].offset;
+  const maxOffset = CARD_STACK_STOPS[CARD_STACK_STOPS.length - 1].offset;
+  const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
+
+  let lower = CARD_STACK_STOPS[0];
+  let upper = CARD_STACK_STOPS[CARD_STACK_STOPS.length - 1];
+  for (let index = 0; index < CARD_STACK_STOPS.length - 1; index += 1) {
+    const current = CARD_STACK_STOPS[index];
+    const next = CARD_STACK_STOPS[index + 1];
+    if (clampedOffset >= current.offset && clampedOffset <= next.offset) {
+      lower = current;
+      upper = next;
+      break;
+    }
+  }
+
+  const range = upper.offset - lower.offset || 1;
+  const t = (clampedOffset - lower.offset) / range;
 
   const y = lerp(lower.y, upper.y, t);
   const z = lerp(lower.z, upper.z, t);
@@ -329,7 +361,7 @@ function getCardDepthScenePosition(offset) {
   const blur = lerp(lower.blur, upper.blur, t);
   const saturation = lerp(lower.saturation, upper.saturation, t);
   const contrast = lerp(lower.contrast, upper.contrast, t);
-  const zIndex = Math.max(2, 12 - Math.round(clampedDepth * 2.2));
+  const zIndex = Math.max(2, 12 - Math.round(Math.max(0, clampedOffset) * 2.2) + Math.round(Math.max(0, -clampedOffset) * 2.4));
 
   return {
     transform: `translate3d(-50%, ${y}px, ${z}px) scale(${scaleX}, ${scaleY})`,
@@ -363,6 +395,7 @@ function setupDepthCarousel() {
   let dragProgress = 0;
   let isPointerDragging = false;
   let isSnapping = false;
+  const snapDurationMs = 320;
 
   const cardElements = CAROUSEL_CARDS.map((card, index) => {
     const element = createCardElement(card, index);
@@ -387,18 +420,32 @@ function setupDepthCarousel() {
     });
   }
 
-  function shiftBy(step) {
+  function completeSnap(stepAfterSnap = 0) {
+    if (stepAfterSnap !== 0) {
+      activeIndex = normalizeCardIndex(activeIndex + stepAfterSnap);
+    }
+    dragProgress = 0;
+    renderCarousel({ animate: false });
+    track.classList.remove('is-snapping');
+    isSnapping = false;
+  }
+
+  function animateToDragProgress(targetProgress, stepAfterSnap = 0) {
     if (isSnapping) {
       return;
     }
+
     isSnapping = true;
-    activeIndex = normalizeCardIndex(activeIndex + step);
-    dragProgress = 0;
+    dragProgress = targetProgress;
     renderCarousel({ animate: true });
     window.setTimeout(() => {
-      isSnapping = false;
-      track.classList.remove('is-snapping');
-    }, 320);
+      completeSnap(stepAfterSnap);
+    }, snapDurationMs);
+  }
+
+  function shiftBy(step) {
+    const targetProgress = step > 0 ? -1 : 1;
+    animateToDragProgress(targetProgress, step);
   }
 
   prevButton.addEventListener('click', () => shiftBy(-1));
@@ -431,24 +478,27 @@ function setupDepthCarousel() {
     }
 
     isPointerDragging = false;
-    const nextStep =
-      Math.abs(dragProgress) >= SWIPE_COMMIT_THRESHOLD ? (dragProgress < 0 ? 1 : -1) : 0;
-    dragProgress = 0;
-    renderCarousel({ animate: true });
-    track.releasePointerCapture(event.pointerId);
+    const nextStep = Math.abs(dragProgress) >= SWIPE_COMMIT_THRESHOLD ? (dragProgress < 0 ? 1 : -1) : 0;
 
-    if (nextStep !== 0) {
-      window.setTimeout(() => {
-        shiftBy(nextStep);
-      }, 18);
+    if (track.hasPointerCapture(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId);
     }
+
+    if (nextStep === 0) {
+      animateToDragProgress(0, 0);
+      return;
+    }
+
+    const targetProgress = nextStep > 0 ? -1 : 1;
+    animateToDragProgress(targetProgress, nextStep);
   });
 
   track.addEventListener('pointercancel', event => {
     isPointerDragging = false;
-    dragProgress = 0;
-    renderCarousel({ animate: true });
-    track.releasePointerCapture(event.pointerId);
+    if (track.hasPointerCapture(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId);
+    }
+    animateToDragProgress(0, 0);
   });
 
   renderCarousel();

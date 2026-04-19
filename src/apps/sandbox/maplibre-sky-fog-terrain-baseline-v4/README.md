@@ -50,6 +50,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Next/previous card controls were also moved out of the top card area and placed with the lower control zone.
 - This pass is intended to isolate and evaluate top card composition more clearly before behavior refinement.
 
+### Card sizing + drag-state visibility refinement update
+
+- The card stack interaction container now spans full screen width to allow wider centered motion space.
+- Individual cards remain inset and narrower (roughly 80–90% viewport width) so they do not touch screen edges.
+- The oversized top card is now a drag-only transient state and is removed when drag interaction settles.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

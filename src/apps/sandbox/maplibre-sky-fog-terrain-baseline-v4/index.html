@@ -11,9 +11,9 @@
         --bottom-shelf-height: clamp(92px, 15vh, 124px);
         --bottom-shelf-side-gap: clamp(12px, 4vw, 28px);
         --bottom-shelf-bottom-gap: calc(env(safe-area-inset-bottom, 0px) + 12px);
-        --carousel-layer-width: min(78vw, 380px);
+        --carousel-layer-width: 100vw;
         --carousel-zone-height: min(42vh, 318px);
-        --carousel-card-width: min(64vw, 300px);
+        --carousel-card-width: clamp(280px, 86vw, 360px);
       }
 
       html,
@@ -111,7 +111,7 @@
         top: 50%;
         left: 50%;
         width: var(--carousel-card-width);
-        max-width: 300px;
+        max-width: 90vw;
         min-height: 108px;
         padding: 9px 10px;
         border-radius: 14px;
@@ -134,7 +134,7 @@
       }
 
       .depth-carousel-card.is-transient-top {
-        width: calc(var(--carousel-card-width) + 22px);
+        width: min(calc(var(--carousel-card-width) + 18px), 92vw);
         min-height: 120px;
         box-shadow: 0 20px 36px rgba(18, 24, 35, 0.26);
       }

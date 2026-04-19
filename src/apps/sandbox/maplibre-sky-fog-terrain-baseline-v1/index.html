@@ -102,10 +102,11 @@
     <div class="panel" aria-label="camera presets">
       <h1>Baseline camera presets</h1>
       <div class="presets">
-        <button id="flat-btn" type="button">Flat</button>
+        <button id="flat-btn" type="button">Reset view</button>
         <button id="browse-btn" type="button">Browse</button>
         <button id="spatial-btn" type="button">Spatial</button>
         <button id="horizon-btn" type="button">Horizon</button>
+        <button id="mountain-btn" type="button">Mountain test</button>
       </div>
 
       <label for="pitch-slider" class="fov-label">
@@ -124,7 +125,7 @@
         class="fov-slider"
         type="range"
         min="30"
-        max="55"
+        max="70"
         step="0.01"
         value="36.87"
       />
@@ -136,8 +137,11 @@
       </div>
       <div class="fov-presets" aria-label="horizon fov compare">
         <button id="horizon-wide-btn" type="button">Hzn 45</button>
-        <button id="horizon-wider-btn" type="button">Hzn 50</button>
+        <button id="horizon-mid-btn" type="button">Hzn 50</button>
+        <button id="horizon-wider-btn" type="button">Hzn 55</button>
         <button id="horizon-extra-wide-btn" type="button">Hzn 55</button>
+        <button id="horizon-60-btn" type="button">Hzn 60</button>
+        <button id="horizon-70-btn" type="button">Hzn 70</button>
       </div>
 
       <label for="sky-enabled">
@@ -160,28 +164,36 @@
       const FOV_PRESETS = {
         default: 36.87,
         wide: 45,
-        wider: 50,
-        extraWide: 55
+        horizon50: 50,
+        wider: 55,
+        extraWide: 70,
+        horizon55: 55,
+        horizon60: 60,
+        horizon70: 70
       };
 
+      const HILVERSUM_CENTER = [5.1766, 52.2292];
+      const MOUNTAIN_CENTER = [11.2953, 47.5479];
+
       const CAMERA_PRESETS = {
-        flat: { center: [11.2953, 47.5479], zoom: 11.3, pitch: 0, bearing: 0 },
-        browse: { center: [11.2953, 47.5479], zoom: 12.6, pitch: 30, bearing: 20 },
-        spatial: { center: [11.2953, 47.5479], zoom: 12.8, pitch: 50, bearing: 35 }
+        flat: { center: HILVERSUM_CENTER, zoom: 11.8, pitch: 0, bearing: 0 },
+        browse: { center: HILVERSUM_CENTER, zoom: 12.6, pitch: 30, bearing: 15 },
+        spatial: { center: HILVERSUM_CENTER, zoom: 12.4, pitch: 50, bearing: 28 },
+        mountain: { center: MOUNTAIN_CENTER, zoom: 11.3, pitch: 50, bearing: 30 }
       };
 
       const HORIZON_CAMERA = {
-        center: [11.2953, 47.5479],
-        zoom: 10.5,
-        pitch: 78,
-        bearing: 15
+        center: HILVERSUM_CENTER,
+        zoom: 10.7,
+        pitch: 70,
+        bearing: 22
       };
 
       const map = new maplibregl.Map({
         container: 'map',
         zoom: 12,
-        center: [11.2953, 47.5479],
-        pitch: 77,
+        center: HILVERSUM_CENTER,
+        pitch: 70,
         hash: true,
         style: {
           version: 8,
@@ -312,6 +324,10 @@
           flyToPreset(HORIZON_CAMERA);
         });
 
+        document.getElementById('mountain-btn').addEventListener('click', () => {
+          flyToPreset(CAMERA_PRESETS.mountain);
+        });
+
         document.getElementById('pitch-slider').addEventListener('input', event => {
           setPitchValue(event.target.value);
         });
@@ -340,12 +356,24 @@
           jumpToHorizonWithFov(FOV_PRESETS.wide);
         });
 
+        document.getElementById('horizon-mid-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.horizon50);
+        });
+
         document.getElementById('horizon-wider-btn').addEventListener('click', () => {
           jumpToHorizonWithFov(FOV_PRESETS.wider);
         });
 
         document.getElementById('horizon-extra-wide-btn').addEventListener('click', () => {
-          jumpToHorizonWithFov(FOV_PRESETS.extraWide);
+          jumpToHorizonWithFov(FOV_PRESETS.horizon55);
+        });
+
+        document.getElementById('horizon-60-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.horizon60);
+        });
+
+        document.getElementById('horizon-70-btn').addEventListener('click', () => {
+          jumpToHorizonWithFov(FOV_PRESETS.horizon70);
         });
 
         map.on('pitch', () => {

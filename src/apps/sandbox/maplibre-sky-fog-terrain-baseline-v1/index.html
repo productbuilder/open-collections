@@ -27,13 +27,40 @@
         color: #fff;
         font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         opacity: 0;
-        transition: opacity 220ms ease;
+        transform: translateY(6px);
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
       }
 
+      .panel.is-open,
       .panel.is-visible,
       .panel:hover,
       .panel:focus-within {
         opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .menu-toggle {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        left: 12px;
+        z-index: 2;
+        min-height: 44px;
+        min-width: 88px;
+        border: 1px solid #777;
+        border-radius: 22px;
+        padding: 8px 14px;
+        cursor: pointer;
+        color: #fff;
+        background: rgba(35, 35, 35, 0.85);
+        font: 600 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        transition: background-color 160ms ease, border-color 160ms ease;
+      }
+
+      .menu-toggle.is-active {
+        background: rgba(70, 70, 70, 0.9);
+        border-color: #aaa;
       }
 
       .panel h1 {
@@ -99,7 +126,11 @@
   <body>
     <div id="map"></div>
 
-    <div class="panel" aria-label="camera presets">
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">
+      Controls
+    </button>
+
+    <div id="controls-panel" class="panel" aria-label="camera presets">
       <h1>Baseline camera presets</h1>
       <div class="presets">
         <button id="flat-btn" type="button">Reset view</button>
@@ -286,6 +317,15 @@
         setVerticalFov(fov);
       }
 
+      function setPanelOpenState(isOpen) {
+        const panel = document.getElementById('controls-panel');
+        const menuToggle = document.getElementById('menu-toggle');
+        panel.classList.toggle('is-open', isOpen);
+        menuToggle.classList.toggle('is-active', isOpen);
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.textContent = isOpen ? 'Close' : 'Controls';
+      }
+
       map.addControl(
         new maplibregl.NavigationControl({
           visualizePitch: true,
@@ -300,9 +340,20 @@
         setVerticalFov(FOV_PRESETS.default);
         syncPitchUi(map.getPitch());
 
-        const panel = document.querySelector('.panel');
+        const panel = document.getElementById('controls-panel');
+        const menuToggle = document.getElementById('menu-toggle');
+        let isPanelOpen = false;
+
+        menuToggle.addEventListener('click', () => {
+          isPanelOpen = !isPanelOpen;
+          setPanelOpenState(isPanelOpen);
+        });
+
         panel.classList.add('is-visible');
-        window.setTimeout(() => panel.classList.remove('is-visible'), 2000);
+        window.setTimeout(() => {
+          panel.classList.remove('is-visible');
+          setPanelOpenState(isPanelOpen);
+        }, 2000);
 
         const skyToggle = document.getElementById('sky-enabled');
         skyToggle.addEventListener('change', () => setSkyEnabled(skyToggle.checked));

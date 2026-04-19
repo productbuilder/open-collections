@@ -19,6 +19,11 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Added simple vertical browsing interaction with:
   - up/down buttons,
   - vertical swipe/drag on the card stack.
+- Refined the vertical depth queue motion so:
+  - the active card sits higher in a top focal zone near the horizon line,
+  - swipe-up / swipe-down touch gestures are the primary browse interaction,
+  - outgoing active cards visibly continue upward and disappear through the top,
+  - underlying cards rise in sequence to reinforce depth/time motion.
 
 ## Intent
 

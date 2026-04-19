@@ -38,6 +38,12 @@ const HORIZON_CAMERA = {
 
 const OC_MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 const TERRAIN_SOURCE_ID = 'terrainSource';
+const MAPLIBRE_MAX_ZOOM = 24;
+
+const BASEMAP_LAYER_TUNING = {
+  road: { minDelta: 1.5, maxDelta: 1 },
+  label: { minDelta: 1, maxDelta: 1 }
+};
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -123,6 +129,108 @@ function configureTerrainAndHillshade() {
   });
 }
 
+function clampZoomRange(minzoom, maxzoom) {
+  const clampedMin = Math.max(0, Math.min(MAPLIBRE_MAX_ZOOM, Number(minzoom)));
+  const clampedMax = Math.max(clampedMin, Math.min(MAPLIBRE_MAX_ZOOM, Number(maxzoom)));
+  return [clampedMin, clampedMax];
+}
+
+function isRoadDetailLayer(layer) {
+  const id = String(layer?.id || '').toLowerCase();
+  const sourceLayer = String(layer?.['source-layer'] || '').toLowerCase();
+  return (
+    layer?.type === 'line' &&
+    (id.includes('road') ||
+      id.includes('street') ||
+      id.includes('transport') ||
+      id.includes('bridge') ||
+      id.includes('tunnel') ||
+      id.includes('path') ||
+      sourceLayer.includes('road') ||
+      sourceLayer.includes('transport'))
+  );
+}
+
+function isDetailLabelLayer(layer) {
+  if (layer?.type !== 'symbol') {
+    return false;
+  }
+
+  const id = String(layer?.id || '').toLowerCase();
+  const sourceLayer = String(layer?.['source-layer'] || '').toLowerCase();
+  return (
+    id.includes('road') ||
+    id.includes('street') ||
+    id.includes('highway') ||
+    id.includes('transport') ||
+    sourceLayer.includes('road') ||
+    sourceLayer.includes('transport')
+  );
+}
+
+function tuneBasemapLayerZoomConsistency() {
+  const style = map.getStyle();
+  const sources = style?.sources || {};
+  const layers = style?.layers || [];
+
+  const vectorSourceIds = new Set(
+    Object.entries(sources)
+      .filter(([, definition]) => definition?.type === 'vector')
+      .map(([sourceId]) => sourceId)
+  );
+
+  const sourceSummary = Object.entries(sources)
+    .filter(([, definition]) => definition?.type === 'vector')
+    .map(([sourceId, definition]) => ({
+      sourceId,
+      minzoom: definition?.minzoom ?? null,
+      maxzoom: definition?.maxzoom ?? null
+    }));
+
+  const tunedLayerIds = [];
+
+  layers.forEach(layer => {
+    if (!vectorSourceIds.has(layer.source)) {
+      return;
+    }
+
+    const isRoadLayer = isRoadDetailLayer(layer);
+    const isLabelLayer = isDetailLabelLayer(layer);
+    if (!isRoadLayer && !isLabelLayer) {
+      return;
+    }
+
+    const currentMin = layer.minzoom ?? 0;
+    const currentMax = layer.maxzoom ?? MAPLIBRE_MAX_ZOOM;
+    const tuning = isRoadLayer ? BASEMAP_LAYER_TUNING.road : BASEMAP_LAYER_TUNING.label;
+    const [nextMin, nextMax] = clampZoomRange(
+      currentMin - tuning.minDelta,
+      currentMax + tuning.maxDelta
+    );
+
+    if (nextMin === currentMin && nextMax === currentMax) {
+      return;
+    }
+
+    map.setLayerZoomRange(layer.id, nextMin, nextMax);
+    tunedLayerIds.push({
+      id: layer.id,
+      type: isRoadLayer ? 'road' : 'label',
+      previousRange: [currentMin, currentMax],
+      nextRange: [nextMin, nextMax]
+    });
+  });
+
+  console.info(
+    '[maplibre-sky-fog-terrain-baseline-v2] basemap zoom consistency tuned',
+    {
+      vectorSources: sourceSummary,
+      tunedLayerCount: tunedLayerIds.length,
+      tunedLayers: tunedLayerIds
+    }
+  );
+}
+
 map.addControl(
   new maplibregl.NavigationControl({
     visualizePitch: true,
@@ -134,6 +242,7 @@ map.addControl(
 
 map.on('load', () => {
   map.setMaxPitch(85);
+  tuneBasemapLayerZoomConsistency();
   configureTerrainAndHillshade();
   setSkyEnabled(true);
   setVerticalFov(FOV_PRESETS.default);

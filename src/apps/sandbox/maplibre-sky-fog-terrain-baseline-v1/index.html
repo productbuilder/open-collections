@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>MapLibre Sky/Fog/Terrain Baseline v1</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
+    <style>
+      html,
+      body,
+      #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .panel {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 1;
+        width: 240px;
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(35, 35, 35, 0.88);
+        color: #fff;
+        font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .panel h1 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .presets {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .presets button {
+        border: 1px solid #777;
+        border-radius: 4px;
+        padding: 6px;
+        cursor: pointer;
+        color: #fff;
+        background: #4a4a4a;
+      }
+
+      .panel label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .hint {
+        margin-top: 8px;
+        color: #d8d8d8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div class="panel" aria-label="camera presets">
+      <h1>Baseline camera presets</h1>
+      <div class="presets">
+        <button id="flat-btn" type="button">Flat</button>
+        <button id="browse-btn" type="button">Browse</button>
+        <button id="spatial-btn" type="button">Spatial</button>
+        <button id="horizon-btn" type="button">Horizon</button>
+      </div>
+      <label for="sky-enabled">
+        <input id="sky-enabled" type="checkbox" checked />
+        Sky enabled
+      </label>
+      <div class="hint">Use “Horizon” for high pitch (official-style baseline view).</div>
+    </div>
+
+    <script>
+      const DEFAULT_SKY = {
+        'sky-color': '#0000ff',
+        'sky-horizon-blend': 0.5,
+        'horizon-color': '#00ff00',
+        'horizon-fog-blend': 0.5,
+        'fog-color': '#ff0000',
+        'fog-ground-blend': 0.1
+      };
+
+      const map = new maplibregl.Map({
+        container: 'map',
+        zoom: 12,
+        center: [11.2953, 47.5479],
+        pitch: 77,
+        hash: true,
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; OpenStreetMap Contributors',
+              maxzoom: 19
+            },
+            terrainSource: {
+              type: 'raster-dem',
+              url: 'https://tiles.mapterhorn.com/tilejson.json',
+              tileSize: 256
+            },
+            hillshadeSource: {
+              type: 'raster-dem',
+              url: 'https://tiles.mapterhorn.com/tilejson.json',
+              tileSize: 256
+            }
+          },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm'
+            },
+            {
+              id: 'hills',
+              type: 'hillshade',
+              source: 'hillshadeSource',
+              layout: { visibility: 'visible' },
+              paint: { 'hillshade-shadow-color': '#473B24' }
+            }
+          ],
+          terrain: {
+            source: 'terrainSource',
+            exaggeration: 1
+          }
+        },
+        maxZoom: 18,
+        maxPitch: 85
+      });
+
+      function setSkyEnabled(isEnabled) {
+        if (isEnabled) {
+          map.setSky(DEFAULT_SKY);
+          return;
+        }
+        map.setSky(undefined);
+      }
+
+      function flyToPreset(options) {
+        map.flyTo({
+          duration: 1100,
+          essential: true,
+          ...options
+        });
+      }
+
+      map.addControl(
+        new maplibregl.NavigationControl({
+          visualizePitch: true,
+          showZoom: true,
+          showCompass: true
+        })
+      );
+
+      map.addControl(new maplibregl.GlobeControl());
+      map.addControl(
+        new maplibregl.TerrainControl({
+          source: 'terrainSource',
+          exaggeration: 1
+        })
+      );
+
+      map.on('load', () => {
+        setSkyEnabled(true);
+
+        const skyToggle = document.getElementById('sky-enabled');
+        skyToggle.addEventListener('change', () => setSkyEnabled(skyToggle.checked));
+
+        document.getElementById('flat-btn').addEventListener('click', () => {
+          flyToPreset({ center: [11.2953, 47.5479], zoom: 11.3, pitch: 0, bearing: 0 });
+        });
+
+        document.getElementById('browse-btn').addEventListener('click', () => {
+          flyToPreset({ center: [11.2953, 47.5479], zoom: 12.6, pitch: 45, bearing: 20 });
+        });
+
+        document.getElementById('spatial-btn').addEventListener('click', () => {
+          flyToPreset({ center: [11.2953, 47.5479], zoom: 12.8, pitch: 63, bearing: 35 });
+        });
+
+        document.getElementById('horizon-btn').addEventListener('click', () => {
+          flyToPreset({ center: [11.2953, 47.5479], zoom: 12, pitch: 77, bearing: 0 });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -35,6 +35,13 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
   - drag down moves cards downward,
   - release outcomes now follow both drag direction and threshold.
 
+### Layout cleanup pass
+
+- Controls now start closed on initial load so the first impression prioritizes map/horizon + cards.
+- Controls access was moved down above the timeline shelf so it lives in the lower control zone.
+- Next/previous card controls were also moved out of the top card area and placed with the lower control zone.
+- This pass is intended to isolate and evaluate top card composition more clearly before behavior refinement.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

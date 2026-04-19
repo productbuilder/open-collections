@@ -30,7 +30,7 @@
       .panel {
         position: absolute;
         left: 12px;
-        bottom: calc(var(--bottom-shelf-height) + var(--bottom-shelf-bottom-gap) + 14px);
+        bottom: calc(var(--bottom-shelf-height) + var(--bottom-shelf-bottom-gap) + 64px);
         z-index: 3;
         width: 252px;
         border-radius: 8px;
@@ -54,10 +54,8 @@
       }
 
       .menu-toggle {
-        position: absolute;
-        top: calc(env(safe-area-inset-top, 0px) + 12px);
-        left: 12px;
-        z-index: 4;
+        position: relative;
+        z-index: 5;
         min-height: 44px;
         min-width: 88px;
         border: 1px solid #777;
@@ -167,10 +165,7 @@
 
       .depth-carousel-nav {
         pointer-events: auto;
-        position: absolute;
-        top: calc(env(safe-area-inset-top, 0px) + 118px);
-        right: max(12px, calc(50% - var(--carousel-layer-width) / 2 - 52px));
-        transform: none;
+        position: relative;
         z-index: 5;
         display: flex;
         flex-direction: column;
@@ -290,6 +285,23 @@
         font: 600 12px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
+      .bottom-control-zone {
+        position: fixed;
+        left: var(--bottom-shelf-side-gap);
+        right: var(--bottom-shelf-side-gap);
+        bottom: calc(var(--bottom-shelf-height) + var(--bottom-shelf-bottom-gap) + 12px);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        pointer-events: none;
+      }
+
+      .bottom-control-zone > * {
+        pointer-events: auto;
+      }
+
       .maplibregl-ctrl-top-right {
         top: auto;
         right: 12px;
@@ -304,17 +316,18 @@
   <body>
     <div id="map"></div>
 
-    <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">
-      Controls
-    </button>
-
     <div class="depth-carousel-layer" aria-label="mock browsing carousel">
       <div id="depth-carousel-track" class="depth-carousel-track" aria-live="polite"></div>
     </div>
 
-    <div class="depth-carousel-nav" aria-label="depth carousel controls">
-      <button id="carousel-prev-btn" type="button" aria-label="Previous card">↑</button>
-      <button id="carousel-next-btn" type="button" aria-label="Next card">↓</button>
+    <div class="bottom-control-zone" aria-label="bottom controls">
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="controls-panel">
+        Controls
+      </button>
+      <div class="depth-carousel-nav" aria-label="depth carousel controls">
+        <button id="carousel-prev-btn" type="button" aria-label="Previous card">↑</button>
+        <button id="carousel-next-btn" type="button" aria-label="Next card">↓</button>
+      </div>
     </div>
 
     <div id="controls-panel" class="panel" aria-label="camera presets">

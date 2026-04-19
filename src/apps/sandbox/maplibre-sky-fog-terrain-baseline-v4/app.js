@@ -55,12 +55,11 @@ const CAROUSEL_CARDS = [
 ];
 
 const CARD_DEPTH_TRANSFORMS = {
-  active: 'translate3d(-50%, 34px, 72px) scale(1)',
-  aboveNear: 'translate3d(-50%, -20px, -24px) scale(0.88)',
-  aboveMid: 'translate3d(-50%, -74px, -96px) scale(0.74)',
-  aboveFar: 'translate3d(-50%, -128px, -178px) scale(0.6)',
-  belowNear: 'translate3d(-50%, 86px, -30px) scale(0.82)',
-  belowFar: 'translate3d(-50%, 142px, -96px) scale(0.68)'
+  active: 'translate3d(-50%, -108px, 102px) scale(1)',
+  trailNear: 'translate3d(-50%, -28px, 24px) scale(0.9)',
+  trailMid: 'translate3d(-50%, 48px, -52px) scale(0.78)',
+  trailFar: 'translate3d(-50%, 120px, -132px) scale(0.66)',
+  trailDeep: 'translate3d(-50%, 186px, -216px) scale(0.56)'
 };
 
 const map = new maplibregl.Map({
@@ -254,26 +253,58 @@ function normalizeCardIndex(index) {
 }
 
 function getCardDepthScenePosition(offset) {
+  const depthLevel = Math.abs(offset);
+
   if (offset === 0) {
-    return { transform: CARD_DEPTH_TRANSFORMS.active, opacity: 1, zIndex: 9, blur: 0 };
-  }
-  if (offset === -1) {
-    return { transform: CARD_DEPTH_TRANSFORMS.aboveNear, opacity: 0.78, zIndex: 7, blur: 0.1 };
-  }
-  if (offset === -2) {
-    return { transform: CARD_DEPTH_TRANSFORMS.aboveMid, opacity: 0.45, zIndex: 5, blur: 0.8 };
-  }
-  if (offset === -3) {
-    return { transform: CARD_DEPTH_TRANSFORMS.aboveFar, opacity: 0.2, zIndex: 3, blur: 1.8 };
-  }
-  if (offset === 1) {
-    return { transform: CARD_DEPTH_TRANSFORMS.belowNear, opacity: 0.52, zIndex: 6, blur: 0.4 };
-  }
-  if (offset === 2) {
-    return { transform: CARD_DEPTH_TRANSFORMS.belowFar, opacity: 0.24, zIndex: 4, blur: 1.2 };
+    return {
+      transform: CARD_DEPTH_TRANSFORMS.active,
+      opacity: 1,
+      zIndex: 9,
+      blur: 0,
+      saturation: 1,
+      contrast: 1
+    };
   }
 
-  return { transform: 'translate3d(-50%, -156px, -220px) scale(0.54)', opacity: 0, zIndex: 1, blur: 2.4 };
+  if (depthLevel === 1) {
+    return {
+      transform: CARD_DEPTH_TRANSFORMS.trailNear,
+      opacity: 0.7,
+      zIndex: 7,
+      blur: 0.5,
+      saturation: 0.9,
+      contrast: 0.92
+    };
+  }
+  if (depthLevel === 2) {
+    return {
+      transform: CARD_DEPTH_TRANSFORMS.trailMid,
+      opacity: 0.46,
+      zIndex: 5,
+      blur: 1.2,
+      saturation: 0.84,
+      contrast: 0.86
+    };
+  }
+  if (depthLevel === 3) {
+    return {
+      transform: CARD_DEPTH_TRANSFORMS.trailFar,
+      opacity: 0.26,
+      zIndex: 4,
+      blur: 1.9,
+      saturation: 0.78,
+      contrast: 0.78
+    };
+  }
+
+  return {
+    transform: CARD_DEPTH_TRANSFORMS.trailDeep,
+    opacity: 0.1,
+    zIndex: 2,
+    blur: 2.8,
+    saturation: 0.72,
+    contrast: 0.72
+  };
 }
 
 function createCardElement(card, index) {
@@ -317,7 +348,7 @@ function setupDepthCarousel() {
       element.style.transform = scene.transform;
       element.style.opacity = String(scene.opacity);
       element.style.zIndex = String(scene.zIndex);
-      element.style.filter = `blur(${scene.blur}px)`;
+      element.style.filter = `blur(${scene.blur}px) saturate(${scene.saturation}) contrast(${scene.contrast})`;
       element.classList.toggle('is-active', wrappedDelta === 0);
       element.setAttribute('aria-hidden', Math.abs(wrappedDelta) > 1 ? 'true' : 'false');
     });

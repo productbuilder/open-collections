@@ -13,9 +13,9 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 
 - Replaced the v3 **flat top carousel slab** with a **vertical depth carousel** experiment.
 - Cards now stack along a vertical depth path:
-  - the active card sits closest and most prominent,
-  - cards above appear smaller/fainter and recede upward,
-  - lower cards lightly hint at what can come forward next.
+  - the active card now sits higher near the horizon focal zone,
+  - non-active cards trail downward underneath it with reduced scale/opacity/clarity,
+  - lower cards fade into map depth so moments feel like they emerge into focus and then recede.
 - Added simple vertical browsing interaction with:
   - up/down buttons,
   - vertical swipe/drag on the card stack.

@@ -46,75 +46,153 @@ const BASEMAP_LAYER_TUNING = {
 };
 
 const CAROUSEL_CARDS = [
-  { title: 'Hilversum Studio Blocks', year: '1933', subtitle: 'Architecture', swatch: '#c9daf5' },
-  { title: 'Open Air Archives', year: '1928', subtitle: 'Photo Series', swatch: '#d8e7c6' },
-  { title: 'New Wave Broadcast', year: '1986', subtitle: 'Video', swatch: '#f4d6bf' },
-  { title: 'City Quiet Intervals', year: '1972', subtitle: 'Audio Essay', swatch: '#d9d1f2' },
-  { title: 'Waterside Marker Studies', year: '1959', subtitle: 'Cartography', swatch: '#c8e9eb' },
-  { title: 'Night Tram Exposure', year: '1964', subtitle: 'Photo Plate', swatch: '#f1cbdd' }
+  {
+    title: 'Hilversum Studio Blocks',
+    year: '1933',
+    subtitle: 'Architecture',
+    description: 'Brick-and-glass studio complex studies with facade rhythm notes.',
+    swatch: '#c9daf5'
+  },
+  {
+    title: 'Open Air Archives',
+    year: '1928',
+    subtitle: 'Photo Series',
+    description: 'Parks and civic edge conditions captured as archival contact sheets.',
+    swatch: '#d8e7c6'
+  },
+  {
+    title: 'New Wave Broadcast',
+    year: '1986',
+    subtitle: 'Video',
+    description: 'Signal-noise edits and production stills from late-night experiments.',
+    swatch: '#f4d6bf'
+  },
+  {
+    title: 'City Quiet Intervals',
+    year: '1972',
+    subtitle: 'Audio Essay',
+    description: 'Urban pauses and ambient room tone mapped into listening chapters.',
+    swatch: '#d9d1f2'
+  },
+  {
+    title: 'Waterside Marker Studies',
+    year: '1959',
+    subtitle: 'Cartography',
+    description: 'Canal-edge markers and route annotations prepared for field crews.',
+    swatch: '#c8e9eb'
+  },
+  {
+    title: 'Night Tram Exposure',
+    year: '1964',
+    subtitle: 'Photo Plate',
+    description: 'Long-exposure tram corridors with stop-by-stop negative references.',
+    swatch: '#f1cbdd'
+  },
+  {
+    title: 'Coastal Signal Ledger',
+    year: '1947',
+    subtitle: 'Survey Log',
+    description: 'Harbor signal observations indexed by beacon pattern and weather.',
+    swatch: '#d6e5f9'
+  },
+  {
+    title: 'Transit Thread Atlas',
+    year: '1991',
+    subtitle: 'Route Study',
+    description: 'Overlay pack tracing line continuity between rail, ferry, and tram.',
+    swatch: '#d9f0da'
+  },
+  {
+    title: 'Signal Tower Notes',
+    year: '1938',
+    subtitle: 'Field Notes',
+    description: 'Operator diagrams and watch-cycle notes from regional control points.',
+    swatch: '#f5e1cb'
+  },
+  {
+    title: 'Depot Pattern Review',
+    year: '2002',
+    subtitle: 'Operations',
+    description: 'Service bay sequencing snapshots and turnaround timing annotations.',
+    swatch: '#e1daf5'
+  },
+  {
+    title: 'Archive Light Pass',
+    year: '2014',
+    subtitle: 'Digitization',
+    description: 'Color normalization tests for slide batches under mixed lighting.',
+    swatch: '#d3eef0'
+  },
+  {
+    title: 'Floodplain Recordings',
+    year: '1968',
+    subtitle: 'Field Audio',
+    description: 'Seasonal floodplain ambiences aligned with river height telemetry.',
+    swatch: '#f4d7e5'
+  }
 ];
 
 const CARD_STACK_STOPS = [
   {
     offset: -2,
-    y: -364,
-    z: 52,
-    scaleX: 0.88,
-    scaleY: 0.84,
-    blur: 1.8,
-    saturation: 0.86,
-    contrast: 0.86
+    y: -312,
+    z: 64,
+    scaleX: 0.9,
+    scaleY: 0.88,
+    blur: 1.7,
+    saturation: 0.87,
+    contrast: 0.87
   },
   {
     offset: -1,
-    y: -282,
-    z: 104,
-    scaleX: 0.96,
-    scaleY: 0.93,
-    blur: 0.65,
-    saturation: 0.94,
-    contrast: 0.94
+    y: -236,
+    z: 122,
+    scaleX: 0.97,
+    scaleY: 0.95,
+    blur: 0.6,
+    saturation: 0.95,
+    contrast: 0.95
   },
-  { offset: 0, y: -218, z: 158, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
+  { offset: 0, y: -174, z: 178, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
   {
     offset: 1,
-    y: -126,
-    z: 84,
-    scaleX: 0.93,
-    scaleY: 0.83,
-    blur: 0.55,
-    saturation: 0.91,
+    y: -84,
+    z: 108,
+    scaleX: 0.95,
+    scaleY: 0.89,
+    blur: 0.5,
+    saturation: 0.92,
     contrast: 0.92
   },
   {
     offset: 2,
-    y: -66,
-    z: 16,
-    scaleX: 0.84,
-    scaleY: 0.67,
-    blur: 1.2,
-    saturation: 0.85,
-    contrast: 0.86
+    y: -24,
+    z: 34,
+    scaleX: 0.87,
+    scaleY: 0.75,
+    blur: 1.1,
+    saturation: 0.86,
+    contrast: 0.87
   },
   {
     offset: 3,
-    y: -22,
-    z: -56,
-    scaleX: 0.74,
-    scaleY: 0.5,
-    blur: 2,
-    saturation: 0.78,
-    contrast: 0.78
+    y: 20,
+    z: -46,
+    scaleX: 0.78,
+    scaleY: 0.59,
+    blur: 1.9,
+    saturation: 0.79,
+    contrast: 0.8
   },
   {
     offset: 4,
-    y: 14,
-    z: -146,
-    scaleX: 0.62,
-    scaleY: 0.34,
-    blur: 2.85,
-    saturation: 0.72,
-    contrast: 0.72
+    y: 56,
+    z: -140,
+    scaleX: 0.67,
+    scaleY: 0.42,
+    blur: 2.7,
+    saturation: 0.73,
+    contrast: 0.74
   }
 ];
 
@@ -373,10 +451,13 @@ function createCardElement(card, index) {
   element.className = 'depth-carousel-card';
   element.dataset.index = String(index);
   element.innerHTML = `
-    <span class="depth-carousel-chip">${card.year}</span>
-    <h3 class="depth-carousel-title">${card.title}</h3>
-    <div class="depth-carousel-meta">${card.subtitle || 'Archive item'}</div>
-    <div class="depth-carousel-swatch" style="--swatch:${card.swatch || '#cfd8ea'}"></div>
+    <div class="depth-carousel-thumb" style="--swatch:${card.swatch || '#cfd8ea'}" aria-hidden="true"></div>
+    <div class="depth-carousel-body">
+      <span class="depth-carousel-chip">${card.year}</span>
+      <h3 class="depth-carousel-title">${card.title}</h3>
+      <div class="depth-carousel-meta">${card.subtitle || 'Archive item'}</div>
+      <p class="depth-carousel-description">${card.description || 'Collection material prepared for browsing.'}</p>
+    </div>
   `;
   return element;
 }

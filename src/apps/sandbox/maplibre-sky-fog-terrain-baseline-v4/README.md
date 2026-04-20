@@ -87,6 +87,12 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Expanded the mock card dataset so browsing now demonstrates continuity across a much larger stack (roughly a dozen items).
 - Preserved the drag-only top outgoing-card behavior, including the upward disappearance/masking behind the top screen edge.
 
+### Fit + bounds correction update
+
+- Reduced main-card width so the resting composition keeps clearer left/right margins inside the full-width top interaction container.
+- Corrected the resting stack position downward so the main card no longer clips against the top screen edge.
+- Main card now fully fits within the red debug-outlined top interaction zone while remaining fully readable at rest.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

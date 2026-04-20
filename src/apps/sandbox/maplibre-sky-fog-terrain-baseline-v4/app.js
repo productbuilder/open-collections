@@ -135,7 +135,7 @@ const CAROUSEL_CARDS = [
 const CARD_STACK_STOPS = [
   {
     offset: -2,
-    y: -312,
+    y: -152,
     z: 64,
     scaleX: 0.9,
     scaleY: 0.88,
@@ -145,7 +145,7 @@ const CARD_STACK_STOPS = [
   },
   {
     offset: -1,
-    y: -236,
+    y: -76,
     z: 122,
     scaleX: 0.97,
     scaleY: 0.95,
@@ -153,10 +153,10 @@ const CARD_STACK_STOPS = [
     saturation: 0.95,
     contrast: 0.95
   },
-  { offset: 0, y: -174, z: 178, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
+  { offset: 0, y: -14, z: 178, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
   {
     offset: 1,
-    y: -84,
+    y: 76,
     z: 108,
     scaleX: 0.95,
     scaleY: 0.89,
@@ -166,7 +166,7 @@ const CARD_STACK_STOPS = [
   },
   {
     offset: 2,
-    y: -24,
+    y: 136,
     z: 34,
     scaleX: 0.87,
     scaleY: 0.75,
@@ -176,7 +176,7 @@ const CARD_STACK_STOPS = [
   },
   {
     offset: 3,
-    y: 20,
+    y: 180,
     z: -46,
     scaleX: 0.78,
     scaleY: 0.59,
@@ -186,7 +186,7 @@ const CARD_STACK_STOPS = [
   },
   {
     offset: 4,
-    y: 56,
+    y: 216,
     z: -140,
     scaleX: 0.67,
     scaleY: 0.42,

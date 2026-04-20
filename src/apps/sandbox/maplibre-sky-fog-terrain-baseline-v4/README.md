@@ -93,6 +93,11 @@ This sandbox is a variation of `maplibre-sky-fog-terrain-baseline-v3` and leaves
 - Corrected the resting stack position downward so the main card no longer clips against the top screen edge.
 - Main card now fully fits within the red debug-outlined top interaction zone while remaining fully readable at rest.
 
+### Resting-balance composition adjustment update
+
+- Moved the main card resting position slightly lower within the same red top interaction zone so it sits more comfortably in the focal band.
+- Reduced card height slightly to keep the richer thumbnail + metadata + description layout readable while reducing visual dominance in the top zone.
+
 ## Intent
 
 v4 is designed to preserve horizon visibility and strengthen the feeling of browsing through time/depth in the scene, instead of blocking the horizon with a wide overlay.

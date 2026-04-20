@@ -153,7 +153,7 @@ const CARD_STACK_STOPS = [
     saturation: 0.95,
     contrast: 0.95
   },
-  { offset: 0, y: -14, z: 178, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
+  { offset: 0, y: -4, z: 178, scaleX: 1, scaleY: 1, blur: 0, saturation: 1, contrast: 1 },
   {
     offset: 1,
     y: 76,

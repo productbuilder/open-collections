@@ -30,6 +30,6 @@ This sandbox isolates the card-stack concept so motion and composition can be ev
 
 ## Recent refinement notes
 
-- Upgraded motion from step-like threshold transitions to live drag + momentum.
-- After release, the stack continues moving briefly with inertial decay before snapping.
-- Styling was refreshed to a light grey backdrop with white cards and dark borders.
+- Viewport fit was corrected so lower controls remain visible on small mobile screens using viewport-aware sizing and safe-area bottom spacing.
+- Motion was refactored around one continuous stack position with explicit drag → momentum → snap phases.
+- Flashing/flicker was reduced by reusing card DOM nodes and separating live transform updates from post-release settle behavior.

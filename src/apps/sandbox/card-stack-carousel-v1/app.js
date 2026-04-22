@@ -68,7 +68,7 @@ class CardStackCarouselSandbox extends HTMLElement {
 
     this.state = {
       position: 0,
-      dragging: false
+      phase: 'idle'
     };
 
     this.dragSession = {
@@ -82,14 +82,13 @@ class CardStackCarouselSandbox extends HTMLElement {
 
     this.motion = {
       rafId: null,
-      mode: null,
+      mode: 'idle',
       velocityCardsPerSec: 0,
-      snapFrom: 0,
-      snapTo: 0,
-      snapStart: 0,
-      snapDurationMs: 220
+      snapTarget: 0,
+      lastFrameTs: 0
     };
 
+    this.cardNodes = [];
     this.snapDistance = 130;
     this.maxVisibleDepth = 5;
 
@@ -103,6 +102,7 @@ class CardStackCarouselSandbox extends HTMLElement {
   connectedCallback() {
     this.render();
     this.cacheRefs();
+    this.buildCards();
 
     this.stage.addEventListener('pointerdown', this.onPointerDown, { passive: false });
     this.stage.addEventListener('pointermove', this.onPointerMove, { passive: false });
@@ -121,11 +121,7 @@ class CardStackCarouselSandbox extends HTMLElement {
     this.stage?.removeEventListener('pointercancel', this.onPointerUp);
     this.stage?.removeEventListener('lostpointercapture', this.onPointerUp);
     this.controls?.removeEventListener('click', this.onControlClick);
-
-    if (this.motion.rafId) {
-      cancelAnimationFrame(this.motion.rafId);
-      this.motion.rafId = null;
-    }
+    this.stopMotion();
   }
 
   cacheRefs() {
@@ -133,6 +129,30 @@ class CardStackCarouselSandbox extends HTMLElement {
     this.deck = this.shadowRoot.querySelector('[data-role="deck"]');
     this.statusLabel = this.shadowRoot.querySelector('[data-role="status-label"]');
     this.controls = this.shadowRoot.querySelector('[data-role="controls"]');
+    this.debugLabel = this.shadowRoot.querySelector('[data-role="debug"]');
+    this.prevButton = this.shadowRoot.querySelector('[data-action="prev"]');
+    this.nextButton = this.shadowRoot.querySelector('[data-action="next"]');
+  }
+
+  buildCards() {
+    const fragment = document.createDocumentFragment();
+
+    this.cardNodes = CARD_DATA.map((card) => {
+      const cardNode = document.createElement('article');
+      cardNode.className = 'deck-card';
+      cardNode.innerHTML = `
+        <div class="thumb" style="background: ${card.image};"></div>
+        <div class="meta">
+          <p class="category">${card.category}</p>
+          <h2>${card.title}</h2>
+          <p class="description">${card.description}</p>
+        </div>
+      `;
+      fragment.appendChild(cardNode);
+      return cardNode;
+    });
+
+    this.deck.appendChild(fragment);
   }
 
   get maxIndex() {
@@ -161,18 +181,34 @@ class CardStackCarouselSandbox extends HTMLElement {
       this.motion.rafId = null;
     }
 
-    this.motion.mode = null;
+    this.motion.mode = 'idle';
     this.motion.velocityCardsPerSec = 0;
+    this.motion.lastFrameTs = 0;
+    this.state.phase = this.dragSession.pointerId === null ? 'idle' : 'drag';
+  }
+
+  startMotion(mode, options = {}) {
+    if (this.motion.rafId) {
+      cancelAnimationFrame(this.motion.rafId);
+      this.motion.rafId = null;
+    }
+
+    this.motion.mode = mode;
+    this.motion.velocityCardsPerSec = options.velocity ?? 0;
+    this.motion.snapTarget = options.snapTarget ?? Math.round(this.clampPosition(this.state.position));
+    this.motion.lastFrameTs = 0;
+    this.state.phase = mode;
+    this.motion.rafId = requestAnimationFrame(this.stepMotion);
   }
 
   onPointerDown(event) {
-    if (event.button !== 0 || this.state.dragging) {
+    if (event.button !== 0 || this.state.phase === 'drag') {
       return;
     }
 
     this.stopMotion();
 
-    this.state.dragging = true;
+    this.state.phase = 'drag';
     this.dragSession.pointerId = event.pointerId;
     this.dragSession.startY = event.clientY;
     this.dragSession.startPosition = this.state.position;
@@ -186,7 +222,7 @@ class CardStackCarouselSandbox extends HTMLElement {
   }
 
   onPointerMove(event) {
-    if (!this.state.dragging || event.pointerId !== this.dragSession.pointerId) {
+    if (this.state.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
       return;
     }
 
@@ -198,7 +234,7 @@ class CardStackCarouselSandbox extends HTMLElement {
     const dy = event.clientY - this.dragSession.lastY;
     const instantVelocity = dy / dt;
 
-    this.dragSession.velocityPxPerMs = this.dragSession.velocityPxPerMs * 0.2 + instantVelocity * 0.8;
+    this.dragSession.velocityPxPerMs = this.dragSession.velocityPxPerMs * 0.15 + instantVelocity * 0.85;
     this.dragSession.lastY = event.clientY;
     this.dragSession.lastTimestamp = event.timeStamp;
 
@@ -207,11 +243,10 @@ class CardStackCarouselSandbox extends HTMLElement {
   }
 
   onPointerUp(event) {
-    if (!this.state.dragging || event.pointerId !== this.dragSession.pointerId) {
+    if (this.state.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
       return;
     }
 
-    this.state.dragging = false;
     this.dragSession.pointerId = null;
 
     if (this.stage.hasPointerCapture(event.pointerId)) {
@@ -219,71 +254,72 @@ class CardStackCarouselSandbox extends HTMLElement {
     }
 
     const velocityCardsPerSec = (-this.dragSession.velocityPxPerMs * 1000) / this.snapDistance;
-    this.startInertia(velocityCardsPerSec);
+    if (Math.abs(velocityCardsPerSec) < 0.02) {
+      this.startMotion('snap', {
+        velocity: 0,
+        snapTarget: Math.round(this.clampPosition(this.state.position))
+      });
+      return;
+    }
+
+    this.startMotion('momentum', { velocity: velocityCardsPerSec });
   }
 
-  startInertia(initialVelocityCardsPerSec) {
-    this.stopMotion();
-
-    this.motion.mode = 'inertia';
-    this.motion.velocityCardsPerSec = initialVelocityCardsPerSec;
-    this.motion.lastFrameTs = null;
-    this.motion.rafId = requestAnimationFrame(this.stepMotion);
-  }
-
-  startSnap(targetIndex) {
-    this.motion.mode = 'snap';
-    this.motion.snapFrom = this.state.position;
-    this.motion.snapTo = this.clampPosition(targetIndex);
-    this.motion.snapStart = performance.now();
-    this.motion.rafId = requestAnimationFrame(this.stepMotion);
+  beginSnap() {
+    this.startMotion('snap', {
+      velocity: this.motion.velocityCardsPerSec,
+      snapTarget: Math.round(this.clampPosition(this.state.position))
+    });
   }
 
   stepMotion(timestamp) {
-    if (this.motion.mode === 'inertia') {
-      if (!this.motion.lastFrameTs) {
-        this.motion.lastFrameTs = timestamp;
-      }
-
-      const dtMs = Math.min(34, timestamp - this.motion.lastFrameTs);
+    if (!this.motion.lastFrameTs) {
       this.motion.lastFrameTs = timestamp;
+    }
 
-      this.state.position += this.motion.velocityCardsPerSec * (dtMs / 1000);
+    const dtSec = Math.min(0.05, (timestamp - this.motion.lastFrameTs) / 1000);
+    this.motion.lastFrameTs = timestamp;
 
-      const decay = Math.pow(0.93, dtMs / 16.67);
-      this.motion.velocityCardsPerSec *= decay;
+    if (this.motion.mode === 'momentum') {
+      this.state.position += this.motion.velocityCardsPerSec * dtSec;
+
+      const frictionPerSecond = 0.14;
+      this.motion.velocityCardsPerSec *= Math.pow(frictionPerSecond, dtSec);
 
       if (this.state.position < 0 || this.state.position > this.maxIndex) {
-        this.state.position = this.withEdgeResistance(this.state.position);
-        this.motion.velocityCardsPerSec *= 0.65;
+        const nearestBound = this.state.position < 0 ? 0 : this.maxIndex;
+        const overscroll = nearestBound - this.state.position;
+        this.motion.velocityCardsPerSec += overscroll * 22 * dtSec;
+        this.motion.velocityCardsPerSec *= Math.pow(0.5, dtSec * 60);
       }
 
-      this.paintCards();
-
-      if (Math.abs(this.motion.velocityCardsPerSec) <= 0.05) {
-        const targetIndex = Math.round(this.clampPosition(this.state.position));
-        this.startSnap(targetIndex);
+      if (Math.abs(this.motion.velocityCardsPerSec) <= 0.04) {
+        this.beginSnap();
         return;
       }
 
+      this.paintCards();
       this.motion.rafId = requestAnimationFrame(this.stepMotion);
       return;
     }
 
     if (this.motion.mode === 'snap') {
-      const elapsed = timestamp - this.motion.snapStart;
-      const progress = Math.min(1, elapsed / this.motion.snapDurationMs);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      this.state.position = this.motion.snapFrom + (this.motion.snapTo - this.motion.snapFrom) * eased;
-      this.paintCards();
+      const distance = this.motion.snapTarget - this.state.position;
+      this.motion.velocityCardsPerSec += distance * 30 * dtSec;
+      this.motion.velocityCardsPerSec *= Math.pow(0.6, dtSec * 60);
+      this.state.position += this.motion.velocityCardsPerSec * dtSec;
 
-      if (progress >= 1) {
-        this.state.position = this.motion.snapTo;
+      const nearTarget = Math.abs(distance) < 0.002;
+      const nearStill = Math.abs(this.motion.velocityCardsPerSec) < 0.02;
+
+      if (nearTarget && nearStill) {
+        this.state.position = this.motion.snapTarget;
         this.stopMotion();
         this.paintCards();
         return;
       }
 
+      this.paintCards();
       this.motion.rafId = requestAnimationFrame(this.stepMotion);
     }
   }
@@ -297,13 +333,17 @@ class CardStackCarouselSandbox extends HTMLElement {
     const activeIndex = Math.round(this.clampPosition(this.state.position));
 
     if (action === 'prev' && activeIndex > 0) {
-      this.stopMotion();
-      this.startSnap(activeIndex - 1);
+      this.startMotion('snap', {
+        velocity: 0,
+        snapTarget: activeIndex - 1
+      });
     }
 
     if (action === 'next' && activeIndex < this.maxIndex) {
-      this.stopMotion();
-      this.startSnap(activeIndex + 1);
+      this.startMotion('snap', {
+        velocity: 0,
+        snapTarget: activeIndex + 1
+      });
     }
   }
 
@@ -331,54 +371,38 @@ class CardStackCarouselSandbox extends HTMLElement {
       y,
       scale,
       opacity,
-      zIndex,
-      relative
+      zIndex
     };
   }
 
   paintCards() {
-    this.deck.innerHTML = '';
+    const activeIndex = Math.round(this.clampPosition(this.state.position));
 
-    const fragment = document.createDocumentFragment();
-
-    CARD_DATA.forEach((card, index) => {
+    this.cardNodes.forEach((cardNode, index) => {
       const layout = this.getCardLayout(index);
+
       if (layout.hidden) {
+        cardNode.style.display = 'none';
         return;
       }
 
-      const cardNode = document.createElement('article');
-      cardNode.className = 'deck-card';
-      if (Math.round(this.clampPosition(this.state.position)) === index) {
-        cardNode.classList.add('is-active');
-      }
-
+      cardNode.style.display = '';
+      cardNode.classList.toggle('is-active', activeIndex === index);
       cardNode.style.zIndex = String(Math.round(layout.zIndex));
       cardNode.style.opacity = layout.opacity.toFixed(3);
       cardNode.style.transform = `translate(-50%, ${layout.y.toFixed(2)}px) scale(${layout.scale.toFixed(3)})`;
-
-      cardNode.innerHTML = `
-        <div class="thumb" style="background: ${card.image};"></div>
-        <div class="meta">
-          <p class="category">${card.category}</p>
-          <h2>${card.title}</h2>
-          <p class="description">${card.description}</p>
-        </div>
-      `;
-
-      fragment.appendChild(cardNode);
     });
 
-    this.deck.appendChild(fragment);
-
-    const activeIndex = Math.round(this.clampPosition(this.state.position));
     this.statusLabel.textContent = `Card ${activeIndex + 1} / ${CARD_DATA.length}`;
+    this.prevButton.disabled = activeIndex === 0;
+    this.nextButton.disabled = activeIndex === this.maxIndex;
 
-    const prevButton = this.shadowRoot.querySelector('[data-action="prev"]');
-    const nextButton = this.shadowRoot.querySelector('[data-action="next"]');
-
-    prevButton.disabled = activeIndex === 0;
-    nextButton.disabled = activeIndex === this.maxIndex;
+    this.debugLabel.textContent = [
+      `index ${activeIndex}`,
+      `offset ${(this.state.position - activeIndex).toFixed(2)}`,
+      `vel ${this.motion.velocityCardsPerSec.toFixed(2)}`,
+      `phase ${this.state.phase}`
+    ].join(' · ');
   }
 
   render() {
@@ -386,7 +410,8 @@ class CardStackCarouselSandbox extends HTMLElement {
       <style>
         :host {
           display: block;
-          min-height: 100vh;
+          height: 100dvh;
+          min-height: 100dvh;
           color: #1e2932;
         }
 
@@ -396,9 +421,9 @@ class CardStackCarouselSandbox extends HTMLElement {
 
         .sandbox {
           position: relative;
-          min-height: 100vh;
+          height: 100%;
           overflow: hidden;
-          padding: 1.2rem 1rem 1rem;
+          padding: 1rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
           display: flex;
           justify-content: center;
           background: #e7eaef;
@@ -418,19 +443,19 @@ class CardStackCarouselSandbox extends HTMLElement {
         .stage {
           position: relative;
           width: min(25rem, 100%);
-          min-height: 86vh;
+          height: 100%;
           touch-action: none;
           user-select: none;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+          display: grid;
+          grid-template-rows: minmax(0, 1fr) auto auto;
+          gap: clamp(0.45rem, 1.8vh, 0.95rem);
+          align-items: end;
         }
 
         .deck {
           position: relative;
           width: 100%;
-          height: clamp(30rem, 74vh, 42rem);
-          margin-top: clamp(0.2rem, 2vh, 1.2rem);
+          min-height: 0;
           pointer-events: none;
         }
 
@@ -448,6 +473,7 @@ class CardStackCarouselSandbox extends HTMLElement {
           transform-origin: top center;
           overflow: hidden;
           will-change: transform, opacity;
+          backface-visibility: hidden;
         }
 
         .deck-card.is-active {
@@ -498,13 +524,10 @@ class CardStackCarouselSandbox extends HTMLElement {
         }
 
         .hud {
-          position: absolute;
-          right: 0;
-          left: 0;
-          bottom: clamp(0.8rem, 2.4vh, 1.6rem);
           display: flex;
           justify-content: center;
           pointer-events: none;
+          padding-bottom: max(0.2rem, env(safe-area-inset-bottom));
         }
 
         .hud-inner {
@@ -524,6 +547,20 @@ class CardStackCarouselSandbox extends HTMLElement {
           font-size: 0.83rem;
           color: #1e293b;
           font-weight: 700;
+        }
+
+        .debug {
+          justify-self: center;
+          font-size: 0.71rem;
+          font-weight: 600;
+          color: #334155;
+          opacity: 0.8;
+          background: rgba(255, 255, 255, 0.55);
+          border: 1px solid rgba(51, 65, 85, 0.25);
+          border-radius: 999px;
+          padding: 0.2rem 0.55rem;
+          backdrop-filter: blur(2px);
+          pointer-events: none;
         }
 
         button {
@@ -563,6 +600,8 @@ class CardStackCarouselSandbox extends HTMLElement {
               <button type="button" data-action="next" aria-label="Show next card">Next</button>
             </div>
           </div>
+
+          <div class="debug" data-role="debug"></div>
         </section>
       </main>
     `;

@@ -199,8 +199,9 @@ const CARD_STACK_STOPS = [
 const SWIPE_SNAP_DISTANCE = 132;
 const SWIPE_COMMIT_THRESHOLD = 0.28;
 const TOP_STACK_MAX_CARDS = 3;
-const TOP_STACK_SPACING = 30;
-const TOP_STACK_CEILING_Y = -120;
+const TOP_STACK_SPACING = 28;
+const TOP_STACK_SCALE_STEP = 0.06;
+const TOP_STACK_OPACITY_STEP = 0.25;
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -410,10 +411,10 @@ function getWrappedDelta(index, activePosition) {
 
 function getCardDepthScenePosition(offset) {
   if (offset < 0) {
-    const stackIndex = Math.min(Math.abs(offset), TOP_STACK_MAX_CARDS);
-    const y = Math.max(-(stackIndex * TOP_STACK_SPACING), TOP_STACK_CEILING_Y);
-    const scale = Math.max(0.8, 1 - stackIndex * 0.05);
-    const opacity = Math.max(0.25, 1 - stackIndex * 0.2);
+    const stackIndex = Math.min(Math.floor(Math.abs(offset)), TOP_STACK_MAX_CARDS);
+    const y = -(stackIndex * TOP_STACK_SPACING);
+    const scale = Math.max(0.8, 1 - stackIndex * TOP_STACK_SCALE_STEP);
+    const opacity = Math.max(0.25, 1 - stackIndex * TOP_STACK_OPACITY_STEP);
 
     return {
       y,

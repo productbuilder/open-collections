@@ -198,6 +198,9 @@ const CARD_STACK_STOPS = [
 
 const SWIPE_SNAP_DISTANCE = 132;
 const SWIPE_COMMIT_THRESHOLD = 0.28;
+const TOP_STACK_MAX_CARDS = 3;
+const TOP_STACK_SPACING = 30;
+const TOP_STACK_CEILING_Y = -120;
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -406,9 +409,28 @@ function getWrappedDelta(index, activePosition) {
 }
 
 function getCardDepthScenePosition(offset) {
+  if (offset < 0) {
+    const stackIndex = Math.min(Math.abs(offset), TOP_STACK_MAX_CARDS);
+    const y = Math.max(-(stackIndex * TOP_STACK_SPACING), TOP_STACK_CEILING_Y);
+    const scale = Math.max(0.8, 1 - stackIndex * 0.05);
+    const opacity = Math.max(0.25, 1 - stackIndex * 0.2);
+
+    return {
+      y,
+      z: 140 - stackIndex * 24,
+      scaleX: scale,
+      scaleY: Math.max(0.78, scale - 0.03),
+      zIndex: Math.max(2, 12 + Math.round(stackIndex)),
+      blur: stackIndex * 0.45,
+      saturation: Math.max(0.72, 1 - stackIndex * 0.08),
+      contrast: Math.max(0.72, 1 - stackIndex * 0.08),
+      opacity
+    };
+  }
+
   const minOffset = CARD_STACK_STOPS[0].offset;
   const maxOffset = CARD_STACK_STOPS[CARD_STACK_STOPS.length - 1].offset;
-  const clampedOffset = Math.max(minOffset, Math.min(maxOffset, offset));
+  const clampedOffset = Math.max(0, Math.min(maxOffset, offset));
 
   let lower = CARD_STACK_STOPS[0];
   let upper = CARD_STACK_STOPS[CARD_STACK_STOPS.length - 1];
@@ -442,7 +464,8 @@ function getCardDepthScenePosition(offset) {
     zIndex,
     blur,
     saturation,
-    contrast
+    contrast,
+    opacity: 1
   };
 }
 
@@ -532,8 +555,7 @@ function setupDepthCarousel() {
       const scene = getCardDepthScenePosition(wrappedDelta);
       const isTransientTopCardPosition = wrappedDelta < 0 && wrappedDelta > -1.25;
       const isTransientTopCard = topCardInteractionBlend > 0.001 && isTransientTopCardPosition;
-      const shouldHideAboveActive = wrappedDelta < 0 && !isTransientTopCard;
-      const visibility = shouldHideAboveActive ? 0 : isTransientTopCard ? topCardInteractionBlend : 1;
+      const visibility = Math.max(0, Math.min(1, scene.opacity));
       const transientScaleBoost = isTransientTopCard ? 1.06 : 1;
       const transientYBoost = isTransientTopCard ? -14 : 0;
       const baseTransform = `translate3d(-50%, ${scene.y + transientYBoost}px, ${scene.z}px) scale(${scene.scaleX * transientScaleBoost}, ${scene.scaleY * transientScaleBoost})`;
@@ -544,7 +566,7 @@ function setupDepthCarousel() {
       element.style.filter = `blur(${scene.blur}px) saturate(${scene.saturation}) contrast(${scene.contrast})`;
       element.classList.toggle('is-active', wrappedDelta === 0);
       element.classList.toggle('is-transient-top', isTransientTopCard);
-      element.setAttribute('aria-hidden', visibility === 0 || Math.abs(wrappedDelta) > 1 ? 'true' : 'false');
+      element.setAttribute('aria-hidden', visibility <= 0.01 || Math.abs(wrappedDelta) > 4 ? 'true' : 'false');
     });
   }
 

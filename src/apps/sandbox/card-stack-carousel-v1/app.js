@@ -83,6 +83,7 @@ class CardStackCarouselSandbox extends HTMLElement {
 
     this.cardNodes = [];
     this.maxVisibleDepth = 5;
+    this.topStackDepth = 3.2;
 
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
@@ -284,19 +285,46 @@ class CardStackCarouselSandbox extends HTMLElement {
 
   getCardLayout(index) {
     const relative = index - this.position;
-    const depth = Math.abs(relative);
-    const hidden = depth > this.maxVisibleDepth + 0.6;
-    const y = relative * 110;
-    const scale = Math.max(0.5, 1 - Math.abs(relative) * 0.05);
-    const opacity = Math.max(0, 1 - Math.abs(relative) * 0.25);
-    const zIndex = 100 - Math.abs(relative);
+
+    if (relative >= 0) {
+      const depth = relative;
+      const hidden = depth > this.maxVisibleDepth + 0.8;
+      const y = depth * 110;
+      const scale = Math.max(0.6, 1 - depth * 0.05);
+      const opacity = Math.max(0, 1 - depth * 0.22);
+      const zIndex = 120 - depth;
+
+      return {
+        hidden,
+        y,
+        scale,
+        opacity,
+        zIndex,
+        blur: 0,
+        topStack: false
+      };
+    }
+
+    const above = -relative;
+    const stackProgress = Math.min(1, above / this.topStackDepth);
+    const compressEase = 1 - Math.exp(-Math.min(above, this.topStackDepth) * 1.4);
+    const stackY = -26 - compressEase * 86;
+    const exitProgress = Math.max(0, above - this.topStackDepth);
+    const y = stackY - exitProgress * 170;
+    const hidden = above > this.topStackDepth + 1.2;
+    const scale = Math.max(0.78, 0.99 - stackProgress * 0.12 - exitProgress * 0.04);
+    const opacity = Math.max(0, 0.9 - stackProgress * 0.45 - exitProgress * 0.55);
+    const blur = Math.min(3.4, stackProgress * 1.5 + exitProgress * 2.6);
+    const zIndex = 95 - above * 2;
 
     return {
       hidden,
       y,
       scale,
       opacity,
-      zIndex
+      zIndex,
+      blur,
+      topStack: true
     };
   }
 
@@ -317,8 +345,10 @@ class CardStackCarouselSandbox extends HTMLElement {
       cardNode.classList.toggle('is-active', activeIndex === index);
       cardNode.classList.toggle('dragging', isDragging);
       cardNode.classList.toggle('snapping', isSnapping);
+      cardNode.classList.toggle('is-top-stack', layout.topStack);
       cardNode.style.zIndex = String(Math.round(layout.zIndex));
       cardNode.style.opacity = layout.opacity.toFixed(3);
+      cardNode.style.filter = layout.blur > 0 ? `blur(${layout.blur.toFixed(2)}px) saturate(0.93)` : '';
       cardNode.style.transform = `translateY(${layout.y.toFixed(2)}px) scale(${layout.scale.toFixed(3)})`;
     });
 
@@ -401,7 +431,7 @@ class CardStackCarouselSandbox extends HTMLElement {
             0 3px 10px rgba(22, 34, 49, 0.1);
           transform-origin: center center;
           overflow: hidden;
-          will-change: transform, opacity;
+          will-change: transform, opacity, filter;
           backface-visibility: hidden;
           transition: none;
         }
@@ -418,6 +448,12 @@ class CardStackCarouselSandbox extends HTMLElement {
           box-shadow:
             0 24px 40px rgba(20, 32, 48, 0.18),
             0 6px 14px rgba(20, 32, 48, 0.12);
+        }
+
+        .deck-card.is-top-stack {
+          box-shadow:
+            0 12px 22px rgba(20, 32, 48, 0.12),
+            0 2px 8px rgba(20, 32, 48, 0.08);
         }
 
         .thumb {

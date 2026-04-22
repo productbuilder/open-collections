@@ -66,30 +66,22 @@ class CardStackCarouselSandbox extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
 
-    this.state = {
-      position: 0,
-      phase: 'idle'
-    };
+    this.position = 0;
+    this.velocity = 0;
+    this.phase = 'idle';
 
     this.dragSession = {
       pointerId: null,
-      startY: 0,
-      startPosition: 0,
       lastY: 0,
-      lastTimestamp: 0,
-      velocityPxPerMs: 0
+      dragVelocity: 0
     };
 
     this.motion = {
       rafId: null,
-      mode: 'idle',
-      velocityCardsPerSec: 0,
-      snapTarget: 0,
-      lastFrameTs: 0
+      snapTarget: 0
     };
 
     this.cardNodes = [];
-    this.snapDistance = 130;
     this.maxVisibleDepth = 5;
 
     this.onPointerDown = this.onPointerDown.bind(this);
@@ -163,58 +155,26 @@ class CardStackCarouselSandbox extends HTMLElement {
     return Math.max(0, Math.min(this.maxIndex, position));
   }
 
-  withEdgeResistance(position) {
-    if (position < 0) {
-      return position * 0.25;
-    }
-
-    if (position > this.maxIndex) {
-      return this.maxIndex + (position - this.maxIndex) * 0.25;
-    }
-
-    return position;
-  }
-
   stopMotion() {
     if (this.motion.rafId) {
       cancelAnimationFrame(this.motion.rafId);
       this.motion.rafId = null;
     }
-
-    this.motion.mode = 'idle';
-    this.motion.velocityCardsPerSec = 0;
-    this.motion.lastFrameTs = 0;
-    this.state.phase = this.dragSession.pointerId === null ? 'idle' : 'drag';
-  }
-
-  startMotion(mode, options = {}) {
-    if (this.motion.rafId) {
-      cancelAnimationFrame(this.motion.rafId);
-      this.motion.rafId = null;
-    }
-
-    this.motion.mode = mode;
-    this.motion.velocityCardsPerSec = options.velocity ?? 0;
-    this.motion.snapTarget = options.snapTarget ?? Math.round(this.clampPosition(this.state.position));
-    this.motion.lastFrameTs = 0;
-    this.state.phase = mode;
-    this.motion.rafId = requestAnimationFrame(this.stepMotion);
+    this.phase = this.dragSession.pointerId === null ? 'idle' : 'drag';
   }
 
   onPointerDown(event) {
-    if (event.button !== 0 || this.state.phase === 'drag') {
+    if (event.button !== 0 || this.phase === 'drag') {
       return;
     }
 
     this.stopMotion();
 
-    this.state.phase = 'drag';
+    this.phase = 'drag';
     this.dragSession.pointerId = event.pointerId;
-    this.dragSession.startY = event.clientY;
-    this.dragSession.startPosition = this.state.position;
     this.dragSession.lastY = event.clientY;
-    this.dragSession.lastTimestamp = event.timeStamp;
-    this.dragSession.velocityPxPerMs = 0;
+    this.dragSession.dragVelocity = 0;
+    this.velocity = 0;
 
     this.stage.setPointerCapture(event.pointerId);
     event.preventDefault();
@@ -222,28 +182,23 @@ class CardStackCarouselSandbox extends HTMLElement {
   }
 
   onPointerMove(event) {
-    if (this.state.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
+    if (this.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
       return;
     }
 
-    const rawDelta = event.clientY - this.dragSession.startY;
-    const nextPosition = this.dragSession.startPosition - rawDelta / this.snapDistance;
-    this.state.position = this.withEdgeResistance(nextPosition);
-
-    const dt = Math.max(1, event.timeStamp - this.dragSession.lastTimestamp);
-    const dy = event.clientY - this.dragSession.lastY;
-    const instantVelocity = dy / dt;
-
-    this.dragSession.velocityPxPerMs = this.dragSession.velocityPxPerMs * 0.15 + instantVelocity * 0.85;
+    const deltaY = event.clientY - this.dragSession.lastY;
+    this.position -= deltaY * 0.01;
+    this.position = this.clampPosition(this.position);
+    const instantVelocity = -deltaY * 0.01;
+    this.dragSession.dragVelocity = this.dragSession.dragVelocity * 0.75 + instantVelocity * 0.25;
     this.dragSession.lastY = event.clientY;
-    this.dragSession.lastTimestamp = event.timeStamp;
 
     event.preventDefault();
     this.paintCards();
   }
 
   onPointerUp(event) {
-    if (this.state.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
+    if (this.phase !== 'drag' || event.pointerId !== this.dragSession.pointerId) {
       return;
     }
 
@@ -253,74 +208,52 @@ class CardStackCarouselSandbox extends HTMLElement {
       this.stage.releasePointerCapture(event.pointerId);
     }
 
-    const velocityCardsPerSec = (-this.dragSession.velocityPxPerMs * 1000) / this.snapDistance;
-    if (Math.abs(velocityCardsPerSec) < 0.02) {
-      this.startMotion('snap', {
-        velocity: 0,
-        snapTarget: Math.round(this.clampPosition(this.state.position))
-      });
+    this.velocity = this.dragSession.dragVelocity;
+    if (Math.abs(this.velocity) < 0.001) {
+      this.snapToNearest();
       return;
     }
 
-    this.startMotion('momentum', { velocity: velocityCardsPerSec });
+    this.phase = 'momentum';
+    this.motion.rafId = requestAnimationFrame(this.stepMotion);
   }
 
-  beginSnap() {
-    this.startMotion('snap', {
-      velocity: this.motion.velocityCardsPerSec,
-      snapTarget: Math.round(this.clampPosition(this.state.position))
-    });
+  snapToNearest() {
+    this.stopMotion();
+    this.phase = 'snap';
+    this.motion.snapTarget = Math.round(this.clampPosition(this.position));
+    this.motion.rafId = requestAnimationFrame(this.stepMotion);
   }
 
-  stepMotion(timestamp) {
-    if (!this.motion.lastFrameTs) {
-      this.motion.lastFrameTs = timestamp;
-    }
-
-    const dtSec = Math.min(0.05, (timestamp - this.motion.lastFrameTs) / 1000);
-    this.motion.lastFrameTs = timestamp;
-
-    if (this.motion.mode === 'momentum') {
-      this.state.position += this.motion.velocityCardsPerSec * dtSec;
-
-      const frictionPerSecond = 0.14;
-      this.motion.velocityCardsPerSec *= Math.pow(frictionPerSecond, dtSec);
-
-      if (this.state.position < 0 || this.state.position > this.maxIndex) {
-        const nearestBound = this.state.position < 0 ? 0 : this.maxIndex;
-        const overscroll = nearestBound - this.state.position;
-        this.motion.velocityCardsPerSec += overscroll * 22 * dtSec;
-        this.motion.velocityCardsPerSec *= Math.pow(0.5, dtSec * 60);
-      }
-
-      if (Math.abs(this.motion.velocityCardsPerSec) <= 0.04) {
-        this.beginSnap();
-        return;
-      }
-
+  stepMotion() {
+    if (this.phase === 'momentum') {
+      this.velocity *= 0.95;
+      this.position += this.velocity;
+      this.position = this.clampPosition(this.position);
       this.paintCards();
-      this.motion.rafId = requestAnimationFrame(this.stepMotion);
+
+      if (Math.abs(this.velocity) > 0.001) {
+        this.motion.rafId = requestAnimationFrame(this.stepMotion);
+      } else {
+        this.snapToNearest();
+      }
       return;
     }
 
-    if (this.motion.mode === 'snap') {
-      const distance = this.motion.snapTarget - this.state.position;
-      this.motion.velocityCardsPerSec += distance * 30 * dtSec;
-      this.motion.velocityCardsPerSec *= Math.pow(0.6, dtSec * 60);
-      this.state.position += this.motion.velocityCardsPerSec * dtSec;
+    if (this.phase === 'snap') {
+      const distance = this.motion.snapTarget - this.position;
+      this.position += distance * 0.18;
+      this.position = this.clampPosition(this.position);
+      this.paintCards();
 
-      const nearTarget = Math.abs(distance) < 0.002;
-      const nearStill = Math.abs(this.motion.velocityCardsPerSec) < 0.02;
-
-      if (nearTarget && nearStill) {
-        this.state.position = this.motion.snapTarget;
+      if (Math.abs(distance) <= 0.001) {
+        this.position = this.motion.snapTarget;
+        this.phase = 'idle';
         this.stopMotion();
         this.paintCards();
-        return;
+      } else {
+        this.motion.rafId = requestAnimationFrame(this.stepMotion);
       }
-
-      this.paintCards();
-      this.motion.rafId = requestAnimationFrame(this.stepMotion);
     }
   }
 
@@ -330,41 +263,33 @@ class CardStackCarouselSandbox extends HTMLElement {
       return;
     }
 
-    const activeIndex = Math.round(this.clampPosition(this.state.position));
+    const activeIndex = Math.round(this.clampPosition(this.position));
 
     if (action === 'prev' && activeIndex > 0) {
-      this.startMotion('snap', {
-        velocity: 0,
-        snapTarget: activeIndex - 1
-      });
+      this.motion.snapTarget = activeIndex - 1;
+      this.phase = 'snap';
+      this.stopMotion();
+      this.phase = 'snap';
+      this.motion.rafId = requestAnimationFrame(this.stepMotion);
     }
 
     if (action === 'next' && activeIndex < this.maxIndex) {
-      this.startMotion('snap', {
-        velocity: 0,
-        snapTarget: activeIndex + 1
-      });
+      this.motion.snapTarget = activeIndex + 1;
+      this.phase = 'snap';
+      this.stopMotion();
+      this.phase = 'snap';
+      this.motion.rafId = requestAnimationFrame(this.stepMotion);
     }
   }
 
   getCardLayout(index) {
-    const relative = index - this.state.position;
+    const relative = index - this.position;
     const depth = Math.abs(relative);
     const hidden = depth > this.maxVisibleDepth + 0.6;
-
-    let y = relative * 52;
-    let scale = Math.max(0.72, 1 - Math.max(0, relative) * 0.05);
-    let opacity = Math.max(0.06, 1 - Math.max(0, relative) * 0.18);
-
-    if (relative < 0) {
-      const reveal = Math.min(1, Math.abs(relative));
-      y = -140 * (1 - reveal);
-      scale = 0.94 + 0.06 * reveal;
-      opacity = 0.1 + 0.9 * reveal;
-    }
-
-    const zIndexBase = 200;
-    const zIndex = relative <= 0 ? zIndexBase + 60 - depth : zIndexBase - relative;
+    const y = relative * 110;
+    const scale = Math.max(0.5, 1 - Math.abs(relative) * 0.05);
+    const opacity = Math.max(0, 1 - Math.abs(relative) * 0.25);
+    const zIndex = 100 - Math.abs(relative);
 
     return {
       hidden,
@@ -376,7 +301,9 @@ class CardStackCarouselSandbox extends HTMLElement {
   }
 
   paintCards() {
-    const activeIndex = Math.round(this.clampPosition(this.state.position));
+    const activeIndex = Math.round(this.clampPosition(this.position));
+    const isDragging = this.phase === 'drag';
+    const isSnapping = this.phase === 'snap';
 
     this.cardNodes.forEach((cardNode, index) => {
       const layout = this.getCardLayout(index);
@@ -388,9 +315,11 @@ class CardStackCarouselSandbox extends HTMLElement {
 
       cardNode.style.display = '';
       cardNode.classList.toggle('is-active', activeIndex === index);
+      cardNode.classList.toggle('dragging', isDragging);
+      cardNode.classList.toggle('snapping', isSnapping);
       cardNode.style.zIndex = String(Math.round(layout.zIndex));
       cardNode.style.opacity = layout.opacity.toFixed(3);
-      cardNode.style.transform = `translate(-50%, ${layout.y.toFixed(2)}px) scale(${layout.scale.toFixed(3)})`;
+      cardNode.style.transform = `translateY(${layout.y.toFixed(2)}px) scale(${layout.scale.toFixed(3)})`;
     });
 
     this.statusLabel.textContent = `Card ${activeIndex + 1} / ${CARD_DATA.length}`;
@@ -399,9 +328,9 @@ class CardStackCarouselSandbox extends HTMLElement {
 
     this.debugLabel.textContent = [
       `index ${activeIndex}`,
-      `offset ${(this.state.position - activeIndex).toFixed(2)}`,
-      `vel ${this.motion.velocityCardsPerSec.toFixed(2)}`,
-      `phase ${this.state.phase}`
+      `offset ${(this.position - activeIndex).toFixed(2)}`,
+      `vel ${this.velocity.toFixed(3)}`,
+      `phase ${this.phase}`
     ].join(' · ');
   }
 
@@ -419,14 +348,11 @@ class CardStackCarouselSandbox extends HTMLElement {
           box-sizing: border-box;
         }
 
-        .sandbox {
-          position: relative;
-          height: 100%;
+        .carousel-root {
+          position: fixed;
+          inset: 0;
+          background: #f2f2f2;
           overflow: hidden;
-          padding: 1rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
-          display: flex;
-          justify-content: center;
-          background: #e7eaef;
         }
 
         .backdrop-glow {
@@ -441,28 +367,31 @@ class CardStackCarouselSandbox extends HTMLElement {
         }
 
         .stage {
-          position: relative;
-          width: min(25rem, 100%);
-          height: 100%;
+          position: absolute;
+          inset: 0;
           touch-action: none;
           user-select: none;
-          display: grid;
-          grid-template-rows: minmax(0, 1fr) auto auto;
-          gap: clamp(0.45rem, 1.8vh, 0.95rem);
-          align-items: end;
+        }
+
+        .stack {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 90%;
+          max-width: 420px;
         }
 
         .deck {
           position: relative;
           width: 100%;
-          min-height: 0;
+          min-height: 24rem;
           pointer-events: none;
         }
 
         .deck-card {
           position: absolute;
-          left: 50%;
-          top: 0;
+          inset: 0;
           width: 100%;
           border-radius: 1.25rem;
           background: #ffffff;
@@ -470,10 +399,19 @@ class CardStackCarouselSandbox extends HTMLElement {
           box-shadow:
             0 18px 34px rgba(22, 34, 49, 0.16),
             0 3px 10px rgba(22, 34, 49, 0.1);
-          transform-origin: top center;
+          transform-origin: center center;
           overflow: hidden;
           will-change: transform, opacity;
           backface-visibility: hidden;
+          transition: none;
+        }
+
+        .deck-card.dragging {
+          transition: none;
+        }
+
+        .deck-card.snapping {
+          transition: transform 220ms ease-out, opacity 220ms ease-out;
         }
 
         .deck-card.is-active {
@@ -523,11 +461,14 @@ class CardStackCarouselSandbox extends HTMLElement {
           font-size: 0.9rem;
         }
 
-        .hud {
+        .controls {
+          position: fixed;
+          bottom: 20px;
+          left: 0;
+          right: 0;
           display: flex;
           justify-content: center;
           pointer-events: none;
-          padding-bottom: max(0.2rem, env(safe-area-inset-bottom));
         }
 
         .hud-inner {
@@ -550,7 +491,10 @@ class CardStackCarouselSandbox extends HTMLElement {
         }
 
         .debug {
-          justify-self: center;
+          position: fixed;
+          top: 16px;
+          left: 50%;
+          transform: translateX(-50%);
           font-size: 0.71rem;
           font-weight: 600;
           color: #334155;
@@ -588,12 +532,14 @@ class CardStackCarouselSandbox extends HTMLElement {
         }
       </style>
 
-      <main class="sandbox">
+      <main class="carousel-root">
         <div class="backdrop-glow"></div>
         <section class="stage" data-role="stage" aria-label="Vertical card stack carousel prototype">
-          <div class="deck" data-role="deck"></div>
+          <div class="stack">
+            <div class="deck" data-role="deck"></div>
+          </div>
 
-          <div class="hud">
+          <div class="controls">
             <div class="hud-inner" data-role="controls">
               <button type="button" data-action="prev" aria-label="Show previous card">Prev</button>
               <div class="status" data-role="status-label"></div>

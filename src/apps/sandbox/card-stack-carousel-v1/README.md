@@ -13,6 +13,7 @@ This sandbox isolates the card-stack concept so motion and composition can be ev
 - Drag/swipe **up** moves the active card upward and promotes the next card into focus.
 - Drag/swipe **down** reveals and restores the previous card.
 - Motion now uses a continuous position model: live drag, momentum after release, gradual velocity decay, then clean snap to the nearest resting card.
+- Motion now uses an asymmetric model: bottom cards continue flowing upward in a readable queue, while cards above the active card compress into a stacked-collapse zone and then disappear upward (inspired by timeline/stacked-card motion references).
 
 ## Prototype characteristics
 

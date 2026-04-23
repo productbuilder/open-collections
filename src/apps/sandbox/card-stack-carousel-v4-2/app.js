@@ -1,6 +1,9 @@
 gsap.registerPlugin(ScrollTrigger)
 
 const colors = ['255,90,80','80,200,120','125,150,255','225,150,225']
+const ACTIVE_SLOT_YPERCENT = -6
+const STACK_GAP_YPERCENT = 16
+const EXIT_TOP_YPERCENT = -182
 
 const tl = gsap.timeline({defaults:{duration:2}})
 .set('.card', {
@@ -14,7 +17,7 @@ const tl = gsap.timeline({defaults:{duration:2}})
   y:'0%',
   yPercent:(i,t,a)=>{
     const depth = a.length - 1 - i
-    return 18 + (depth * 14)
+    return ACTIVE_SLOT_YPERCENT + (depth * STACK_GAP_YPERCENT)
   },
   z:(i,t,a)=>{
     const depth = a.length - 1 - i
@@ -31,9 +34,9 @@ const tl = gsap.timeline({defaults:{duration:2}})
   stagger:-1
 }, 0)
 .to('.card', {
-  yPercent:-132,
+  yPercent:EXIT_TOP_YPERCENT,
   stagger:-1,
-  ease:'back.in(1.7)'
+  ease:'none'
 }, 0)
 .to('.card', {
   duration:1,

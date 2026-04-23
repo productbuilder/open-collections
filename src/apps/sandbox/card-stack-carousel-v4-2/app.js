@@ -8,21 +8,30 @@ const tl = gsap.timeline({defaults:{duration:2}})
   backgroundImage:(i,t,a)=>(i==a.length-1)
     ? 'radial-gradient(ellipse at 330px 120px, rgba(0,0,0,0) 30%, #000 150%)'
     : 'radial-gradient(ellipse at 2500px -400px, rgba(0,0,0,0) 0%, #000 60%)',
-  transformOrigin:'50% 115% -40px',
+  transformOrigin:'50% 120% -20px',
   'backdrop-filter': 'blur(20px)',
   x:'-50%',
-  y:'12%',
-  yPercent:35,
-  z:-220,
-  rotateX:8
+  y:'0%',
+  yPercent:(i,t,a)=>{
+    const depth = a.length - 1 - i
+    return 18 + (depth * 14)
+  },
+  z:(i,t,a)=>{
+    const depth = a.length - 1 - i
+    return -36 - (depth * 22)
+  },
+  rotateX:(i,t,a)=>{
+    const depth = a.length - 1 - i
+    return 2 + (depth * 1.3)
+  }
 })
 .to('.card', {
-  z:8,
-  rotateX:-1,
+  z:12,
+  rotateX:0,
   stagger:-1
 }, 0)
 .to('.card', {
-  yPercent:-88,
+  yPercent:-132,
   stagger:-1,
   ease:'back.in(1.7)'
 }, 0)

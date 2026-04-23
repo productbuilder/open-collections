@@ -1,7 +1,6 @@
 body {
   margin:0;
   background:#ddd;
-  overflow:hidden;
 }
 
 main {
@@ -12,15 +11,14 @@ main {
 .carousel {
   width:100vw;
   height:100vh;
-  perspective:360px;
   overflow:hidden;
-  opacity:0;
 }
 
 .card {
   position:absolute;
   left:50%;
-  top:24%;
+  top:0;
+  transform: translate(-50%, 0);
   width:min(84vw, 740px);
   aspect-ratio:2 / 1;
   max-height:46vh;

@@ -20,7 +20,7 @@ main {
 .card {
   position:absolute;
   left:50%;
-  top:33%;
+  top:24%;
   width:min(84vw, 740px);
   aspect-ratio:2 / 1;
   max-height:46vh;

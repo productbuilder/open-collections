@@ -9,6 +9,12 @@ This sandbox is a refinement pass on `card-stack-carousel-v4`, keeping the same 
 - Transform staging was adjusted so cards emerge more from **underneath** the stack than from deep behind it.
 - Staging was corrected so the active card sits higher in the viewport, queued cards sit underneath, and cards exit upward through the top edge.
 
+## Lane note
+
+- v4-2 uses a single continuous upward stack lane.
+- The active slot is intentionally positioned higher in the viewport.
+- Cards rise from underneath into the active slot, then continue upward and exit through the top edge.
+
 ## Preserved behavior
 
 - Light grey background and overall visual identity.

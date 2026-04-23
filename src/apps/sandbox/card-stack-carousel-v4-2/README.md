@@ -4,16 +4,17 @@ This sandbox is a refinement pass on `card-stack-carousel-v4`, keeping the same 
 
 ## Refinements in v4-2
 
-- Motion was tuned to read more clearly as **upward** travel through the stack.
-- Card proportions were shifted toward a **2:1** feel (wider and shorter).
-- Transform staging was adjusted so cards emerge more from **underneath** the stack than from deep behind it.
-- Staging was corrected so the active card sits higher in the viewport, queued cards sit underneath, and cards exit upward through the top edge.
+- Motion now uses a **true upward-moving stack** with fixed slots.
+- The active card is the **top slot of the stack**, not a separate floating layer.
+- During each transition, **all visible cards advance upward together** by one slot.
+- Card proportions remain tuned toward a **2:1** feel (wider and shorter).
+- The top card exits through the top edge while a new card enters from the bottom slot.
 
 ## Lane note
 
 - v4-2 uses a single continuous upward stack lane.
-- The active slot is intentionally positioned higher in the viewport.
-- Cards rise from underneath into the active slot, then continue upward and exit through the top edge.
+- Slot 0 is the active top card; queued cards remain underneath in lower slots.
+- On every scroll transition, the entire stack shifts upward one slot.
 
 ## Preserved behavior
 

@@ -1,99 +1,132 @@
 gsap.registerPlugin(ScrollTrigger)
 
-const colors = ['255,90,80','80,200,120','125,150,255','225,150,225']
-const ACTIVE_SLOT_YPERCENT = -6
-const STACK_GAP_YPERCENT = 16
-const EXIT_TOP_YPERCENT = -182
+const colors = ['255,90,80', '80,200,120', '125,150,255', '225,150,225']
+const SLOT_Y_PERCENT = [-6, 11, 26, 40, 53]
+const SLOT_Z = [16, -6, -28, -50, -72]
+const SLOT_ROTATE_X = [0, 2.2, 3.7, 5.2, 6.7]
+const EXIT_TOP_YPERCENT = -170
+const ENTRY_BOTTOM_YPERCENT = 74
+const HIDDEN_BELOW_YPERCENT = 108
+const BLUR_BY_SLOT = [8, 12, 15, 18, 20]
 
-const tl = gsap.timeline({defaults:{duration:2}})
-.set('.card', {
-  backgroundColor:(i)=>'rgba('+colors[gsap.utils.wrap(0, colors.length, i)]+',0.7)',
-  backgroundImage:(i,t,a)=>(i==a.length-1)
-    ? 'radial-gradient(ellipse at 330px 120px, rgba(0,0,0,0) 30%, #000 150%)'
-    : 'radial-gradient(ellipse at 2500px -400px, rgba(0,0,0,0) 0%, #000 60%)',
-  transformOrigin:'50% 120% -20px',
-  'backdrop-filter': 'blur(20px)',
-  x:'-50%',
-  y:'0%',
-  yPercent:(i,t,a)=>{
-    const depth = a.length - 1 - i
-    return ACTIVE_SLOT_YPERCENT + (depth * STACK_GAP_YPERCENT)
-  },
-  z:(i,t,a)=>{
-    const depth = a.length - 1 - i
-    return -36 - (depth * 22)
-  },
-  rotateX:(i,t,a)=>{
-    const depth = a.length - 1 - i
-    return 2 + (depth * 1.3)
+const cards = gsap.utils.toArray('.card')
+const slotCount = SLOT_Y_PERCENT.length
+const maxStep = cards.length
+const motionState = { step: 0 }
+
+const lerp = (start, end, progress) => start + (end - start) * progress
+
+function getInterpolatedSlotValue(position, values, beforeValue, afterValue) {
+  if (position < -1 || position > slotCount + 1) return null
+
+  if (position <= 0) {
+    const p = gsap.utils.clamp(0, 1, position + 1)
+    return lerp(beforeValue, values[0], p)
   }
-})
-.to('.card', {
-  z:12,
-  rotateX:0,
-  stagger:-1
-}, 0)
-.to('.card', {
-  yPercent:EXIT_TOP_YPERCENT,
-  stagger:-1,
-  ease:'none'
-}, 0)
-.to('.card', {
-  duration:1,
-  'backdrop-filter': 'blur(8px)',
-  backgroundImage: 'radial-gradient(ellipse at 150px 250px, rgba(0,0,0,0) 80%, #000 300%)',
-  stagger:-1,
-  ease:'power3.in'
-}, 0)
-.to('.card', {
-  duration:1,
-  'backdrop-filter': 'blur(1px)',
-  backgroundImage: 'radial-gradient(ellipse at -1000px 500px, rgba(0,0,0,0) 0%, #000 50%)',
-  stagger:-1,
-  ease:'sine.in'
-}, 1)
-.to('.card', {
-  duration:0.1,
-  autoAlpha:0,
-  stagger:-1,
-}, 1.9)
-.pause(1)
+
+  if (position >= slotCount - 1) {
+    if (position <= slotCount) {
+      const p = position - (slotCount - 1)
+      return lerp(values[slotCount - 1], afterValue, p)
+    }
+
+    const p = gsap.utils.clamp(0, 1, position - slotCount)
+    return lerp(afterValue, HIDDEN_BELOW_YPERCENT, p)
+  }
+
+  const lowerSlot = Math.floor(position)
+  const p = position - lowerSlot
+  return lerp(values[lowerSlot], values[lowerSlot + 1], p)
+}
+
+function renderStackSlots() {
+  const progressStep = motionState.step
+
+  cards.forEach((card, index) => {
+    const slotPosition = index - progressStep
+    const yPercent = getInterpolatedSlotValue(
+      slotPosition,
+      SLOT_Y_PERCENT,
+      EXIT_TOP_YPERCENT,
+      ENTRY_BOTTOM_YPERCENT
+    )
+
+    if (yPercent == null) {
+      gsap.set(card, { autoAlpha: 0 })
+      return
+    }
+
+    const z = getInterpolatedSlotValue(slotPosition, SLOT_Z, 28, -92)
+    const rotateX = getInterpolatedSlotValue(slotPosition, SLOT_ROTATE_X, -1.2, 8.2)
+    const blur = getInterpolatedSlotValue(slotPosition, BLUR_BY_SLOT, 2, 22)
+    const depthOpacity = gsap.utils.clamp(0, 1, 1 - Math.max(slotPosition, 0) * 0.12)
+    const exitOpacity = slotPosition < 0 ? gsap.utils.clamp(0, 1, slotPosition + 1) : 1
+
+    gsap.set(card, {
+      yPercent,
+      z,
+      rotateX,
+      autoAlpha: depthOpacity * exitOpacity,
+      backdropFilter: `blur(${blur}px)`,
+      backgroundImage:
+        slotPosition <= 0
+          ? 'radial-gradient(ellipse at 160px 230px, rgba(0,0,0,0) 74%, #000 280%)'
+          : 'radial-gradient(ellipse at 2000px -300px, rgba(0,0,0,0) 0%, #000 62%)'
+    })
+  })
+}
+
+const tl = gsap.timeline({ defaults: { ease: 'none' } })
+  .set('.card', {
+    backgroundColor: (i) => `rgba(${colors[gsap.utils.wrap(0, colors.length, i)]},0.7)`,
+    transformOrigin: '50% 120% -20px',
+    x: '-50%',
+    y: '0%'
+  })
+  .to(motionState, {
+    step: maxStep,
+    duration: maxStep,
+    onUpdate: renderStackSlots
+  }, 0)
+  .pause(0)
+
+renderStackSlots()
 
 gsap.timeline()
-.to('.carousel', {duration:0.8, opacity:1, ease:'power2.inOut'})
-.fromTo(tl, {
-  progress:1
-},{
-  duration:1.5,
-  progress:0.07,
-  ease:'expo',
-  onComplete:initST
-}, 0)
+  .to('.carousel', { duration: 0.8, opacity: 1, ease: 'power2.inOut' })
+  .fromTo(tl, {
+    progress: 0
+  }, {
+    duration: 1.5,
+    progress: 0.07,
+    ease: 'expo',
+    onComplete: initST
+  }, 0)
 
-function initST(){
-  gsap.set('body', {overflow:'scroll'})
+function initST() {
+  gsap.set('body', { overflow: 'scroll' })
   gsap.to(tl, {
-    progress:1,
-    scrollTrigger:{
-      trigger:'main',
-      start:'0 0',
-      end:'100% 100%',
-      scrub:true,
-      pin:'.carousel'
+    progress: 1,
+    scrollTrigger: {
+      trigger: 'main',
+      start: '0 0',
+      end: '100% 100%',
+      scrub: true,
+      pin: '.carousel'
     }
   })
-  
-  gsap.timeline({repeat:-1, repeatDelay:0.5})
-  .to('.arrow path', { attr:{d:'M0,0 0,10'}, ease:'power3.inOut' })
-  .to('.arrow path', { attr:{d:'M0,10 0,10'}, ease:'power3.inOut' })
-  
+
+  gsap.timeline({ repeat: -1, repeatDelay: 0.5 })
+    .to('.arrow path', { attr: { d: 'M0,0 0,10' }, ease: 'power3.inOut' })
+    .to('.arrow path', { attr: { d: 'M0,10 0,10' }, ease: 'power3.inOut' })
+
   gsap.to('.arrow', {
-    opacity:0,
-    scrollTrigger:{
-      trigger:'main',
-      start:'0 0',
-      end:'9px 0',
-      scrub:1,
+    opacity: 0,
+    scrollTrigger: {
+      trigger: 'main',
+      start: '0 0',
+      end: '9px 0',
+      scrub: 1
     }
   })
 }

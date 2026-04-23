@@ -59,26 +59,21 @@ function renderStackSlots() {
     const z = getInterpolatedSlotValue(slotPosition, SLOT_Z, 28, -92)
     const rotateX = getInterpolatedSlotValue(slotPosition, SLOT_ROTATE_X, -1.2, 8.2)
     const blur = getInterpolatedSlotValue(slotPosition, BLUR_BY_SLOT, 2, 22)
-    const depthOpacity = gsap.utils.clamp(0, 1, 1 - Math.max(slotPosition, 0) * 0.12)
-    const exitOpacity = slotPosition < 0 ? gsap.utils.clamp(0, 1, slotPosition + 1) : 1
 
     gsap.set(card, {
       yPercent,
       z,
       rotateX,
-      autoAlpha: depthOpacity * exitOpacity,
+      autoAlpha: 1,
       backdropFilter: `blur(${blur}px)`,
-      backgroundImage:
-        slotPosition <= 0
-          ? 'radial-gradient(ellipse at 160px 230px, rgba(0,0,0,0) 74%, #000 280%)'
-          : 'radial-gradient(ellipse at 2000px -300px, rgba(0,0,0,0) 0%, #000 62%)'
+      backgroundImage: 'none'
     })
   })
 }
 
 const tl = gsap.timeline({ defaults: { ease: 'none' } })
   .set('.card', {
-    backgroundColor: (i) => `rgba(${colors[gsap.utils.wrap(0, colors.length, i)]},0.7)`,
+    backgroundColor: (i) => `rgb(${colors[gsap.utils.wrap(0, colors.length, i)]})`,
     transformOrigin: '50% 120% -20px',
     x: '-50%',
     y: '0%'

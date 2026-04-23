@@ -19,6 +19,11 @@ This sandbox is a refinement pass on `card-stack-carousel-v4`, keeping the same 
 ## Preserved behavior
 
 - Light grey background and overall visual identity.
-- Blur/fade staging and card lifecycle.
+- Blur staging and card lifecycle.
 - Pinned carousel, intro fade/progress ramp, and arrow behavior.
 - Scroll-driven GSAP timeline with ScrollTrigger scrubbing.
+
+## Visual correction note
+
+- Cards now render in their assigned final colors from the first frame.
+- Semi-transparency during card motion has been removed so cards remain fully opaque while stacking.

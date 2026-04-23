@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #ddd;
+  color: #fff;
+  font-family: monospace;
+}
+
+main {
+  width: 100%;
+  min-height: 700vh;
+}
+
+.pin-wrap {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.carousel {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  perspective: 300px;
+  opacity: 1;
+}
+
+.card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60%;
+  height: 80%;
+  max-width: 400px;
+  max-height: 600px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter, background-image;
+  pointer-events: none;
+}
+
+.arrow {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 8vh;
+  width: auto;
+  opacity: 1;
+  transition: opacity 220ms ease-out;
+}
+
+.arrow path {
+  stroke: #333;
+  stroke-width: 0.25;
+  stroke-linecap: round;
+  fill: none;
+  stroke-dasharray: 10;
+  animation: arrow-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes arrow-pulse {
+  0% {
+    stroke-dashoffset: 10;
+    transform: translateY(-0.35rem);
+  }
+
+  50% {
+    stroke-dashoffset: 2;
+    transform: translateY(0);
+  }
+
+  100% {
+    stroke-dashoffset: -6;
+    transform: translateY(0.35rem);
+  }
+}

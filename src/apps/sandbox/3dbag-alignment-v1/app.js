@@ -1,5 +1,5 @@
 import "../../../shared/ui/primitives/index.js";
-import "./oc-3dbag-alignment-layer.js";
+import "./oc-3dbag-layer.js";
 
 class Oc3DBagAlignmentSandboxElement extends HTMLElement {
 	constructor() {
@@ -75,7 +75,7 @@ class Oc3DBagAlignmentSandboxElement extends HTMLElement {
 				<header>
 					<h1>3DBAG Alignment Sandbox (v1)</h1>
 					<p>
-						Uses shared <code>oc-map</code> and an <code>oc-3dbag-alignment-layer</code> component,
+						Uses shared <code>oc-map</code> and an <code>oc-3dbag-layer</code> component,
 						with the public 3DBAG OGC <code>/collections/pand/items</code> endpoint strategy.
 					</p>
 					<p id="status" class="status">Waiting for initial 3DBAG layer fetch…</p>
@@ -89,12 +89,12 @@ class Oc3DBagAlignmentSandboxElement extends HTMLElement {
 					zoom="16"
 					style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
 				></oc-map>
-				<oc-3dbag-alignment-layer
+				<oc-3dbag-layer
 					for="map"
 					rdx="192647.49226594163"
 					rdy="444371.34647845256"
 					debug
-				></oc-3dbag-alignment-layer>
+				></oc-3dbag-layer>
 			</main>
 		`;
 	}

@@ -1,6 +1,6 @@
 export const BAG_3D_ENDPOINTS = {
 	pandItems: "https://api.3dbag.nl/collections/pand/items",
-	// Documented public 3D Tiles pattern (version segment varies per release):
+	// 3DBAG docs + public viewer data host pattern:
 	// https://data.3dbag.nl/<version>/cesium3dtiles/lod22/tileset.json
 	threeDTilesTemplate: "https://data.3dbag.nl/{version}/cesium3dtiles/{lod}/tileset.json",
 };
@@ -25,6 +25,24 @@ export function createBagPandItemsUrl({
 	url.searchParams.set("limit", String(Math.max(1, Math.round(Number(limit) || 1))));
 	url.searchParams.set("f", format);
 	return url.toString();
+}
+
+export function createBag3DTilesUrl({
+	version,
+	lod = "lod22",
+	template = BAG_3D_ENDPOINTS.threeDTilesTemplate,
+} = {}) {
+	const normalizedVersion = String(version || "").trim();
+	if (!normalizedVersion) {
+		throw new TypeError("version is required (for example: v20250903).");
+	}
+	const normalizedLod = String(lod || "").trim().toLowerCase();
+	if (!/^lod(12|13|22)$/.test(normalizedLod)) {
+		throw new TypeError("lod must be one of: lod12, lod13, lod22.");
+	}
+	return template
+		.replace("{version}", encodeURIComponent(normalizedVersion))
+		.replace("{lod}", encodeURIComponent(normalizedLod));
 }
 
 export async function fetchBagPandItems(

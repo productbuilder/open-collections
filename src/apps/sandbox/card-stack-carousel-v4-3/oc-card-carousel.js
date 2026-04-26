@@ -1,13 +1,13 @@
 // src/apps/sandbox/card-stack-carousel-v4-3/oc-card-carousel.js
 
-const { gsap, ScrollTrigger } = window
+const { gsap, ScrollTrigger, ScrollToPlugin } = window
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 
 class OcCardCarousel extends HTMLElement {
 
 	static get observedAttributes() {
-		return ['scroll-vh-per-card', 'max-visible-cards']
+		return ['scroll-vh-per-card', 'max-visible-cards', 'scroll-mode']
 	}
 
 	constructor() {
@@ -16,21 +16,41 @@ class OcCardCarousel extends HTMLElement {
 
 		this.attachShadow({ mode: 'open' })
 
+
+
 		this._cards = []
 		this._cardElements = []
 		this._motionState = { step: 0 }
 		this._tl = null
 		this._scrollTween = null
+		this._scrollTrigger = null
+
+		// scroll mode
+		this._currentStep = 0
+		this._isAnimatingStep = false
+		this._queuedStepDelta = 0
+		this._wheelSnapTargetStep = 0
+		this._wheelSnapTimeout = null
+		this._wheelSnapTween = null
+		this._touchStartY = 0
+		this._removeStepInputHandlers = null
+		
+
+
 
 		this.scrollVhPerCard = Number(this.getAttribute('scroll-vh-per-card')) || 100;
 
 		this.maxVisibleCards = Number(this.getAttribute('max-visible-cards')) || 30;
+
+		this.scrollMode = this.getAttribute('scroll-mode') || 'continuous';
 
 		this.colors = ['255,255,255', '255,255,120', '125,150,255', '225,150,225']
 
 		this.exitTopYPercent = -120
 		this.entryBottomYPercent = 74
 		this.hiddenBelowYPercent = 50
+
+
 	}
 
 	connectedCallback() {
@@ -52,6 +72,11 @@ class OcCardCarousel extends HTMLElement {
 
 		if (name === 'max-visible-cards') {
 			this.maxVisibleCards = Number(newValue) || 30
+			this.setup()
+		}
+
+		if (name === 'scroll-mode') {
+			this.scrollMode = newValue || 'continuous'
 			this.setup()
 		}
 	}
@@ -127,25 +152,29 @@ class OcCardCarousel extends HTMLElement {
 		if (!this._cardElements.length) return
 
 		const cardCount = this._cardElements.length
+		const maxStep = Math.max(0, cardCount - 1)
+
+		const scrollPxPerCard = window.innerHeight * (this.scrollVhPerCard / 100)
+		const scrollDistance = Math.max(1, maxStep * scrollPxPerCard)
 
 		this.style.setProperty(
 			'--oc-card-carousel-scroll-height',
-			`${cardCount * this.scrollVhPerCard}vh`
+			`${scrollDistance + window.innerHeight}px`
 		)
 
-		const visibleSlotCount = Math.min(cardCount, this.maxVisibleCards)
+		const visibleStackCount = Math.min(cardCount, this.maxVisibleCards)
+		const visibleSlotCount = Math.min(cardCount, this.maxVisibleCards + 1)
+
 		const isMobile = window.matchMedia('(max-width: 768px)').matches
 		const maxBlur = isMobile ? 0 : 8
 
 		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0, 53, 5)
 		const slotZ = this.createCurvedSlots(visibleSlotCount, 16, -72, 2)
 		const slotRotateX = this.createLinearSlots(visibleSlotCount, 0, 0)
-
-
 		const blurBySlot = this.createCurvedSlots(visibleSlotCount, 0, maxBlur, 2)
 
 		const slotCount = visibleSlotCount
-		const maxStep = cardCount
+
 
 		this._motionState.step = 0
 
@@ -154,12 +183,13 @@ class OcCardCarousel extends HTMLElement {
 			const progressStep = this._motionState.step
 
 			this._cardElements.forEach((cardElement, index) => {
+
 				const distanceFromCurrent = index - progressStep
 
-				if (distanceFromCurrent < -1 || distanceFromCurrent > this.maxVisibleCards) {
+				if (distanceFromCurrent < -1 || distanceFromCurrent >= visibleStackCount) {
 					gsap.set(cardElement, {
-					autoAlpha: 0,
-					pointerEvents: 'none'
+						autoAlpha: 0,
+						pointerEvents: 'none'
 					})
 					return
 				}
@@ -181,7 +211,7 @@ class OcCardCarousel extends HTMLElement {
 
 				const z = this.getInterpolatedSlotValue(slotPosition, slotZ, 28, -92, slotCount)
 				const rotateX = this.getInterpolatedSlotValue(slotPosition, slotRotateX, -1.2, 8.2, slotCount)
-				const blur = this.getInterpolatedSlotValue(slotPosition, blurBySlot, 2, 22, slotCount)
+				const blur = this.getInterpolatedSlotValue(slotPosition, blurBySlot, 0, maxBlur, slotCount)
 
 				gsap.set(cardElement, {
 					yPercent,
@@ -194,7 +224,7 @@ class OcCardCarousel extends HTMLElement {
 					backgroundImage: 'none',
 					zIndex: this.maxVisibleCards - Math.floor(distanceFromCurrent)
 				})
-				})
+			})
 		}
 
 		this._tl = gsap.timeline({ defaults: { ease: 'none' } })
@@ -206,26 +236,245 @@ class OcCardCarousel extends HTMLElement {
 			})
 			.to(this._motionState, {
 				step: maxStep,
-				duration: maxStep,
+				duration: Math.max(1, maxStep),
 				onUpdate: renderStackSlots
 			}, 0)
 			.pause(0)
 
 		renderStackSlots()
 
-		this._scrollTween = gsap.to(this._tl, {
-			progress: 1,
-			scrollTrigger: {
+		this._currentStep = 0
+
+		const pinElement = this.shadowRoot.querySelector('.carousel')
+
+		if (this.scrollMode === 'step') {
+			// step mode
+			this._scrollTrigger = ScrollTrigger.create({
 				trigger: this,
 				start: 'top top',
-				end: 'bottom bottom',
-				scrub: true,
-				pin: this.shadowRoot.querySelector('.carousel')
-			}
-		})
+				end: `+=${scrollDistance}`,
+				pin: pinElement,
+				invalidateOnRefresh: true,
+				onUpdate: (self) => {
+					const step = self.progress * maxStep
+					this._tl.progress(maxStep === 0 ? 0 : step / maxStep)
+				}
+			})
+
+			this.addStepInputHandlers(maxStep, scrollPxPerCard)
+		}  else if (this.scrollMode === 'wheel-snap') {
+			 // hybrid snap step mode
+			this._scrollTrigger = ScrollTrigger.create({
+				trigger: this,
+				start: 'top top',
+				end: `+=${scrollDistance}`,
+				pin: pinElement,
+				invalidateOnRefresh: true,
+				onUpdate: (self) => {
+				const step = self.progress * maxStep
+				this._tl.progress(maxStep === 0 ? 0 : step / maxStep)
+				}
+			})
+
+			this.addWheelSnapInputHandlers(maxStep, scrollPxPerCard)
+		} else {
+			 // existing continuous / snap mode
+			const snapConfig = this.scrollMode === 'snap' && maxStep > 0
+				? {
+					snapTo: 1 / maxStep,
+					duration: { min: 0.03, max: 0.08 },
+					delay: 0.00,
+					ease: 'power2.out'
+				}
+				: false
+
+			this._scrollTween = gsap.to(this._tl, {
+				progress: 1,
+				ease: 'none',
+				scrollTrigger: {
+					trigger: this,
+					start: 'top top',
+					end: `+=${scrollDistance}`,
+					//scrub: this.scrollMode === 'snap' ? 0.15 : true,
+					scrub: true,
+					pin: pinElement,
+					invalidateOnRefresh: true,
+					snap: snapConfig
+				}
+			})
+		}
+
 	}
 
+	addStepInputHandlers(maxStep, scrollPxPerCard) {
+		const carousel = this.shadowRoot.querySelector('.carousel')
+
+		const goByStep = (delta) => {
+			if (!delta) return
+
+			const direction = delta > 0 ? 1 : -1
+
+			if (this._isAnimatingStep) {
+				this._queuedStepDelta += direction
+				this._queuedStepDelta = gsap.utils.clamp(-5, 5, this._queuedStepDelta) // increase this if you want more momentum: this._queuedStepDelta = gsap.utils.clamp(-10, 10, this._queuedStepDelta)
+				return
+			}
+
+			const nextStep = gsap.utils.clamp(
+				0,
+				maxStep,
+				this._currentStep + direction
+			)
+
+			if (nextStep === this._currentStep) return
+
+			this._currentStep = nextStep
+			this._isAnimatingStep = true
+
+			const targetScroll = this._scrollTrigger.start + nextStep * scrollPxPerCard
+
+			gsap.to(window, {
+				scrollTo: targetScroll,
+				duration: 0.28,
+				ease: 'power2.out',
+				onComplete: () => {
+					this._tl.progress(maxStep === 0 ? 0 : nextStep / maxStep)
+					this._isAnimatingStep = false
+
+					if (this._queuedStepDelta !== 0) {
+						const queuedDirection = this._queuedStepDelta > 0 ? 1 : -1
+						this._queuedStepDelta -= queuedDirection
+						goByStep(queuedDirection)
+					}
+				}
+			})
+		}
+
+		const onWheel = (event) => {
+			event.preventDefault()
+
+			const direction = event.deltaY > 0 ? 1 : -1
+			goByStep(direction)
+		}
+
+		const onTouchStart = (event) => {
+			this._touchStartY = event.touches[0].clientY
+		}
+
+		const onTouchEnd = (event) => {
+			const touchEndY = event.changedTouches[0].clientY
+			const deltaY = this._touchStartY - touchEndY
+
+			if (Math.abs(deltaY) < 20) return
+
+			const direction = deltaY > 0 ? 1 : -1
+			goByStep(direction)
+		}
+
+		carousel.addEventListener('wheel', onWheel, { passive: false })
+		carousel.addEventListener('touchstart', onTouchStart, { passive: true })
+		carousel.addEventListener('touchend', onTouchEnd, { passive: true })
+
+		this._removeStepInputHandlers = () => {
+			carousel.removeEventListener('wheel', onWheel)
+			carousel.removeEventListener('touchstart', onTouchStart)
+			carousel.removeEventListener('touchend', onTouchEnd)
+		}
+	}
+
+	addWheelSnapInputHandlers(maxStep, scrollPxPerCard) {
+		const carousel = this.shadowRoot.querySelector('.carousel')
+
+		const goToTargetStep = () => {
+			const targetScroll = this._scrollTrigger.start + this._wheelSnapTargetStep * scrollPxPerCard
+
+			if (this._wheelSnapTween) {
+			this._wheelSnapTween.kill()
+			}
+
+			this._wheelSnapTween = gsap.to(window, {
+			scrollTo: targetScroll,
+			duration: 0.32,
+			ease: 'power2.out',
+			onComplete: () => {
+				this._currentStep = this._wheelSnapTargetStep
+				this._tl.progress(maxStep === 0 ? 0 : this._currentStep / maxStep)
+				this._wheelSnapTween = null
+			}
+			})
+		}
+
+		const queueDirection = (direction) => {
+			this._wheelSnapTargetStep = gsap.utils.clamp(
+			0,
+			maxStep,
+			this._wheelSnapTargetStep + direction
+			)
+
+			if (this._wheelSnapTimeout) {
+			clearTimeout(this._wheelSnapTimeout)
+			}
+
+			this._wheelSnapTimeout = setTimeout(() => {
+			goToTargetStep()
+			}, 70) // controls the timing of the scroll step/snap. Higher values collect more wheel ticks before animating.
+		}
+
+		const onWheel = (event) => {
+			event.preventDefault()
+
+			const direction = event.deltaY > 0 ? 1 : -1
+			queueDirection(direction)
+		}
+
+		const onTouchStart = (event) => {
+			this._touchStartY = event.touches[0].clientY
+		}
+
+		const onTouchEnd = (event) => {
+			const touchEndY = event.changedTouches[0].clientY
+			const deltaY = this._touchStartY - touchEndY
+
+			if (Math.abs(deltaY) < 20) return
+
+			const direction = deltaY > 0 ? 1 : -1
+			queueDirection(direction)
+		}
+
+		this._wheelSnapTargetStep = this._currentStep
+
+		carousel.addEventListener('wheel', onWheel, { passive: false })
+		carousel.addEventListener('touchstart', onTouchStart, { passive: true })
+		carousel.addEventListener('touchend', onTouchEnd, { passive: true })
+
+		this._removeStepInputHandlers = () => {
+			carousel.removeEventListener('wheel', onWheel)
+			carousel.removeEventListener('touchstart', onTouchStart)
+			carousel.removeEventListener('touchend', onTouchEnd)
+
+			if (this._wheelSnapTimeout) {
+			clearTimeout(this._wheelSnapTimeout)
+			this._wheelSnapTimeout = null
+			}
+
+			if (this._wheelSnapTween) {
+			this._wheelSnapTween.kill()
+			this._wheelSnapTween = null
+			}
+		}
+		}
+
 	destroyAnimationsOnly() {
+		if (this._removeStepInputHandlers) {
+			this._removeStepInputHandlers()
+			this._removeStepInputHandlers = null
+		}
+
+		if (this._scrollTrigger) {
+			this._scrollTrigger.kill()
+			this._scrollTrigger = null
+		}
+
 		if (this._scrollTween) {
 			this._scrollTween.kill()
 			this._scrollTween = null
@@ -269,7 +518,7 @@ class OcCardCarousel extends HTMLElement {
 	getInterpolatedSlotValue(position, values, beforeValue, afterValue, slotCount) {
 		if (position < -1 || position > slotCount + 1) return null
 
-		if (position <= 0) {
+		if (position < 0) {
 			const p = gsap.utils.clamp(0, 1, position + 1)
 			return this.lerp(beforeValue, values[0], p)
 		}

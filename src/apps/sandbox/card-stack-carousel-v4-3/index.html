@@ -1,41 +1,70 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scrolling 3D Card Carousel v4-3 — Sandbox</title>
-    <link rel="stylesheet" href="./style.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
-    <script type="module" src="./oc-card-carousel.js"></script>
-  </head>
-  <body>
-    <main>
-      <!-- Use continuous, step, snap, wheel-snap for scroll-mode-->
-      <oc-card-carousel
-        id="carousel"
-        scroll-vh-per-card="100"
-        max-visible-cards="30"
-        scroll-mode="wheel-snap"
-        stack-height="25"
-      ></oc-card-carousel>
-    </main>
 
-    
-  <script type="module">
-    const carousel = document.querySelector('#carousel')
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Scrolling 3D Card Carousel v4-3 — Sandbox</title>
+	<link rel="stylesheet" href="./style.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+	<script type="module" src="./oc-card-carousel.js"></script>
+	<style>
+		.demo-card {
+			background: white;
+			border: 1px solid #ccc;
+			border-radius: 0.5rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font: 3rem monospace;
+		}
 
-    const cardCount = 100
+		.oc-card-carousel-card {
+			background: white;
+			border: 1px solid #ccc;
+			border-radius: 0.5rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font: 3rem monospace;
+		}
+	</style>
+</head>
 
-    carousel.cards = Array.from({ length: cardCount }, (_, index) => {
-      const number = cardCount - index
+<body>
+	<main>
+		<!-- Use continuous, step, snap, wheel-snap for scroll-mode-->
+		<oc-card-carousel id="carousel" scroll-vh-per-card="100" max-visible-cards="30" scroll-mode="wheel-snap"
+			stack-height="50">
+			<div class="demo-card" >100</div>
+			<div class="demo-card" >99</div>
+			<div class="demo-card" >98</div>
+			<div class="demo-card" >100</div>
+			<div class="demo-card" >99</div>
+			<div class="demo-card" >98</div>
+			<div class="demo-card" >100</div>
+			<div class="demo-card" >99</div>
+			<div class="demo-card" >98</div>
+		</oc-card-carousel>
+	</main>
 
-      return {
-        id: String(number),
-        title: String(number)
-      }
-    })
-  </script>
-  </body>
+
+	<script type="module">
+		const carousel = document.querySelector('#carousel')
+
+		const cardCount = 30
+
+		// carousel.cards = Array.from({ length: cardCount }, (_, index) => {
+		// 	const number = cardCount - index
+
+		// 	return {
+		// 		id: String(number),
+		// 		title: String(number)
+		// 	}
+		// })
+	</script>
+</body>
+
 </html>

@@ -53,10 +53,11 @@ class OcCardCarousel extends HTMLElement {
 
 	}
 
-	connectedCallback() {
-		this.render()
-		this.setup()
-	}
+connectedCallback() {
+	this.assignSlotsToChildren()
+	this.render()
+	this.setup()
+}
 
 	disconnectedCallback() {
 		this.destroy()
@@ -79,10 +80,29 @@ class OcCardCarousel extends HTMLElement {
 			this.scrollMode = newValue || 'continuous'
 			this.setup()
 		}
+
+		if (name === 'stack-height') {
+			this.stackHeight = Number(newValue) || 50
+			this.render()
+			this.setup()
+		}
 	}
 
 	set cards(value) {
 		this._cards = Array.isArray(value) ? value : []
+
+		this.innerHTML = this._cards
+			.map((card, index) => `
+			<div
+				class="oc-card-carousel-card"
+				slot="card-${index}"
+				data-card-index="${index}"
+			>
+				${card.title ?? card.label ?? card.id ?? index + 1}
+			</div>
+		`)
+			.join('')
+
 		this.render()
 		this.setup()
 	}
@@ -91,49 +111,83 @@ class OcCardCarousel extends HTMLElement {
 		return this._cards
 	}
 
+	getCardCount() {
+		return this._cards.length || this.children.length
+	}
+
+	renderGeneratedCards() {
+		this.innerHTML = this._cards
+			.map((card, index) => `
+			<div class="oc-card-carousel-card" data-card-index="${index}">
+				${card.title ?? card.label ?? card.id ?? index + 1}
+			</div>
+			`)
+			.join('')
+	}
+
 	render() {
-
 		this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-			display: block;
-			width: 100%;
-			 height: var(--oc-card-carousel-scroll-height, 700vh);
-		}
+		<style>
+			:host {
+				display: block;
+				width: 100%;
+				height: var(--oc-card-carousel-scroll-height, 700vh);
+			}
 
-        .carousel {
-          position: relative;
-          width: 100vw;
-          height: 100vh;
-          perspective: 360px;
-          overflow: hidden;
-          opacity: 1;
-        }
+			.carousel {
+				position: relative;
+				width: 100vw;
+				height: 100vh;
+				perspective: 360px;
+				transform-style: preserve-3d;
+				overflow: hidden;
+				opacity: 1;
+			}
 
-        .card {
-          position: absolute;
-          left: 50%;
-          top: 8vw;
-          width: min(84vw, 740px);
-          aspect-ratio: 2 / 1;
-          max-height: 46vh;
-          border-radius: 0.5rem;
-		  border: 1px solid #ccc;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          font-size: 3rem;
-          font-family: monospace;
-          /* color: #00000000; */
-          box-sizing: border-box;
-		  background: #fff;
-        }
-      </style>
+			.card-layer {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				transform-style: preserve-3d;
+			}
 
-      <div class="carousel">
-        ${this._cards.map((card, index) => this.renderCard(card, index)).join('')}
-      </div>
-    `
+			.card-frame {
+				position: absolute;
+				left: 50%;
+				top: 8vw;
+				width: min(84vw, 740px);
+				aspect-ratio: 2 / 1;
+				max-height: 46vh;
+				border-radius: 0.5rem;
+				box-sizing: border-box;
+				transform-style: preserve-3d;
+			}
+
+			::slotted(*) {
+				width: 100%;
+				height: 100%;
+				box-sizing: border-box;
+			}
+		</style>
+
+		<div class="carousel">
+			<div class="card-layer">
+				${Array.from({ length: this.getCardCount() }, (_, index) => `
+					<div class="card-frame" data-card-index="${index}">
+						<slot name="card-${index}"></slot>
+					</div>
+				`).join('')}
+			</div>
+		</div>
+	`
+	}
+
+	assignSlotsToChildren() {
+		Array.from(this.children).forEach((child, index) => {
+			if (!child.slot) {
+				child.slot = `card-${index}`
+			}
+		})
 	}
 
 	renderCard(card, index) {
@@ -147,7 +201,11 @@ class OcCardCarousel extends HTMLElement {
 	setup() {
 		this.destroyAnimationsOnly()
 
-		this._cardElements = Array.from(this.shadowRoot.querySelectorAll('.card'))
+		this.assignSlotsToChildren()
+
+		this._cardElements = Array.from(
+			this.shadowRoot.querySelectorAll('.card-frame')
+		)
 
 		if (!this._cardElements.length) return
 
@@ -168,7 +226,7 @@ class OcCardCarousel extends HTMLElement {
 		const isMobile = window.matchMedia('(max-width: 768px)').matches
 		const maxBlur = isMobile ? 0 : 8
 
-		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0,  this.stackHeight, 5) 
+		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0, this.stackHeight, 5)
 		const slotZ = this.createCurvedSlots(visibleSlotCount, 16, -72, 2)
 		const slotRotateX = this.createLinearSlots(visibleSlotCount, 0, 0)
 		const blurBySlot = this.createCurvedSlots(visibleSlotCount, 0, maxBlur, 2)

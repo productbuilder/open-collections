@@ -7,7 +7,7 @@ gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 class OcCardCarousel extends HTMLElement {
 
 	static get observedAttributes() {
-		return ['scroll-vh-per-card', 'max-visible-cards', 'scroll-mode']
+		return ['scroll-vh-per-card', 'max-visible-cards', 'scroll-mode', 'stack-height']
 	}
 
 	constructor() {
@@ -37,12 +37,12 @@ class OcCardCarousel extends HTMLElement {
 
 
 
-
+		// attributes
 		this.scrollVhPerCard = Number(this.getAttribute('scroll-vh-per-card')) || 100;
-
 		this.maxVisibleCards = Number(this.getAttribute('max-visible-cards')) || 30;
-
 		this.scrollMode = this.getAttribute('scroll-mode') || 'continuous';
+		this.stackHeight = Number(this.getAttribute('stack-height')) || 50
+
 
 		this.colors = ['255,255,255', '255,255,120', '125,150,255', '225,150,225']
 
@@ -168,7 +168,7 @@ class OcCardCarousel extends HTMLElement {
 		const isMobile = window.matchMedia('(max-width: 768px)').matches
 		const maxBlur = isMobile ? 0 : 8
 
-		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0, 53, 5)
+		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0,  this.stackHeight, 5) 
 		const slotZ = this.createCurvedSlots(visibleSlotCount, 16, -72, 2)
 		const slotRotateX = this.createLinearSlots(visibleSlotCount, 0, 0)
 		const blurBySlot = this.createCurvedSlots(visibleSlotCount, 0, maxBlur, 2)

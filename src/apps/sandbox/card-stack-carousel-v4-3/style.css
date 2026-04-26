@@ -8,32 +8,4 @@ main {
   height:700vh;
 }
 
-.carousel {
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-}
 
-.card {
-  position:absolute;
-  left:50%;
-  top:0;
-  transform: translate(-50%, 0);
-  width:min(84vw, 740px);
-  aspect-ratio:2 / 1;
-  max-height:46vh;
-  border-radius:14px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:3rem;
-  font-family:monospace;
-  color:#fff;
-}
-
-.arrow {
-  position:fixed;
-  bottom:5vh;
-  left:50%;
-  height:8vh;
-}

@@ -24,9 +24,9 @@ class OcCardCarousel extends HTMLElement {
 
 		this.scrollVhPerCard = Number(this.getAttribute('scroll-vh-per-card')) || 100
 
-		this.colors = ['255,90,80', '80,200,120', '125,150,255', '225,150,225']
+		this.colors = ['255,255,255', '255,255,120', '125,150,255', '225,150,225']
 
-		this.exitTopYPercent = -200
+		this.exitTopYPercent = -120
 		this.entryBottomYPercent = 74
 		this.hiddenBelowYPercent = 50
 	}
@@ -85,14 +85,16 @@ class OcCardCarousel extends HTMLElement {
           width: min(84vw, 740px);
           aspect-ratio: 2 / 1;
           max-height: 46vh;
-          border-radius: 14px;
+          border-radius: 0.5rem;
+		  border: 1px solid #ccc;
           display: flex;
           justify-content: center;
           align-items: center;
           font-size: 3rem;
           font-family: monospace;
-          color: #fff;
+          /* color: #00000000; */
           box-sizing: border-box;
+		  background: #fff;
         }
       </style>
 
@@ -163,7 +165,7 @@ class OcCardCarousel extends HTMLElement {
 					z,
 					rotateX,
 					autoAlpha: 1,
-					backdropFilter: `blur(${blur}px)`,
+					backdropFilter:  'white',  //`blur(${blur}px)`, //
 					backgroundImage: 'none',
 					zIndex: cardCount - index
 				})
@@ -172,7 +174,7 @@ class OcCardCarousel extends HTMLElement {
 
 		this._tl = gsap.timeline({ defaults: { ease: 'none' } })
 			.set(this._cardElements, {
-				backgroundColor: (i) => `rgb(${this.colors[gsap.utils.wrap(0, this.colors.length, i)]})`,
+				//backgroundColor: (i) => `rgb(${this.colors[gsap.utils.wrap(0, this.colors.length, i)]})`,
 				transformOrigin: '50% 120% -20px',
 				x: '-50%',
 				y: '0%'

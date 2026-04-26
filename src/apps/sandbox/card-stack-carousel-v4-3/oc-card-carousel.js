@@ -407,8 +407,8 @@ class OcCardCarousel extends HTMLElement {
 
 			this._wheelSnapTween = gsap.to(window, {
 				scrollTo: targetScroll,
-				duration: 0.42,
-				ease: 'power3.out',
+				duration: 0.32,		//  duration: 0.42,
+				ease: 'power2.out', //ease: 'power3.out',
 				overwrite: true,
 				onComplete: () => {
 					this._currentStep = this._wheelSnapTargetStep
@@ -466,7 +466,7 @@ class OcCardCarousel extends HTMLElement {
 				return
 			}
 
-			const cardHeightForGesture = window.innerHeight * 0.16  // Smaller value = more cards per swipe:
+			const cardHeightForGesture = window.innerHeight * 0.16  // Smaller value = more cards per swipe: higher value less cards per swipe
 
 			const stepDelta = gsap.utils.clamp(
 				-8,

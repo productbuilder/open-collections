@@ -7,7 +7,7 @@ gsap.registerPlugin(ScrollTrigger)
 class OcCardCarousel extends HTMLElement {
 
 	static get observedAttributes() {
-		return ['scroll-vh-per-card']
+		return ['scroll-vh-per-card', 'max-visible-cards']
 	}
 
 	constructor() {
@@ -22,7 +22,9 @@ class OcCardCarousel extends HTMLElement {
 		this._tl = null
 		this._scrollTween = null
 
-		this.scrollVhPerCard = Number(this.getAttribute('scroll-vh-per-card')) || 100
+		this.scrollVhPerCard = Number(this.getAttribute('scroll-vh-per-card')) || 100;
+
+		this.maxVisibleCards = Number(this.getAttribute('max-visible-cards')) || 30;
 
 		this.colors = ['255,255,255', '255,255,120', '125,150,255', '225,150,225']
 
@@ -45,6 +47,11 @@ class OcCardCarousel extends HTMLElement {
 
 		if (name === 'scroll-vh-per-card') {
 			this.scrollVhPerCard = Number(newValue) || 100
+			this.setup()
+		}
+
+		if (name === 'max-visible-cards') {
+			this.maxVisibleCards = Number(newValue) || 30
 			this.setup()
 		}
 	}
@@ -126,21 +133,37 @@ class OcCardCarousel extends HTMLElement {
 			`${cardCount * this.scrollVhPerCard}vh`
 		)
 
-		const slotYPercent = this.createCurvedSlots(cardCount, 0, 53, 5)
-		const slotZ = this.createCurvedSlots(cardCount, 16, -72, 2)
-		const slotRotateX = this.createLinearSlots(cardCount, 0, 0)
-		const blurBySlot = this.createCurvedSlots(cardCount, 8, 20, 2)
+		const visibleSlotCount = Math.min(cardCount, this.maxVisibleCards)
+		const isMobile = window.matchMedia('(max-width: 768px)').matches
+		const maxBlur = isMobile ? 0 : 8
 
-		const slotCount = slotYPercent.length
+		const slotYPercent = this.createCurvedSlots(visibleSlotCount, 0, 53, 5)
+		const slotZ = this.createCurvedSlots(visibleSlotCount, 16, -72, 2)
+		const slotRotateX = this.createLinearSlots(visibleSlotCount, 0, 0)
+
+
+		const blurBySlot = this.createCurvedSlots(visibleSlotCount, 0, maxBlur, 2)
+
+		const slotCount = visibleSlotCount
 		const maxStep = cardCount
 
 		this._motionState.step = 0
 
 		const renderStackSlots = () => {
+
 			const progressStep = this._motionState.step
 
 			this._cardElements.forEach((cardElement, index) => {
-				//const slotPosition = cardCount - 1 - index - progressStep
+				const distanceFromCurrent = index - progressStep
+
+				if (distanceFromCurrent < -1 || distanceFromCurrent > this.maxVisibleCards) {
+					gsap.set(cardElement, {
+					autoAlpha: 0,
+					pointerEvents: 'none'
+					})
+					return
+				}
+
 				const slotPosition = index - progressStep
 
 				const yPercent = this.getInterpolatedSlotValue(
@@ -152,7 +175,7 @@ class OcCardCarousel extends HTMLElement {
 				)
 
 				if (yPercent == null) {
-					gsap.set(cardElement, { autoAlpha: 0 })
+					gsap.set(cardElement, { autoAlpha: 0, pointerEvents: 'none' })
 					return
 				}
 
@@ -165,11 +188,13 @@ class OcCardCarousel extends HTMLElement {
 					z,
 					rotateX,
 					autoAlpha: 1,
-					backdropFilter:  'white',  //`blur(${blur}px)`, //
+					pointerEvents: 'auto',
+					filter: `blur(${blur}px)`,
+					backdropFilter: 'none',
 					backgroundImage: 'none',
-					zIndex: cardCount - index
+					zIndex: this.maxVisibleCards - Math.floor(distanceFromCurrent)
 				})
-			})
+				})
 		}
 
 		this._tl = gsap.timeline({ defaults: { ease: 'none' } })

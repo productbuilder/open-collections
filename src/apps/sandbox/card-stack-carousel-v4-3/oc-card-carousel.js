@@ -364,7 +364,7 @@ class OcCardCarousel extends HTMLElement {
 	}
 
 	addStepInputHandlers(maxStep, scrollPxPerCard) {
-		const carousel = this.shadowRoot.querySelector('.carousel')
+		const inputTargets = this._cardElements
 
 		const goByStep = (delta) => {
 			if (!delta) return
@@ -428,19 +428,35 @@ class OcCardCarousel extends HTMLElement {
 			goByStep(direction)
 		}
 
-		carousel.addEventListener('wheel', onWheel, { passive: false })
-		carousel.addEventListener('touchstart', onTouchStart, { passive: true })
-		carousel.addEventListener('touchend', onTouchEnd, { passive: true })
+inputTargets.forEach((target) => {
+	target.addEventListener('wheel', onWheel, { passive: false })
+	target.addEventListener('touchstart', onTouchStart, { passive: true })
+	target.addEventListener('touchmove', onTouchMove, { passive: false })
+	target.addEventListener('touchend', onTouchEnd, { passive: true })
+})
 
-		this._removeStepInputHandlers = () => {
-			carousel.removeEventListener('wheel', onWheel)
-			carousel.removeEventListener('touchstart', onTouchStart)
-			carousel.removeEventListener('touchend', onTouchEnd)
-		}
+this._removeStepInputHandlers = () => {
+	inputTargets.forEach((target) => {
+		target.removeEventListener('wheel', onWheel)
+		target.removeEventListener('touchstart', onTouchStart)
+		target.removeEventListener('touchmove', onTouchMove)
+		target.removeEventListener('touchend', onTouchEnd)
+	})
+
+	if (this._wheelSnapTimeout) {
+		clearTimeout(this._wheelSnapTimeout)
+		this._wheelSnapTimeout = null
+	}
+
+	if (this._wheelSnapTween) {
+		this._wheelSnapTween.kill()
+		this._wheelSnapTween = null
+	}
+}
 	}
 
 	addWheelSnapInputHandlers(maxStep, scrollPxPerCard) {
-		const carousel = this.shadowRoot.querySelector('.carousel')
+		const inputTargets = this._cardElements
 
 		const getStepFromScroll = () => {
 			if (!this._scrollTrigger) return this._currentStep
@@ -542,27 +558,31 @@ class OcCardCarousel extends HTMLElement {
 
 		this._wheelSnapTargetStep = this._currentStep
 
-		carousel.addEventListener('wheel', onWheel, { passive: false })
-		carousel.addEventListener('touchstart', onTouchStart, { passive: true })
-		carousel.addEventListener('touchmove', onTouchMove, { passive: false })
-		carousel.addEventListener('touchend', onTouchEnd, { passive: true })
+		inputTargets.forEach((target) => {
+	target.addEventListener('wheel', onWheel, { passive: false })
+	target.addEventListener('touchstart', onTouchStart, { passive: true })
+	target.addEventListener('touchmove', onTouchMove, { passive: false })
+	target.addEventListener('touchend', onTouchEnd, { passive: true })
+})
 
-		this._removeStepInputHandlers = () => {
-			carousel.removeEventListener('wheel', onWheel)
-			carousel.removeEventListener('touchstart', onTouchStart)
-			carousel.removeEventListener('touchmove', onTouchMove)
-			carousel.removeEventListener('touchend', onTouchEnd)
+this._removeStepInputHandlers = () => {
+	inputTargets.forEach((target) => {
+		target.removeEventListener('wheel', onWheel)
+		target.removeEventListener('touchstart', onTouchStart)
+		target.removeEventListener('touchmove', onTouchMove)
+		target.removeEventListener('touchend', onTouchEnd)
+	})
 
-			if (this._wheelSnapTimeout) {
-				clearTimeout(this._wheelSnapTimeout)
-				this._wheelSnapTimeout = null
-			}
+	if (this._wheelSnapTimeout) {
+		clearTimeout(this._wheelSnapTimeout)
+		this._wheelSnapTimeout = null
+	}
 
-			if (this._wheelSnapTween) {
-				this._wheelSnapTween.kill()
-				this._wheelSnapTween = null
-			}
-		}
+	if (this._wheelSnapTween) {
+		this._wheelSnapTween.kill()
+		this._wheelSnapTween = null
+	}
+}
 	}
 
 	destroyAnimationsOnly() {

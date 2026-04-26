@@ -2,6 +2,10 @@
 
 const { gsap, ScrollTrigger, ScrollToPlugin } = window
 
+if (!gsap || !ScrollTrigger || !ScrollToPlugin) {
+  throw new Error('OcCardCarousel requires GSAP, ScrollTrigger and ScrollToPlugin')
+}
+
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 
 class OcCardCarousel extends HTMLElement {
@@ -86,6 +90,11 @@ connectedCallback() {
 			this.render()
 			this.setup()
 		}
+
+		 if (this.isConnected && this.shadowRoot?.querySelector('.carousel')) {
+			this.render()
+			this.setup()
+		}
 	}
 
 	set cards(value) {
@@ -127,59 +136,59 @@ connectedCallback() {
 
 	render() {
 		this.shadowRoot.innerHTML = `
-		<style>
-			:host {
-				display: block;
-				width: 100%;
-				height: var(--oc-card-carousel-scroll-height, 700vh);
-			}
+			<style>
+				:host {
+					display: block;
+					width: 100%;
+					height: var(--oc-card-carousel-scroll-height, 700vh);
+				}
 
-			.carousel {
-				position: relative;
-				width: 100vw;
-				height: 100vh;
-				perspective: 360px;
-				transform-style: preserve-3d;
-				overflow: hidden;
-				opacity: 1;
-			}
+				.carousel {
+					position: relative;
+					width: 100vw;
+					height: 100vh;
+					perspective: 360px;
+					transform-style: preserve-3d;
+					overflow: hidden;
+					opacity: 1;
+				}
 
-			.card-layer {
-				position: relative;
-				width: 100%;
-				height: 100%;
-				transform-style: preserve-3d;
-			}
+				.card-layer {
+					position: relative;
+					width: 100%;
+					height: 100%;
+					transform-style: preserve-3d;
+				}
 
-			.card-frame {
-				position: absolute;
-				left: 50%;
-				top: 8vw;
-				width: min(84vw, 740px);
-				aspect-ratio: 2 / 1;
-				max-height: 46vh;
-				border-radius: 0.5rem;
-				box-sizing: border-box;
-				transform-style: preserve-3d;
-			}
+				.card-frame {
+					position: absolute;
+					left: 50%;
+					top: 8vw;
+					width: min(84vw, 740px);
+					aspect-ratio: 2 / 1;
+					max-height: 46vh;
+					border-radius: 0.5rem;
+					box-sizing: border-box;
+					transform-style: preserve-3d;
+				}
 
-			::slotted(*) {
-				width: 100%;
-				height: 100%;
-				box-sizing: border-box;
-			}
-		</style>
+				::slotted(*) {
+					width: 100%;
+					height: 100%;
+					box-sizing: border-box;
+				}
+			</style>
 
-		<div class="carousel">
-			<div class="card-layer">
-				${Array.from({ length: this.getCardCount() }, (_, index) => `
-					<div class="card-frame" data-card-index="${index}">
-						<slot name="card-${index}"></slot>
-					</div>
-				`).join('')}
+			<div class="carousel" part="carousel">
+				<div class="card-layer">
+					${Array.from({ length: this.getCardCount() }, (_, index) => `
+						<div class="card-frame" part="card-frame" data-card-index="${index}">
+							<slot name="card-${index}"></slot>
+						</div>
+					`).join('')}
+				</div>
 			</div>
-		</div>
-	`
+		`;
 	}
 
 	assignSlotsToChildren() {
@@ -302,6 +311,9 @@ connectedCallback() {
 		renderStackSlots()
 
 		this._currentStep = 0
+		this._queuedStepDelta = 0
+		this._wheelSnapTargetStep = 0
+		this._isAnimatingStep = false
 
 		const pinElement = this.shadowRoot.querySelector('.carousel')
 
@@ -491,7 +503,7 @@ connectedCallback() {
 
 			this._wheelSnapTimeout = setTimeout(() => {
 				goToTargetStep()
-			}, 70)
+			}, 25) //delay lets multiple wheel ticks collect before snapping
 		}
 
 		const onWheel = (event) => {

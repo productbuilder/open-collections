@@ -57,11 +57,11 @@ class OcCardCarousel extends HTMLElement {
 
 	}
 
-connectedCallback() {
-	this.assignSlotsToChildren()
-	this.render()
-	this.setup()
-}
+	connectedCallback() {
+		this.assignSlotsToChildren()
+		this.render()
+		this.setup()
+	}
 
 	disconnectedCallback() {
 		this.destroy()
@@ -72,26 +72,21 @@ connectedCallback() {
 
 		if (name === 'scroll-vh-per-card') {
 			this.scrollVhPerCard = Number(newValue) || 100
-			this.setup()
 		}
 
 		if (name === 'max-visible-cards') {
 			this.maxVisibleCards = Number(newValue) || 30
-			this.setup()
 		}
 
 		if (name === 'scroll-mode') {
 			this.scrollMode = newValue || 'continuous'
-			this.setup()
 		}
 
 		if (name === 'stack-height') {
 			this.stackHeight = Number(newValue) || 50
-			this.render()
-			this.setup()
 		}
 
-		 if (this.isConnected && this.shadowRoot?.querySelector('.carousel')) {
+		if (this.isConnected && this.shadowRoot?.querySelector('.carousel')) {
 			this.render()
 			this.setup()
 		}
@@ -124,15 +119,7 @@ connectedCallback() {
 		return this._cards.length || this.children.length
 	}
 
-	renderGeneratedCards() {
-		this.innerHTML = this._cards
-			.map((card, index) => `
-			<div class="oc-card-carousel-card" data-card-index="${index}">
-				${card.title ?? card.label ?? card.id ?? index + 1}
-			</div>
-			`)
-			.join('')
-	}
+
 
 	render() {
 		this.shadowRoot.innerHTML = `
@@ -199,13 +186,7 @@ connectedCallback() {
 		})
 	}
 
-	renderCard(card, index) {
-		return `
-			<div class="card" data-card-index="${index}">
-				${card.title ?? card.label ?? card.id ?? index + 1}
-			</div>
-		`;
-	}
+
 
 	setup() {
 		this.destroyAnimationsOnly()

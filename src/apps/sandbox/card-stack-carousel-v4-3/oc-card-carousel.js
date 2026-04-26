@@ -128,6 +128,7 @@ class OcCardCarousel extends HTMLElement {
 					display: block;
 					width: 100%;
 					height: var(--oc-card-carousel-scroll-height, 700vh);
+					pointer-events: none;
 				}
 
 				.carousel {
@@ -138,6 +139,7 @@ class OcCardCarousel extends HTMLElement {
 					transform-style: preserve-3d;
 					overflow: hidden;
 					opacity: 1;
+					pointer-events: none;
 				}
 
 				.card-layer {
@@ -145,6 +147,7 @@ class OcCardCarousel extends HTMLElement {
 					width: 100%;
 					height: 100%;
 					transform-style: preserve-3d;
+					pointer-events: none;
 				}
 
 				.card-frame {
@@ -157,12 +160,15 @@ class OcCardCarousel extends HTMLElement {
 					border-radius: 0.5rem;
 					box-sizing: border-box;
 					transform-style: preserve-3d;
+					pointer-events: auto;
+					touch-action: none;
 				}
 
 				::slotted(*) {
 					width: 100%;
 					height: 100%;
 					box-sizing: border-box;
+					pointer-events: auto;
 				}
 			</style>
 

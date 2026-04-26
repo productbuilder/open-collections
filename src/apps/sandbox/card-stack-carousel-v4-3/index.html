@@ -10,7 +10,44 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
 	<script type="module" src="./oc-card-carousel.js"></script>
+	<script type="module" src="../../../shared/ui/primitives/index.js"></script>
+
 	<style>
+		
+
+	
+
+		html,
+		body {
+		margin: 0;
+		width: 100%;
+		min-height: 100%;
+		}
+
+		body {
+		background: #ddd;
+		}
+
+		main {
+		position: relative;
+		width: 100%;
+		}
+
+		oc-map {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		z-index: 0;
+		}
+
+		oc-card-carousel {
+		position: relative;
+		display: block;
+		width: 100%;
+		z-index: 10;
+		}
+
 		.demo-card {
 			background: white;
 			border: 1px solid #ccc;
@@ -21,7 +58,7 @@
 			font: 3rem monospace;
 		}
 
-		.oc-card-carousel-card {
+			.oc-card-carousel-card {
 			background: white;
 			border: 1px solid #ccc;
 			border-radius: 0.5rem;
@@ -35,6 +72,13 @@
 
 <body>
 	<main>
+		<oc-map
+			id="map"
+			center-lng="4.8933"
+			center-lat="52.3728"
+			zoom="16"
+			style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+		></oc-map>
 		<!-- Use continuous, step, snap, wheel-snap for scroll-mode-->
 		<oc-card-carousel id="carousel" scroll-vh-per-card="100" max-visible-cards="30" scroll-mode="wheel-snap"
 			stack-height="30">
@@ -48,6 +92,7 @@
 			<div class="demo-card" >8</div>
 			<div class="demo-card" >9</div>
 		</oc-card-carousel>
+		
 	</main>
 
 

@@ -466,7 +466,7 @@ class OcCardCarousel extends HTMLElement {
 				return
 			}
 
-			const cardHeightForGesture = window.innerHeight * 0.22  // Smaller value = more cards per swipe:
+			const cardHeightForGesture = window.innerHeight * 0.16  // Smaller value = more cards per swipe:
 
 			const stepDelta = gsap.utils.clamp(
 				-8,

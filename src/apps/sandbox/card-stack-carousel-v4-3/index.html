@@ -69,8 +69,24 @@
 
 <body>
 	<main>
-		<oc-map id="map" center-lng="4.8933" center-lat="52.3728" zoom="16"
-			style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"></oc-map>
+		<!-- <oc-map id="map" center-lng="4.8933" center-lat="52.3728" zoom="16"
+			style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"></oc-map> -->
+
+
+			<oc-map
+				id="map"
+				class="app-map"
+				style-url="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+				center-lng="5.1766"
+				center-lat="52.2292"
+				zoom="12.5"
+				pitch="70"
+				bearing="15"
+				max-zoom="18"
+				max-pitch="85"
+				hash
+			></oc-map>
+
 		<!-- Use continuous, step, snap, wheel-snap for scroll-mode-->
 		<oc-card-carousel id="carousel" scroll-vh-per-card="100" max-visible-cards="30" scroll-mode="wheel-snap"
 			stack-height="30">

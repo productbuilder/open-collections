@@ -51,6 +51,9 @@ class OcMapElement extends BaseElement {
 			"bearing",
 			"pitch",
 			"interactive",
+			"max-zoom",
+			"max-pitch",
+			"hash",
 		];
 	}
 
@@ -64,6 +67,8 @@ class OcMapElement extends BaseElement {
 		this._layerClickHandlers = new Map();
 		this._registeredLayers = new Map();
 		this._sourceDataById = new Map();
+
+
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -295,6 +300,47 @@ class OcMapElement extends BaseElement {
 		return true;
 	}
 
+
+	setSky(skyConfig) {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._map.setSky(skyConfig);
+		return true;
+	}
+
+	setTerrainConfig(terrainConfig) {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._map.setTerrain(terrainConfig);
+		return true;
+	}
+
+	setVerticalFieldOfView(value) {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._map.setVerticalFieldOfView(Number(value));
+		return true;
+	}
+
+	flyTo(options = {}) {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._map.flyTo(options);
+		return true;
+	}
+
+	jumpTo(options = {}) {
+		if (!this._map || !this._isMapReady) {
+			return false;
+		}
+		this._map.jumpTo(options);
+		return true;
+	}
+
 	destroyMap() {
 		if (!this._map) {
 			return;
@@ -332,6 +378,18 @@ class OcMapElement extends BaseElement {
 			this._mapLibre = await loadMapLibreGl();
 		}
 
+		// this._map = new this._mapLibre.Map({
+		// 	container,
+		// 	style: this._resolveStyleUrl(),
+		// 	center: this._parseCenter(),
+		// 	zoom: this._parseNumberAttr("zoom", 2),
+		// 	bearing: this._parseNumberAttr("bearing", 0),
+		// 	pitch: this._parseNumberAttr("pitch", 0),
+		// 	interactive:
+		// 		this.getBoolAttr("interactive") ||
+		// 		!this.hasAttribute("interactive"),
+		// });
+
 		this._map = new this._mapLibre.Map({
 			container,
 			style: this._resolveStyleUrl(),
@@ -339,6 +397,9 @@ class OcMapElement extends BaseElement {
 			zoom: this._parseNumberAttr("zoom", 2),
 			bearing: this._parseNumberAttr("bearing", 0),
 			pitch: this._parseNumberAttr("pitch", 0),
+			maxZoom: this._parseNumberAttr("max-zoom", undefined),
+			maxPitch: this._parseNumberAttr("max-pitch", undefined),
+			hash: this.getBoolAttr("hash"),
 			interactive:
 				this.getBoolAttr("interactive") ||
 				!this.hasAttribute("interactive"),
@@ -675,10 +736,10 @@ class OcMapElement extends BaseElement {
 
 			const featureMatchExpression = this._selectedFeature.property
 				? [
-						"==",
-						["get", this._selectedFeature.property],
-						this._selectedFeature.featureId,
-					]
+					"==",
+					["get", this._selectedFeature.property],
+					this._selectedFeature.featureId,
+				]
 				: ["==", ["id"], this._selectedFeature.featureId];
 			const nextFilter = layerRegistration.baseFilter
 				? ["all", layerRegistration.baseFilter, featureMatchExpression]

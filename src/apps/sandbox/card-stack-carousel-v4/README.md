@@ -1,19 +1,51 @@
 # card-stack-carousel-v4
 
-This sandbox is a direct recreation of the GSAP ScrollTrigger **Scrolling 3D Card Carousel** demo behavior from FreeFrontend/CodePen.
+Sandbox v4 prototypes a **map-first time + space + cards/info explorer**.
 
-## What it is
+## Layout concept
 
-- A **scroll-driven GSAP timeline** (GSAP + ScrollTrigger) where page scroll controls animation progress.
-- A staged 3D card stack sequence with depth, staggered movement, blur transitions, and fade-out.
-- An intro phase that animates `tl.progress` from `1` to `0.07`, then enables scrolling and pins the carousel while scrolling through `main`.
-- An animated arrow indicator that loops before scroll interaction and fades as scroll begins.
+- Top: floating card stack (`oc-card-carousel`) over the map.
+- Middle: open map focus area kept clear for interaction/context.
+- Bottom: floating timeline above floating search, both safe-area aware.
 
-## What it is not
+## State and event flow
 
-- Not a traditional carousel with drag/swipe interaction.
-- Not a physics/position/velocity implementation.
+- Root wrapper component: `oc-card-stack-map-explorer`.
+- Data/state is local/static for now:
+  - `query`
+  - `timeRange`
+  - `mapBounds`
+  - `activeCardId`
+  - `activeLocation`
+  - `activeTime`
+  - `visibleCardIds`
+- Events:
+  - `oc-search-bar` emits `oc-search-query-change`.
+  - `oc-timeline-bar` emits `oc-timeline-range-change`.
+  - `oc-card-carousel` emits `oc-card-carousel-active-index-change`.
 
-## Isolation intent
+## Reuse
 
-`card-stack-carousel-v4` is intentionally isolated from the `v1`, `v2`, and `v3` sandbox experiments so this version can remain a faithful, source-aligned recreation.
+- Reuses shared `oc-map` primitive.
+- Reuses shared `oc-time-range-slider` inside local timeline bar.
+- Keeps carousel motion engine local copy from v4-3 with minimal fixes only.
+
+## Static demo vs future integration
+
+- Demo records are static Hilversum-area samples in `map-card-explorer.js`.
+- Filtering is simple text + year range.
+- TODO: wire active card -> map marker/focus/highlight once map marker API wiring is available.
+
+## Manual test steps
+
+1. Open `src/apps/sandbox/card-stack-carousel-v4/index.html` in sandbox runner.
+2. Confirm map fills viewport and stays visible behind overlays.
+3. Confirm cards float at top and middle area remains open.
+4. Confirm timeline floats above search at bottom.
+5. Confirm bottom controls respect mobile safe area.
+6. Type in search and confirm cards filter.
+7. Change timeline range and confirm cards filter.
+8. Scroll/swipe card stack and confirm snap behavior remains usable.
+9. Confirm map remains interactive in middle open area.
+10. Confirm no mobile viewport console errors.
+11. Confirm `card-stack-carousel-v4-3` remains unchanged/working.

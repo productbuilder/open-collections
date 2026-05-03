@@ -28,7 +28,7 @@ This folder holds the first modest set of app-shell family shared primitives.
     - Emits `oc-time-range-change` with normalized `{ min, max, start, end }` detail for host integration.
 - `oc-map`
     - Generic shared map primitive powered by MapLibre GL JS (loaded from CDN at runtime; no package install needed).
-    - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`).
+    - Supports initial map config via attributes (`style-url`, `center`, `center-lng`, `center-lat`, `zoom`) and optional camera behavior attributes (`camera-behavior`, `zoom-pitch-stops`, `zoom-pitch-duration`).
     - Exposes imperative methods (`setGeoJsonData`, `setLayerVisibility`, `fitToBounds`, `fitToData`, `selectFeature`, `clearSelection`, and backward-compatible `highlightFeature` alias).
     - Emits `oc-map-ready`, `oc-map-feature-click`, `oc-map-viewport-change`, and `oc-map-error` (for loader/init failures).
 - `oc-map-three-layer`

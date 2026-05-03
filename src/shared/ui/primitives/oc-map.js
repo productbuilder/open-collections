@@ -31,6 +31,8 @@ const ocMapStyles = `
 		min-block-size: 120px;
 		border-radius: var(--oc-radius-md);
 		overflow: clip;
+		touch-action: none;
+		overscroll-behavior: contain;
 		background: var(--oc-bg-subtle);
 		border: var(--oc-border-width-sm, 1px) solid var(--oc-border-default);
 	}
@@ -38,6 +40,8 @@ const ocMapStyles = `
 	.map-root {
 		inline-size: 100%;
 		block-size: 100%;
+		touch-action: none;
+		overscroll-behavior: contain;
 	}
 `;
 
@@ -412,6 +416,9 @@ class OcMapElement extends BaseElement {
 				this.getBoolAttr("interactive") ||
 				!this.hasAttribute("interactive"),
 		});
+
+		this._map.touchZoomRotate?.enable?.();
+		this._map.dragPan?.enable?.();
 
 		this._map.on("load", () => {
 			this._isMapReady = true;

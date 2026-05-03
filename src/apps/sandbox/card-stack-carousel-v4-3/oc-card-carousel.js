@@ -161,7 +161,7 @@ class OcCardCarousel extends HTMLElement {
 					box-sizing: border-box;
 					transform-style: preserve-3d;
 					pointer-events: auto;
-					touch-action: none;
+					touch-action: pan-y;
 				}
 
 				::slotted(*) {
@@ -415,10 +415,17 @@ class OcCardCarousel extends HTMLElement {
 		}
 
 		const onTouchStart = (event) => {
+			if (event.touches.length > 1) return
 			this._touchStartY = event.touches[0].clientY
 		}
 
+		const onTouchMove = (event) => {
+			if (event.touches.length > 1) return
+			event.preventDefault()
+		}
+
 		const onTouchEnd = (event) => {
+			if (event.changedTouches.length > 1) return
 			const touchEndY = event.changedTouches[0].clientY
 			const deltaY = this._touchStartY - touchEndY
 
@@ -517,6 +524,7 @@ this._removeStepInputHandlers = () => {
 		}
 
 		const onTouchStart = (event) => {
+			if (event.touches.length > 1) return
 			this._touchStartY = event.touches[0].clientY
 			this._wheelSnapTargetStep = getStepFromScroll()
 
@@ -527,10 +535,12 @@ this._removeStepInputHandlers = () => {
 		}
 
 		const onTouchMove = (event) => {
+			if (event.touches.length > 1) return
 			event.preventDefault()
 		}
 
 		const onTouchEnd = (event) => {
+			if (event.changedTouches.length > 1) return
 			const touchEndY = event.changedTouches[0].clientY
 			const deltaY = this._touchStartY - touchEndY
 

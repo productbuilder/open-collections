@@ -1,6 +1,7 @@
 import { loadMapLibreGl } from "./maplibre-loader.js";
 
 import { BaseElement } from "../app-foundation/base-element.js";
+import { OcMapCameraBehaviorController } from "./oc-map-camera-behavior.js";
 import { appFoundationTokenStyles } from "../app-foundation/tokens.css.js";
 
 /**
@@ -54,6 +55,9 @@ class OcMapElement extends BaseElement {
 			"max-zoom",
 			"max-pitch",
 			"hash",
+			"camera-behavior",
+			"zoom-pitch-stops",
+			"zoom-pitch-duration",
 		];
 	}
 
@@ -67,8 +71,7 @@ class OcMapElement extends BaseElement {
 		this._layerClickHandlers = new Map();
 		this._registeredLayers = new Map();
 		this._sourceDataById = new Map();
-
-
+		this._cameraBehaviorController = null;
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -356,6 +359,11 @@ class OcMapElement extends BaseElement {
 		this._registeredLayers.clear();
 		this._sourceDataById.clear();
 
+		if (this._cameraBehaviorController) {
+			this._cameraBehaviorController.disconnect();
+			this._cameraBehaviorController = null;
+		}
+
 		this._map.off("moveend", this._boundMoveEnd);
 		this._map.remove();
 		this._map = null;
@@ -420,6 +428,7 @@ class OcMapElement extends BaseElement {
 		});
 
 		this._map.on("moveend", this._boundMoveEnd);
+		this._syncCameraBehavior();
 	}
 
 	_emitMapError(error) {
@@ -436,11 +445,34 @@ class OcMapElement extends BaseElement {
 		);
 	}
 
+	_syncCameraBehavior() {
+		if (!this._map) {
+			return;
+		}
+		const behavior = this.getStringAttr("camera-behavior");
+		const options = {
+			behavior,
+			zoomPitchStops: this.getStringAttr("zoom-pitch-stops"),
+			duration: this._parseNumberAttr("zoom-pitch-duration", 120),
+		};
+
+		if (!this._cameraBehaviorController) {
+			this._cameraBehaviorController = new OcMapCameraBehaviorController(
+				this._map,
+				options,
+			);
+		}
+
+		this._cameraBehaviorController.updateOptions(options);
+	}
+
 	_applyViewportConfig() {
 		const center = this._parseCenter();
 		const zoom = this._parseNumberAttr("zoom", null);
 		const bearing = this._parseNumberAttr("bearing", null);
 		const pitch = this._parseNumberAttr("pitch", null);
+
+		this._syncCameraBehavior();
 
 		this._map.easeTo({
 			center,

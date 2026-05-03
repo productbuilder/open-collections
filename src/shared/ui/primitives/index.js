@@ -12,6 +12,7 @@ import "./grid5-card-collection.js";
 import "./grid5-card-item.js";
 import "./section-header.js";
 import "./oc-map.js";
+import "./oc-map-camera-behavior.js";
 import "./oc-map-three-layer.js";
 import "./oc-time-range-slider.js";
 import "./open-collections-browse-header.js";
@@ -35,3 +36,5 @@ export { Grid5ItemCardElement } from "./grid5-card-item.js";
 
 export { OcTimeRangeSliderElement } from "./oc-time-range-slider.js";
 export { OpenCollectionsBrowseHeaderElement } from "./open-collections-browse-header.js";
+
+export { OcMapCameraBehaviorController, parseZoomPitchStops } from "./oc-map-camera-behavior.js";

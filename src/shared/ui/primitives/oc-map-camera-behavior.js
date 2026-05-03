@@ -168,11 +168,7 @@ export class OcMapCameraBehaviorController {
 
 		this._isApplyingPitch = true;
 		this._lastAppliedPitch = clampedTarget;
-		this._map.easeTo({
-			pitch: clampedTarget,
-			duration: this._options.duration,
-			essential: true,
-		});
+		this._map.setPitch(clampedTarget);
 		requestAnimationFrame(this._boundCancelApplyFlag);
 	}
 

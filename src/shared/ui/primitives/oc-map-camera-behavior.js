@@ -79,9 +79,15 @@ export class OcMapCameraBehaviorController {
 		this._rafId = null;
 		this._lastAppliedPitch = null;
 		this._isApplyingPitch = false;
+		this._isPinching = false;
+		this._pendingPitchAfterPinch = false;
+		this._gestureSurface = null;
 
 		this._boundScheduleUpdate = this._scheduleUpdate.bind(this);
 		this._boundCancelApplyFlag = this._cancelApplyFlag.bind(this);
+		this._boundHandleTouchStart = this._handleTouchStart.bind(this);
+		this._boundHandleTouchMove = this._handleTouchMove.bind(this);
+		this._boundHandleTouchEnd = this._handleTouchEnd.bind(this);
 	}
 
 	connect() {
@@ -89,6 +95,7 @@ export class OcMapCameraBehaviorController {
 			return;
 		}
 		this._connected = true;
+		this._bindGestureListeners();
 		this._map.on("move", this._boundScheduleUpdate);
 		this._map.on("zoom", this._boundScheduleUpdate);
 		this._map.on("pitch", this._boundCancelApplyFlag);
@@ -100,6 +107,7 @@ export class OcMapCameraBehaviorController {
 			return;
 		}
 		this._connected = false;
+		this._unbindGestureListeners();
 		this._map.off("move", this._boundScheduleUpdate);
 		this._map.off("zoom", this._boundScheduleUpdate);
 		this._map.off("pitch", this._boundCancelApplyFlag);
@@ -153,6 +161,10 @@ export class OcMapCameraBehaviorController {
 		if (!this._map || !this._connected || this._isApplyingPitch) {
 			return;
 		}
+		if (this._isPinching) {
+			this._pendingPitchAfterPinch = true;
+			return;
+		}
 		const target = interpolatePitchByZoom(
 			this._map.getZoom(),
 			this._options.zoomPitchStops,
@@ -170,6 +182,64 @@ export class OcMapCameraBehaviorController {
 		this._lastAppliedPitch = clampedTarget;
 		this._map.setPitch(clampedTarget);
 		requestAnimationFrame(this._boundCancelApplyFlag);
+	}
+
+	_bindGestureListeners() {
+		const canvasContainer = this._map?.getCanvasContainer?.();
+		if (!canvasContainer) {
+			return;
+		}
+		this._gestureSurface = canvasContainer;
+		this._gestureSurface.addEventListener("touchstart", this._boundHandleTouchStart, {
+			passive: true,
+		});
+		this._gestureSurface.addEventListener("touchmove", this._boundHandleTouchMove, {
+			passive: true,
+		});
+		this._gestureSurface.addEventListener("touchend", this._boundHandleTouchEnd, {
+			passive: true,
+		});
+		this._gestureSurface.addEventListener("touchcancel", this._boundHandleTouchEnd, {
+			passive: true,
+		});
+	}
+
+	_unbindGestureListeners() {
+		if (!this._gestureSurface) {
+			return;
+		}
+		this._gestureSurface.removeEventListener("touchstart", this._boundHandleTouchStart);
+		this._gestureSurface.removeEventListener("touchmove", this._boundHandleTouchMove);
+		this._gestureSurface.removeEventListener("touchend", this._boundHandleTouchEnd);
+		this._gestureSurface.removeEventListener("touchcancel", this._boundHandleTouchEnd);
+		this._gestureSurface = null;
+		this._isPinching = false;
+		this._pendingPitchAfterPinch = false;
+	}
+
+	_handleTouchStart(event) {
+		if (event.touches?.length >= 2) {
+			this._isPinching = true;
+		}
+	}
+
+	_handleTouchMove(event) {
+		if (event.touches?.length >= 2) {
+			this._isPinching = true;
+		}
+	}
+
+	_handleTouchEnd(event) {
+		const touchCount = event.touches?.length ?? 0;
+		if (touchCount >= 2) {
+			return;
+		}
+		const wasPinching = this._isPinching;
+		this._isPinching = false;
+		if (wasPinching && this._pendingPitchAfterPinch) {
+			this._pendingPitchAfterPinch = false;
+			this._scheduleUpdate();
+		}
 	}
 
 	_resolveMaxPitch() {

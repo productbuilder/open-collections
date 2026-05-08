@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Picobello — Voetbalteam Hilversum</title>
+    <style>
+      :root {
+        --bg: #f3f8ff;
+        --surface: #ffffff;
+        --surface-soft: #eef5ff;
+        --text: #10233f;
+        --muted: #4b6182;
+        --primary: #0866ff;
+        --primary-strong: #0540a3;
+        --accent: #16c479;
+        --ring: rgba(8, 102, 255, 0.28);
+        --radius: 18px;
+        --radius-sm: 12px;
+        --shadow: 0 14px 40px rgba(14, 51, 106, 0.14);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top right, #ddebff, transparent 42%), var(--bg);
+        color: var(--text);
+      }
+
+      a { color: inherit; }
+
+      .container {
+        width: min(1120px, calc(100% - 2rem));
+        margin-inline: auto;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(10px);
+        background: rgba(243, 248, 255, 0.88);
+        border-bottom: 1px solid rgba(16, 35, 63, 0.08);
+        z-index: 20;
+      }
+
+      .header-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem 1rem;
+        min-height: 74px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .brand-ball {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: conic-gradient(from 200deg, var(--accent), #69f0b7, var(--primary), var(--accent));
+        box-shadow: 0 6px 16px rgba(8, 102, 255, 0.35);
+      }
+
+      nav ul {
+        display: flex;
+        gap: 0.25rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav a {
+        display: inline-block;
+        text-decoration: none;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 0.6rem 0.85rem;
+        border-radius: 999px;
+      }
+
+      nav a:hover,
+      nav a:focus-visible {
+        color: var(--primary-strong);
+        background: #e7f0ff;
+        outline: none;
+      }
+
+      .hero {
+        padding: 3rem 0 2.2rem;
+      }
+
+      .hero-card {
+        background:
+          linear-gradient(120deg, rgba(8, 102, 255, 0.95), rgba(5, 64, 163, 0.92)),
+          radial-gradient(circle at 86% 10%, rgba(255, 255, 255, 0.24), transparent 48%);
+        color: #f5f9ff;
+        border-radius: calc(var(--radius) + 6px);
+        box-shadow: var(--shadow);
+        padding: clamp(1.5rem, 3vw, 3rem);
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #d9edff;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.26);
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+      }
+
+      h1 {
+        margin: 0.9rem 0 0.35rem;
+        font-size: clamp(2rem, 6vw, 4.3rem);
+        line-height: 1.02;
+        letter-spacing: 0.01em;
+      }
+
+      .subtitle {
+        margin: 0;
+        font-size: clamp(1rem, 2.3vw, 1.35rem);
+        color: #d3e7ff;
+      }
+
+      .hero p {
+        max-width: 52ch;
+        font-size: 1.03rem;
+        line-height: 1.7;
+        color: #edf6ff;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: none;
+        padding: 0.8rem 1.15rem;
+        font-size: 0.98rem;
+        font-weight: 700;
+        text-decoration: none;
+        background: #ffffff;
+        color: var(--primary-strong);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .cta:hover,
+      .cta:focus-visible {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(3, 16, 40, 0.25);
+        outline: 3px solid var(--ring);
+        outline-offset: 2px;
+      }
+
+      main section {
+        margin: 1.75rem 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: 0 8px 28px rgba(16, 35, 63, 0.09);
+        padding: 1.25rem;
+        border: 1px solid rgba(16, 35, 63, 0.06);
+      }
+
+      .card h2 {
+        margin: 0 0 0.6rem;
+        font-size: 1.25rem;
+      }
+
+      .card p,
+      .card li {
+        color: var(--muted);
+        line-height: 1.62;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0;
+        list-style: none;
+        margin: 0.8rem 0 0;
+      }
+
+      .chips li {
+        font-size: 0.86rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        background: var(--surface-soft);
+        color: #1d3e6f;
+        border: 1px solid #d8e7ff;
+        border-radius: 999px;
+        padding: 0.35rem 0.68rem;
+      }
+
+      .fixture {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.68rem;
+      }
+
+      .fixture li {
+        border: 1px solid rgba(8, 102, 255, 0.16);
+        background: #f8fbff;
+        border-radius: var(--radius-sm);
+        padding: 0.72rem 0.8rem;
+      }
+
+      .fixture strong {
+        display: block;
+        color: var(--text);
+        font-size: 0.96rem;
+      }
+
+      footer {
+        padding: 1.8rem 0 2.4rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @media (min-width: 760px) {
+        .hero { padding-top: 4rem; }
+
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1.2rem;
+        }
+
+        .card { padding: 1.4rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-row">
+        <div class="brand" aria-label="Picobello">
+          <span class="brand-ball" aria-hidden="true"></span>
+          <span>Picobello</span>
+        </div>
+
+        <nav aria-label="Hoofdnavigatie">
+          <ul>
+            <li><a href="#team">Team</a></li>
+            <li><a href="#wedstrijden">Wedstrijden</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container">
+          <article class="hero-card">
+            <span class="badge">Hilversum • Victoria</span>
+            <h1 id="hero-title">Picobello</h1>
+            <p class="subtitle">Voetbalteam uit Hilversum bij Victoria</p>
+            <p>
+              Wij spelen met energie, lef en vooral veel plezier. Picobello is een team waar
+              teamspirit centraal staat: samen druk zetten, samen lachen en samen elke wedstrijd
+              vol gas gaan.
+            </p>
+            <a class="cta" href="#team">Bekijk het team</a>
+          </article>
+        </div>
+      </section>
+
+      <div class="container">
+        <div class="grid">
+          <section class="card" id="team" aria-labelledby="team-title">
+            <h2 id="team-title">Team</h2>
+            <p>
+              Een fanatieke en hechte groep uit Hilversum met ruimte voor talent, inzet en
+              gezelligheid op én naast het veld.
+            </p>
+            <ul class="chips" aria-label="Team kenmerken">
+              <li>Teamspirit</li>
+              <li>Fit & scherp</li>
+              <li>Aanvallend voetbal</li>
+            </ul>
+          </section>
+
+          <section class="card" id="wedstrijden" aria-labelledby="wedstrijden-title">
+            <h2 id="wedstrijden-title">Wedstrijden</h2>
+            <ul class="fixture" aria-label="Voorbeeld wedstrijden">
+              <li><strong>Picobello vs FC Zuid</strong><span>Zaterdag • 14:30 • Thuis</span></li>
+              <li><strong>SV Noord vs Picobello</strong><span>Volgende week • 11:00 • Uit</span></li>
+              <li><strong>Picobello vs Hilversum United</strong><span>Komende maand • 13:00</span></li>
+            </ul>
+          </section>
+
+          <section class="card" id="contact" aria-labelledby="club-title">
+            <h2 id="club-title">Club & locatie</h2>
+            <p>
+              Picobello speelt op het terrein van Victoria in Hilversum. We trainen door de week
+              en spelen in het weekend.
+            </p>
+            <p><strong>Locatie:</strong> Sportpark Victoria, Hilversum</p>
+            <p><strong>Contact:</strong> info@picobello.example</p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>© Picobello — Hilversum / Victoria</p>
+        <p>Vragen of meespelen? Neem contact op via het teamadres.</p>
+      </div>
+    </footer>
+  </body>
+</html>

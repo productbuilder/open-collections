@@ -16,13 +16,15 @@
       "description": "De markt in Hilversum is niet meer wat het ooit was, voorheen was hij groter en veel drukker bezocht. De kraam van Pronk met zijn kaas was er al vóór de oorlog. Van de Kerkstraat laat ik wat gevels zien, helaas zijn er veel verdwenen en ik hoop dat de oude gevels die er nu nog zijn nog lang bewaard zullen blijven. Het filmen liep niet zo lekker en ik ook niet trouwens. Raar getik in het geluid van de video, geen idee wat het is maar het zit in de camera. De gimbal werkt ook niet goed, misschien is de camera te zwaar voor dat ding.",
       "creator": "B. Peet",
       "date": "2022",
-      "location": "Hilversum",
+      "city": "Hilversum",
       "attribution": "Beeldbank-01",
       "source": "https://hhkap.collectiebank.nl/portaal/start/collecties?fc=browse&utf8=1&view=preview&fileid=-1&fuid=HHKAP%252Fdir3%252FNL-HvsHHKAP-009284.jpg",
       "tags": [],
       "include": true,
-      "location_lat": "52.215528",
-      "location_long": "5.185187"
+      "location": {
+        "lat": "52.215528",
+        "long": "5.185187"
+      }
     },
     {
       "id": "Hilversum-walks-50",

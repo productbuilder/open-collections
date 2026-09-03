@@ -1,0 +1,27 @@
+{
+  "id": "demo-collection",
+  "title": "Mijn eerste Open Collection",
+  "protocolVersion": "1.0",
+  "canonicalUrl": "https://example.org/collections/demo/collection.json",
+  "license": "CC BY 4.0",
+  "items": [
+    {
+      "id": "object-001",
+      "title": "Historische foto",
+      "type": "image",
+      "thumbnailUrl": "object-001.thumb.jpg",
+      "mediaUrl": "object-001.jpg",
+      "detailUrl": "object-001.json",
+      "updatedAt": "2026-08-24T08:00:00Z"
+    },
+    {
+      "id": "object-002",
+      "title": "Tweede historische foto",
+      "type": "image",
+      "thumbnailUrl": "object-002.thumb.jpg",
+      "mediaUrl": "object-002.jpg",
+      "detailUrl": "object-002.json",
+      "updatedAt": "2026-08-24T08:00:00Z"
+    }
+  ]
+}

@@ -19,11 +19,17 @@
       "city": "Hilversum",
       "attribution": "Beeldbank-01",
       "source": "https://hhkap.collectiebank.nl/portaal/start/collecties?fc=browse&utf8=1&view=preview&fileid=-1&fuid=HHKAP%252Fdir3%252FNL-HvsHHKAP-009284.jpg",
-      "tags": [],
+
+      "tags": [
+        "media",
+        "architecture",
+        "urban",
+        "landmark"
+      ],
       "include": true,
       "location": {
-        "lat": "52.215528",
-        "long": "5.185187"
+        "lat": 52.215528,
+        "lon": 5.185187
       }
     },
     {

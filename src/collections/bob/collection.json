@@ -20,13 +20,15 @@
       "attribution": "Beeldbank-01",
       "source": "https://hhkap.collectiebank.nl/portaal/start/collecties?fc=browse&utf8=1&view=preview&fileid=-1&fuid=HHKAP%252Fdir3%252FNL-HvsHHKAP-009284.jpg",
       "tags": [],
-      "include": true
+      "include": true,
+      "location_lat": "52.215528",
+      "location_long": "5.185187"
     },
     {
       "id": "Hilversum-walks-50",
       "title": "Hilversum Walks 50, Tunnelproject Oosterengweg 3 juni 2022",
       "media": {
-        "type": "video",
+        "type": "image",
         "url": "https://drive.google.com/file/d/1IJDNwdj5wEXZpOj_CIv7E6BQeFM9Zlyi/view?usp=drive_link",
         "thumbnailUrl": "https://hhkap.collectiebank.nl/portaal/start/collecties?view=preview&fuid=HHKAP/dir3/NL-HvsHHKAP-009287.jpg"
       },

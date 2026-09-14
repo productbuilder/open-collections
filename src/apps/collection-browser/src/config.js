@@ -25,6 +25,13 @@ export const BROWSER_CONFIG = {
 			label: "Dudok Architectuur Centrum",
 			sourceType: "source.json",
 			sourceUrl: "https://raw.githubusercontent.com/productbuilder/hilversum-timemachine-data/main/dev/org/dudok-architectuur-centrum/source.json",
+		},
+		// dit is bobs collectie van albrtus perk.
+		{
+			id: "albertus-perk-source",
+			label: "Albertus Perk",
+			sourceType: "source.json",
+			sourceUrl: "https://raw.githubusercontent.com/sunnywood2000/Albertus-Perk-HTM/refs/heads/main/source.json"
 		}
 		// {
 		// 	id: "city-photos",

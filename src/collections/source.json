@@ -7,10 +7,7 @@
   "countryCode": "NL",
   "title": "Example source",
   "collections": [
-    {
-      "id": "bobv1",
-      "manifest": "bob/collection.json"
-    },
+
     {
       "id": "example-dataset",
       "manifest": "example-dataset/collection.json"

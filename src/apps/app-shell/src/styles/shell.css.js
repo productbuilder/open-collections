@@ -153,6 +153,7 @@ export const appShellStyles = `
   }
 
   .oc-app-bar {
+    display:none;
     height: var(--oc-shell-mobile-nav-height);
     position: fixed;
     left: 0;
@@ -222,7 +223,7 @@ export const appShellStyles = `
   .oc-app-viewport {
     flex: 1 1 auto;
     box-sizing: border-box;
-    padding-bottom: var(--oc-shell-mobile-nav-offset);
+    <!-- padding-bottom: var(--oc-shell-mobile-nav-offset); -->
   }
 }
 

@@ -40,7 +40,7 @@ function renderNavButton(section, activeSectionKey) {
 
 export function renderShellHeader(
 	activeSectionKey,
-	title = "Open Collections",
+	title = "Hilversum Time Machine",
 ) {
 	const primarySections = SHELL_SECTIONS.filter(
 		(section) => section.key !== "account",

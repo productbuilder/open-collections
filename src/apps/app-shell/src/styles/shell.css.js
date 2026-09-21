@@ -29,6 +29,7 @@ export const appShellStyles = `
   .oc-app-bar {
 	  flex: 0 0 auto;
     display: grid;
+    display:none;
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 0.75rem;

@@ -153,7 +153,7 @@ export const appShellStyles = `
   }
 
   .oc-app-bar {
-    display:none;
+   
     height: var(--oc-shell-mobile-nav-height);
     position: fixed;
     left: 0;
@@ -162,6 +162,7 @@ export const appShellStyles = `
     z-index: 20;
 
     display: grid;
+     display: none;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: stretch;
     gap: 0.35rem;
